@@ -1,0 +1,54 @@
+.homework-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1em;
+}
+
+.homework-table th,
+.homework-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.homework-table th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+.homework-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.homework-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.homework-table button {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.homework-table button:hover {
+  background-color: #d32f2f;
+}
+
+.add-homework-btn {
+  margin-top: 1em;
+  padding: 10px 15px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-homework-btn:hover {
+  background-color: #388e3c;
+}

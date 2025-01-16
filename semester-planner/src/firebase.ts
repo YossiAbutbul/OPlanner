@@ -1,24 +1,16 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 
-// Your web app's Firebase configuration
+
 const firebaseConfig = {
-  apiKey: "AIzaSyCJyWV4yrfsNfmhTxAdzoX8xS8oxcu-gcE", 
-  authDomain: "oplanner-d15b8.firebaseapp.com",
-  projectId: "oplanner-d15b8",
-  storageBucket: "oplanner-d15b8.firebasestorage.app",
-  messagingSenderId: "997951072533",
-  appId: "1:997951072533:web:29498bcbdd430d05c0a11c",
-  measurementId: "G-1K9L9YL4HE"
+  apiKey: "AIzaSyCCp3fqZ7tQUMCcZb5LM8zdNv88D3Dnb0M",
+  authDomain: "oplenner-id.firebaseapp.com",
+  projectId: "oplenner-id",
+  storageBucket: "oplenner-id.firebasestorage.app",
+  messagingSenderId: "600772103063",
+  appId: "1:600772103063:web:bc28d7d3c8a2ae670652d2",
+  measurementId: "G-Y0MVW1N7PY"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Initialize Firestore
 export const db = getFirestore(app);
-
-// Optional: Initialize Analytics (if required)
-export const analytics = getAnalytics(app);

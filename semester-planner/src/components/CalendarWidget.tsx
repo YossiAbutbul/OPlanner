@@ -9,7 +9,7 @@ const CalendarWidget: React.FC = () => {
   return (
     <div className="calendar-widget">
       <h2>Select a Date</h2>
-      <Calendar onChange={setValue} value={value} />
+        <Calendar onChange={setValue} value={value} />
       <p>Selected Date: {value.toDateString()}</p>
     </div>
   );
