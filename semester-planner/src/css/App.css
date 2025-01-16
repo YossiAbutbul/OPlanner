@@ -1,0 +1,30 @@
+.app-container {
+  display: flex;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+.sidebar, .right-sidebar {
+  width: 20%;
+  background-color: #282c34;
+  color: white;
+  padding: 1em;
+}
+
+.sidebar ul, .right-sidebar table {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 2em;
+}
+
+.pie-chart {
+  width: 250px;
+  height: 250px;
+  margin: 1em;
+}
+
