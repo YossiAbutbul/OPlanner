@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';  // Ensure this is styled correctly
-import '../css/CalendarWidget.css';          
+import React from "react";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import "../css/CalendarWidget.css"; // Custom styles for width adjustment
 
-const CalendarWidget: React.FC = () => {
-  const [value, setValue] = useState(new Date());
+interface CalendarWidgetProps {
+  value: Date | null;
+  onChange: (date: Date | Date[]) => void;
+}
 
+const CalendarWidget: React.FC<CalendarWidgetProps> = ({ value, onChange }) => {
   return (
-    <div className="calendar-widget">
-      <h2>Select a Date</h2>
-        <Calendar onChange={setValue} value={value} />
-      <p>Selected Date: {value.toDateString()}</p>
+    <div className="calendar-container">
+      <Calendar value={value} onChange={onChange} />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import ProgressChart from './ProgressChart';
 import CalendarWidget from './CalendarWidget';
 import HomeworkTable from './HomeworkTable';
+import '../css/MainContent.css'
 
 function MainContent() {
 return (

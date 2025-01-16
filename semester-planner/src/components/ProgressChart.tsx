@@ -1,6 +1,6 @@
-import React from 'react';
-import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import React from "react";
+import { Doughnut } from "react-chartjs-2";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -11,12 +11,11 @@ interface ProgressChartProps {
 
 const ProgressChart: React.FC<ProgressChartProps> = ({ completed, total }) => {
   const data = {
-    labels: ['Completed', 'Remaining'],
     datasets: [
       {
         data: [completed, total - completed],
-        backgroundColor: ['#4caf50', '#e0e0e0'],
-        hoverBackgroundColor: ['#66bb6a', '#f5f5f5'],
+        backgroundColor: ["#4caf50", "#e0e0e0"],
+        hoverBackgroundColor: ["#66bb6a", "#f5f5f5"],
       },
     ],
   };
@@ -24,6 +23,14 @@ const ProgressChart: React.FC<ProgressChartProps> = ({ completed, total }) => {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false, // Remove labels
+      },
+      tooltip: {
+        enabled: false, // Disable tooltips
+      },
+    },
   };
 
   return <Doughnut data={data} options={options} />;

@@ -1,0 +1,72 @@
+/* Main Content Area */
+.main-content {
+  padding: 20px;
+  background-color: #f9f9f9; /* Light background */
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  margin: 20px;
+  flex-grow: 1; /* Fills remaining space */
+  overflow-y: auto;
+}
+
+/* Title */
+.main-content h1 {
+  font-size: 2rem;
+  color: #333; /* Dark text */
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Progress Charts Section */
+.progress-charts {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.pie-chart {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #e0e0e0; /* Placeholder background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #555;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Calendar Section */
+.calendar {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #ffffff; /* White background */
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.calendar h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+#calendarWidget {
+  margin: 0 auto; /* Center the calendar */
+  max-width: 300px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .progress-charts {
+    flex-direction: column;
+  }
+
+  .pie-chart {
+    margin-bottom: 20px;
+  }
+}

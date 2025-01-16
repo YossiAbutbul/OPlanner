@@ -4,8 +4,8 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="profile-section">
-        <img src="/profile-placeholder.jpg" alt="Profile" className="profile-pic" />
-        <p>MY SEMESTERS</p>
+        <img src="./public/user-svgrepo-com.svg" alt="Profile" className="profile-pic" />
+        <label>My Semesters</label>
       </div>
       <ul className="semester-list">
         <li>2024 A</li>

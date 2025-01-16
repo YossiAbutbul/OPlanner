@@ -1,6 +1,7 @@
 .app-container {
   display: flex;
   height: 100vh;
+  width: 100vw;
   font-family: Arial, sans-serif;
 }
 
@@ -11,6 +12,14 @@
   padding: 1em;
 }
 
+.sidebar img {
+  aspect-ratio: 1/1;
+  width: 10rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 2em; /* Added space from the top */
+}
 .sidebar ul, .right-sidebar table {
   margin: 0;
   padding: 0;
