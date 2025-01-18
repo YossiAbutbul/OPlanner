@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Modal from "react-modal";
-import "../css/HomeworkModal.css";
+import '../css/HomeworkModal.css'
 
 Modal.setAppElement("#root");
 
@@ -16,12 +16,11 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({ isOpen, onClose, onSave, 
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState("PENDING");
 
-  // Preload the fields with the current homework details if editing
   useEffect(() => {
     if (editHomework) {
-      setName(editHomework.name);
-      setDueDate(editHomework.dueDate);
-      setStatus(editHomework.status);
+      setName(editHomework.name || "");
+      setDueDate(editHomework.dueDate || "");
+      setStatus(editHomework.status || "PENDING");
     } else {
       setName("");
       setDueDate("");
@@ -29,19 +28,17 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({ isOpen, onClose, onSave, 
     }
   }, [editHomework]);
 
-const handleSave = () => {
-  if (name && dueDate) {
-    onSave(editHomework?.id || null, name, dueDate, status); // Pass the homework ID if editing
-    setName("");
-    setDueDate("");
-    setStatus("PENDING");
-    onClose();
-  } else {
-    alert("Please fill in all fields!"); // Basic validation
-  }
-};
-
-
+  const handleSave = () => {
+    if (name && dueDate && status) {
+      onSave(editHomework?.id || null, name, dueDate, status);
+      setName("");
+      setDueDate("");
+      setStatus("PENDING");
+      onClose();
+    } else {
+      alert("Please fill in all fields!");
+    }
+  };
 
 
   return (

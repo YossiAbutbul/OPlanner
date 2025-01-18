@@ -51,7 +51,7 @@
   padding: 10px;
   text-align: center;
   cursor: pointer;
-  border-radius: 50%;
+  color: #000000;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -83,7 +83,6 @@
 .react-calendar__tile:hover {
   background-color: #f1f1f1; /* Light gray hover */
   color: #212121; /* Dark text for better readability */
-  border-radius: 50%;
 }
 
 /* Responsiveness */
@@ -99,5 +98,6 @@
 
   .react-calendar__month-view__days__day {
     padding: 8px;
+    color: #000000;
   }
 }

@@ -35,7 +35,7 @@ useEffect(() => {
       const snapshot = await getDocs(homeworkCollection);
 
       const homeworkList = snapshot.docs.map((doc) => ({
-        id: doc.id, // Ensure the ID is included
+        id: doc.id || `${Date.now()}-${Math.random()}`, // Assign a fallback unique ID if `doc.id` is empty
         ...doc.data(),
       }));
 
@@ -47,6 +47,9 @@ useEffect(() => {
 
   fetchHomework();
 }, []);
+
+
+
 
 
 

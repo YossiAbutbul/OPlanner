@@ -6,7 +6,7 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
   margin: 20px;
   flex-grow: 1; /* Fills remaining space */
-  overflow-y: auto;
+  overflow-y: overlay; /* Scrollbar outside the content */
 }
 
 /* Title */
@@ -69,4 +69,23 @@
   .pie-chart {
     margin-bottom: 20px;
   }
+}
+
+/* Custom Scrollbar */
+.main-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }

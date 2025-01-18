@@ -1,54 +1,50 @@
+/* Table Container */
 .homework-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1em;
-}
-
-.homework-table th,
-.homework-table td {
-  border: 1px solid #ddd;
-  padding: 10px;
+  margin: 20px 0;
+  font-size: 1rem;
+  font-family: Arial, sans-serif;
   text-align: left;
 }
 
+/* Table Header */
 .homework-table th {
-  background-color: #f4f4f4;
-  font-weight: bold;
+  background-color: #f4f4f4; /* Light gray background */
+  color: #333; /* Dark text */
+  padding: 10px;
+  border: 1px solid #ddd; /* Border for separation */
 }
 
-.homework-table tr:nth-child(even) {
-  background-color: #f9f9f9;
+/* Table Rows */
+.homework-table td {
+  color: #000; /* Black text */
+  background-color: #fff; /* White background */
+  padding: 10px;
+  border: 1px solid #ddd; /* Border for separation */
 }
 
+/* Hover Effect for Rows */
 .homework-table tr:hover {
-  background-color: #f1f1f1;
+  background-color: #f1f1f1; /* Light gray on hover */
 }
 
+/* Button Styles */
 .homework-table button {
-  background-color: #f44336;
+  background-color: #4caf50; /* Green background */
   color: white;
   border: none;
   padding: 5px 10px;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s;
+  margin: 5px;
 }
 
 .homework-table button:hover {
-  background-color: #d32f2f;
+  background-color: #388e3c; /* Darker green on hover */
 }
-
-.add-homework-btn {
-  margin-top: 1em;
-  padding: 10px 15px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.add-homework-btn:hover {
-  background-color: #388e3c;
+/* H2 Header Styles */
+h2, p {
+  color: #000; /* Black text */
 }

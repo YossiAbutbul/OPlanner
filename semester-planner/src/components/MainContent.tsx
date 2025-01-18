@@ -1,25 +1,26 @@
 import React from 'react';
 import ProgressChart from './ProgressChart';
-import CalendarWidget from './CalendarWidget';
 import HomeworkTable from './HomeworkTable';
-import '../css/MainContent.css'
+import '../css/MainContent.css';
+import { useHomework } from "../context/HomeworkContext";
 
-function MainContent() {
-return (
-    <main className="main-content">
-      <h1>Semester Overview</h1>
-      <div className="progress-charts">
-        <div className="pie-chart">
-          <ProgressChart completed={15} total={30} />
-        </div>
-        <div className="pie-chart">
-          <ProgressChart completed={8} total={20} />
-        </div>
+const MainContent: React.FC = () => {
+  const { homework } = useHomework();
+
+  const completed = homework.filter((hw) => hw.status === "COMPLETED").length;
+  const pending = homework.filter((hw) => hw.status === "PENDING").length;
+
+  return (
+    <div className="main-content">
+      <h1>Homework Progress</h1>
+      <div className="progress-chart-container">
+        <ProgressChart completed={completed} pending={pending} />
       </div>
-      <CalendarWidget />
-      <HomeworkTable />
-    </main>
+      <div className="homework-table-container">
+        <HomeworkTable />
+      </div>
+    </div>
   );
-}
+};
 
 export default MainContent;

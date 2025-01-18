@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import HomeworkModal from "./HomeworkModal";
+import '../css/HomeworkTable.css'
 
 const HomeworkTable: React.FC = () => {
-  const { homework, addHomework, removeHomework, updateHomework } = useHomework();
+  const { homework, addHomework, removeHomework } = useHomework();
   const [isModalOpen, setModalOpen] = useState(false);
   const [editHomework, setEditHomework] = useState<{
     id: string;
@@ -18,21 +19,21 @@ const HomeworkTable: React.FC = () => {
     dueDate: string,
     status: string
   ) => {
-    if (id) {
-      await updateHomework(id, name, dueDate, status); // Update existing homework
-    } else {
-      await addHomework(name, dueDate, status); // Add new homework
-    }
-    setModalOpen(false); // Close the modal after saving
+    console.log("Adding or Updating Homework:", { id, name, dueDate, status }); // Debugging log
+    await addHomework(id, name, dueDate, status); // Handles both add and update
+    setModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    console.log("Attempting to delete homework with ID:", id); // Debugging log
-    removeHomework(id);
+
+  const handleDelete = async (id: string) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this homework?");
+    if (confirmDelete) {
+      await removeHomework(id);
+    }
   };
 
   const handleEditClick = (homework: { id: string; name: string; dueDate: string; status: string }) => {
-    setEditHomework(homework); // Set the homework to be edited
+    setEditHomework(homework); // Pass the homework item for editing
     setModalOpen(true);
   };
 
@@ -64,12 +65,13 @@ const HomeworkTable: React.FC = () => {
               </tr>
             ))}
           </tbody>
+
         </table>
       )}
       <button
         className="add-homework-btn"
         onClick={() => {
-          setEditHomework(null); // Clear editHomework to add new
+          setEditHomework(null); // Clear editHomework for new entries
           setModalOpen(true);
         }}
       >
