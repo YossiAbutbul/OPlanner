@@ -1,7 +1,7 @@
 // File Name: HomeworkContext.tsx
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import {collection, getDocs, doc, addDoc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
 
 import { db } from "../firebase";
 
@@ -33,6 +33,14 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [homework, setHomework] = useState<HomeworkEntry[]>([]);
   const [notifications, setNotifications] = useState<string[]>([]);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   // Fetch homework from Firestore
   useEffect(() => {
@@ -82,7 +90,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
         const daysLeft = Math.ceil(diffInTime / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
         return `Homework "${entry.name}" is due in ${daysLeft} day${
           daysLeft > 1 ? "s" : ""
-        } (${entry.dueDate}).`;
+        } (${formatDate(entry.dueDate)}).`;
       });
 
     setNotifications(upcoming);

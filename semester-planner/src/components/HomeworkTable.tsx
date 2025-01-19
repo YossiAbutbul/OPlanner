@@ -13,35 +13,38 @@ const HomeworkTable: React.FC = () => {
     status: string;
   } | null>(null);
 
-const handleAddOrUpdateHomework = async (
-  id: string | null,
-  name: string,
-  dueDate: string,
-  status: string
-) => {
-  await addHomework(id, name, dueDate, status); // Updates state
-  console.log("Homework added or updated:", { id, name, dueDate, status }); // Debugging log
-  setModalOpen(false);
-};
-
+  const handleAddOrUpdateHomework = async (
+    id: string | null,
+    name: string,
+    dueDate: string,
+    status: string
+  ) => {
+    await addHomework(id, name, dueDate, status); // Updates state
+    console.log("Homework added or updated:", { id, name, dueDate, status }); // Debugging log
+    setModalOpen(false);
+  };
 
   const handleDelete = async (id: string) => {
-  const confirmDelete = window.confirm("Are you sure you want to delete this homework?");
-  if (confirmDelete) {
-    await removeHomework(id); // Pass the correct id
-  }
-};
-
+    const confirmDelete = window.confirm("Are you sure you want to delete this homework?");
+    if (confirmDelete) {
+      await removeHomework(id); // Pass the correct id
+    }
+  };
 
   const handleEditClick = (homework: { id: string; name: string; dueDate: string; status: string }) => {
-  setEditHomework(homework); // Pass the homework item for editing
-  setModalOpen(true);
-};
+    setEditHomework(homework); // Pass the homework item for editing
+    setModalOpen(true);
+  };
 
   const getStatusStyle = (status: string) => {
     return status === "COMPLETED"
       ? { color: "green", fontWeight: "bold" }
       : { color: "orange", fontWeight: "bold" };
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB"); // Format date as DD/MM/YYYY
   };
 
   return (
@@ -67,7 +70,7 @@ const handleAddOrUpdateHomework = async (
               return (
                 <tr key={entry.id || Math.random().toString()}>
                   <td>{entry.name}</td>
-                  <td>{entry.dueDate}</td>
+                  <td>{formatDate(entry.dueDate)}</td>
                   <td style={getStatusStyle(entry.status)}>{entry.status}</td>
                   <td>
                     <button onClick={() => handleEditClick(entry)}>Edit</button>
@@ -77,7 +80,6 @@ const handleAddOrUpdateHomework = async (
               );
             })}
           </tbody>
-
         </table>
       )}
       <button
