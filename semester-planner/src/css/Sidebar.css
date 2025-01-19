@@ -2,13 +2,12 @@
 .sidebar {
   width: 20%;
   min-width: 250px;
-  background-color: #282c34;
-  color: #ffffff;
+  background-color: #1e1e1e;
+  color: #e3e3e3;
   height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* padding: 20px; */
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -39,7 +38,7 @@
   display: flex;
   justify-content: space-between;
   padding: 10px;
-  background-color: #3a3f47;
+  /* background-color: #3a3f47; */
   cursor: pointer;
   border-radius: 8px;
   font-size: 1rem;
@@ -57,35 +56,37 @@
 
 .semester-list {
   list-style: none;
-  padding-left: 20px;
+  padding-left: 10px;
   margin-top: 10px;
+  cursor: pointer;
 }
 
 .semester-item {
+  margin-left: 20px;
   padding: 8px;
-  background-color: #4caf50;
+  background-color: #1e1e1e;
   margin-bottom: 5px;
   border-radius: 6px;
-  text-align: center;
+  text-align: left;
   transition: background-color 0.3s ease;
 }
 
 .semester-item:hover {
-  background-color: #45a049;
+  background-color: #303030;
 }
 
 /* Add Year Button */
 .add-year-btn {
   /* margin-top: auto; */
-  padding: 10px 15px;
-  background-color: #4caf50;
+  padding: 12px 30px;
+  background-color: #303030;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
 .add-year-btn:hover {
-  background-color: #45a049;
+  background-color: #484848;
 }

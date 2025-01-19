@@ -3,14 +3,14 @@ import "../css/Sidebar.css";
 
 const Sidebar: React.FC = () => {
   const [years, setYears] = useState<{ year: number; expanded: boolean }[]>([
-    { year: 2024, expanded: true },
-    { year: 2025, expanded: true },
+    { year: 2024, expanded: false },
+    { year: 2025, expanded: false },
   ]);
 
   const addYear = () => {
     const lastYear = years[years.length - 1]?.year || new Date().getFullYear();
     const newYear = lastYear + 1;
-    setYears([...years, { year: newYear, expanded: true }]);
+    setYears([...years, { year: newYear, expanded: false }]);
   };
 
   const toggleYear = (year: number) => {
