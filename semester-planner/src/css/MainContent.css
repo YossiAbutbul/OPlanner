@@ -1,14 +1,32 @@
-/* Main Content Area */
-.main-content {
-  padding: 20px;
-  background-color: #f9f9f9; /* Light background */
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-  margin: 20px;
-  flex-grow: 1; /* Fills remaining space */
-  overflow-y: overlay; /* Scrollbar outside the content */
+.main-layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch; /* Ensures sidebars and main content align properly */
+  width: 100%;
+  height: 100%; /* Fills the full height of the parent */
+  flex-grow: 1; /* Allows the layout to expand as needed */
 }
 
+.main-content {
+  flex-grow: 1; /* Ensures the main content fills the remaining space */
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  margin: 20px;
+  overflow-y: auto; /* Allows scrolling within the main content */
+}
+
+.sidebar,
+.right-sidebar {
+  width: 20%;
+  min-width: 250px;
+  background-color: #282c34;
+  color: white;
+  padding: 1em;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto; /* Allows scrolling for long content */
+}
 /* Title */
 .main-content h1 {
   font-size: 2rem;

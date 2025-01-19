@@ -13,29 +13,30 @@ const HomeworkTable: React.FC = () => {
     status: string;
   } | null>(null);
 
-  const handleAddOrUpdateHomework = async (
-    id: string | null,
-    name: string,
-    dueDate: string,
-    status: string
-  ) => {
-    console.log("Adding or Updating Homework:", { id, name, dueDate, status }); // Debugging log
-    await addHomework(id, name, dueDate, status); // Handles both add and update
-    setModalOpen(false);
-  };
+const handleAddOrUpdateHomework = async (
+  id: string | null,
+  name: string,
+  dueDate: string,
+  status: string
+) => {
+  await addHomework(id, name, dueDate, status); // Updates state
+  console.log("Homework added or updated:", { id, name, dueDate, status }); // Debugging log
+  setModalOpen(false);
+};
 
 
   const handleDelete = async (id: string) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this homework?");
-    if (confirmDelete) {
-      await removeHomework(id);
-    }
-  };
+  const confirmDelete = window.confirm("Are you sure you want to delete this homework?");
+  if (confirmDelete) {
+    await removeHomework(id); // Pass the correct id
+  }
+};
+
 
   const handleEditClick = (homework: { id: string; name: string; dueDate: string; status: string }) => {
-    setEditHomework(homework); // Pass the homework item for editing
-    setModalOpen(true);
-  };
+  setEditHomework(homework); // Pass the homework item for editing
+  setModalOpen(true);
+};
 
   return (
     <div>
@@ -65,7 +66,6 @@ const HomeworkTable: React.FC = () => {
               </tr>
             ))}
           </tbody>
-
         </table>
       )}
       <button

@@ -38,9 +38,9 @@ const ProgressChart: React.FC<ProgressChartProps> = ({ completed = 0, pending = 
   };
 
   return (
-    <div style={{ width: "200px", height: "200px", margin: "0 auto", textAlign: "center" }}>
+    <div style={{ width: "300px", height: "300px", margin: "0 auto", textAlign: "center" }}>
       <Doughnut data={data} options={options} />
-      {!hasData && <p style={{ marginTop: "20px", color: "#999" }}>No Data</p>}
+      {!hasData && <p style={{ marginTop: "20px", color: "#999" }}></p>}
     </div>
   );
 };

@@ -14,6 +14,10 @@
   color: #333; /* Dark text */
   padding: 10px;
   border: 1px solid #ddd; /* Border for separation */
+  position: sticky; /* Keeps the header fixed during scroll */
+  top: 0;
+  z-index: 1;
+  box-sizing: border-box; /* Include padding and border in width calculation */
 }
 
 /* Table Rows */
@@ -27,6 +31,32 @@
 /* Hover Effect for Rows */
 .homework-table tr:hover {
   background-color: #f1f1f1; /* Light gray on hover */
+}
+
+/* Scrollable Table Body */
+.homework-table tbody {
+  display: block;
+  max-height: calc(5 * 50px); /* Limit to 5 rows */
+  overflow-y: scroll; /* Add scrollbar for overflow */
+  overflow-x: hidden; /* Remove horizontal scrollbar */
+  box-sizing: border-box; /* Ensure alignment with header */
+}
+
+.homework-table tbody::-webkit-scrollbar {
+  width: 0; /* Hide scrollbar */
+}
+
+.homework-table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.homework-table thead,
+.homework-table tbody tr {
+  width: 100%;
+  display: table;
+  table-layout: fixed;
 }
 
 /* Button Styles */
@@ -44,6 +74,7 @@
 .homework-table button:hover {
   background-color: #388e3c; /* Darker green on hover */
 }
+
 /* H2 Header Styles */
 h2, p {
   color: #000; /* Black text */

@@ -1,148 +1,144 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase"; // Ensure the correct path to your firebase.ts file
+// File Name: HomeworkContext.tsx
 
-// Define the HomeworkEntry type
+import React, { createContext, useContext, useState, useEffect } from "react";
+import {
+  collection,
+  getDocs,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore";
+import { db } from "../firebase";
+
 interface HomeworkEntry {
-  id: string; // Firestore document ID
+  id: string;
   name: string;
-  dueDate: string; // Date in "YYYY-MM-DD" format
-  status: string; // "PENDING" or "COMPLETED"
+  dueDate: string;
+  status: string;
 }
 
-// Define the HomeworkContext type
-interface HomeworkContextType {
+interface HomeworkContextProps {
   homework: HomeworkEntry[];
-  addHomework: () => Promise<void>;
-  removeHomework: (id: string) => Promise<void>;
-  updateHomework: (id: string, field: keyof HomeworkEntry, value: string) => Promise<void>;
   notifications: string[];
+  addHomework: (
+    id: string | null,
+    name: string,
+    dueDate: string,
+    status: string
+  ) => Promise<void>;
+  removeHomework: (id: string) => Promise<void>;
 }
 
-// Create the HomeworkContext
-const HomeworkContext = createContext<HomeworkContextType | undefined>(undefined);
+const HomeworkContext = createContext<HomeworkContextProps | undefined>(
+  undefined
+);
 
-// HomeworkProvider component
-export const HomeworkProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [homework, setHomework] = useState<HomeworkEntry[]>([]);
   const [notifications, setNotifications] = useState<string[]>([]);
 
-  // Fetch data from Firestore on component mount
-useEffect(() => {
-  const fetchHomework = async () => {
-    try {
-      const homeworkCollection = collection(db, "homework");
-      const snapshot = await getDocs(homeworkCollection);
+  // Fetch homework from Firestore
+  useEffect(() => {
+    const fetchHomework = async () => {
+      try {
+        const homeworkCollection = collection(db, "homework");
+        const snapshot = await getDocs(homeworkCollection);
+        const homeworkList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as HomeworkEntry[];
 
-      const homeworkList = snapshot.docs.map((doc) => ({
-        id: doc.id || `${Date.now()}-${Math.random()}`, // Assign a fallback unique ID if `doc.id` is empty
-        ...doc.data(),
-      }));
+        setHomework(homeworkList);
+      } catch (error) {
+        console.error("Error fetching homework:", error);
+      }
+    };
 
-      setHomework(homeworkList);
-    } catch (error) {
-      console.error("Error fetching homework:", error);
-    }
-  };
+    fetchHomework();
+  }, []);
 
-  fetchHomework();
-}, []);
-
-
-
-
-
-
-  // Generate notifications for due dates within the next 3 days
+  // Calculate notifications with a threshold of 2 weeks
   useEffect(() => {
     const now = new Date();
     const upcoming = homework
       .filter((entry) => {
         const dueDate = new Date(entry.dueDate);
-        return dueDate > now && dueDate <= new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+        return (
+          dueDate >= now &&
+          dueDate <= new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000) // Next 2 weeks
+        );
       })
-      .map((entry) => `Homework "${entry.name}" is due on ${entry.dueDate}`);
+      .map((entry) => {
+        const dueDate = new Date(entry.dueDate);
+        const diffInTime = dueDate.getTime() - now.getTime();
+        const daysLeft = Math.ceil(diffInTime / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
+        return `Homework "${entry.name}" is due in ${daysLeft} day${
+          daysLeft > 1 ? "s" : ""
+        } (${entry.dueDate}).`;
+      });
+
     setNotifications(upcoming);
   }, [homework]);
 
-  // Add a new homework entry
-const addHomework = async (id: string | null, name: string, dueDate: string, status: string) => {
-  try {
-    const homeworkCollection = collection(db, "homework");
+  const addHomework = async (
+    id: string | null,
+    name: string,
+    dueDate: string,
+    status: string
+  ) => {
+    try {
+      const homeworkCollection = collection(db, "homework");
 
-    if (id) {
-      // Update existing homework
+      if (id) {
+        // Update existing homework
+        const homeworkDoc = doc(db, "homework", id);
+        await updateDoc(homeworkDoc, { name, dueDate, status });
+
+        setHomework((prev) =>
+          prev.map((entry) =>
+            entry.id === id ? { ...entry, name, dueDate, status } : entry
+          )
+        );
+      } else {
+        // Add new homework
+        const newEntry: HomeworkEntry = { id: "", name, dueDate, status };
+        const docRef = await addDoc(homeworkCollection, newEntry);
+
+        setHomework((prev) => [...prev, { ...newEntry, id: docRef.id }]);
+      }
+    } catch (error) {
+      console.error("Error adding or updating homework:", error);
+    }
+  };
+
+  const removeHomework = async (id: string) => {
+    try {
+      if (!id) {
+        console.error("Invalid document ID:", id);
+        return;
+      }
+
       const homeworkDoc = doc(db, "homework", id);
-      await updateDoc(homeworkDoc, { name, dueDate, status });
+      await deleteDoc(homeworkDoc);
 
-      setHomework((prev) =>
-        prev.map((entry) =>
-          entry.id === id ? { ...entry, name, dueDate, status } : entry
-        )
-      );
-    } else {
-      // Add new homework
-      const newEntry: HomeworkEntry = { id: "", name, dueDate, status };
-      const docRef = await addDoc(homeworkCollection, newEntry);
-
-      setHomework((prev) => [...prev, { ...newEntry, id: docRef.id }]);
+      setHomework((prev) => prev.filter((entry) => entry.id !== id));
+    } catch (error) {
+      console.error("Error removing homework:", error);
     }
-  } catch (error) {
-    console.error("Error adding or updating homework:", error);
-  }
-};
-
-
-  // Remove a homework entry
-const removeHomework = async (id: string) => {
-  try {
-    if (!id) {
-      throw new Error("Invalid document ID");
-    }
-
-    console.log("Deleting homework with ID:", id); // Debugging log
-
-    const homeworkDoc = doc(db, "homework", id); // Reference the specific document
-    console.log("Document reference:", homeworkDoc); // Debugging log
-
-    await deleteDoc(homeworkDoc); // Delete the document from Firestore
-
-    setHomework((prev) => prev.filter((entry) => entry.id !== id)); // Update local state
-  } catch (error) {
-    console.error("Error removing homework:", error);
-  }
-};
-
-
-
-
-  // Update a homework entry
-const updateHomework = async (id: string, name: string, dueDate: string, status: string) => {
-  try {
-    const homeworkDoc = doc(db, "homework", id); // Reference the specific document
-    await updateDoc(homeworkDoc, { name, dueDate, status }); // Update the document
-
-    setHomework((prev) =>
-      prev.map((entry) =>
-        entry.id === id ? { ...entry, name, dueDate, status } : entry
-      )
-    );
-  } catch (error) {
-    console.error("Error updating homework:", error);
-  }
-};
-
+  };
 
   return (
     <HomeworkContext.Provider
-      value={{ homework, addHomework, removeHomework, updateHomework, notifications }}
+      value={{ homework, notifications, addHomework, removeHomework }}
     >
       {children}
     </HomeworkContext.Provider>
   );
 };
 
-// Custom hook for accessing HomeworkContext
 export const useHomework = () => {
   const context = useContext(HomeworkContext);
   if (!context) {
