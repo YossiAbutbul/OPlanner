@@ -36,7 +36,7 @@
 /* Scrollable Table Body */
 .homework-table tbody {
   display: block;
-  max-height: calc(5 * 50px); /* Limit to 5 rows */
+  max-height: calc(5 * 48px); /* Limit to 5 rows */
   overflow-y: scroll; /* Add scrollbar for overflow */
   overflow-x: hidden; /* Remove horizontal scrollbar */
   box-sizing: border-box; /* Ensure alignment with header */
