@@ -10,23 +10,21 @@
 .main-content {
   flex-grow: 1; /* Ensures the main content fills the remaining space */
   padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  border-radius: 8px;
   margin: 20px;
-  overflow-y: auto; /* Allows scrolling within the main content */
 }
 
 .sidebar,
 .right-sidebar {
   width: 20%;
   min-width: 250px;
-  background-color: #282c34;
+  background-color: #1f1f1f;
   color: white;
   padding: 1em;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   overflow-y: auto; /* Allows scrolling for long content */
 }
+
 /* Title */
 .main-content h1 {
   font-size: 2rem;
@@ -47,14 +45,13 @@
   width: 150px;
   height: 150px;
   border-radius: 50%;
-  background-color: #e0e0e0; /* Placeholder background */
+  background-color: #e6e6e6; /* Placeholder background */
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 1rem;
   font-weight: bold;
   color: #555;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* Calendar Section */
@@ -62,8 +59,7 @@
   margin-top: 20px;
   padding: 15px;
   background-color: #ffffff; /* White background */
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
 }
 
 .calendar h2 {

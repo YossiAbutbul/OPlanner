@@ -1,0 +1,91 @@
+/* Sidebar Container */
+.sidebar {
+  width: 20%;
+  min-width: 250px;
+  background-color: #282c34;
+  color: #ffffff;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* padding: 20px; */
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Profile Section */
+.profile-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+
+.profile-label {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Year List */
+.year-list {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+
+.year-item {
+  margin-bottom: 15px;
+}
+
+.year-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #3a3f47;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.year-header:hover {
+  background-color: #303030;
+}
+
+.toggle-icon {
+  font-size: 1.2rem;
+}
+
+.semester-list {
+  list-style: none;
+  padding-left: 20px;
+  margin-top: 10px;
+}
+
+.semester-item {
+  padding: 8px;
+  background-color: #4caf50;
+  margin-bottom: 5px;
+  border-radius: 6px;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.semester-item:hover {
+  background-color: #45a049;
+}
+
+/* Add Year Button */
+.add-year-btn {
+  /* margin-top: auto; */
+  padding: 10px 15px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-year-btn:hover {
+  background-color: #45a049;
+}
