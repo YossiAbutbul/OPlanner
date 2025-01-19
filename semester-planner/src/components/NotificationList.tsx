@@ -7,13 +7,13 @@ const NotificationList: React.FC = () => {
 
   const getDayStyle = (daysLeft: number) => {
     if (daysLeft === 0) {
-      return { color: "red", fontWeight: "bold" }; // Today: Bold red
+      return { color: "#ff4c4c", fontWeight: "bold" }; // Today: Bold red
     } else if (daysLeft < 3) {
-      return { color: "red" }; // Urgent: Red
+      return { color: "#ff4c4c" }; // Urgent: Red
     } else if (daysLeft < 7) {
       return { color: "orange" }; // Near-due: Orange
     } else {
-      return { color: "green" }; // Distant: Green
+      return { color: "#2ECC71" }; // Distant: Green
     }
   };
 

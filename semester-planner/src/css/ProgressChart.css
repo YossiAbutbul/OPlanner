@@ -11,7 +11,18 @@
 }
 
 .chart-placeholder {
-  color: #999; /* Light gray text */
+  color: #999999; /* Light gray text */
   font-size: 1rem;
   text-align: center;
 }
+
+.percentage-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+

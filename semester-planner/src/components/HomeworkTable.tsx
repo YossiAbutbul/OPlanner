@@ -38,8 +38,8 @@ const HomeworkTable: React.FC = () => {
 
   const getStatusStyle = (status: string) => {
     return status === "COMPLETED"
-      ? { color: "green", fontWeight: "bold" }
-      : { color: "orange", fontWeight: "bold" };
+      ? { color: "#00ad00", fontWeight: "bold" }
+      : { color: "#ff9309", fontWeight: "bold" };
   };
 
   const formatDate = (dateString: string) => {

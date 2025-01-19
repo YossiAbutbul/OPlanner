@@ -1,5 +1,4 @@
 .notification-list {
-  background-color: var(--background-light, #f9f9f9);
   border-radius: 8px;
   padding: 15px;
   margin-top: 10px;
@@ -12,12 +11,11 @@
 }
 
 .notification-list li {
-  background: #fff;
+  font-size: 1.1rem;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 10px;
   margin: 5px 0;
-  color: var(--text-dark, #333);
   display: flex;
   align-items: center;
   cursor: pointer; /* Pointer cursor for hover */
@@ -25,9 +23,9 @@
 }
 
 .notification-list li:hover {
-  transform: scale(0.95); /* Shrink effect */
+  transform: scale(0.98); /* Shrink effect */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Highlight shadow */
-  background-color: #f0f8ff; /* Light blue for hover effect */
+  background-color: #484848; /* Light blue for hover effect */
 }
 
 .notification-list li.urgent {
@@ -38,6 +36,3 @@
   border-left: 5px solid orange;
 }
 
-.notification-list li span.icon {
-  font-size: 1.5rem;
-}
