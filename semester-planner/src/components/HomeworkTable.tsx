@@ -54,18 +54,24 @@ const handleAddOrUpdateHomework = async (
             </tr>
           </thead>
           <tbody>
-            {homework.map((entry) => (
-              <tr key={entry.id}>
-                <td>{entry.name}</td>
-                <td>{entry.dueDate}</td>
-                <td>{entry.status}</td>
-                <td>
-                  <button onClick={() => handleEditClick(entry)}>Edit</button>
-                  <button onClick={() => handleDelete(entry.id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
+            {homework.map((entry) => {
+              if (!entry.id) {
+                console.warn("Missing or invalid ID for homework entry:", entry);
+              }
+              return (
+                <tr key={entry.id || Math.random().toString()}>
+                  <td>{entry.name}</td>
+                  <td>{entry.dueDate}</td>
+                  <td>{entry.status}</td>
+                  <td>
+                    <button onClick={() => handleEditClick(entry)}>Edit</button>
+                    <button onClick={() => handleDelete(entry.id)}>Delete</button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
+
         </table>
       )}
       <button

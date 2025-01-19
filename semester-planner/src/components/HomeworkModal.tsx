@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Modal from "react-modal";
-import '../css/HomeworkModal.css'
+import '../css/HomeworkModal.css';
 
 Modal.setAppElement("#root");
 
@@ -15,6 +15,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({ isOpen, onClose, onSave, 
   const [name, setName] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState("PENDING");
+  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editHomework) {
@@ -40,6 +41,9 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({ isOpen, onClose, onSave, 
     }
   };
 
+  const handleDateClick = () => {
+    dateInputRef.current?.showPicker(); // Show date picker programmatically
+  };
 
   return (
     <Modal isOpen={isOpen} onRequestClose={onClose} contentLabel="Add/Edit Homework">
@@ -56,12 +60,19 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({ isOpen, onClose, onSave, 
         </div>
         <div>
           <label>Due Date:</label>
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            required
-          />
+          <div
+            className="date-input-container"
+            onClick={handleDateClick}
+            style={{ cursor: "pointer" }}
+          >
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              ref={dateInputRef}
+              required
+            />
+          </div>
         </div>
         <div>
           <label>Status:</label>

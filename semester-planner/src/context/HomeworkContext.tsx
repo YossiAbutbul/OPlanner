@@ -1,14 +1,8 @@
 // File Name: HomeworkContext.tsx
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import {
-  collection,
-  getDocs,
-  doc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
+import {collection, getDocs, doc, addDoc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
+
 import { db } from "../firebase";
 
 interface HomeworkEntry {
@@ -51,7 +45,18 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
           ...doc.data(),
         })) as HomeworkEntry[];
 
-        setHomework(homeworkList);
+        setHomework(
+          homeworkList.sort((a, b) => {
+            // Sort by status first (COMPLETED first)
+            if (a.status === "COMPLETED" && b.status !== "COMPLETED") return -1;
+            if (a.status !== "COMPLETED" && b.status === "COMPLETED") return 1;
+
+            // Then sort by date (earliest first)
+            const dateA = new Date(a.dueDate).getTime();
+            const dateB = new Date(b.dueDate).getTime();
+            return dateA - dateB;
+          })
+        );
       } catch (error) {
         console.error("Error fetching homework:", error);
       }
@@ -83,36 +88,61 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     setNotifications(upcoming);
   }, [homework]);
 
-  const addHomework = async (
-    id: string | null,
-    name: string,
-    dueDate: string,
-    status: string
-  ) => {
-    try {
-      const homeworkCollection = collection(db, "homework");
+const addHomework = async (
+  id: string | null,
+  name: string,
+  dueDate: string,
+  status: string
+) => {
+  try {
+    const homeworkCollection = collection(db, "homework");
 
-      if (id) {
-        // Update existing homework
-        const homeworkDoc = doc(db, "homework", id);
-        await updateDoc(homeworkDoc, { name, dueDate, status });
+    if (id) {
+      // Update existing homework
+      const homeworkDoc = doc(db, "homework", id);
+      await updateDoc(homeworkDoc, { name, dueDate, status });
 
-        setHomework((prev) =>
-          prev.map((entry) =>
+      setHomework((prev) =>
+        prev
+          .map((entry) =>
             entry.id === id ? { ...entry, name, dueDate, status } : entry
           )
-        );
-      } else {
-        // Add new homework
-        const newEntry: HomeworkEntry = { id: "", name, dueDate, status };
-        const docRef = await addDoc(homeworkCollection, newEntry);
+          .sort((a, b) => {
+            // Sort by status first (COMPLETED first)
+            if (a.status === "COMPLETED" && b.status !== "COMPLETED") return -1;
+            if (a.status !== "COMPLETED" && b.status === "COMPLETED") return 1;
 
-        setHomework((prev) => [...prev, { ...newEntry, id: docRef.id }]);
-      }
-    } catch (error) {
-      console.error("Error adding or updating homework:", error);
+            // Then sort by date (earliest first)
+            const dateA = new Date(a.dueDate).getTime();
+            const dateB = new Date(b.dueDate).getTime();
+            return dateA - dateB;
+          })
+      );
+    } else {
+      // Add new homework
+      const newId = Date.now().toString(); // Generate a unique ID based on timestamp
+      const newEntry: HomeworkEntry = { id: newId, name, dueDate, status };
+      const docRef = doc(homeworkCollection, newId); // Use generated ID as document ID
+      await setDoc(docRef, newEntry); // Use setDoc instead of addDoc
+
+      setHomework((prev) =>
+        [...prev, newEntry].sort((a, b) => {
+          // Sort by status first (COMPLETED first)
+          if (a.status === "COMPLETED" && b.status !== "COMPLETED") return -1;
+          if (a.status !== "COMPLETED" && b.status === "COMPLETED") return 1;
+
+          // Then sort by date (earliest first)
+          const dateA = new Date(a.dueDate).getTime();
+          const dateB = new Date(b.dueDate).getTime();
+          return dateA - dateB;
+        })
+      );
     }
-  };
+  } catch (error) {
+    console.error("Error adding or updating homework:", error);
+  }
+};
+
 
   const removeHomework = async (id: string) => {
     try {
