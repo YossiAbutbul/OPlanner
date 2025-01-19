@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import HomeworkModal from "./HomeworkModal";
-import '../css/HomeworkTable.css'
+import '../css/HomeworkTable.css';
 
 const HomeworkTable: React.FC = () => {
   const { homework, addHomework, removeHomework } = useHomework();
@@ -38,6 +38,12 @@ const handleAddOrUpdateHomework = async (
   setModalOpen(true);
 };
 
+  const getStatusStyle = (status: string) => {
+    return status === "COMPLETED"
+      ? { color: "green", fontWeight: "bold" }
+      : { color: "orange", fontWeight: "bold" };
+  };
+
   return (
     <div>
       <h2>Homework List</h2>
@@ -62,7 +68,7 @@ const handleAddOrUpdateHomework = async (
                 <tr key={entry.id || Math.random().toString()}>
                   <td>{entry.name}</td>
                   <td>{entry.dueDate}</td>
-                  <td>{entry.status}</td>
+                  <td style={getStatusStyle(entry.status)}>{entry.status}</td>
                   <td>
                     <button onClick={() => handleEditClick(entry)}>Edit</button>
                     <button onClick={() => handleDelete(entry.id)}>Delete</button>

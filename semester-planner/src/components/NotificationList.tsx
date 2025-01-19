@@ -43,7 +43,9 @@ const NotificationList: React.FC = () => {
               return (
                 <li key={index}>
                   <strong>{name}</strong>&nbsp;is due in&nbsp;
-                  <span style={getDayStyle(daysLeft)}>{daysLeft} day{daysLeft !== 1 ? "s" : ""}</span>.
+                  <span style={{ ...getDayStyle(daysLeft), fontWeight: "bold" }}>
+                    {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+                  </span>.
                 </li>
               );
             }
