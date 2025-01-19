@@ -45,6 +45,20 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({ isOpen, onClose, onSave, 
     dateInputRef.current?.showPicker(); // Show date picker programmatically
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && isOpen) {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, name, dueDate, status]);
+
   return (
     <Modal isOpen={isOpen} onRequestClose={onClose} contentLabel="Add/Edit Homework">
       <h2>{editHomework ? "Edit Homework" : "Add Homework"}</h2>

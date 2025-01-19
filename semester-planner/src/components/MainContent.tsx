@@ -25,9 +25,6 @@ const MainContent: React.FC = () => {
           <HomeworkTable />
         </div>
       </div>
-
-      {/* Right Sidebar */}
-      {/* <RightSidebar /> */}
     </div>
   );
 };
