@@ -4,50 +4,54 @@
   border-collapse: collapse;
   margin: 20px 0;
   font-size: 1rem;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   text-align: left;
-  
+  border-radius: 8px; /* Rounded corners */
+  overflow: hidden; /* Ensures rounding for table edges */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
 /* Table Header */
 .homework-table th {
-  background-color: #f4f4f4; /* Light gray background */
-  color: #333; /* Dark text */
-  padding: 10px;
-  border: 1px solid #ddd; /* Border for separation */
-  
+  background-color: #1a1a1a; /* Modern blue background */
+  color: white; /* White text */
+  padding: 15px;
+  border: none;
+  text-align: left;
   position: sticky; /* Keeps the header fixed during scroll */
   top: 0;
   z-index: 1;
-  box-sizing: border-box; /* Include padding and border in width calculation */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Shadow for header */
+  text-transform: uppercase; /* Make header text uppercase */
 }
 
 /* Table Rows */
 .homework-table td {
-  color: #000; /* Black text */
-  background-color: #fff; /* White background */
-  padding: 10px;
-  border: 1px solid #ddd; /* Border for separation */
-  
+  color: #333; /* Dark gray text */
+  background-color: #f9f9f9; /* Light gray background for rows */
+  padding: 15px;
+  border: none;
+  transition: background-color 0.3s; /* Smooth hover effect */
 }
 
 /* Hover Effect for Rows */
 .homework-table tr:hover {
-  background-color: #f1f1f1; /* Light gray on hover */
+  background-color: #e6f7ff; /* Light blue on hover */
 }
 
 /* Scrollable Table Body */
 .homework-table tbody {
   display: block;
   max-height: calc(5 * 48px); /* Limit to 5 rows */
-  overflow-y: scroll; /* Add scrollbar for overflow */
+  overflow-y: auto; /* Add vertical scrollbar */
   overflow-x: hidden; /* Remove horizontal scrollbar */
-  box-sizing: border-box; /* Ensure alignment with header */
 }
 
 .homework-table tbody::-webkit-scrollbar {
-  width: 0; /* Hide scrollbar */
+  width: 0px; /* Visible scrollbar */
 }
+
+
 
 .homework-table tbody tr {
   display: table;
@@ -64,27 +68,31 @@
 
 /* Button Styles */
 .homework-table button {
-  background-color: #1a1a1a; /* Green background */
+  background-color: #525252; /* Blue background */
   color: white;
   border: none;
-  padding: 6px 15px;
-  border-radius: 5px;
+  padding: 8px 16px;
+  border-radius: 8px; /* Rounded buttons */
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-size: 0.9rem;
+  transition: all 0.3s;
   margin: 5px;
 }
 
-.homework-table button:active,
-.homework-table button:focus {
-  outline: none;
-  border: none;
-}
-
 .homework-table button:hover {
-  background-color: #2c2c2c; /* Darker green on hover */
+  background-color: #005a9e; /* Darker blue on hover */
+  transform: scale(1.05); /* Slight scaling on hover */
 }
 
-/* H2 Header Styles */
+.homework-table button:active {
+  background-color: #004377; /* Even darker blue on active */
+  transform: scale(1); /* Reset scaling */
+  outline: none; /* Remove focus outline */
+}
+
+/* Header Styles */
 h2, p {
-  color: #000; /* Black text */
+  color: #333; /* Dark text */
+  font-weight: bold;
+  margin-bottom: 15px;
 }
