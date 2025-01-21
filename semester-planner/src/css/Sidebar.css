@@ -17,7 +17,6 @@
   margin-bottom: 30px;
 }
 
-
 .profile-label {
   font-size: 1.2rem;
   font-weight: bold;
@@ -34,16 +33,18 @@
   margin-bottom: 15px;
 }
 
+/* Year Header */
 .year-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 10px;
-  /* background-color: #3a3f47; */
   cursor: pointer;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: bold;
   transition: background-color 0.3s ease;
+  /* background-color: #303030; */
 }
 
 .year-header:hover {
@@ -54,15 +55,28 @@
   font-size: 1.1rem;
 }
 
-
-
+/* Semester List Animation */
 .semester-list {
   list-style: none;
   padding-left: 10px;
-  margin-top: 10px;
-  cursor: pointer;
+  margin-top: 0;
+  overflow: hidden;
+  max-height: 0; /* Collapsed state */
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
+.semester-list.expanded {
+  max-height: 300px; /* Sufficient height for all items */
+  opacity: 1;
+}
+
+.semester-list.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Semester Items */
 .semester-item {
   margin-left: 20px;
   padding: 8px;
@@ -74,12 +88,11 @@
 }
 
 .semester-item:hover {
-  background-color: #303030;
+  background-color: #3a3f47;
 }
 
 /* Add Year Button */
 .add-year-btn {
-  /* margin-top: auto; */
   padding: 12px 30px;
   background-color: #303030;
   color: white;

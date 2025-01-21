@@ -38,13 +38,15 @@ const Sidebar: React.FC = () => {
               {year}
               <span className="toggle-icon">{expanded ? "-" : "+"}</span>
             </div>
-            {expanded && (
-              <ul className="semester-list">
-                <li className="semester-item">{year} A</li>
-                <li className="semester-item">{year} B</li>
-                <li className="semester-item">{year} C</li>
-              </ul>
-            )}
+            <ul
+              className={`semester-list ${
+                expanded ? "expanded" : "collapsed"
+              }`}
+            >
+              <li className="semester-item">{year} A</li>
+              <li className="semester-item">{year} B</li>
+              <li className="semester-item">{year} C</li>
+            </ul>
           </li>
         ))}
       </ul>

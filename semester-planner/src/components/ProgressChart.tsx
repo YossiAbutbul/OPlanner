@@ -22,7 +22,7 @@ const ProgressChart: React.FC<ProgressChartProps> = ({ completed = 0, pending = 
       {
         data: hasData ? [completed, pending] : [1],
         backgroundColor: hasData ? ["#ff6361", "#e0e0e0"] : ["#e0e0e0"], // Updated color
-        hoverBackgroundColor: hasData ? ["#ff6361", "#f5f5f5"] : ["#e0e0e0"], // Updated color
+        hoverBackgroundColor: hasData ? ["#ff6361", "#e0e0e0"] : ["#e0e0e0"], // Updated color
       },
     ],
   };
@@ -37,6 +37,10 @@ const ProgressChart: React.FC<ProgressChartProps> = ({ completed = 0, pending = 
       tooltip: {
         enabled: hasData,
       },
+    },
+    hover: {
+      mode: null,
+      animation: false,
     },
   };
 

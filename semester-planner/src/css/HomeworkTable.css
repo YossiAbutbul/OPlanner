@@ -79,15 +79,27 @@
   margin: 5px;
 }
 
-.homework-table button:hover {
-  background-color: #005a9e; /* Darker blue on hover */
-  transform: scale(1.05); /* Slight scaling on hover */
+.homework-table button:hover{
+  background-color: #838383; /* Darker blue on hover */
+  transform: scale(1.05); 
 }
 
-.homework-table button:active {
-  background-color: #004377; /* Even darker blue on active */
-  transform: scale(1); /* Reset scaling */
-  outline: none; /* Remove focus outline */
+.homework-table button:focus,
+.add-homework-btn:focus {
+  outline: none; /* Remove the default focus border */
+  box-shadow: none; /* Remove any box shadow */
+}
+
+.add-homework-btn{
+  background-color: #242424; /* Blue background */
+  color: white;
+  border: none;
+  transition: all 0.3s;
+}
+
+.add-homework-btn:hover{
+  background-color: #383838; /* Darker blue on hover */
+  transform: scale(1.05); 
 }
 
 /* Header Styles */

@@ -1,106 +1,155 @@
-/* Modal Container */
+/* Modal Overlay */
 .ReactModal__Overlay {
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  background-color: rgba(0, 0, 0, 0.7); /* Darker semi-transparent background */
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
 }
 
+/* Modal Content */
 .ReactModal__Content {
   width: 90%;
-  max-width: 500px;
+  max-width: 450px;
   background-color: #ffffff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  animation: slideDown 0.3s ease-in-out;
+  border-radius: 16px; /* Rounded corners */
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Deeper shadow */
+  animation: scaleIn 0.3s ease-in-out;
+  position: relative;
 }
 
 /* Modal Header */
 .ReactModal__Content h2 {
   margin-top: 0;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  font-weight: bold;
   text-align: center;
-  color: #333;
+  color: #2d3748; /* Dark gray text */
+  margin-bottom: 20px;
+}
+
+/* Close Button */
+.ReactModal__Content .close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 1.4rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  transition: color 0.3s, transform 0.3s;
+}
+
+.ReactModal__Content .close-btn:hover {
+  color: #000;
+  transform: scale(1.1);
 }
 
 /* Form Fields */
 form div {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 form label {
   display: block;
   font-size: 1rem;
-  font-weight: bold;
-  color: #555;
-  margin-bottom: 5px;
+  font-weight: 600;
+  color: #4a5568; /* Dark gray */
+  margin-bottom: 8px;
 }
 
 form input,
 form select {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  border: 0px solid #cbd5e0; /* Light blue-gray */
+  border-radius: 10px;
+  background-color: #e6e6e6; /* Light gray background */
+  color: #2d3748; /* Dark gray text */
   box-sizing: border-box;
   outline: none;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-form input:focus,
-form select:focus {
-  border-color: #4caf50;
+
+/* Style for Calendar Icon */
+.date-input-container input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
 }
+
+
 
 /* Buttons */
 form button {
   margin-top: 10px;
-  padding: 10px 15px;
+  padding: 12px 20px;
   font-size: 1rem;
+  font-weight: bold;
   border: none;
-  border-radius: 5px;
+  border-radius: 12px;
   cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
 form button:first-of-type {
-  background-color: #4caf50;
+  background-color: #48bb78; /* Green */
   color: white;
-  transition: background-color 0.3s;
 }
 
 form button:first-of-type:hover {
-  background-color: #388e3c;
+  background-color: #38a169; /* Darker green */
+  transform: scale(1.05);
 }
 
 form button:last-of-type {
-  background-color: #f44336;
+  background-color: #e53e3e; /* Red */
   color: white;
   margin-left: 10px;
-  transition: background-color 0.3s;
 }
 
 form button:last-of-type:hover {
-  background-color: #d32f2f;
+  background-color: #c53030; /* Darker red */
+  transform: scale(1.05);
 }
 
-.date-input-container input{
+/* Date Input */
+.date-input-container input {
   cursor: pointer;
 }
-select{
+
+select {
   cursor: pointer;
 }
 
 /* Animation */
-@keyframes slideDown {
+@keyframes scaleIn {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: scale(0.9);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: scale(1);
   }
+}
+
+/* Custom Scrollbar */
+.ReactModal__Content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ReactModal__Content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.ReactModal__Content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.ReactModal__Content::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
