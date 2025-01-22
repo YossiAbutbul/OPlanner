@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import HomeworkModal from "./HomeworkModal";
-import '../css/HomeworkTable.css';
+import "../css/HomeworkTable.css";
+import "boxicons/css/boxicons.min.css";
 
 const HomeworkTable: React.FC = () => {
   const { homework, addHomework, removeHomework } = useHomework();
@@ -25,21 +26,28 @@ const HomeworkTable: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this homework?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this homework?"
+    );
     if (confirmDelete) {
       await removeHomework(id); // Pass the correct id
     }
   };
 
-  const handleEditClick = (homework: { id: string; name: string; dueDate: string; status: string }) => {
+  const handleEditClick = (homework: {
+    id: string;
+    name: string;
+    dueDate: string;
+    status: string;
+  }) => {
     setEditHomework(homework); // Pass the homework item for editing
     setModalOpen(true);
   };
 
   const getStatusStyle = (status: string) => {
     return status === "COMPLETED"
-      ? { color: "#00ad00", fontWeight: "bold" }
-      : { color: "#ff9309", fontWeight: "bold" };
+      ? { color: "#00bb77", fontWeight: "bold" }
+      : { color: "#ffbf00", fontWeight: "bold" };
   };
 
   const formatDate = (dateString: string) => {
@@ -49,14 +57,25 @@ const HomeworkTable: React.FC = () => {
 
   return (
     <div>
-      <h2>Homework List</h2>
+      <div className="header-row">
+        <h2>Tasks List</h2>
+        <button
+          className="add-homework-btn"
+          onClick={() => {
+            setEditHomework(null); // Clear editHomework for new entries
+            setModalOpen(true);
+          }}
+        >
+          <i className="bx bx-plus"></i> Add Task
+        </button>
+      </div>
       {homework.length === 0 ? (
-        <p>No homework available. Click "Add Homework" to get started!</p>
+        <p>No tasks available. Click "Add Homework" to get started!</p>
       ) : (
         <table className="homework-table">
           <thead>
             <tr>
-              <th>H.W.</th>
+              <th>Assignment</th>
               <th>Due Date</th>
               <th>Status</th>
               <th>Actions</th>
@@ -65,16 +84,24 @@ const HomeworkTable: React.FC = () => {
           <tbody>
             {homework.map((entry) => {
               if (!entry.id) {
-                console.warn("Missing or invalid ID for homework entry:", entry);
+                console.warn(
+                  "Missing or invalid ID for homework entry:",
+                  entry
+                );
               }
               return (
                 <tr key={entry.id || Math.random().toString()}>
                   <td>{entry.name}</td>
-                  <td>{formatDate(entry.dueDate)}</td>
+                  <td>
+                    <i className='bx bx-calendar-alt'></i>
+                    {formatDate(entry.dueDate)}
+                  </td>
                   <td style={getStatusStyle(entry.status)}>{entry.status}</td>
                   <td>
                     <button onClick={() => handleEditClick(entry)}>Edit</button>
-                    <button onClick={() => handleDelete(entry.id)}>Delete</button>
+                    <button onClick={() => handleDelete(entry.id)}>
+                      Delete
+                    </button>
                   </td>
                 </tr>
               );
@@ -82,15 +109,6 @@ const HomeworkTable: React.FC = () => {
           </tbody>
         </table>
       )}
-      <button
-        className="add-homework-btn"
-        onClick={() => {
-          setEditHomework(null); // Clear editHomework for new entries
-          setModalOpen(true);
-        }}
-      >
-        Add Homework
-      </button>
       <HomeworkModal
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}

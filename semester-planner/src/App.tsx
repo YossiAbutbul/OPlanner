@@ -3,6 +3,8 @@ import './css/App.css';
 import Sidebar from './components/Sidebar';
 import MainContent from './components/MainContent';
 import RightSidebar from './components/RightSidebar';
+import 'boxicons/css/boxicons.min.css';
+
 
 function App() {
   return (

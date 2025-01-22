@@ -38,9 +38,10 @@
 /* Sidebar Image Styling */
 .sidebar img {
   aspect-ratio: 1 / 1;
-  width: 10rem;
+  width: 8.5rem;
   display: block;
   margin: 2em auto 0; /* Center and add space from the top */
+  margin-bottom: 30px;
 }
 
 /* Sidebar List/Table Styling */

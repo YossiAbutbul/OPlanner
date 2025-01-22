@@ -5,7 +5,7 @@ import "../css/RightSidebar.css";
 const RightSidebar: React.FC = () => {
   return (
     <aside className="right-sidebar">
-      <h2>Notifications</h2>
+      <h2>Upcoming Deadlines</h2>
       <NotificationList />
     </aside>
   );

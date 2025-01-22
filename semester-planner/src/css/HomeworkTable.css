@@ -8,36 +8,31 @@
   text-align: left;
   border-radius: 8px; /* Rounded corners */
   overflow: hidden; /* Ensures rounding for table edges */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
 /* Table Header */
 .homework-table th {
-  background-color: #1a1a1a; /* Modern blue background */
-  color: white; /* White text */
+  background-color: #f9f9f9; 
+  color: #71717a; 
   padding: 15px;
-  border: none;
+  border-bottom: solid 1px #e4e4e7;
   text-align: left;
   position: sticky; /* Keeps the header fixed during scroll */
   top: 0;
   z-index: 1;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Shadow for header */
-  text-transform: uppercase; /* Make header text uppercase */
+  font-weight: 500;
+  font-size: 1.05rem;
 }
 
 /* Table Rows */
 .homework-table td {
-  color: #333; /* Dark gray text */
-  background-color: #f9f9f9; /* Light gray background for rows */
+  color: #333; 
+  background-color: #f9f9f9; 
   padding: 15px;
   border: none;
-  transition: background-color 0.3s; /* Smooth hover effect */
+  transition: background-color 0.3s; 
 }
 
-/* Hover Effect for Rows */
-.homework-table tr:hover {
-  background-color: #e6f7ff; /* Light blue on hover */
-}
 
 /* Scrollable Table Body */
 .homework-table tbody {
@@ -48,10 +43,8 @@
 }
 
 .homework-table tbody::-webkit-scrollbar {
-  width: 0px; /* Visible scrollbar */
+  width: 0px; /* Hide scrollbar */
 }
-
-
 
 .homework-table tbody tr {
   display: table;
@@ -66,22 +59,57 @@
   table-layout: fixed;
 }
 
-/* Button Styles */
-.homework-table button {
-  background-color: #525252; /* Blue background */
+/* Header Row Styling */
+.header-row {
+  display: flex;
+  justify-content: space-between; /* Aligns header and button */
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* Add Task Button Styles */
+.add-homework-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #242424; /* Dark gray background */
   color: white;
   border: none;
+  padding-top: 0.7rem;
+  padding-bottom: 0.7rem;
+  padding-right: 2rem;
+  border-radius: 8px; /* Rounded button */
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.add-homework-btn i {
+  margin-right: 8px; 
+  font-size: 1.2rem; 
+  transform: translateY(1px);
+}
+
+.add-homework-btn:hover {
+  background-color: #383838; /* Darker gray on hover */
+}
+
+/* Action Buttons Styles */
+.homework-table button {
+  background-color: #fff; /* Gray background */
+  color: #333;
+  border: solid 1px #e4e4e7;
   padding: 8px 16px;
-  border-radius: 8px; /* Rounded buttons */
+  border-radius: calc(0.5rem - 2px); /* Rounded buttons */
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.3s;
   margin: 5px;
 }
 
-.homework-table button:hover{
-  background-color: #838383; /* Darker blue on hover */
-  transform: scale(1.05); 
+.homework-table button:hover {
+  background-color: #efefef
+  /* transform: scale(1.05); */
 }
 
 .homework-table button:focus,
@@ -90,21 +118,18 @@
   box-shadow: none; /* Remove any box shadow */
 }
 
-.add-homework-btn{
-  background-color: #242424; /* Blue background */
-  color: white;
-  border: none;
-  transition: all 0.3s;
-}
-
-.add-homework-btn:hover{
-  background-color: #383838; /* Darker blue on hover */
-  transform: scale(1.05); 
-}
-
 /* Header Styles */
-h2, p {
+h2,
+p {
   color: #333; /* Dark text */
   font-weight: bold;
   margin-bottom: 15px;
+}
+
+/* Calendar Icon */
+.homework-table i {
+  margin-top: 5px;
+  padding: 10px 5px;
+  color: #494949;
+  transform: translateY(1px);
 }

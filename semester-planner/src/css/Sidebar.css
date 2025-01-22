@@ -14,7 +14,7 @@
 /* Profile Section */
 .profile-section {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 35px;
 }
 
 .profile-label {
@@ -64,6 +64,7 @@
   max-height: 0; /* Collapsed state */
   opacity: 0;
   transition: max-height 0.3s ease, opacity 0.3s ease;
+  cursor: pointer;
 }
 
 .semester-list.expanded {

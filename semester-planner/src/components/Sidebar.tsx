@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../css/Sidebar.css";
+import "boxicons/css/boxicons.min.css"; // Import Boxicons CSS
 
 const Sidebar: React.FC = () => {
   const [years, setYears] = useState<{ year: number; expanded: boolean }[]>([
@@ -29,14 +30,18 @@ const Sidebar: React.FC = () => {
           alt="Profile"
           className="profile-pic"
         />
-        <label className="profile-label">My Semesters</label>
+        <label className="profile-label">OPlanner</label>
       </div>
       <ul className="year-list">
         {years.map(({ year, expanded }) => (
           <li key={year} className="year-item">
             <div className="year-header" onClick={() => toggleYear(year)}>
               {year}
-              <span className="toggle-icon">{expanded ? "-" : "+"}</span>
+              <i
+                className={`bx ${
+                  expanded ? "bx-chevron-up" : "bx-chevron-down"
+                } toggle-icon`}
+              ></i>
             </div>
             <ul
               className={`semester-list ${

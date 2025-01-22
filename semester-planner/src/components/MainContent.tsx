@@ -17,7 +17,7 @@ const MainContent: React.FC = () => {
     <div className="main-layout">
       {/* Main Content */}
       <div className="main-content">
-        <h1>Homework Progress</h1>
+        <h1>Course Progress</h1>
         <div className="progress-chart-container">
           <ProgressChart completed={completed} pending={pending} />
         </div>
