@@ -4,7 +4,11 @@ import HomeworkTable from "./HomeworkTable";
 import "../css/MainContent.css";
 import { useHomework } from "../context/HomeworkContext";
 
-const MainContent: React.FC<{ selectedCourse: string | null }> = ({ selectedCourse }) => {
+interface MainContentProps {
+  selectedCourse: string | null;
+}
+
+const MainContent: React.FC<MainContentProps> = ({ selectedCourse }) => {
   const { homework } = useHomework();
 
   const [filteredHomework, setFilteredHomework] = useState(homework);
@@ -28,7 +32,7 @@ const MainContent: React.FC<{ selectedCourse: string | null }> = ({ selectedCour
         <h1>Course Progress</h1>
         {selectedCourse ? (
           <>
-            <h2>{selectedCourse}</h2>
+            <h2>Progress for {selectedCourse}</h2>
             <div className="progress-chart-container">
               <ProgressChart completed={completed} pending={pending} />
             </div>
