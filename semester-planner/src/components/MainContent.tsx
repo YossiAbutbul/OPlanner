@@ -1,8 +1,7 @@
 import React from "react";
 import ProgressChart from "./ProgressChart";
 import HomeworkTable from "./HomeworkTable";
-import RightSidebar from "./RightSidebar";
-import CalendarWidget from "./CalendarWidget"; // Ensure the correct path
+
 
 import "../css/MainContent.css";
 import { useHomework } from "../context/HomeworkContext";

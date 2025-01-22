@@ -91,7 +91,10 @@ const HomeworkTable: React.FC = () => {
               }
               return (
                 <tr key={entry.id || Math.random().toString()}>
-                  <td>{entry.name}</td>
+                  <td>
+                    <i className='bx bx-clipboard'></i>
+                    {entry.name}
+                    </td>
                   <td>
                     <i className='bx bx-calendar-alt'></i>
                     {formatDate(entry.dueDate)}

@@ -18,7 +18,7 @@
 }
 
 .right-sidebar {
-  flex: 0 0 20%; /* Fixed width of 20% */
+  flex: 0 0 18%; /* Fixed width of 20% */
   min-width: 250px; /* Minimum width of 250px */
   background-color: #282c34;
   color: white;

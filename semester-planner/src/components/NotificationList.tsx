@@ -4,7 +4,7 @@ import HomeworkModal from "./HomeworkModal";
 import "../css/NotificationList.css";
 
 const NotificationList: React.FC = () => {
-  const { notifications, homework, addHomework } = useHomework(); // Import addHomework
+  const { notifications, homework, addHomework } = useHomework();
   const [isModalOpen, setModalOpen] = useState(false);
   const [editHomework, setEditHomework] = useState<{
     id: string;
@@ -13,15 +13,27 @@ const NotificationList: React.FC = () => {
     status: string;
   } | null>(null);
 
+  const getNotificationClass = (daysLeft: number) => {
+    if (daysLeft === 0) {
+      return "urgent"; // Red border
+    } else if (daysLeft < 3) {
+      return "urgent"; // Red border
+    } else if (daysLeft < 7) {
+      return "near-due"; // Orange border
+    } else {
+      return "distant"; // Green border
+    }
+  };
+
   const getDayStyle = (daysLeft: number) => {
     if (daysLeft === 0) {
-      return { color: "#ff4c4c", fontWeight: "bold" }; // Today: Bold red
+      return { color: "#ff4c4c", fontWeight: "bold" }; // Bold red
     } else if (daysLeft < 3) {
-      return { color: "#ff4c4c" }; // Urgent: Red
+      return { color: "#ff4c4c", fontWeight: "bold" }; // Red
     } else if (daysLeft < 7) {
-      return { color: "orange" }; // Near-due: Orange
+      return { color: "orange", fontWeight: "bold" }; // Orange
     } else {
-      return { color: "#2ECC71" }; // Distant: Green
+      return { color: "#2ECC71", fontWeight: "bold" }; // Green
     }
   };
 
@@ -55,7 +67,6 @@ const NotificationList: React.FC = () => {
       ) : (
         <ul>
           {notifications.map((notification, index) => {
-            // Extract name and due date from the notification text
             const match = notification.match(/"(.+?)" is due in (\d+) day/);
             const name = match ? match[1] : "Unknown";
             const daysLeft = match ? parseInt(match[2], 10) : null;
@@ -65,20 +76,21 @@ const NotificationList: React.FC = () => {
                 <li
                   key={index}
                   onClick={() => handleNotificationClick(name)}
-                  className="notification-item"
+                  className={`notification-item ${getNotificationClass(
+                    daysLeft
+                  )}`}
                 >
                   {daysLeft === 0 ? (
-                    <span style={{ color: "red", fontWeight: "bold" }}>
-                      <strong>{name}</strong> is due today.
+                    <span>
+                      <strong>{name}</strong> is due&nbsp;
+                      <span style={getDayStyle(daysLeft)}>today</span>.
                     </span>
                   ) : (
                     <>
                       <strong>{name}</strong>&nbsp;is due in&nbsp;
-                      <span
-                        style={{ ...getDayStyle(daysLeft), fontWeight: "bold" }}
-                      >
+                      <span style={getDayStyle(daysLeft)}>
                         {daysLeft} day{daysLeft !== 1 ? "s" : ""}
-                      </span>.
+                      </span>&nbsp;
                     </>
                   )}
                 </li>
@@ -94,7 +106,7 @@ const NotificationList: React.FC = () => {
       <HomeworkModal
         isOpen={isModalOpen}
         onClose={handleModalClose}
-        onSave={handleSave} // Correctly pass handleSave
+        onSave={handleSave}
         editHomework={editHomework}
       />
     </div>

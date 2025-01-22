@@ -1,7 +1,8 @@
 .notification-list {
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 15px;
-  margin-top: 10px;
+  margin-top: 15px;
+  color: #e0e0e0; /* Softer light text color */
 }
 
 .notification-list ul {
@@ -11,27 +12,65 @@
 }
 
 .notification-list li {
-  font-size: 1.1rem;
-  border-radius: 8px;
-  padding: 10px;
-  margin: 5px 0;
+  font-size: 1.2rem;
+  border-radius: 10px;
+  padding: 15px;
+  margin: 10px 0;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  background-color: #404040; /* Neutral background for list items */
+  color: #f1f1f1; /* Light text color for items */
   cursor: pointer; /* Pointer cursor for hover */
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth hover animation */
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease; /* Smooth animations */
 }
 
 .notification-list li:hover {
-  transform: scale(0.98); /* Shrink effect */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Highlight shadow */
-  background-color: #484848; /* Light blue for hover effect */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5); /* Stronger shadow on hover */
+  background-color: #555555; /* Darker background on hover */
+  transform: scale(1.05); /* Slightly enlarge on hover */
 }
 
 .notification-list li.urgent {
-  border-left: 5px solid red;
+  border-left: 6px solid #ff4c4c; /* Vibrant red border for urgent items */
 }
 
 .notification-list li.near-due {
-  border-left: 5px solid orange;
+  border-left: 6px solid #ffa500; /* Bold orange border for near-due items */
 }
 
+.notification-list li.distant {
+  border-left: 6px solid #4caf50; /* Bright green border for distant items */
+}
+
+.notification-item {
+  transition: background-color 0.5s ease, transform 0.5s ease; /* Smooth animation for state changes */
+}
+
+.notification-item.notification-animated {
+  background-color: #606060; /* Slightly highlighted color during animation */
+  transform: scale(1.1); /* Grow more during animation */
+}
+
+.notification-item span {
+  font-weight: bold; /* Emphasize key information */
+}
+
+/* Scrollbar for notification list */
+.notification-list ul::-webkit-scrollbar {
+  width: 10px;
+}
+
+.notification-list ul::-webkit-scrollbar-track {
+  background: #404040; /* Match the list background */
+  border-radius: 5px;
+}
+
+.notification-list ul::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+}
+
+.notification-list ul::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
