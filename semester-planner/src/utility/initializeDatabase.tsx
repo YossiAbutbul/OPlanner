@@ -45,21 +45,25 @@ export const getAllYearsAndSemesters = async (): Promise<
   try {
     const yearsCollection = collection(db, "years");
     const snapshot = await getDocs(yearsCollection);
+
     const yearsData = snapshot.docs.map((doc) => {
       const data = doc.data();
-      const semesters = Object.entries(data.semesters || {}).map(
-        ([semesterKey, semesterValue]: [string, any]) => ({
-          name: `Semester ${semesterKey}`, // Use key for semester name (e.g., A, B, C)
+
+      // Extract and sort semesters by alphabetical order
+      const semesters = Object.entries(data.semesters || {})
+        .map(([semesterKey, semesterValue]: [string, any]) => ({
+          name: `Semester ${semesterKey}`,
           courses: semesterValue.courses || [],
-        })
-      );
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)); // Sort by semester name
 
       return { year: data.year, semesters };
     });
 
-    return yearsData;
+    return yearsData.sort((a, b) => a.year - b.year); // Sort years numerically
   } catch (error) {
     console.error("Error fetching years and semesters:", error);
     return [];
   }
 };
+
