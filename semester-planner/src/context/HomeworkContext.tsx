@@ -1,8 +1,5 @@
-// File Name: HomeworkContext.tsx
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
-
 import { db } from "../firebase";
 
 interface HomeworkEntry {
@@ -10,152 +7,117 @@ interface HomeworkEntry {
   name: string;
   dueDate: string;
   status: string;
+  year: string;
+  semester: string;
 }
 
 interface HomeworkContextProps {
   homework: HomeworkEntry[];
   notifications: string[];
+  fetchHomework: (year: string, semester: string) => Promise<void>;
   addHomework: (
     id: string | null,
     name: string,
     dueDate: string,
-    status: string
+    status: string,
+    year: string,
+    semester: string
   ) => Promise<void>;
-  removeHomework: (id: string) => Promise<void>;
+  removeHomework: (id: string, year: string, semester: string) => Promise<void>;
 }
 
-const HomeworkContext = createContext<HomeworkContextProps | undefined>(
-  undefined
-);
+const HomeworkContext = createContext<HomeworkContextProps | undefined>(undefined);
 
-export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [homework, setHomework] = useState<HomeworkEntry[]>([]);
   const [notifications, setNotifications] = useState<string[]>([]);
 
+  // Fetch homework for a specific year and semester
+  const fetchHomework = async (year: string, semester: string) => {
+    try {
+      const homeworkCollection = collection(db, `years/${year}/semesters/${semester}/tasks`);
+      const snapshot = await getDocs(homeworkCollection);
+      const homeworkList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as HomeworkEntry[];
 
-  // Fetch homework from Firestore
-  useEffect(() => {
-    const fetchHomework = async () => {
-      try {
-        const homeworkCollection = collection(db, "homework");
-        const snapshot = await getDocs(homeworkCollection);
-        const homeworkList = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as HomeworkEntry[];
-
-        setHomework(
-          homeworkList.sort((a, b) => {
-            // Sort by status first (COMPLETED first)
-            if (a.status === "COMPLETED" && b.status !== "COMPLETED") return -1;
-            if (a.status !== "COMPLETED" && b.status === "COMPLETED") return 1;
-
-            // Then sort by date (earliest first)
-            const dateA = new Date(a.dueDate).getTime();
-            const dateB = new Date(b.dueDate).getTime();
-            return dateA - dateB;
-          })
-        );
-      } catch (error) {
-        console.error("Error fetching homework:", error);
-      }
-    };
-
-    fetchHomework();
-  }, []);
-
-  // Calculate notifications with a threshold of 2 weeks
-  useEffect(() => {
-  const now = new Date();
-  const upcoming = homework
-    .filter((entry) => {
-      const dueDate = new Date(entry.dueDate);
-      return (
-        dueDate >= now &&
-        dueDate <= new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000) // Next 2 weeks
-      );
-    })
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()) // Sort by due date
-    .map((entry) => {
-      const dueDate = new Date(entry.dueDate);
-      const diffInTime = dueDate.getTime() - now.getTime();
-      const daysLeft = Math.ceil(diffInTime / (1000 * 60 * 60 * 24)); // Convert milliseconds to days
-      return `Homework "${entry.name}" is due in ${daysLeft} day${
-        daysLeft > 1 ? "s" : ""
-      } (${entry.dueDate}).`;
-    });
-
-  setNotifications(upcoming);
-}, [homework]);
-
-
-const addHomework = async (
-  id: string | null,
-  name: string,
-  dueDate: string,
-  status: string
-) => {
-  try {
-    const homeworkCollection = collection(db, "homework");
-
-    if (id) {
-      // Update existing homework
-      const homeworkDoc = doc(db, "homework", id);
-      await updateDoc(homeworkDoc, { name, dueDate, status });
-
-      setHomework((prev) =>
-        prev
-          .map((entry) =>
-            entry.id === id ? { ...entry, name, dueDate, status } : entry
-          )
-          .sort((a, b) => {
-            // Sort by status first (COMPLETED first)
-            if (a.status === "COMPLETED" && b.status !== "COMPLETED") return -1;
-            if (a.status !== "COMPLETED" && b.status === "COMPLETED") return 1;
-
-            // Then sort by date (earliest first)
-            const dateA = new Date(a.dueDate).getTime();
-            const dateB = new Date(b.dueDate).getTime();
-            return dateA - dateB;
-          })
-      );
-    } else {
-      // Add new homework
-      const newId = Date.now().toString(); // Generate a unique ID based on timestamp
-      const newEntry: HomeworkEntry = { id: newId, name, dueDate, status };
-      const docRef = doc(homeworkCollection, newId); // Use generated ID as document ID
-      await setDoc(docRef, newEntry); // Use setDoc instead of addDoc
-
-      setHomework((prev) =>
-        [...prev, newEntry].sort((a, b) => {
-          // Sort by status first (COMPLETED first)
+      setHomework(
+        homeworkList.sort((a, b) => {
           if (a.status === "COMPLETED" && b.status !== "COMPLETED") return -1;
           if (a.status !== "COMPLETED" && b.status === "COMPLETED") return 1;
-
-          // Then sort by date (earliest first)
           const dateA = new Date(a.dueDate).getTime();
           const dateB = new Date(b.dueDate).getTime();
           return dateA - dateB;
         })
       );
+    } catch (error) {
+      console.error("Error fetching homework:", error);
     }
-  } catch (error) {
-    console.error("Error adding or updating homework:", error);
-  }
-};
+  };
 
+  // Calculate notifications
+  useEffect(() => {
+    const now = new Date();
+    const upcoming = homework
+      .filter((entry) => {
+        const dueDate = new Date(entry.dueDate);
+        return (
+          dueDate >= now &&
+          dueDate <= new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
+        );
+      })
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .map((entry) => {
+        const dueDate = new Date(entry.dueDate);
+        const diffInTime = dueDate.getTime() - now.getTime();
+        const daysLeft = Math.ceil(diffInTime / (1000 * 60 * 60 * 24));
+        return `Homework "${entry.name}" is due in ${daysLeft} day${
+          daysLeft > 1 ? "s" : ""
+        } (${entry.dueDate}).`;
+      });
 
-  const removeHomework = async (id: string) => {
+    setNotifications(upcoming);
+  }, [homework]);
+
+  // Add or update homework
+  const addHomework = async (
+    id: string | null,
+    name: string,
+    dueDate: string,
+    status: string,
+    year: string,
+    semester: string
+  ) => {
     try {
-      if (!id) {
-        console.error("Invalid document ID:", id);
-        return;
-      }
+      const tasksCollection = collection(db, `years/${year}/semesters/${semester}/tasks`);
 
-      const homeworkDoc = doc(db, "homework", id);
-      await deleteDoc(homeworkDoc);
+      if (id) {
+        const taskDoc = doc(tasksCollection, id);
+        await updateDoc(taskDoc, { name, dueDate, status });
+
+        setHomework((prev) =>
+          prev.map((entry) =>
+            entry.id === id ? { ...entry, name, dueDate, status } : entry
+          )
+        );
+      } else {
+        const newTask: HomeworkEntry = { id: "", name, dueDate, status, year, semester };
+        const taskDoc = doc(tasksCollection);
+        await setDoc(taskDoc, newTask);
+
+        setHomework((prev) => [...prev, { ...newTask, id: taskDoc.id }]);
+      }
+    } catch (error) {
+      console.error("Error adding or updating homework:", error);
+    }
+  };
+
+  // Remove homework
+  const removeHomework = async (id: string, year: string, semester: string) => {
+    try {
+      const taskDoc = doc(db, `years/${year}/semesters/${semester}/tasks`, id);
+      await deleteDoc(taskDoc);
 
       setHomework((prev) => prev.filter((entry) => entry.id !== id));
     } catch (error) {
@@ -165,7 +127,7 @@ const addHomework = async (
 
   return (
     <HomeworkContext.Provider
-      value={{ homework, notifications, addHomework, removeHomework }}
+      value={{ homework, notifications, fetchHomework, addHomework, removeHomework }}
     >
       {children}
     </HomeworkContext.Provider>

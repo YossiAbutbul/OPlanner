@@ -55,6 +55,12 @@ const HomeworkTable: React.FC = () => {
     return date.toLocaleDateString("en-GB"); // Format date as DD/MM/YYYY
   };
 
+  const sortedHomework = [...homework].sort((a, b) => {
+    if (a.status === "PENDING" && b.status !== "PENDING") return -1;
+    if (a.status !== "PENDING" && b.status === "PENDING") return 1;
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+  });
+
   return (
     <div>
       <div className="header-row">
@@ -69,7 +75,7 @@ const HomeworkTable: React.FC = () => {
           <i className="bx bx-plus"></i> Add Task
         </button>
       </div>
-      {homework.length === 0 ? (
+      {sortedHomework.length === 0 ? (
         <p>No tasks available. Click "Add Homework" to get started!</p>
       ) : (
         <table className="homework-table">
@@ -82,7 +88,7 @@ const HomeworkTable: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {homework.map((entry) => {
+            {sortedHomework.map((entry) => {
               if (!entry.id) {
                 console.warn(
                   "Missing or invalid ID for homework entry:",
@@ -92,7 +98,7 @@ const HomeworkTable: React.FC = () => {
               return (
                 <tr key={entry.id || Math.random().toString()}>
                   <td>
-                    <i className='bx bx-clipboard'></i>
+                    <i className='bx bx-edit'></i>
                     {entry.name}
                     </td>
                   <td>

@@ -1,23 +1,77 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../css/Sidebar.css";
-import "boxicons/css/boxicons.min.css"; // Import Boxicons CSS
+import "boxicons/css/boxicons.min.css";
+import { initializeYear, getAllYearsAndSemesters } from "../utility/initializeDatabase";
 
-const Sidebar: React.FC = () => {
-  const [years, setYears] = useState<{ year: number; expanded: boolean }[]>([
-    { year: 2024, expanded: false },
-    { year: 2025, expanded: false },
-  ]);
+interface YearData {
+  year: number;
+  semesters: { name: string }[];
+  expanded: boolean;
+}
 
-  const addYear = () => {
-    const lastYear = years[years.length - 1]?.year || new Date().getFullYear();
-    const newYear = lastYear + 1;
-    setYears([...years, { year: newYear, expanded: false }]);
+interface SidebarProps {
+  onSemesterSelect: (year: number, semester: string) => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ onSemesterSelect }) => {
+  const [years, setYears] = useState<YearData[]>([]);
+
+  const fetchYearsAndSemesters = async () => {
+    const existingYears = await getAllYearsAndSemesters();
+
+    const formattedYears = existingYears.map((year) => ({
+      ...year,
+      expanded: false, // Initialize as collapsed
+    }));
+
+    if (formattedYears.length === 0) {
+      const currentYear = new Date().getFullYear();
+      await initializeYear(currentYear);
+      formattedYears.push({
+        year: currentYear,
+        semesters: [
+          { name: "Semester A" },
+          { name: "Semester B" },
+          { name: "Semester C" },
+        ],
+        expanded: false,
+      });
+    }
+
+    setYears(formattedYears);
   };
 
-  const toggleYear = (year: number) => {
+  useEffect(() => {
+    fetchYearsAndSemesters();
+  }, []);
+
+  const addYear = async () => {
+    const lastYear = years[years.length - 1]?.year || new Date().getFullYear();
+    const newYear = lastYear + 1;
+
+    const yearAdded = await initializeYear(newYear);
+    if (yearAdded) {
+      setYears((prevYears) => [
+        ...prevYears.map((y) => ({ ...y, expanded: false })), // Close all years
+        {
+          year: newYear,
+          semesters: [
+            { name: "Semester A" },
+            { name: "Semester B" },
+            { name: "Semester C" },
+          ],
+          expanded: true, // Automatically expand the new year
+        },
+      ]);
+    }
+  };
+
+  const toggleExpand = (year: number) => {
     setYears((prevYears) =>
       prevYears.map((y) =>
-        y.year === year ? { ...y, expanded: !y.expanded } : y
+        y.year === year
+          ? { ...y, expanded: !y.expanded }
+          : { ...y, expanded: false } // Collapse others
       )
     );
   };
@@ -33,9 +87,9 @@ const Sidebar: React.FC = () => {
         <label className="profile-label">OPlanner</label>
       </div>
       <ul className="year-list">
-        {years.map(({ year, expanded }) => (
-          <li key={year} className="year-item">
-            <div className="year-header" onClick={() => toggleYear(year)}>
+        {years.map(({ year, semesters, expanded }) => (
+          <li key={year} className={`year-item ${expanded ? "expanded" : ""}`}>
+            <div className="year-header" onClick={() => toggleExpand(year)}>
               {year}
               <i
                 className={`bx ${
@@ -43,21 +97,25 @@ const Sidebar: React.FC = () => {
                 } toggle-icon`}
               ></i>
             </div>
-            <ul
-              className={`semester-list ${
-                expanded ? "expanded" : "collapsed"
-              }`}
-            >
-              <li className="semester-item">{year} A</li>
-              <li className="semester-item">{year} B</li>
-              <li className="semester-item">{year} C</li>
+            <ul className="semester-list">
+              {semesters.map((semester) => (
+                <li
+                  key={semester.name}
+                  className="semester-item"
+                  onClick={() => onSemesterSelect(year, semester.name)}
+                >
+                  {semester.name}
+                </li>
+              ))}
             </ul>
           </li>
         ))}
       </ul>
-      <button className="add-year-btn" onClick={addYear}>
-        Add Year
-      </button>
+      <div className="add-year-container">
+        <button className="add-year-btn" onClick={addYear}>
+          Add Year
+        </button>
+      </div>
     </aside>
   );
 };

@@ -63,7 +63,7 @@ const NotificationList: React.FC = () => {
   return (
     <div className="notification-list">
       {notifications.length === 0 ? (
-        <p>No upcoming homework due.</p>
+        <p>No upcoming deadlines yet!</p>
       ) : (
         <ul>
           {notifications.map((notification, index) => {
