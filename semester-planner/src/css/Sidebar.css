@@ -21,7 +21,7 @@ button:focus {
   display: flex;
   justify-content: space-between;
   align-items: center; /* Center align the plus icon */
-  padding: 15px;
+  padding: 10px 15px;
   cursor: pointer;
   border-radius: 8px;
   font-size: 1rem;
@@ -71,6 +71,7 @@ button:focus {
   border-radius: 8px; /* Rounded edges for semester items */
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
+  font-weight: 500;
 }
 
 .semester-header:hover {
@@ -98,12 +99,14 @@ button:focus {
 
 .course-item {
   margin-bottom: 5px;
-  margin-left: 20px;
+  margin-left: 5px;
   padding: 5px 10px;
   border-radius: 4px;
+  color: #ffffff;
   background-color: #1f1f1f; /* Match sidebar background */
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-size: 0.9rem;
 }
 
 /* Ensure hover effect applies only to the hovered course */

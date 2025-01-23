@@ -11,12 +11,14 @@ const NotificationList: React.FC = () => {
     name: string;
     dueDate: string;
     status: string;
+    year: number;
+    semester: string;
+    course: string;
   } | null>(null);
 
+  // Get notification styling class
   const getNotificationClass = (daysLeft: number) => {
-    if (daysLeft === 0) {
-      return "urgent"; // Red border
-    } else if (daysLeft < 3) {
+    if (daysLeft === 0 || daysLeft < 3) {
       return "urgent"; // Red border
     } else if (daysLeft < 7) {
       return "near-due"; // Orange border
@@ -25,11 +27,10 @@ const NotificationList: React.FC = () => {
     }
   };
 
+  // Get styling for days text
   const getDayStyle = (daysLeft: number) => {
-    if (daysLeft === 0) {
+    if (daysLeft === 0 || daysLeft < 3) {
       return { color: "#ff4c4c", fontWeight: "bold" }; // Bold red
-    } else if (daysLeft < 3) {
-      return { color: "#ff4c4c", fontWeight: "bold" }; // Red
     } else if (daysLeft < 7) {
       return { color: "orange", fontWeight: "bold" }; // Orange
     } else {
@@ -37,11 +38,14 @@ const NotificationList: React.FC = () => {
     }
   };
 
-  const handleNotificationClick = (homeworkName: string) => {
-    const selectedHomework = homework.find((hw) => hw.name === homeworkName);
+  // Handle notification click
+  const handleNotificationClick = (id: string) => {
+    const selectedHomework = homework.find((hw) => hw.id === id);
     if (selectedHomework) {
       setEditHomework(selectedHomework);
       setModalOpen(true);
+    } else {
+      console.error(`Homework with ID ${id} not found.`);
     }
   };
 
@@ -49,9 +53,12 @@ const NotificationList: React.FC = () => {
     id: string | null,
     name: string,
     dueDate: string,
-    status: string
+    status: string,
+    year: number,
+    semester: string,
+    course: string
   ) => {
-    await addHomework(id, name, dueDate, status); // Save the updated data
+    await addHomework(id, name, dueDate, status, year, semester, course); // Save the updated data
     setModalOpen(false); // Close modal after saving
   };
 
@@ -66,37 +73,25 @@ const NotificationList: React.FC = () => {
         <p>No upcoming deadlines yet!</p>
       ) : (
         <ul>
-          {notifications.map((notification, index) => {
-            const match = notification.match(/"(.+?)" is due in (\d+) day/);
-            const name = match ? match[1] : "Unknown";
-            const daysLeft = match ? parseInt(match[2], 10) : null;
+          {notifications.map(({ id, message }) => {
+            const match = message.match(/(\d+) day/);
+            const daysLeft = match ? parseInt(match[1], 10) : null;
 
             if (daysLeft !== null) {
+              const [taskName] = message.split(" is due");
               return (
                 <li
-                  key={index}
-                  onClick={() => handleNotificationClick(name)}
-                  className={`notification-item ${getNotificationClass(
-                    daysLeft
-                  )}`}
+                  key={id}
+                  onClick={() => handleNotificationClick(id)}
+                  className={`notification-item ${getNotificationClass(daysLeft)}`}
                 >
-                  {daysLeft === 0 ? (
-                    <span>
-                      <strong>{name}</strong> is due&nbsp;
-                      <span style={getDayStyle(daysLeft)}>today</span>.
-                    </span>
-                  ) : (
-                    <>
-                      <strong>{name}</strong>&nbsp;is due in&nbsp;
-                      <span style={getDayStyle(daysLeft)}>
-                        {daysLeft} day{daysLeft !== 1 ? "s" : ""}
-                      </span>&nbsp;
-                    </>
-                  )}
+                  <strong>{taskName}</strong> is due in{" "}
+                  <span style={getDayStyle(daysLeft)}>
+                    {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+                  </span>
                 </li>
               );
             }
-
             return null; // Skip invalid notifications
           })}
         </ul>
@@ -108,6 +103,7 @@ const NotificationList: React.FC = () => {
         onClose={handleModalClose}
         onSave={handleSave}
         editHomework={editHomework}
+        selectedCourseData={null} // Not needed when editing
       />
     </div>
   );

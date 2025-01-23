@@ -14,14 +14,20 @@ export interface HomeworkEntry {
   name: string;
   dueDate: string;
   status: string;
-  year: number; // Changed from string to number
+  year: number;
   semester: string;
   course: string;
 }
 
+interface Notification {
+  id: string;
+  message: string;
+  style: React.CSSProperties; // Include style for days left
+}
+
 interface HomeworkContextProps {
   homework: HomeworkEntry[];
-  notifications: string[];
+  notifications: Notification[];
   fetchHomework: (year: number, semester: string, course: string) => Promise<void>;
   addHomework: (
     id: string | null,
@@ -40,15 +46,13 @@ interface HomeworkContextProps {
   ) => Promise<void>;
 }
 
-const HomeworkContext = createContext<HomeworkContextProps | undefined>(
-  undefined
-);
+const HomeworkContext = createContext<HomeworkContextProps | undefined>(undefined);
 
 export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [homework, setHomework] = useState<HomeworkEntry[]>([]);
-  const [notifications, setNotifications] = useState<string[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   // Fetch homework for a specific course under a semester and year
   const fetchHomework = async (year: number, semester: string, course: string) => {
@@ -85,6 +89,17 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Get style for days left
+  const getDayStyle = (daysLeft: number): React.CSSProperties => {
+    if (daysLeft === 0 || daysLeft < 3) {
+      return { color: "#ff4c4c", fontWeight: "bold" }; // Bold red
+    } else if (daysLeft < 7) {
+      return { color: "orange", fontWeight: "bold" }; // Orange
+    } else {
+      return { color: "#2ECC71", fontWeight: "bold" }; // Green
+    }
+  };
+
   // Calculate notifications
   useEffect(() => {
     const now = new Date();
@@ -101,9 +116,11 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
         const dueDate = new Date(entry.dueDate);
         const diffInTime = dueDate.getTime() - now.getTime();
         const daysLeft = Math.ceil(diffInTime / (1000 * 60 * 60 * 24));
-        return `Homework "${entry.name}" is due in ${daysLeft} day${
+        const message = `${entry.name} is due in ${daysLeft} day${
           daysLeft > 1 ? "s" : ""
-        } (${entry.dueDate}).`;
+        } `;
+        const style = getDayStyle(daysLeft);
+        return { id: entry.id, message, style }; // Include ID and style in notification
       });
 
     setNotifications(upcoming);
