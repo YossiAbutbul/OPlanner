@@ -11,9 +11,20 @@ interface HomeworkModalProps {
     id: string | null,
     name: string,
     dueDate: string,
-    status: string
+    status: string,
+    year: number,
+    semester: string,
+    course: string
   ) => void;
-  editHomework?: { id: string; name: string; dueDate: string; status: string } | null;
+  editHomework?: {
+    id: string;
+    name: string;
+    dueDate: string;
+    status: string;
+    year: number;
+    semester: string;
+    course: string;
+  } | null;
   selectedCourseData: {
     year: number;
     semester: string;
@@ -33,11 +44,12 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   const [status, setStatus] = useState("PENDING");
   const dateInputRef = useRef<HTMLInputElement>(null);
 
+  // Populate modal fields for editing or reset for adding
   useEffect(() => {
     if (editHomework) {
-      setName(editHomework.name || "");
-      setDueDate(editHomework.dueDate || "");
-      setStatus(editHomework.status || "PENDING");
+      setName(editHomework.name);
+      setDueDate(editHomework.dueDate);
+      setStatus(editHomework.status);
     } else {
       setName("");
       setDueDate("");
@@ -46,23 +58,33 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   }, [editHomework]);
 
   const handleSave = () => {
-    if (!selectedCourseData) {
-      alert("Please select a valid course to add homework.");
-      console.error("Invalid selectedCourseData:", selectedCourseData);
+    const courseData = editHomework || selectedCourseData;
+
+    if (!courseData) {
+      alert("Please select a valid course to add or edit homework.");
       return;
     }
 
-    const { year, semester, course } = selectedCourseData;
+    const { year, semester, course } = courseData;
 
-    if (name && dueDate && status) {
-      onSave(editHomework?.id || null, name, dueDate, status, year.toString(), semester, course);
-      setName("");
-      setDueDate("");
-      setStatus("PENDING");
-      onClose();
-    } else {
-      alert("Please fill in all fields!");
+    if (!name.trim()) {
+      alert("Please enter a valid name for the homework.");
+      return;
     }
+
+    if (!dueDate) {
+      alert("Please select a valid due date for the homework.");
+      return;
+    }
+
+    // Call the parent save function
+    onSave(editHomework?.id || null, name.trim(), dueDate, status, year, semester, course);
+
+    // Reset modal fields
+    setName("");
+    setDueDate("");
+    setStatus("PENDING");
+    onClose();
   };
 
   const handleDateClick = () => {
@@ -81,10 +103,14 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, name, dueDate, status]);
+  }, [isOpen, name, dueDate, status, selectedCourseData, editHomework]);
 
   return (
-    <Modal isOpen={isOpen} onRequestClose={onClose} contentLabel="Add/Edit Homework">
+    <Modal
+      isOpen={isOpen}
+      onRequestClose={onClose}
+      contentLabel={editHomework ? "Edit Homework" : "Add Homework"}
+    >
       <h2>{editHomework ? "Edit Homework" : "Add Homework"}</h2>
       <form>
         <div>
@@ -93,7 +119,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            required
+            placeholder="Enter homework name"
           />
         </div>
         <div>
@@ -108,18 +134,24 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               ref={dateInputRef}
-              required
             />
           </div>
         </div>
         <div>
           <label>Status:</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
             <option value="PENDING">PENDING</option>
             <option value="COMPLETED">COMPLETED</option>
           </select>
         </div>
-        <button type="button" onClick={handleSave}>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!name.trim() || !dueDate || !(selectedCourseData || editHomework)}
+        >
           Save
         </button>
         <button type="button" onClick={onClose}>

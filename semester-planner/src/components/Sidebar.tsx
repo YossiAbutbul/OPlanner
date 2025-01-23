@@ -5,34 +5,51 @@ import { getAllYearsAndSemesters, addCourse, initializeYearIfEmpty } from "../ut
 
 interface YearData {
   year: number;
-  semesters: { name: string; courses: string[]; expanded: boolean }[];
+  semesters: {
+    name: string;
+    courses: { name: string; tasks: string[] }[];
+    expanded: boolean;
+  }[];
   expanded: boolean;
 }
 
 interface SidebarProps {
-  onCourseOrSemesterSelect: (year: number, semester: string, course?: string) => void;
+  onCourseOrSemesterSelect: (
+    year: number,
+    semester: string,
+    course?: string
+  ) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   const [years, setYears] = useState<YearData[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [modalData, setModalData] = useState<{ year: number; semester: string } | null>(null);
+  const [modalData, setModalData] = useState<{
+    year: number;
+    semester: string;
+  } | null>(null);
   const [courseName, setCourseName] = useState("");
 
   const fetchYearsAndSemesters = async () => {
-    const existingYears = await getAllYearsAndSemesters();
+  const existingYears = await getAllYearsAndSemesters();
 
-    const formattedYears = existingYears.map((year) => ({
-      ...year,
-      expanded: false,
-      semesters: year.semesters.map((semester) => ({
-        ...semester,
-        expanded: false,
+  const formattedYears = existingYears.map((year) => ({
+    ...year,
+    expanded: false,
+    semesters: year.semesters.map((semester) => ({
+      ...semester,
+      name: semester.name || "Unnamed Semester",
+      courses: Object.entries(semester.courses || {}).map(([name, courseData]) => ({
+        name,
+        tasks: courseData.tasks || [],
       })),
-    }));
+      expanded: false,
+    })),
+  }));
 
-    setYears(formattedYears);
-  };
+  setYears(formattedYears);
+};
+
 
   useEffect(() => {
     const initData = async () => {
@@ -87,7 +104,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   return (
     <aside className="sidebar">
       <div className="profile-section">
-        <img src="./public/user-svgrepo-com.svg" alt="Profile" className="profile-pic" />
+        <img
+          src="./public/user-svgrepo-com.svg"
+          alt="Profile"
+          className="profile-pic"
+        />
         <div className="profile-header">
           <label className="profile-label">OPlanner</label>
           <button className="add-year-btn" onClick={addYear} title="Add Year">
@@ -98,12 +119,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
       <ul className="year-list">
         {years.map((year, yearIndex) => (
           <li key={year.year} className={`year-item ${year.expanded ? "expanded" : ""}`}>
-            <div
-              className="year-header"
-              onClick={() => toggleExpand(yearIndex)}
-            >
+            <div className="year-header" onClick={() => toggleExpand(yearIndex)}>
               {year.year}
-              <i className={`bx ${year.expanded ? "bx-chevron-up" : "bx-chevron-down"} toggle-icon`}></i>
+              <i
+                className={`bx ${year.expanded ? "bx-chevron-up" : "bx-chevron-down"} toggle-icon`}
+              ></i>
             </div>
             <ul
               className="semester-list"
@@ -141,21 +161,27 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
                   <ul
                     className="course-list"
                     style={{
-                      maxHeight: semester.expanded ? `${semester.courses.length * 45}px` : "0",
+                      maxHeight: semester.expanded
+                        ? `${semester.courses.length * 45}px`
+                        : "0",
                       opacity: semester.expanded ? 1 : 0,
                       transition: "max-height 0.3s ease, opacity 0.3s ease",
                       overflow: "hidden",
                     }}
                   >
-                    {semester.courses.map((course) => (
+                    {semester.courses.map((course, index) => (
                       <li
-                        key={course}
+                        key={`${semester.name}-${course.name}-${index}`}
                         className="course-item"
                         onClick={() =>
-                          onCourseOrSemesterSelect(year.year, semester.name, course)
+                          onCourseOrSemesterSelect(
+                            year.year,
+                            semester.name,
+                            course.name
+                          )
                         }
                       >
-                        {course}
+                        {course.name}
                       </li>
                     ))}
                   </ul>

@@ -4,62 +4,71 @@ import HomeworkModal from "./HomeworkModal";
 import "../css/HomeworkTable.css";
 import "boxicons/css/boxicons.min.css";
 
-const HomeworkTable: React.FC = () => {
-  const { homework, addHomework, removeHomework } = useHomework();
+interface HomeworkEntry {
+  id: string;
+  name: string;
+  dueDate: string;
+  status: string;
+  year: number;
+  semester: string;
+  course: string;
+}
+
+interface HomeworkTableProps {
+  tasks: HomeworkEntry[]; // Accept tasks from parent
+  onAddTask: () => void; // Trigger modal for adding homework
+}
+
+const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
+  const { removeHomework, addHomework } = useHomework();
   const [isModalOpen, setModalOpen] = useState(false);
-  const [editHomework, setEditHomework] = useState<{
-    id: string;
-    name: string;
-    dueDate: string;
-    status: string;
-  } | null>(null);
+  const [editHomework, setEditHomework] = useState<HomeworkEntry | null>(null);
 
-  const handleAddOrUpdateHomework = async (id, name, dueDate, status) => {
-  if (!selectedYear || !selectedSemester) {
-    alert("Please select a year and semester.");
-    return;
-  }
-
-  try {
-    await addHomework(id, name, dueDate, status, selectedYear, selectedSemester);
-    alert("Homework added/updated successfully.");
-  } catch (error) {
-    console.error("Error adding/updating homework:", error);
-  }
-};
-
-
+  // Handle task deletion
   const handleDelete = async (id: string) => {
+    const homeworkEntry = tasks.find((task) => task.id === id);
+
+    if (!homeworkEntry) {
+      console.error("Homework entry not found for deletion.");
+      return;
+    }
+
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this homework?"
+      `Are you sure you want to delete this homework: "${homeworkEntry.name}"?`
     );
+
     if (confirmDelete) {
-      await removeHomework(id); // Pass the correct id
+      const { year, semester, course } = homeworkEntry;
+      try {
+        await removeHomework(id, year, semester, course);
+        console.log(`Task "${homeworkEntry.name}" deleted successfully.`);
+      } catch (error) {
+        console.error("Error deleting homework:", error);
+      }
     }
   };
 
-  const handleEditClick = (homework: {
-    id: string;
-    name: string;
-    dueDate: string;
-    status: string;
-  }) => {
-    setEditHomework(homework); // Pass the homework item for editing
+  // Handle task editing
+  const handleEditClick = (homework: HomeworkEntry) => {
+    setEditHomework(homework); // Set the homework for editing
     setModalOpen(true);
   };
 
+  // Get style for status
   const getStatusStyle = (status: string) => {
     return status === "COMPLETED"
       ? { color: "#00bb77", fontWeight: "bold" }
       : { color: "#ffbf00", fontWeight: "bold" };
   };
 
+  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB"); // Format date as DD/MM/YYYY
+    return date.toLocaleDateString("en-GB");
   };
 
-  const sortedHomework = [...homework].sort((a, b) => {
+  // Sort homework for display
+  const sortedHomework = [...tasks].sort((a, b) => {
     if (a.status === "PENDING" && b.status !== "PENDING") return -1;
     if (a.status !== "PENDING" && b.status === "PENDING") return 1;
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
@@ -69,18 +78,12 @@ const HomeworkTable: React.FC = () => {
     <div>
       <div className="header-row">
         <h2>Tasks List</h2>
-        <button
-          className="add-homework-btn"
-          onClick={() => {
-            setEditHomework(null); // Clear editHomework for new entries
-            setModalOpen(true);
-          }}
-        >
+        <button className="add-homework-btn" onClick={onAddTask}>
           <i className="bx bx-plus"></i> Add Task
         </button>
       </div>
       {sortedHomework.length === 0 ? (
-        <p>No tasks available. Click "Add Homework" to get started!</p>
+        <p>No tasks available. Click "Add Task" to get started!</p>
       ) : (
         <table className="homework-table">
           <thead>
@@ -92,41 +95,41 @@ const HomeworkTable: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {sortedHomework.map((entry) => {
-              if (!entry.id) {
-                console.warn(
-                  "Missing or invalid ID for homework entry:",
-                  entry
-                );
-              }
-              return (
-                <tr key={entry.id || Math.random().toString()}>
-                  <td>
-                    <i className='bx bx-edit'></i>
-                    {entry.name}
-                    </td>
-                  <td>
-                    <i className='bx bx-calendar-alt'></i>
-                    {formatDate(entry.dueDate)}
-                  </td>
-                  <td style={getStatusStyle(entry.status)}>{entry.status}</td>
-                  <td>
-                    <button onClick={() => handleEditClick(entry)}>Edit</button>
-                    <button onClick={() => handleDelete(entry.id)}>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {sortedHomework.map((entry, index) => (
+              <tr key={`${entry.id}-${entry.dueDate}`}>
+                <td>
+                  <i className="bx bx-edit"></i> {entry.name}
+                </td>
+                <td>
+                  <i className="bx bx-calendar-alt"></i> {formatDate(entry.dueDate)}
+                </td>
+                <td style={getStatusStyle(entry.status)}>{entry.status}</td>
+                <td>
+                  <button onClick={() => handleEditClick(entry)}>Edit</button>
+                  <button onClick={() => handleDelete(entry.id)}>Delete</button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       )}
       <HomeworkModal
         isOpen={isModalOpen}
-        onClose={() => setModalOpen(false)}
-        onSave={handleAddOrUpdateHomework}
+        onClose={() => {
+          setModalOpen(false);
+          setEditHomework(null);
+        }}
+        onSave={(id, name, dueDate, status, year, semester, course) => {
+          if (!name || !dueDate) {
+            alert("Please fill in all fields before saving.");
+            return;
+          }
+          addHomework(id, name, dueDate, status, year, semester, course);
+          setModalOpen(false);
+          setEditHomework(null);
+        }}
         editHomework={editHomework}
+        selectedCourseData={editHomework ? null : null}
       />
     </div>
   );

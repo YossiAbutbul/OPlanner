@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import ProgressChart from "./ProgressChart";
 import HomeworkTable from "./HomeworkTable";
+import HomeworkModal from "./HomeworkModal";
 import "../css/MainContent.css";
-import { useHomework } from "../context/HomeworkContext";
+import { useHomework, HomeworkEntry } from "../context/HomeworkContext";
+
+// Removed duplicate HomeworkEntry interface
 
 interface MainContentProps {
   selectedCourseData: {
@@ -13,34 +16,56 @@ interface MainContentProps {
 }
 
 const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
-  const { homework, fetchHomework } = useHomework();
-  const [filteredHomework, setFilteredHomework] = useState(homework);
+  const { homework, fetchHomework, addHomework } = useHomework();
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [filteredHomework, setFilteredHomework] = useState<HomeworkEntry[]>([]);
 
-  // Fetch homework when selectedCourseData changes
+  // Fetch homework whenever the selected course changes
   useEffect(() => {
-    const fetchTasks = async () => {
-      if (selectedCourseData) {
-        const { year, semester } = selectedCourseData;
-        await fetchHomework(year.toString(), semester); // Fetch tasks for the selected year/semester
-      }
-    };
-
-    fetchTasks();
+    if (selectedCourseData) {
+      const { year, semester, course } = selectedCourseData;
+      fetchHomework(year, semester, course); // Fetch homework for the selected course
+    }
   }, [selectedCourseData, fetchHomework]);
 
   // Filter homework for the selected course
   useEffect(() => {
-    if (selectedCourseData) {
-      const { course } = selectedCourseData;
-      const courseTasks = homework.filter((hw) => hw.course === course);
-      setFilteredHomework(courseTasks);
-    } else {
-      setFilteredHomework([]);
-    }
-  }, [homework, selectedCourseData]);
+  if (selectedCourseData) {
+    const { course } = selectedCourseData;
+
+
+    const courseTasks = homework.filter((hw) => hw.course === course);
+
+    setFilteredHomework(courseTasks);
+  } else {
+    setFilteredHomework([]);
+  }
+}, [homework, selectedCourseData]);
+
 
   const completed = filteredHomework.filter((hw) => hw.status === "COMPLETED").length;
   const pending = filteredHomework.filter((hw) => hw.status === "PENDING").length;
+
+  const handleSaveHomework = async (
+    id: string | null,
+    name: string,
+    dueDate: string,
+    status: string
+  ) => {
+    if (!selectedCourseData) {
+      alert("Please select a valid course.");
+      return;
+    }
+
+    const { year, semester, course } = selectedCourseData;
+
+    try {
+      await addHomework(id, name, dueDate, status, year, semester, course);
+      await fetchHomework(year, semester, course); // Refresh after adding
+    } catch (error) {
+      console.error("Error saving homework:", error);
+    }
+  };
 
   return (
     <div className="main-layout">
@@ -56,13 +81,23 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
               <ProgressChart completed={completed} pending={pending} />
             </div>
             <div className="homework-table-container">
-              <HomeworkTable tasks={filteredHomework} />
+              <HomeworkTable
+                tasks={filteredHomework}
+                onAddTask={() => setModalOpen(true)}
+              />
             </div>
           </>
         ) : (
           <p>Please select a course from the sidebar to view its progress.</p>
         )}
       </div>
+
+      <HomeworkModal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        onSave={handleSaveHomework}
+        selectedCourseData={selectedCourseData}
+      />
     </div>
   );
 };
