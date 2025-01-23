@@ -1,4 +1,4 @@
-import { doc, setDoc, getDocs, collection, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDocs, collection, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 
 /**
@@ -7,6 +7,13 @@ import { db } from "../firebase";
 export const initializeYear = async (year: number): Promise<boolean> => {
   try {
     const yearDoc = doc(db, "years", year.toString());
+    const yearSnapshot = await getDoc(yearDoc);
+
+    if (yearSnapshot.exists()) {
+      console.warn(`Year ${year} already exists.`);
+      return false;
+    }
+
     await setDoc(yearDoc, {
       year,
       semesters: {
@@ -106,12 +113,8 @@ export const addCourse = async (
       [course]: { tasks: {} }, // Initialize empty tasks
     };
 
-    await setDoc(yearDoc, {
-      ...yearData,
-      semesters: {
-        ...yearData.semesters,
-        [semesterKey]: semesterData,
-      },
+    await updateDoc(yearDoc, {
+      [`semesters.${semesterKey}`]: semesterData,
     });
 
     console.log(`Course "${course}" added successfully to ${semester}, ${year}.`);

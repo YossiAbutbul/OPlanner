@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../css/Sidebar.css";
 import "boxicons/css/boxicons.min.css";
-import { getAllYearsAndSemesters, addCourse, initializeYearIfEmpty } from "../utility/initializeDatabase";
+import { getAllYearsAndSemesters, addCourse, initializeYear } from "../utility/initializeDatabase";
 
 interface YearData {
   year: number;
@@ -31,37 +31,40 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   const [courseName, setCourseName] = useState("");
 
   const fetchYearsAndSemesters = async () => {
-  const existingYears = await getAllYearsAndSemesters();
+    const existingYears = await getAllYearsAndSemesters();
 
-  const formattedYears = existingYears.map((year) => ({
-    ...year,
-    expanded: false,
-    semesters: year.semesters.map((semester) => ({
-      ...semester,
-      name: semester.name || "Unnamed Semester",
-      courses: Object.entries(semester.courses || {}).map(([name, courseData]) => ({
-        name,
-        tasks: courseData.tasks || [],
-      })),
+    const formattedYears = existingYears.map((year) => ({
+      ...year,
       expanded: false,
-    })),
-  }));
+      semesters: year.semesters.map((semester) => ({
+        ...semester,
+        name: semester.name || "Unnamed Semester",
+        courses: Object.entries(semester.courses || {}).map(([name, courseData]) => ({
+          name,
+          tasks: courseData.tasks || [],
+        })),
+        expanded: false,
+      })),
+    }));
 
-  setYears(formattedYears);
-};
-
+    setYears(formattedYears);
+  };
 
   useEffect(() => {
-    const initData = async () => {
-      await initializeYearIfEmpty();
-      fetchYearsAndSemesters();
-    };
-    initData();
+    fetchYearsAndSemesters();
   }, []);
 
   const addYear = async () => {
-    await initializeYearIfEmpty();
-    fetchYearsAndSemesters();
+    const currentYears = years.map((y) => y.year); // Get all existing years
+    const maxYear = Math.max(...currentYears); // Find the latest year
+    const nextYear = maxYear + 1; // Calculate the next year
+
+    const yearAdded = await initializeYear(nextYear); // Initialize the next year
+    if (yearAdded) {
+      fetchYearsAndSemesters(); // Refresh the sidebar if successful
+    } else {
+      alert(`Failed to add year ${nextYear}. Please try again.`);
+    }
   };
 
   const toggleExpand = (yearIndex: number, semesterIndex?: number) => {
@@ -181,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
                           )
                         }
                       >
-                        <i className='bx bxs-chevron-right'></i> {course.name}
+                        <i className="bx bxs-chevron-right"></i> {course.name}
                       </li>
                     ))}
                   </ul>
