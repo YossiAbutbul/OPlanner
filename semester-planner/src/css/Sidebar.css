@@ -2,7 +2,9 @@
   font-weight: 500;
   padding: 15px;
 }
-
+button:focus {
+  outline: none;
+}
 .year-list {
   list-style: none;
   padding: 0;
@@ -114,17 +116,10 @@
   background-color: #1f1f1f; /* Reset sibling course backgrounds */
 }
 
-/* Add Year Button */
-.add-year-container {
-  margin-top: 20px;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
 
 .add-year-btn {
-  padding: 10px 20px;
-  background-color: #333;
+  padding: 8px 8px;
+  background-color: #1f1f1f;
   color: white;
   border: none;
   border-radius: 5px;
@@ -133,7 +128,14 @@
 }
 
 .add-year-btn:hover {
-  background-color: #484848;
+  background-color: #292929;
+}
+.profile-header{
+  padding-right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 40px;
 }
 
 /* Modal Overlay */
@@ -211,3 +213,5 @@
 .modal-btn:hover {
   background-color: #4cae4c;
 }
+
+

@@ -95,7 +95,7 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
             </tr>
           </thead>
           <tbody>
-            {sortedHomework.map((entry, index) => (
+            {sortedHomework.map((entry) => (
               <tr key={`${entry.id}-${entry.dueDate}`}>
                 <td>
                   <i className="bx bx-edit"></i> {entry.name}
