@@ -14,16 +14,20 @@ const HomeworkTable: React.FC = () => {
     status: string;
   } | null>(null);
 
-  const handleAddOrUpdateHomework = async (
-    id: string | null,
-    name: string,
-    dueDate: string,
-    status: string
-  ) => {
-    await addHomework(id, name, dueDate, status); // Updates state
-    console.log("Homework added or updated:", { id, name, dueDate, status }); // Debugging log
-    setModalOpen(false);
-  };
+  const handleAddOrUpdateHomework = async (id, name, dueDate, status) => {
+  if (!selectedYear || !selectedSemester) {
+    alert("Please select a year and semester.");
+    return;
+  }
+
+  try {
+    await addHomework(id, name, dueDate, status, selectedYear, selectedSemester);
+    alert("Homework added/updated successfully.");
+  } catch (error) {
+    console.error("Error adding/updating homework:", error);
+  }
+};
+
 
   const handleDelete = async (id: string) => {
     const confirmDelete = window.confirm(

@@ -5,23 +5,39 @@ import "../css/MainContent.css";
 import { useHomework } from "../context/HomeworkContext";
 
 interface MainContentProps {
-  selectedCourse: string | null;
+  selectedCourseData: {
+    year: number;
+    semester: string;
+    course: string;
+  } | null;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ selectedCourse }) => {
-  const { homework } = useHomework();
-
+const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
+  const { homework, fetchHomework } = useHomework();
   const [filteredHomework, setFilteredHomework] = useState(homework);
 
+  // Fetch homework when selectedCourseData changes
   useEffect(() => {
-    if (selectedCourse) {
-      // Filter tasks by the selected course
-      const courseTasks = homework.filter((hw) => hw.course === selectedCourse);
+    const fetchTasks = async () => {
+      if (selectedCourseData) {
+        const { year, semester } = selectedCourseData;
+        await fetchHomework(year.toString(), semester); // Fetch tasks for the selected year/semester
+      }
+    };
+
+    fetchTasks();
+  }, [selectedCourseData, fetchHomework]);
+
+  // Filter homework for the selected course
+  useEffect(() => {
+    if (selectedCourseData) {
+      const { course } = selectedCourseData;
+      const courseTasks = homework.filter((hw) => hw.course === course);
       setFilteredHomework(courseTasks);
     } else {
       setFilteredHomework([]);
     }
-  }, [homework, selectedCourse]);
+  }, [homework, selectedCourseData]);
 
   const completed = filteredHomework.filter((hw) => hw.status === "COMPLETED").length;
   const pending = filteredHomework.filter((hw) => hw.status === "PENDING").length;
@@ -30,9 +46,12 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourse }) => {
     <div className="main-layout">
       <div className="main-content">
         <h1>Course Progress</h1>
-        {selectedCourse ? (
+        {selectedCourseData ? (
           <>
-            <h2>Progress for {selectedCourse}</h2>
+            <h2>
+              Progress for {selectedCourseData.course} in{" "}
+              {selectedCourseData.semester}, {selectedCourseData.year}
+            </h2>
             <div className="progress-chart-container">
               <ProgressChart completed={completed} pending={pending} />
             </div>

@@ -1,17 +1,33 @@
 import React, { useState, useEffect, useRef } from "react";
 import Modal from "react-modal";
-import '../css/HomeworkModal.css';
+import "../css/HomeworkModal.css";
 
 Modal.setAppElement("#root");
 
 interface HomeworkModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (id: string | null, name: string, dueDate: string, status: string) => void;
+  onSave: (
+    id: string | null,
+    name: string,
+    dueDate: string,
+    status: string
+  ) => void;
   editHomework?: { id: string; name: string; dueDate: string; status: string } | null;
+  selectedCourseData: {
+    year: number;
+    semester: string;
+    course: string;
+  } | null;
 }
 
-const HomeworkModal: React.FC<HomeworkModalProps> = ({ isOpen, onClose, onSave, editHomework }) => {
+const HomeworkModal: React.FC<HomeworkModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+  editHomework,
+  selectedCourseData,
+}) => {
   const [name, setName] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState("PENDING");
@@ -30,8 +46,16 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({ isOpen, onClose, onSave, 
   }, [editHomework]);
 
   const handleSave = () => {
+    if (!selectedCourseData) {
+      alert("Please select a valid course to add homework.");
+      console.error("Invalid selectedCourseData:", selectedCourseData);
+      return;
+    }
+
+    const { year, semester, course } = selectedCourseData;
+
     if (name && dueDate && status) {
-      onSave(editHomework?.id || null, name, dueDate, status);
+      onSave(editHomework?.id || null, name, dueDate, status, year.toString(), semester, course);
       setName("");
       setDueDate("");
       setStatus("PENDING");
@@ -42,7 +66,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({ isOpen, onClose, onSave, 
   };
 
   const handleDateClick = () => {
-    dateInputRef.current?.showPicker(); // Show date picker programmatically
+    dateInputRef.current?.showPicker();
   };
 
   useEffect(() => {

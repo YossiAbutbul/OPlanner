@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, getDoc, } from "firebase/firestore";
 import { db } from "../firebase";
 
 interface HomeworkEntry {
@@ -26,16 +26,23 @@ interface HomeworkContextProps {
   removeHomework: (id: string, year: string, semester: string) => Promise<void>;
 }
 
-const HomeworkContext = createContext<HomeworkContextProps | undefined>(undefined);
+const HomeworkContext = createContext<HomeworkContextProps | undefined>(
+  undefined
+);
 
-export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [homework, setHomework] = useState<HomeworkEntry[]>([]);
   const [notifications, setNotifications] = useState<string[]>([]);
 
   // Fetch homework for a specific year and semester
   const fetchHomework = async (year: string, semester: string) => {
     try {
-      const homeworkCollection = collection(db, `years/${year}/semesters/${semester}/tasks`);
+      const homeworkCollection = collection(
+        db,
+        `years/${year}/semesters/${semester}/tasks`
+      );
       const snapshot = await getDocs(homeworkCollection);
       const homeworkList = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -82,40 +89,51 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Add or update homework
   const addHomework = async (
-    id: string | null,
-    name: string,
-    dueDate: string,
-    status: string,
-    year: string,
-    semester: string
-  ) => {
-    try {
-      const tasksCollection = collection(db, `years/${year}/semesters/${semester}/tasks`);
-
-      if (id) {
-        const taskDoc = doc(tasksCollection, id);
-        await updateDoc(taskDoc, { name, dueDate, status });
-
-        setHomework((prev) =>
-          prev.map((entry) =>
-            entry.id === id ? { ...entry, name, dueDate, status } : entry
-          )
-        );
-      } else {
-        const newTask: HomeworkEntry = { id: "", name, dueDate, status, year, semester };
-        const taskDoc = doc(tasksCollection);
-        await setDoc(taskDoc, newTask);
-
-        setHomework((prev) => [...prev, { ...newTask, id: taskDoc.id }]);
-      }
-    } catch (error) {
-      console.error("Error adding or updating homework:", error);
+  id,
+  name,
+  dueDate,
+  status,
+  year,
+  semester
+) => {
+  try {
+    if (!year || !semester) {
+      throw new Error("Year and semester are required to add homework.");
     }
-  };
+
+    console.log("Adding/Updating homework:", { id, name, dueDate, status, year, semester });
+
+    const tasksCollection = collection(db, `years/${year}/semesters/${semester}/tasks`);
+
+    if (id) {
+      const taskDoc = doc(tasksCollection, id);
+      await updateDoc(taskDoc, { name, dueDate, status });
+
+      setHomework((prev) =>
+        prev.map((entry) =>
+          entry.id === id ? { ...entry, name, dueDate, status } : entry
+        )
+      );
+    } else {
+      const newTaskRef = doc(tasksCollection);
+      const newTask = { id: newTaskRef.id, name, dueDate, status, year, semester };
+      await setDoc(newTaskRef, newTask);
+
+      setHomework((prev) => [...prev, newTask]);
+    }
+  } catch (error) {
+    console.error("Error adding or updating homework:", error);
+  }
+};
+
 
   // Remove homework
   const removeHomework = async (id: string, year: string, semester: string) => {
     try {
+      if (!id || !year || !semester) {
+        throw new Error("Invalid data for removing homework.");
+      }
+
       const taskDoc = doc(db, `years/${year}/semesters/${semester}/tasks`, id);
       await deleteDoc(taskDoc);
 

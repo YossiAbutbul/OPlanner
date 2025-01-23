@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../css/Sidebar.css";
 import "boxicons/css/boxicons.min.css";
-import { initializeYear, getAllYearsAndSemesters, addCourse } from "../utility/initializeDatabase";
+import { getAllYearsAndSemesters, addCourse, initializeYearIfEmpty } from "../utility/initializeDatabase";
 
 interface YearData {
   year: number;
@@ -31,72 +31,40 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
       })),
     }));
 
-    if (formattedYears.length === 0) {
-      const currentYear = new Date().getFullYear();
-      await initializeYear(currentYear);
-      formattedYears.push({
-        year: currentYear,
-        semesters: [
-          { name: "Semester A", courses: [], expanded: false },
-          { name: "Semester B", courses: [], expanded: false },
-          { name: "Semester C", courses: [], expanded: false },
-        ],
-        expanded: false,
-      });
-    }
-
     setYears(formattedYears);
   };
 
   useEffect(() => {
-    fetchYearsAndSemesters();
+    const initData = async () => {
+      await initializeYearIfEmpty();
+      fetchYearsAndSemesters();
+    };
+    initData();
   }, []);
 
   const addYear = async () => {
-    const lastYear = years[years.length - 1]?.year || new Date().getFullYear();
-    const newYear = lastYear + 1;
-
-    const yearAdded = await initializeYear(newYear);
-    if (yearAdded) {
-      setYears((prevYears) => [
-        ...prevYears.map((y) => ({ ...y, expanded: false })),
-        {
-          year: newYear,
-          semesters: [
-            { name: "Semester A", courses: [], expanded: false },
-            { name: "Semester B", courses: [], expanded: false },
-            { name: "Semester C", courses: [], expanded: false },
-          ],
-          expanded: true,
-        },
-      ]);
-    }
+    await initializeYearIfEmpty();
+    fetchYearsAndSemesters();
   };
 
-  const toggleYearExpand = (year: number) => {
+  const toggleExpand = (yearIndex: number, semesterIndex?: number) => {
     setYears((prevYears) =>
-      prevYears.map((y) =>
-        y.year === year
-          ? { ...y, expanded: !y.expanded }
-          : { ...y, expanded: false }
-      )
-    );
-  };
-
-  const toggleSemesterExpand = (year: number, semesterName: string) => {
-    setYears((prevYears) =>
-      prevYears.map((y) =>
-        y.year === year
-          ? {
-              ...y,
-              semesters: y.semesters.map((semester) =>
-                semester.name === semesterName
-                  ? { ...semester, expanded: !semester.expanded }
-                  : semester
-              ),
-            }
-          : y
-      )
+      prevYears.map((year, yIndex) => {
+        if (yIndex === yearIndex) {
+          const updatedYear = {
+            ...year,
+            expanded: semesterIndex === undefined ? !year.expanded : year.expanded,
+          };
+          if (semesterIndex !== undefined) {
+            updatedYear.semesters = updatedYear.semesters.map((semester, sIndex) => ({
+              ...semester,
+              expanded: sIndex === semesterIndex ? !semester.expanded : semester.expanded,
+            }));
+          }
+          return updatedYear;
+        }
+        return { ...year, expanded: false };
+      })
     );
   };
 
@@ -119,11 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   return (
     <aside className="sidebar">
       <div className="profile-section">
-        <img
-          src="./public/user-svgrepo-com.svg"
-          alt="Profile"
-          className="profile-pic"
-        />
+        <img src="./public/user-svgrepo-com.svg" alt="Profile" className="profile-pic" />
         <div className="profile-header">
           <label className="profile-label">OPlanner</label>
           <button className="add-year-btn" onClick={addYear} title="Add Year">
@@ -132,19 +96,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
         </div>
       </div>
       <ul className="year-list">
-        {years.map(({ year, semesters, expanded }) => (
-          <li key={year} className={`year-item ${expanded ? "expanded" : ""}`}>
-            <div className="year-header" onClick={() => toggleYearExpand(year)}>
-              {year}
-              <i
-                className={`bx ${expanded ? "bx-chevron-up" : "bx-chevron-down"} toggle-icon`}
-              ></i>
+        {years.map((year, yearIndex) => (
+          <li key={year.year} className={`year-item ${year.expanded ? "expanded" : ""}`}>
+            <div
+              className="year-header"
+              onClick={() => toggleExpand(yearIndex)}
+            >
+              {year.year}
+              <i className={`bx ${year.expanded ? "bx-chevron-up" : "bx-chevron-down"} toggle-icon`}></i>
             </div>
             <ul
               className="semester-list"
               style={{
-                maxHeight: expanded
-                  ? `${semesters.reduce(
+                maxHeight: year.expanded
+                  ? `${year.semesters.reduce(
                       (acc, semester) =>
                         acc +
                         70 +
@@ -152,23 +117,23 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
                       0
                     )}px`
                   : "0",
-                opacity: expanded ? 1 : 0,
+                opacity: year.expanded ? 1 : 0,
                 transition: "max-height 0.3s ease, opacity 0.3s ease",
                 overflow: "hidden",
               }}
             >
-              {semesters.map((semester) => (
+              {year.semesters.map((semester, semesterIndex) => (
                 <li key={semester.name} className="semester-item">
                   <div
                     className="semester-header"
-                    onClick={() => toggleSemesterExpand(year, semester.name)}
+                    onClick={() => toggleExpand(yearIndex, semesterIndex)}
                   >
                     {semester.name}
                     <i
                       className="bx bx-plus add-course-icon"
                       onClick={(e) => {
                         e.stopPropagation();
-                        openAddCourseModal(year, semester.name);
+                        openAddCourseModal(year.year, semester.name);
                       }}
                       title="Add New Course"
                     ></i>
@@ -176,9 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
                   <ul
                     className="course-list"
                     style={{
-                      maxHeight: semester.expanded
-                        ? `${semester.courses.length * 45}px`
-                        : "0",
+                      maxHeight: semester.expanded ? `${semester.courses.length * 45}px` : "0",
                       opacity: semester.expanded ? 1 : 0,
                       transition: "max-height 0.3s ease, opacity 0.3s ease",
                       overflow: "hidden",
@@ -189,7 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
                         key={course}
                         className="course-item"
                         onClick={() =>
-                          onCourseOrSemesterSelect(year, semester.name, course)
+                          onCourseOrSemesterSelect(year.year, semester.name, course)
                         }
                       >
                         {course}

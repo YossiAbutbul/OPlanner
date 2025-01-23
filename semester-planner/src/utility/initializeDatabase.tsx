@@ -3,30 +3,40 @@ import { db } from "../firebase";
 
 /**
  * Initializes a year with its default semesters (A, B, C) and an empty courses list.
- * @param {number} year - The year to initialize.
+ * If no years exist in Firestore, it will automatically initialize the current year.
  * @returns {Promise<boolean>} - Returns true if initialization is successful.
  */
-export const initializeYear = async (year: number): Promise<boolean> => {
+export const initializeYearIfEmpty = async (): Promise<boolean> => {
   try {
-    const yearDoc = doc(db, "years", year.toString());
-    await setDoc(yearDoc, {
-      year,
-      semesters: {
-        A: { name: "Semester A", courses: [] },
-        B: { name: "Semester B", courses: [] },
-        C: { name: "Semester C", courses: [] },
-      },
-    });
-    console.log(`Year ${year} initialized successfully.`);
-    return true;
+    const yearsCollection = collection(db, "years");
+    const snapshot = await getDocs(yearsCollection);
+
+    // If no years exist, initialize the current year
+    if (snapshot.empty) {
+      const currentYear = new Date().getFullYear();
+      const yearDoc = doc(db, "years", currentYear.toString());
+      await setDoc(yearDoc, {
+        year: currentYear,
+        semesters: {
+          A: { name: "Semester A", courses: [] },
+          B: { name: "Semester B", courses: [] },
+          C: { name: "Semester C", courses: [] },
+        },
+      });
+      console.log(`Year ${currentYear} initialized successfully.`);
+      return true;
+    }
+
+    return false; // No initialization needed
   } catch (error) {
-    console.error(`Error initializing year ${year}:`, error);
+    console.error("Error initializing year if empty:", error);
     return false;
   }
 };
 
 /**
  * Fetches all years, including their semesters and courses, from Firestore.
+ * If no years exist, initializes the current year automatically.
  * @returns {Promise<Array<{ year: number; semesters: Array<{ name: string; courses: string[] }> }>>}
  */
 export const getAllYearsAndSemesters = async (): Promise<
@@ -36,6 +46,9 @@ export const getAllYearsAndSemesters = async (): Promise<
   }>
 > => {
   try {
+    // Ensure there's at least one year in Firestore
+    await initializeYearIfEmpty();
+
     const yearsCollection = collection(db, "years");
     const snapshot = await getDocs(yearsCollection);
 
@@ -106,7 +119,7 @@ export const addCourse = async (
     console.log(`Course "${course}" added successfully to ${semester}, ${year}.`);
     return true;
   } catch (error) {
-    console.error(`Error adding course: ${error}`);
+    console.error("Error adding course:", error);
     return false;
   }
 };
