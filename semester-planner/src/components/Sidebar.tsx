@@ -108,7 +108,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     <aside className="sidebar">
       <div className="profile-section">
         <img
-          src="./public/user-svgrepo-com.svg"
+          src="./user-svgrepo-com.svg"
           alt="Profile"
           className="profile-pic"
         />
