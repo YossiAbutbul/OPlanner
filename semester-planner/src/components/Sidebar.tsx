@@ -184,7 +184,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
                           )
                         }
                       >
-                        <i className="bx bxs-chevron-right"></i> {course.name}
+                        {course.name}
                       </li>
                     ))}
                   </ul>
