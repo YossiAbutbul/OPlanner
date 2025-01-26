@@ -14,10 +14,8 @@ export const initializeYear = async (year: number): Promise<boolean> => {
       return false;
     }
 
-    // Create the year document
     await setDoc(yearDoc, { year });
 
-    // Add default semesters
     const semesters = [
       { name: "Semester A", key: "Semester A" },
       { name: "Semester B", key: "Semester B" },
@@ -27,9 +25,6 @@ export const initializeYear = async (year: number): Promise<boolean> => {
     for (const semester of semesters) {
       const semesterDoc = doc(db, `years/${year}/semesters`, semester.key);
       await setDoc(semesterDoc, { name: semester.name });
-
-      // Create an empty courses collection for each semester
-      console.log(`Created courses collection for ${semester.name}`);
     }
 
     console.log(`Year ${year} initialized successfully.`);
@@ -42,7 +37,6 @@ export const initializeYear = async (year: number): Promise<boolean> => {
 
 /**
  * Ensures at least one year exists in the database.
- * If no years are found, initializes the current year.
  */
 export const initializeYearIfEmpty = async (): Promise<void> => {
   try {
@@ -60,7 +54,7 @@ export const initializeYearIfEmpty = async (): Promise<void> => {
 };
 
 /**
- * Fetches all years, including their semesters and courses, from Firestore.
+ * Fetches all years, including their semesters and courses.
  */
 export const getAllYearsAndSemesters = async (): Promise<
   Array<{
@@ -68,7 +62,6 @@ export const getAllYearsAndSemesters = async (): Promise<
     semesters: { name: string; key: string; courses: { name: string }[] }[];
   }>
 > => {
-  console.log("Fetching data from Firestore...");
   try {
     const yearsCollection = collection(db, "years");
     const snapshot = await getDocs(yearsCollection);
@@ -77,7 +70,6 @@ export const getAllYearsAndSemesters = async (): Promise<
       snapshot.docs.map(async (yearDoc) => {
         const yearData = yearDoc.data();
 
-        // Fetch semesters collection for the current year
         const semestersCollection = collection(db, `years/${yearDoc.id}/semesters`);
         const semestersSnapshot = await getDocs(semestersCollection);
 
@@ -85,7 +77,6 @@ export const getAllYearsAndSemesters = async (): Promise<
           semestersSnapshot.docs.map(async (semesterDoc) => {
             const semesterData = semesterDoc.data();
 
-            // Fetch courses collection for the current semester
             const coursesCollection = collection(
               db,
               `years/${yearDoc.id}/semesters/${semesterDoc.id}/courses`
@@ -108,7 +99,6 @@ export const getAllYearsAndSemesters = async (): Promise<
       })
     );
 
-    console.log("Parsed Years Data:", yearsData);
     return yearsData;
   } catch (error) {
     console.error("Error fetching years and semesters:", error);
@@ -117,7 +107,7 @@ export const getAllYearsAndSemesters = async (): Promise<
 };
 
 /**
- * Adds a course to a specific semester under a specific year.
+ * Adds a course to a specific semester.
  */
 export const addCourse = async (
   year: number,
@@ -146,7 +136,7 @@ export const addCourse = async (
 };
 
 /**
- * Renames a course within a semester under a specific year.
+ * Renames a course within a semester while retaining all nested data.
  */
 export const renameCourse = async (
   year: number,
@@ -155,31 +145,40 @@ export const renameCourse = async (
   newName: string
 ): Promise<boolean> => {
   try {
-    const semesterDoc = doc(db, `years/${year}/semesters/${semester}`);
     const coursesCollection = collection(db, `years/${year}/semesters/${semester}/courses`);
     const oldCourseDoc = doc(coursesCollection, oldName);
-    const newCourseDoc = doc(coursesCollection, newName);
-
     const oldCourseSnapshot = await getDoc(oldCourseDoc);
+
     if (!oldCourseSnapshot.exists()) {
       console.error(`Course "${oldName}" does not exist.`);
       return false;
     }
 
+    const newCourseDoc = doc(coursesCollection, newName);
     const newCourseSnapshot = await getDoc(newCourseDoc);
+
     if (newCourseSnapshot.exists()) {
       console.error(`Course "${newName}" already exists.`);
       return false;
     }
 
-    // Copy old course data to the new course document
+    // Copy all tasks and data to the new course
     const courseData = oldCourseSnapshot.data();
     await setDoc(newCourseDoc, courseData);
+
+    // Copy tasks collection
+    const oldTasksCollection = collection(db, `years/${year}/semesters/${semester}/courses/${oldName}/tasks`);
+    const oldTasksSnapshot = await getDocs(oldTasksCollection);
+
+    for (const task of oldTasksSnapshot.docs) {
+      const newTaskDoc = doc(db, `years/${year}/semesters/${semester}/courses/${newName}/tasks`, task.id);
+      await setDoc(newTaskDoc, task.data());
+    }
 
     // Delete the old course document
     await deleteDoc(oldCourseDoc);
 
-    console.log(`Course renamed from "${oldName}" to "${newName}".`);
+    console.log(`Course renamed from "${oldName}" to "${newName}" with all data.`);
     return true;
   } catch (error) {
     console.error(`Error renaming course: ${error}`);
@@ -188,7 +187,7 @@ export const renameCourse = async (
 };
 
 /**
- * Deletes a course from a specific semester under a specific year.
+ * Deletes a course from a semester.
  */
 export const deleteCourse = async (year: number, semester: string, course: string): Promise<boolean> => {
   try {

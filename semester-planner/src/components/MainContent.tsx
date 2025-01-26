@@ -15,32 +15,30 @@ interface MainContentProps {
 
 const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
   const { homework, fetchHomework, addHomework } = useHomework();
-  const [isModalOpen, setModalOpen] = useState(false);
   const [filteredHomework, setFilteredHomework] = useState<HomeworkEntry[]>([]);
+  const [isModalOpen, setModalOpen] = useState(false);
 
-  // Fetch homework when the selected course changes
+  // Fetch homework whenever the selected course changes
   useEffect(() => {
     if (selectedCourseData) {
       const { year, semester, course } = selectedCourseData;
-      fetchHomework(year, semester, course);
+      if (course) {
+        fetchHomework(year, semester, course);
+      }
     }
   }, [selectedCourseData, fetchHomework]);
 
-  // Filter homework based on the selected course
+  // Filter homework for the selected course
   useEffect(() => {
-    if (selectedCourseData?.course) {
-      const courseTasks = homework.filter(
-        (hw) => hw.course === selectedCourseData.course
-      );
-      setFilteredHomework(courseTasks);
+    if (selectedCourseData) {
+      const { course } = selectedCourseData;
+      setFilteredHomework(homework.filter((hw) => hw.course === course));
     } else {
       setFilteredHomework([]);
     }
-  }, [homework, selectedCourseData]);
+  }, [selectedCourseData, homework]);
 
-  const completed = filteredHomework.filter((hw) => hw.status === "COMPLETED").length;
-  const pending = filteredHomework.filter((hw) => hw.status === "PENDING").length;
-
+  // Handle saving new homework or updating existing homework
   const handleSaveHomework = async (
     id: string | null,
     name: string,
@@ -56,7 +54,8 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
 
     try {
       await addHomework(id, name, dueDate, status, year, semester, course);
-      await fetchHomework(year, semester, course); // Refresh tasks after saving
+      await fetchHomework(year, semester, course); // Refresh homework list after saving
+      setModalOpen(false); // Close the modal after saving
     } catch (error) {
       console.error("Error saving homework:", error);
     }
@@ -73,7 +72,10 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
               {selectedCourseData.semester}, {selectedCourseData.year}
             </h2>
             <div className="progress-chart-container">
-              <ProgressChart completed={completed} pending={pending} />
+              <ProgressChart
+                completed={filteredHomework.filter((hw) => hw.status === "COMPLETED").length}
+                pending={filteredHomework.filter((hw) => hw.status === "PENDING").length}
+              />
             </div>
             <div className="homework-table-container">
               <HomeworkTable

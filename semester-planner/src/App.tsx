@@ -3,7 +3,6 @@ import "./css/App.css";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
 import RightSidebar from "./components/RightSidebar";
-import "boxicons/css/boxicons.min.css";
 
 const App: React.FC = () => {
   const [selectedCourseData, setSelectedCourseData] = useState<{
@@ -13,6 +12,7 @@ const App: React.FC = () => {
   } | null>(null);
 
   const onCourseOrSemesterSelect = (year: number, semester: string, course?: string) => {
+    console.log("Course selected:", { year, semester, course });
     setSelectedCourseData({ year, semester, course });
   };
 
@@ -20,7 +20,7 @@ const App: React.FC = () => {
     <div className="app-container">
       <Sidebar onCourseOrSemesterSelect={onCourseOrSemesterSelect} />
       <MainContent selectedCourseData={selectedCourseData} />
-      <RightSidebar />
+      <RightSidebar/>
     </div>
   );
 };

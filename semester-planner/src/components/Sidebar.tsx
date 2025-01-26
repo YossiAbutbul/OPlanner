@@ -33,12 +33,23 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{ year: number; semester: string } | null>(null);
   const [newCourseName, setNewCourseName] = useState("");
-  const [loading, setLoading] = useState(false); // For loading states
-  const [error, setError] = useState<string | null>(null); // For error messages
+  const [contextMenu, setContextMenu] = useState<{
+    year: number;
+    semester: string;
+    course: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [renameModal, setRenameModal] = useState<{
+    year: number;
+    semester: string;
+    course: string;
+  } | null>(null);
+  const [renameCourseName, setRenameCourseName] = useState("");
+
+  const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const fetchYearsAndSemesters = async () => {
-    setLoading(true);
-    setError(null);
     try {
       const existingYears = await getAllYearsAndSemesters();
       const formattedYears = existingYears.map((year) => ({
@@ -51,16 +62,23 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
         })),
       }));
       setYears(formattedYears);
-    } catch (err) {
-      console.error("Error fetching years and semesters:", err);
-      setError("Failed to fetch data. Please try again.");
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching years and semesters:", error);
     }
   };
 
   useEffect(() => {
     fetchYearsAndSemesters();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
+        setContextMenu(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const toggleExpand = (yearIndex: number, semesterIndex?: number) => {
@@ -85,27 +103,68 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
 
   const handleAddCourse = async () => {
     if (modalData && newCourseName.trim() !== "") {
-      setLoading(true);
       try {
         await addCourse(modalData.year, modalData.semester, newCourseName.trim());
         await fetchYearsAndSemesters();
         setModalOpen(false);
         setNewCourseName("");
-      } catch (err) {
-        console.error("Error adding course:", err);
-        setError("Failed to add course. Please try again.");
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.error("Error adding course:", error);
       }
     } else {
       alert("Please enter a valid course name.");
     }
   };
 
-  const handleCourseSelect = (year: number, semester: string, course: string) => {
-    console.log("Switching to course:", { year, semester, course });
-    onCourseOrSemesterSelect(year, semester, course);
+  const handleRenameCourse = async () => {
+    if (renameModal && renameCourseName.trim() !== "") {
+      try {
+        await renameCourse(
+          renameModal.year,
+          renameModal.semester,
+          renameModal.course,
+          renameCourseName.trim()
+        );
+        await fetchYearsAndSemesters();
+        setRenameModal(null);
+        setRenameCourseName("");
+      } catch (error) {
+        console.error("Error renaming course:", error);
+      }
+    } else {
+      alert("Please enter a valid course name.");
+    }
   };
+
+  const handleDeleteCourse = async (year: number, semester: string, course: string) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete "${course}"?`);
+    if (confirmDelete) {
+      try {
+        await deleteCourse(year, semester, course);
+        await fetchYearsAndSemesters();
+      } catch (error) {
+        console.error("Error deleting course:", error);
+      }
+    }
+  };
+
+  const openContextMenu = (
+  e: React.MouseEvent,
+  year: number,
+  semester: string,
+  course: string
+) => {
+  e.preventDefault();
+  const rect = (e.target as HTMLElement).getBoundingClientRect();
+  setContextMenu({
+    year,
+    semester,
+    course,
+    x: rect.right + 10, // Position slightly to the right of the icon
+    y: rect.top, // Align vertically with the icon
+  });
+};
+
 
   return (
     <aside className="sidebar">
@@ -122,64 +181,63 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
           </button>
         </div>
       </div>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <p className="error-message">{error}</p>
-      ) : (
-        <ul className="year-list">
-          {years.map((year, yearIndex) => (
-            <li key={year.year} className={`year-item ${year.expanded ? "expanded" : ""}`}>
-              <div className="year-header" onClick={() => toggleExpand(yearIndex)}>
-                {year.year}
-                <i
-                  className={`bx ${year.expanded ? "bx-chevron-up" : "bx-chevron-down"} toggle-icon`}
-                ></i>
-              </div>
-              {year.expanded && (
-                <ul className="semester-list">
-                  {year.semesters.map((semester, semesterIndex) => (
-                    <li
-                      key={semester.key}
-                      className={`semester-item ${semester.expanded ? "expanded" : ""}`}
-                    >
-                      <div
-                        className="semester-header"
-                        onClick={() => toggleExpand(yearIndex, semesterIndex)}
-                      >
-                        {semester.name}
-                        <i
-                          className="bx bx-plus add-course-icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setModalData({ year: year.year, semester: semester.name });
-                            setModalOpen(true);
-                          }}
-                          title="Add New Course"
-                        ></i>
-                      </div>
-                      {semester.expanded && (
-                        <ul className="course-list">
-                          {semester.courses.map((course) => (
-                            <li
-                              key={course.name}
-                              className="course-item"
-                              onClick={() => handleCourseSelect(year.year, semester.name, course.name)}
-                            >
-                              {course.name}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="year-list">
+        {years.map((year, yearIndex) => (
+          <li key={year.year} className={`year-item ${year.expanded ? "expanded" : ""}`}>
+            <div className="year-header" onClick={() => toggleExpand(yearIndex)}>
+              {year.year}
+              <i className={`bx ${year.expanded ? "bx-chevron-up" : "bx-chevron-down"} toggle-icon`}></i>
+            </div>
+            {year.expanded && (
+              <ul className="semester-list">
+                {year.semesters.map((semester, semesterIndex) => (
+                  <li key={semester.key} className={`semester-item ${semester.expanded ? "expanded" : ""}`}>
+                    <div className="semester-header" onClick={() => toggleExpand(yearIndex, semesterIndex)}>
+                      {semester.name}
+                      <i
+                        className="bx bx-plus add-course-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setModalData({ year: year.year, semester: semester.name });
+                          setModalOpen(true);
+                        }}
+                        title="Add New Course"
+                      ></i>
+                    </div>
+                    {semester.expanded && (
+                      <ul className="course-list">
+                        {semester.courses.map((course) => (
+                          <li
+                            key={course.name}
+                            className="course-item"
+                            onClick={() => {
+                              console.log("Switching to course:", {
+                                year: year.year,
+                                semester: semester.name,
+                                course: course.name,
+                              });
+                              onCourseOrSemesterSelect(year.year, semester.name, course.name);
+                            }}
+                          >
+                            {course.name}
+                            <i
+                              className="bx bx-dots-vertical-rounded context-menu-icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openContextMenu(e, year.year, semester.name, course.name);
+                              }}
+                            ></i>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
 
       {isModalOpen && (
         <div className="modal-overlay">
@@ -196,6 +254,65 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
                 Add Course
               </button>
               <button className="modal-btn cancel-btn" onClick={() => setModalOpen(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {contextMenu && (
+  <div
+    ref={contextMenuRef}
+    className="context-menu"
+    style={{
+      top: `${contextMenu.y}px`,
+      left: `${contextMenu.x}px`,
+    }}
+  >
+    <button
+      onClick={() => {
+        setRenameModal({
+          year: contextMenu.year,
+          semester: contextMenu.semester,
+          course: contextMenu.course,
+        });
+        setContextMenu(null);
+      }}
+    >
+      Rename
+    </button>
+    <button
+      onClick={() => {
+        handleDeleteCourse(
+          contextMenu.year,
+          contextMenu.semester,
+          contextMenu.course
+        );
+        setContextMenu(null);
+      }}
+    >
+      Delete
+    </button>
+  </div>
+)}
+
+
+      {renameModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Rename Course</h2>
+            <input
+              type="text"
+              placeholder="Enter New Course Name"
+              value={renameCourseName}
+              onChange={(e) => setRenameCourseName(e.target.value)}
+            />
+            <div className="modal-actions">
+              <button className="modal-btn" onClick={handleRenameCourse}>
+                Rename
+              </button>
+              <button className="modal-btn cancel-btn" onClick={() => setRenameModal(null)}>
                 Cancel
               </button>
             </div>
