@@ -46,6 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     course: string;
   } | null>(null);
   const [renameCourseName, setRenameCourseName] = useState("");
+  const [isAddingYear, setIsAddingYear] = useState(false);
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
@@ -108,6 +109,26 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
       })
     );
   };
+
+  const handleAddYear = async () => {
+  let yearToAdd = new Date().getFullYear();
+
+  while (true) {
+    setIsAddingYear(true);
+
+    const yearAdded = await initializeYear(yearToAdd);
+
+    if (yearAdded) {
+      await fetchYearsAndSemesters(true); // Preserve expanded state
+      setIsAddingYear(false);
+      break; // Successfully added a year, exit the loop
+    } else {
+      console.warn(`Year ${yearToAdd} already exists. Trying the next year.`);
+      yearToAdd += 1; // Increment to the next year
+    }
+  }
+};
+
 
   const handleAddCourse = async () => {
     if (modalData && newCourseName.trim() !== "") {
@@ -176,10 +197,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
           <label className="profile-label">OPlanner</label>
           <button
             className="add-year-btn"
-            onClick={() => initializeYear(new Date().getFullYear())}
+            onClick={handleAddYear}
             title="Add Year"
+            disabled={isAddingYear}
           >
-            <i className="bx bx-plus"></i>
+            {isAddingYear ? <i className='bx bx-loader-alt bx-spin bx-flip-vertical' ></i> : <i className="bx bx-plus"></i>}
           </button>
         </div>
       </div>
