@@ -14,14 +14,25 @@ export const initializeYear = async (year: number): Promise<boolean> => {
       return false;
     }
 
-    await setDoc(yearDoc, {
-      year,
-      semesters: {
-        A: { name: "Semester A", courses: {} },
-        B: { name: "Semester B", courses: {} },
-        C: { name: "Semester C", courses: {} },
-      },
-    });
+    // Create the year document
+    await setDoc(yearDoc, { year });
+
+    // Add default semesters
+    const semesters = [
+      { name: "Semester A", key: "A" },
+      { name: "Semester B", key: "B" },
+      { name: "Semester C", key: "C" },
+    ];
+
+    for (const semester of semesters) {
+      const semesterDoc = doc(db, `years/${year}/semesters`, semester.key);
+      await setDoc(semesterDoc, { name: semester.name });
+
+      // Create an empty courses collection for each semester
+      const coursesCollection = collection(db, `years/${year}/semesters/${semester.key}/courses`);
+      console.log(`Created courses collection for ${semester.name}`);
+    }
+
     console.log(`Year ${year} initialized successfully.`);
     return true;
   } catch (error) {
@@ -49,9 +60,6 @@ export const initializeYearIfEmpty = async (): Promise<void> => {
   }
 };
 
-/**
- * Fetches all years, including their semesters and courses, from Firestore.
- */
 /**
  * Fetches all years, including their semesters and courses, from Firestore.
  */
@@ -112,11 +120,6 @@ export const getAllYearsAndSemesters = async (): Promise<
   }
 };
 
-
-
-
-
-
 /**
  * Adds a course to a specific semester under a specific year.
  */
@@ -126,38 +129,17 @@ export const addCourse = async (
   course: string
 ): Promise<boolean> => {
   try {
-    const yearDoc = doc(db, "years", year.toString());
-    const yearSnapshot = await getDoc(yearDoc);
+    const semesterDoc = doc(db, `years/${year}/semesters/${semester}`);
+    const semesterSnapshot = await getDoc(semesterDoc);
 
-    if (!yearSnapshot.exists()) {
-      console.error(`Year ${year} does not exist.`);
-      return false;
-    }
-
-    const yearData = yearSnapshot.data();
-    const semesterKey = Object.keys(yearData.semesters).find(
-      (key) => yearData.semesters[key]?.name === semester
-    );
-
-    if (!semesterKey) {
+    if (!semesterSnapshot.exists()) {
       console.error(`Semester "${semester}" does not exist in year ${year}.`);
       return false;
     }
 
-    const semesterData = yearData.semesters[semesterKey];
-    if (semesterData.courses && semesterData.courses[course]) {
-      console.warn(`Course "${course}" already exists in ${semester}, ${year}.`);
-      return false;
-    }
-
-    semesterData.courses = {
-      ...semesterData.courses,
-      [course]: { tasks: {} }, // Initialize empty tasks
-    };
-
-    await updateDoc(yearDoc, {
-      [`semesters.${semesterKey}`]: semesterData,
-    });
+    const coursesCollection = collection(db, `years/${year}/semesters/${semester}/courses`);
+    const courseDoc = doc(coursesCollection, course);
+    await setDoc(courseDoc, { tasks: [] });
 
     console.log(`Course "${course}" added successfully to ${semester}, ${year}.`);
     return true;

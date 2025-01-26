@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../css/Sidebar.css";
 import "boxicons/css/boxicons.min.css";
-import { getAllYearsAndSemesters, initializeYear } from "../utility/initializeDatabase";
+import { getAllYearsAndSemesters, initializeYear, addCourse } from "../utility/initializeDatabase";
 
 interface YearData {
   year: number;
@@ -23,6 +23,12 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   const [years, setYears] = useState<YearData[]>([]);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState<{
+    year: number;
+    semester: string;
+  } | null>(null);
+  const [newCourseName, setNewCourseName] = useState("");
 
   const fetchYearsAndSemesters = async () => {
     console.log("Fetching years and semesters...");
@@ -31,17 +37,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
       console.log("Raw Years Data from Firestore:", existingYears);
 
       const formattedYears = existingYears.map((year) => {
-        console.log("Processing Year:", year.year);
-        const processedSemesters = year.semesters.map((semester) => {
-          console.log(`Processing Semester "${semester.name}":`, semester);
-          const processedCourses = semester.courses || [];
-          console.log(`Courses in Semester "${semester.name}":`, processedCourses);
-          return {
-            ...semester,
-            expanded: false, // Initially collapsed
-            courses: processedCourses,
-          };
-        });
+        const processedSemesters = year.semesters.map((semester) => ({
+          ...semester,
+          expanded: false, // Initially collapsed
+          courses: semester.courses || [],
+        }));
         return {
           ...year,
           expanded: false, // Initially collapsed
@@ -49,7 +49,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
         };
       });
 
-      console.log("Formatted Years:", formattedYears);
       setYears(formattedYears);
     } catch (error) {
       console.error("Error in fetchYearsAndSemesters:", error);
@@ -78,6 +77,22 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
         return year;
       })
     );
+  };
+
+  const openAddCourseModal = (year: number, semester: string) => {
+    setModalData({ year, semester });
+    setModalOpen(true);
+  };
+
+  const handleAddCourse = async () => {
+    if (modalData && newCourseName.trim() !== "") {
+      await addCourse(modalData.year, modalData.semester, newCourseName);
+      fetchYearsAndSemesters();
+      setModalOpen(false);
+      setNewCourseName("");
+    } else {
+      alert("Please enter a valid course name.");
+    }
   };
 
   const addYear = async () => {
@@ -110,10 +125,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
       <ul className="year-list">
         {years.map((year, yearIndex) => (
           <li key={year.year} className={`year-item ${year.expanded ? "expanded" : ""}`}>
-            <div
-              className="year-header"
-              onClick={() => toggleExpand(yearIndex)}
-            >
+            <div className="year-header" onClick={() => toggleExpand(yearIndex)}>
               {year.year}
               <i
                 className={`bx ${year.expanded ? "bx-chevron-up" : "bx-chevron-down"} toggle-icon`}
@@ -132,7 +144,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
                     >
                       {semester.name}
                       <i
-                        className={`bx ${semester.expanded ? "bx-chevron-up" : "bx-chevron-down"} toggle-icon`}
+                        className="bx bx-plus add-course-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openAddCourseModal(year.year, semester.name);
+                        }}
+                        title="Add New Course"
                       ></i>
                     </div>
                     {semester.expanded && (
@@ -157,6 +174,31 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
           </li>
         ))}
       </ul>
+
+      {isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Add New Course</h2>
+            <input
+              type="text"
+              placeholder="Enter Course Name"
+              value={newCourseName}
+              onChange={(e) => setNewCourseName(e.target.value)}
+            />
+            <div className="modal-actions">
+              <button className="modal-btn" onClick={handleAddCourse}>
+                Add Course
+              </button>
+              <button
+                className="modal-btn cancel-btn"
+                onClick={() => setModalOpen(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };
