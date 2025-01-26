@@ -56,53 +56,47 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Fetch homework for a specific course under a semester and year
   const fetchHomework = async (year: number, semester: string, course: string) => {
-    try {
-      const tasksCollection = collection(
-        db,
-        `years/${year}/semesters/${semester}/courses/${course}/tasks`
-      );
-      const snapshot = await getDocs(tasksCollection);
-      const homeworkList = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          name: data.name,
-          dueDate: data.dueDate,
-          status: data.status,
-          year,
-          semester,
-          course,
-        } as HomeworkEntry;
-      });
+  try {
+    const tasksCollection = collection(
+      db,
+      `years/${year}/semesters/${semester}/courses/${course}/tasks`
+    );
+    const snapshot = await getDocs(tasksCollection);
+    const homeworkList = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      year,
+      semester,
+      course,
+    })) as HomeworkEntry[];
 
-      setHomework(
-        homeworkList.sort((a, b) => {
-          if (a.status === "COMPLETED" && b.status !== "COMPLETED") return -1;
-          if (a.status !== "COMPLETED" && b.status === "COMPLETED") return 1;
-          const dateA = new Date(a.dueDate).getTime();
-          const dateB = new Date(b.dueDate).getTime();
-          return dateA - dateB;
-        })
-      );
-    } catch (error) {
-      console.error("Error fetching homework:", error);
-    }
-  };
+    setHomework(homeworkList);
+  } catch (error) {
+    console.error("Error fetching homework:", error);
+    setHomework([]); // Set to an empty array if fetching fails
+  }
+};
+
 
   // Get style for days left
   const getDayStyle = (daysLeft: number): React.CSSProperties => {
-    if (daysLeft === 0 || daysLeft < 3) {
-      return { color: "#ff4c4c", fontWeight: "bold" }; // Bold red
-    } else if (daysLeft < 7) {
-      return { color: "orange", fontWeight: "bold" }; // Orange
+    if (daysLeft <= 0) {
+      return { color: "#ff4c4c", fontWeight: "bold" }; // Bold red for overdue
+    } else if (daysLeft < 3) {
+      return { color: "orange", fontWeight: "bold" }; // Orange for near-due
     } else {
-      return { color: "#2ECC71", fontWeight: "bold" }; // Green
+      return { color: "#2ECC71", fontWeight: "bold" }; // Green for sufficient time
     }
   };
 
   // Calculate notifications
   useEffect(() => {
     const now = new Date();
+    const overdue = homework.filter((entry) => {
+      const dueDate = new Date(entry.dueDate);
+      return dueDate < now && entry.status === "PENDING";
+    });
+
     const upcoming = homework
       .filter((entry) => {
         const dueDate = new Date(entry.dueDate);
@@ -111,19 +105,25 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
           dueDate <= new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
         );
       })
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-      .map((entry) => {
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+    setNotifications([
+      ...overdue.map((entry) => ({
+        id: entry.id,
+        message: `${entry.name} is overdue!`,
+        style: { color: "red", fontWeight: "bold" },
+      })),
+      ...upcoming.map((entry) => {
         const dueDate = new Date(entry.dueDate);
         const diffInTime = dueDate.getTime() - now.getTime();
         const daysLeft = Math.ceil(diffInTime / (1000 * 60 * 60 * 24));
-        const message = `${entry.name} is due in ${daysLeft} day${
-          daysLeft > 1 ? "s" : ""
-        } `;
-        const style = getDayStyle(daysLeft);
-        return { id: entry.id, message, style }; // Include ID and style in notification
-      });
-
-    setNotifications(upcoming);
+        return {
+          id: entry.id,
+          message: `${entry.name} is due in ${daysLeft} day${daysLeft > 1 ? "s" : ""}`,
+          style: getDayStyle(daysLeft),
+        };
+      }),
+    ]);
   }, [homework]);
 
   // Add or update homework
@@ -170,17 +170,18 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     semester: string,
     course: string
   ) => {
+    const previousHomework = [...homework];
     try {
+      setHomework((prev) => prev.filter((entry) => entry.id !== id));
       const taskDoc = doc(
         db,
         `years/${year}/semesters/${semester}/courses/${course}/tasks`,
         id
       );
       await deleteDoc(taskDoc);
-
-      setHomework((prev) => prev.filter((entry) => entry.id !== id));
     } catch (error) {
       console.error("Error removing homework:", error);
+      setHomework(previousHomework); // Revert state on error
     }
   };
 

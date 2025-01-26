@@ -5,52 +5,38 @@ import HomeworkModal from "./HomeworkModal";
 import "../css/MainContent.css";
 import { useHomework, HomeworkEntry } from "../context/HomeworkContext";
 
-// Removed duplicate HomeworkEntry interface
-
 interface MainContentProps {
-
   selectedCourseData: {
-
     year: number;
-
     semester: string;
-
     course: string;
-
   } | null;
-
 }
-
 
 const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
   const { homework, fetchHomework, addHomework } = useHomework();
   const [isModalOpen, setModalOpen] = useState(false);
   const [filteredHomework, setFilteredHomework] = useState<HomeworkEntry[]>([]);
 
-  // Fetch homework whenever the selected course changes
+  // Fetch homework when the selected course changes
   useEffect(() => {
     if (selectedCourseData) {
       const { year, semester, course } = selectedCourseData;
-      if (course) {
-        fetchHomework(year, semester, course); // Fetch homework for the selected course
-      }
+      fetchHomework(year, semester, course);
     }
   }, [selectedCourseData, fetchHomework]);
 
-  // Filter homework for the selected course
+  // Filter homework based on the selected course
   useEffect(() => {
-  if (selectedCourseData) {
-    const { course } = selectedCourseData;
-
-
-    const courseTasks = homework.filter((hw) => hw.course === course);
-
-    setFilteredHomework(courseTasks);
-  } else {
-    setFilteredHomework([]);
-  }
-}, [homework, selectedCourseData]);
-
+    if (selectedCourseData?.course) {
+      const courseTasks = homework.filter(
+        (hw) => hw.course === selectedCourseData.course
+      );
+      setFilteredHomework(courseTasks);
+    } else {
+      setFilteredHomework([]);
+    }
+  }, [homework, selectedCourseData]);
 
   const completed = filteredHomework.filter((hw) => hw.status === "COMPLETED").length;
   const pending = filteredHomework.filter((hw) => hw.status === "PENDING").length;
@@ -69,16 +55,8 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
     const { year, semester, course } = selectedCourseData;
 
     try {
-      if (course) {
-        await addHomework(id, name, dueDate, status, year, semester, course);
-      } else {
-        console.error("Course is undefined");
-      }
-      if (course) {
-        await fetchHomework(year, semester, course); // Refresh after adding
-      } else {
-        console.error("Course is undefined");
-      }
+      await addHomework(id, name, dueDate, status, year, semester, course);
+      await fetchHomework(year, semester, course); // Refresh tasks after saving
     } catch (error) {
       console.error("Error saving homework:", error);
     }
@@ -87,9 +65,9 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
   return (
     <div className="main-layout">
       <div className="main-content">
-        <h1>Course Progress</h1>
         {selectedCourseData ? (
           <>
+            <h1>Course Progress</h1>
             <h2>
               Progress for {selectedCourseData.course} in{" "}
               {selectedCourseData.semester}, {selectedCourseData.year}
@@ -105,7 +83,10 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
             </div>
           </>
         ) : (
-          <p>Please select a course from the sidebar to view its progress.</p>
+          <>
+            <h1>Course Progress</h1>
+            <p>Please select a course from the sidebar to view its progress.</p>
+          </>
         )}
       </div>
 
