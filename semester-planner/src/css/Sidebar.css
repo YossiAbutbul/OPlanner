@@ -2,15 +2,17 @@
   font-weight: 500;
   padding: 15px;
 }
+
 button:focus {
   outline: none;
 }
+
 .year-list {
   list-style: none;
   padding: 0;
   width: 100%;
   flex-grow: 1;
-  overflow-y: auto; /* Add scrolling for long lists */
+  overflow-y: auto; /* Enable scrolling for long lists */
 }
 
 .year-item {
@@ -20,18 +22,18 @@ button:focus {
 .year-header {
   display: flex;
   justify-content: space-between;
-  align-items: center; /* Center align the plus icon */
+  align-items: center;
   padding: 10px 15px;
   cursor: pointer;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: bold;
-  background-color: #1f1f1f; /* Sidebar background color */
+  background-color: #1f1f1f;
   transition: background-color 0.3s ease;
 }
 
 .year-header:hover {
-  background-color: #292929; /* Slightly lighter for hover */
+  background-color: #292929;
 }
 
 .toggle-icon {
@@ -50,8 +52,9 @@ button:focus {
 }
 
 .year-item.expanded .semester-list {
-  max-height: 500px; /* Arbitrary height to accommodate content */
+  max-height: 1000px; /* Allow space for nested content */
   opacity: 1;
+  transition: max-height 0.5s ease, opacity 0.5s ease;
 }
 
 .semester-item {
@@ -59,7 +62,7 @@ button:focus {
   margin-bottom: 5px;
   margin-left: 20px;
   border-radius: 5px;
-  background-color: #1f1f1f; /* Same as sidebar background */
+  background-color: #1f1f1f;
   transition: background-color 0.3s ease;
 }
 
@@ -68,17 +71,16 @@ button:focus {
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  border-radius: 8px; /* Rounded edges for semester items */
+  border-radius: 8px;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
   font-weight: 500;
 }
 
 .semester-header:hover {
-  background-color: #292929; /* Slightly lighter on hover */
+  background-color: #292929;
 }
 
-/* Add Course Icon */
 .add-course-icon {
   font-size: 1.2rem;
   color: #888;
@@ -92,33 +94,28 @@ button:focus {
 
 /* Course List */
 .course-list {
+  list-style: none;
   padding-left: 30px;
   margin: 0;
 }
 
 .course-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 5px;
-  margin-left: 5px;
   padding: 5px 10px;
   border-radius: 4px;
   color: #ffffff;
-  background-color: #1f1f1f; /* Match sidebar background */
+  background-color: #1f1f1f;
   cursor: pointer;
   transition: background-color 0.3s ease;
   font-size: 0.9rem;
-  list-style: circle !important;
 }
 
-/* Ensure hover effect applies only to the hovered course */
 .course-item:hover {
-  background-color: #292929; /* Lighter color for hover */
+  background-color: #292929;
 }
-
-/* Prevent hover of one course from affecting others */
-.course-list .course-item:hover ~ .course-item {
-  background-color: #1f1f1f; /* Reset sibling course backgrounds */
-}
-
 
 .add-year-btn {
   padding: 8px 8px;
@@ -133,7 +130,8 @@ button:focus {
 .add-year-btn:hover {
   background-color: #292929;
 }
-.profile-header{
+
+.profile-header {
   padding-right: 10px;
   display: flex;
   justify-content: space-between;
@@ -216,5 +214,3 @@ button:focus {
 .modal-btn:hover {
   background-color: #4cae4c;
 }
-
-

@@ -52,35 +52,70 @@ export const initializeYearIfEmpty = async (): Promise<void> => {
 /**
  * Fetches all years, including their semesters and courses, from Firestore.
  */
+/**
+ * Fetches all years, including their semesters and courses, from Firestore.
+ */
 export const getAllYearsAndSemesters = async (): Promise<
   Array<{
     year: number;
-    semesters: { name: string; courses: { [course: string]: any } }[];
+    semesters: { name: string; key: string; courses: { name: string }[] }[];
   }>
 > => {
+  console.log("Fetching data from Firestore...");
   try {
     const yearsCollection = collection(db, "years");
     const snapshot = await getDocs(yearsCollection);
+    console.log("Firestore Snapshot:", snapshot.docs);
 
-    const yearsData = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      const semesters = Object.entries(data.semesters || {})
-        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB)) // Sort semesters (A, B, C)
-        .map(([key, value]: [string, any]) => ({
-          name: value.name || `Semester ${key}`,
-          courses: value.courses || {},
-        }));
+    const yearsData = await Promise.all(
+      snapshot.docs.map(async (yearDoc) => {
+        const yearData = yearDoc.data();
+        console.log("Year Document Data:", yearData);
 
-      return { year: data.year, semesters };
-    });
+        // Fetch semesters collection for the current year
+        const semestersCollection = collection(db, `years/${yearDoc.id}/semesters`);
+        const semestersSnapshot = await getDocs(semestersCollection);
 
-    // Sort years in ascending order
-    return yearsData.sort((a, b) => a.year - b.year);
+        const semesters = await Promise.all(
+          semestersSnapshot.docs.map(async (semesterDoc) => {
+            const semesterData = semesterDoc.data();
+            console.log("Semester Document Data:", semesterData);
+
+            // Fetch courses collection for the current semester
+            const coursesCollection = collection(
+              db,
+              `years/${yearDoc.id}/semesters/${semesterDoc.id}/courses`
+            );
+            const coursesSnapshot = await getDocs(coursesCollection);
+
+            const courses = coursesSnapshot.docs.map((courseDoc) => ({
+              name: courseDoc.id,
+            }));
+
+            return {
+              name: semesterData.name || `Semester ${semesterDoc.id}`,
+              key: semesterDoc.id,
+              courses,
+            };
+          })
+        );
+
+        return { year: yearData.year, semesters };
+      })
+    );
+
+    console.log("Parsed Years Data:", yearsData);
+    return yearsData;
   } catch (error) {
     console.error("Error fetching years and semesters:", error);
     return [];
   }
 };
+
+
+
+
+
 
 /**
  * Adds a course to a specific semester under a specific year.
@@ -100,11 +135,18 @@ export const addCourse = async (
     }
 
     const yearData = yearSnapshot.data();
-    const semesterKey = semester.replace("Semester ", ""); // Extract A, B, or C
-    const semesterData = yearData.semesters[semesterKey] || {};
+    const semesterKey = Object.keys(yearData.semesters).find(
+      (key) => yearData.semesters[key]?.name === semester
+    );
 
+    if (!semesterKey) {
+      console.error(`Semester "${semester}" does not exist in year ${year}.`);
+      return false;
+    }
+
+    const semesterData = yearData.semesters[semesterKey];
     if (semesterData.courses && semesterData.courses[course]) {
-      console.warn(`Course "${course}" already exists in ${semester}, ${year}`);
+      console.warn(`Course "${course}" already exists in ${semester}, ${year}.`);
       return false;
     }
 

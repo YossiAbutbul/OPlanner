@@ -8,12 +8,19 @@ import { useHomework, HomeworkEntry } from "../context/HomeworkContext";
 // Removed duplicate HomeworkEntry interface
 
 interface MainContentProps {
+
   selectedCourseData: {
+
     year: number;
+
     semester: string;
+
     course: string;
+
   } | null;
+
 }
+
 
 const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
   const { homework, fetchHomework, addHomework } = useHomework();
@@ -24,7 +31,9 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
   useEffect(() => {
     if (selectedCourseData) {
       const { year, semester, course } = selectedCourseData;
-      fetchHomework(year, semester, course); // Fetch homework for the selected course
+      if (course) {
+        fetchHomework(year, semester, course); // Fetch homework for the selected course
+      }
     }
   }, [selectedCourseData, fetchHomework]);
 
@@ -60,8 +69,16 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
     const { year, semester, course } = selectedCourseData;
 
     try {
-      await addHomework(id, name, dueDate, status, year, semester, course);
-      await fetchHomework(year, semester, course); // Refresh after adding
+      if (course) {
+        await addHomework(id, name, dueDate, status, year, semester, course);
+      } else {
+        console.error("Course is undefined");
+      }
+      if (course) {
+        await fetchHomework(year, semester, course); // Refresh after adding
+      } else {
+        console.error("Course is undefined");
+      }
     } catch (error) {
       console.error("Error saving homework:", error);
     }
