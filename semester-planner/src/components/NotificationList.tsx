@@ -83,8 +83,7 @@ const NotificationList: React.FC = () => {
                 <li
                   key={id}
                   onClick={() => handleNotificationClick(id)}
-                  className={`notification-item ${getNotificationClass(daysLeft)}`}
-                >
+                  className={`notification-item ${getNotificationClass(daysLeft)}`}>
                   <strong>{taskName}</strong> is due in{" "}
                   <span style={getDayStyle(daysLeft)}>
                     {daysLeft} day{daysLeft !== 1 ? "s" : ""}

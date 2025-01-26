@@ -49,18 +49,26 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
-  const fetchYearsAndSemesters = async () => {
+  const fetchYearsAndSemesters = async (preserveState = false) => {
     try {
       const existingYears = await getAllYearsAndSemesters();
-      const formattedYears = existingYears.map((year) => ({
-        ...year,
-        expanded: false,
-        semesters: year.semesters.map((semester) => ({
-          ...semester,
-          expanded: false,
-          courses: semester.courses || [],
-        })),
-      }));
+      const formattedYears = existingYears.map((year) => {
+        const existingYear = years.find((y) => y.year === year.year);
+        return {
+          ...year,
+          expanded: preserveState ? existingYear?.expanded || false : false,
+          semesters: year.semesters.map((semester) => {
+            const existingSemester = existingYear?.semesters.find(
+              (s) => s.name === semester.name
+            );
+            return {
+              ...semester,
+              expanded: preserveState ? existingSemester?.expanded || false : false,
+              courses: semester.courses || [],
+            };
+          }),
+        };
+      });
       setYears(formattedYears);
     } catch (error) {
       console.error("Error fetching years and semesters:", error);
@@ -105,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     if (modalData && newCourseName.trim() !== "") {
       try {
         await addCourse(modalData.year, modalData.semester, newCourseName.trim());
-        await fetchYearsAndSemesters();
+        await fetchYearsAndSemesters(true); // Preserve expanded state
         setModalOpen(false);
         setNewCourseName("");
       } catch (error) {
@@ -125,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
           renameModal.course,
           renameCourseName.trim()
         );
-        await fetchYearsAndSemesters();
+        await fetchYearsAndSemesters(true); // Preserve expanded state
         setRenameModal(null);
         setRenameCourseName("");
       } catch (error) {
@@ -141,30 +149,24 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     if (confirmDelete) {
       try {
         await deleteCourse(year, semester, course);
-        await fetchYearsAndSemesters();
+        await fetchYearsAndSemesters(true); // Preserve expanded state
       } catch (error) {
         console.error("Error deleting course:", error);
       }
     }
   };
 
-  const openContextMenu = (
-  e: React.MouseEvent,
-  year: number,
-  semester: string,
-  course: string
-) => {
-  e.preventDefault();
-  const rect = (e.target as HTMLElement).getBoundingClientRect();
-  setContextMenu({
-    year,
-    semester,
-    course,
-    x: rect.right + 10, // Position slightly to the right of the icon
-    y: rect.top, // Align vertically with the icon
-  });
-};
-
+  const openContextMenu = (e: React.MouseEvent, year: number, semester: string, course: string) => {
+    e.preventDefault();
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    setContextMenu({
+      year,
+      semester,
+      course,
+      x: rect.right + 10,
+      y: rect.top,
+    });
+  };
 
   return (
     <aside className="sidebar">
@@ -191,7 +193,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
             {year.expanded && (
               <ul className="semester-list">
                 {year.semesters.map((semester, semesterIndex) => (
-                  <li key={semester.key} className={`semester-item ${semester.expanded ? "expanded" : ""}`}>
+                  <li
+                    key={semester.key}
+                    className={`semester-item ${semester.expanded ? "expanded" : ""}`}
+                  >
                     <div className="semester-header" onClick={() => toggleExpand(yearIndex, semesterIndex)}>
                       {semester.name}
                       <i
@@ -262,41 +267,33 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
       )}
 
       {contextMenu && (
-  <div
-    ref={contextMenuRef}
-    className="context-menu"
-    style={{
-      top: `${contextMenu.y}px`,
-      left: `${contextMenu.x}px`,
-    }}
-  >
-    <button
-      onClick={() => {
-        setRenameModal({
-          year: contextMenu.year,
-          semester: contextMenu.semester,
-          course: contextMenu.course,
-        });
-        setContextMenu(null);
-      }}
-    >
-      Rename
-    </button>
-    <button
-      onClick={() => {
-        handleDeleteCourse(
-          contextMenu.year,
-          contextMenu.semester,
-          contextMenu.course
-        );
-        setContextMenu(null);
-      }}
-    >
-      Delete
-    </button>
-  </div>
-)}
-
+        <div
+          ref={contextMenuRef}
+          className="context-menu"
+          style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
+        >
+          <button
+            onClick={() => {
+              setRenameModal({
+                year: contextMenu.year,
+                semester: contextMenu.semester,
+                course: contextMenu.course,
+              });
+              setContextMenu(null);
+            }}
+          >
+            Rename
+          </button>
+          <button
+            onClick={() => {
+              handleDeleteCourse(contextMenu.year, contextMenu.semester, contextMenu.course);
+              setContextMenu(null);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )}
 
       {renameModal && (
         <div className="modal-overlay">

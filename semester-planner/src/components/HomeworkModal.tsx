@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Modal from "react-modal";
-import "../css/HomeworkModal.css";
+import "../css/HomeworkModal.css"; // Ensure your styles are correctly imported
 
 Modal.setAppElement("#root");
 
@@ -44,7 +44,6 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   const [status, setStatus] = useState("PENDING");
   const dateInputRef = useRef<HTMLInputElement>(null);
 
-  // Populate modal fields for editing or reset for adding
   useEffect(() => {
     if (editHomework) {
       setName(editHomework.name);
@@ -77,10 +76,8 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       return;
     }
 
-    // Call the parent save function
     onSave(editHomework?.id || null, name.trim(), dueDate, status, year, semester, course);
 
-    // Reset modal fields
     setName("");
     setDueDate("");
     setStatus("PENDING");
@@ -109,13 +106,17 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
     <Modal
       isOpen={isOpen}
       onRequestClose={onClose}
+      className="ReactModal__Content"
+      overlayClassName="ReactModal__Overlay"
       contentLabel={editHomework ? "Edit Homework" : "Add Homework"}
     >
+      <button className="close-btn" onClick={onClose}>&times;</button>
       <h2>{editHomework ? "Edit Homework" : "Add Homework"}</h2>
       <form>
         <div>
-          <label>Name:</label>
+          <label htmlFor="homework-name">Name:</label>
           <input
+            id="homework-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -123,13 +124,14 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
           />
         </div>
         <div>
-          <label>Due Date:</label>
+          <label htmlFor="due-date">Due Date:</label>
           <div
             className="date-input-container"
             onClick={handleDateClick}
             style={{ cursor: "pointer" }}
           >
             <input
+              id="due-date"
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
@@ -138,8 +140,9 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
           </div>
         </div>
         <div>
-          <label>Status:</label>
+          <label htmlFor="status">Status:</label>
           <select
+            id="status"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
@@ -147,16 +150,18 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
             <option value="COMPLETED">COMPLETED</option>
           </select>
         </div>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={!name.trim() || !dueDate || !(selectedCourseData || editHomework)}
-        >
-          Save
-        </button>
-        <button type="button" onClick={onClose}>
-          Cancel
-        </button>
+        <div className="modal-actions">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!name.trim() || !dueDate || !(selectedCourseData || editHomework)}
+          >
+            Save
+          </button>
+          <button type="button" className="cancel-btn" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
       </form>
     </Modal>
   );

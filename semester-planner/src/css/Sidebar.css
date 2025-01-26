@@ -94,9 +94,11 @@ button:focus {
 
 /* Course List */
 .course-list {
-  list-style: none;
-  padding-left: 30px;
+  /* list-style: none; */
+  padding-left: 20px;
   margin: 0;
+  
+
 }
 
 .course-item {
@@ -111,6 +113,7 @@ button:focus {
   cursor: pointer;
   transition: background-color 0.3s ease;
   font-size: 0.9rem;
+
 }
 
 .course-item:hover {
@@ -170,7 +173,7 @@ button:focus {
 }
 
 .modal-content input {
-  width: 100%;
+  width: 94%;
   padding: 10px;
   margin-bottom: 10px;
   border: 1px solid #555;
