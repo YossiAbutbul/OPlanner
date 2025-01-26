@@ -121,6 +121,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Enter homework name"
+            autoComplete="off"
           />
         </div>
         <div>

@@ -1,16 +1,16 @@
 /* Modal Overlay */
 .ReactModal__Overlay {
-  position: fixed; /* Ensures the overlay covers the entire screen */
+  position: fixed; 
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7); /* Dark semi-transparent background */
-  display: flex; /* Center the modal */
+  background-color: rgba(0, 0, 0, 0.7); 
+  display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; /* Ensure it appears on top of other elements */
-  backdrop-filter: blur(4px); /* Add blur effect to the background */
+  z-index: 1000; 
+  backdrop-filter: blur(4px); 
 }
 
 /* Modal Content */
@@ -80,6 +80,8 @@ form select {
   outline: none;
   transition: border-color 0.3s, box-shadow 0.3s;
 }
+
+
 
 form input:focus,
 form select:focus {

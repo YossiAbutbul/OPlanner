@@ -97,8 +97,6 @@ button:focus {
   /* list-style: none; */
   padding-left: 20px;
   margin: 0;
-  
-
 }
 
 .course-item {
@@ -113,7 +111,6 @@ button:focus {
   cursor: pointer;
   transition: background-color 0.3s ease;
   font-size: 0.9rem;
-
 }
 
 .course-item:hover {
@@ -144,27 +141,30 @@ button:focus {
 
 /* Modal Overlay */
 .modal-overlay {
-  position: fixed;
+  position: fixed; 
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.7); 
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000; 
+  backdrop-filter: blur(4px); 
 }
 
 /* Modal Content */
 .modal-content {
-  background-color: #1e1e1e;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  text-align: center;
   width: 90%;
-  max-width: 400px;
+  max-width: 450px; /* Limit modal width on larger screens */
+  background-color: #1e1e1e; /* Dark background */
+  border-radius: 16px; /* Rounded corners */
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Box shadow for depth */
+  animation: scaleIn 0.3s ease-in-out; /* Smooth scale-in animation */
+  position: relative; /* Needed for positioning child elements */
+  color: #ffffff; /* White text for readability */
 }
 
 .modal-content h2 {
@@ -182,9 +182,14 @@ button:focus {
   color: #fff;
 }
 
-.modal-content input::placeholder {
-  color: #888;
+.modal-content input:focus {
+  border-color: #48bb78; /* Green border on focus */
+  box-shadow: 0 0 5px rgba(72, 187, 120, 0.8); /* Subtle glow */
 }
+
+/* .modal-content input::placeholder {
+  color: #888;
+} */
 
 .modal-actions {
   display: flex;
@@ -192,33 +197,36 @@ button:focus {
 }
 
 .modal-btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  margin-top: 10px;
+  padding: 12px 20px;
+  font-size: 1rem;
   font-weight: bold;
-  transition: background-color 0.3s ease;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
 }
 
 .modal-btn.cancel-btn {
-  background-color: #d9534f;
-  color: #fff;
+  background-color: #e53e3e;
+  color: white;
+  margin-left: 10px;
 }
 
 .modal-btn.cancel-btn:hover {
-  background-color: #c9302c;
+  background-color: #c53030; /* Darker red */
+  transform: scale(1.05);
 }
 
 .modal-btn {
-  background-color: #5cb85c;
-  color: #fff;
+  background-color: #48bb78; 
+  color: white;
 }
 
 .modal-btn:hover {
-  background-color: #4cae4c;
+  background-color: #38a169; /* Darker green */
+  transform: scale(1.05);
 }
-
-
 
 /* Context Menu */
 .context-menu {
@@ -228,7 +236,7 @@ button:focus {
   border-radius: 8px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
   z-index: 2000;
-  padding: 10px 0;
+  padding: 0;
   width: 150px;
 }
 
@@ -264,4 +272,16 @@ button:focus {
 
 .context-menu-icon:hover {
   color: #fff;
+}
+
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
