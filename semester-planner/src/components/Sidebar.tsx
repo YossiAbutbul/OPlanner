@@ -48,6 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   const [renameCourseName, setRenameCourseName] = useState("");
   const [isAddingYear, setIsAddingYear] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // New state for loading
+  const [isLoadingAction, setIsLoadingAction] = useState(false); // New state for action loading
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
@@ -133,15 +134,23 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     }
   };
 
+  const capitalizeWords = (str: string) => {
+    return str.replace(/\b\w/g, char => char.toUpperCase());
+  };
+
   const handleAddCourse = async () => {
     if (modalData && newCourseName.trim() !== "") {
       try {
-        await addCourse(modalData.year, modalData.semester, newCourseName.trim());
+        setIsLoadingAction(true); // Start loading
+        const capitalizedCourseName = capitalizeWords(newCourseName.trim());
+        await addCourse(modalData.year, modalData.semester, capitalizedCourseName);
         await fetchYearsAndSemesters(true); // Preserve expanded state
         setModalOpen(false);
         setNewCourseName("");
       } catch (error) {
         console.error("Error adding course:", error);
+      } finally {
+        setIsLoadingAction(false); // End loading
       }
     } else {
       alert("Please enter a valid course name.");
@@ -151,17 +160,21 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   const handleRenameCourse = async () => {
     if (renameModal && renameCourseName.trim() !== "") {
       try {
+        setIsLoadingAction(true); // Start loading
+        const capitalizedCourseName = capitalizeWords(renameCourseName.trim());
         await renameCourse(
           renameModal.year,
           renameModal.semester,
           renameModal.course,
-          renameCourseName.trim()
+          capitalizedCourseName
         );
         await fetchYearsAndSemesters(true); // Preserve expanded state
         setRenameModal(null);
         setRenameCourseName("");
       } catch (error) {
         console.error("Error renaming course:", error);
+      } finally {
+        setIsLoadingAction(false); // End loading
       }
     } else {
       alert("Please enter a valid course name.");
@@ -172,10 +185,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete "${course}"?`);
     if (confirmDelete) {
       try {
+        setIsLoadingAction(true); // Start loading
         await deleteCourse(year, semester, course);
         await fetchYearsAndSemesters(true); // Preserve expanded state
       } catch (error) {
         console.error("Error deleting course:", error);
+      } finally {
+        setIsLoadingAction(false); // End loading
       }
     }
   };
@@ -198,7 +214,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     }
   }, [renameModal]);
 
-  
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      handleAddCourse();
+    }
+  };
 
   return (
     <aside className="sidebar">
@@ -257,7 +277,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
                               onCourseOrSemesterSelect(year.year, semester.name, course.name);
                             }}
                           >
-                            {course.name}
+                            {capitalizeWords(course.name)}
                             <i
                               className="bx bx-dots-vertical-rounded context-menu-icon"
                               onClick={(e) => {
@@ -286,12 +306,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
               placeholder="Enter Course Name"
               value={newCourseName}
               onChange={(e) => setNewCourseName(e.target.value)}
+              onKeyPress={handleKeyPress}
+              disabled={isLoadingAction}
             />
             <div className="modal-actions">
-              <button className="modal-btn" onClick={handleAddCourse}>
-                Add Course
+              <button className="modal-btn" onClick={handleAddCourse} disabled={isLoadingAction}>
+                {isLoadingAction ? <div className="loading-spinner"></div> : "Add Course"}
               </button>
-              <button className="modal-btn cancel-btn" onClick={() => setModalOpen(false)}>
+              <button className="modal-btn cancel-btn" onClick={() => setModalOpen(false)} disabled={isLoadingAction}>
                 Cancel
               </button>
             </div>
@@ -339,8 +361,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
               onChange={(e) => setRenameCourseName(e.target.value)}
             />
             <div className="modal-actions">
-              <button className="modal-btn" onClick={handleRenameCourse}>
-                Rename
+              <button className="modal-btn" onClick={handleRenameCourse} disabled={isLoadingAction}>
+                {isLoadingAction ? <i className="bx bx-loader-alt bx-spin"></i> : "Rename"}
               </button>
               <button className="modal-btn cancel-btn" onClick={() => setRenameModal(null)}>
                 Cancel
