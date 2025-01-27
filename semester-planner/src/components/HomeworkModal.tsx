@@ -30,6 +30,7 @@ interface HomeworkModalProps {
     semester: string;
     course: string;
   } | null;
+  isLoading: boolean; // New prop for loading state
 }
 
 const HomeworkModal: React.FC<HomeworkModalProps> = ({
@@ -38,6 +39,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   onSave,
   editHomework,
   selectedCourseData,
+  isLoading,
 }) => {
   const [name, setName] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -155,9 +157,9 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
           <button
             type="button"
             onClick={handleSave}
-            disabled={!name.trim() || !dueDate || !(selectedCourseData || editHomework)}
+            disabled={!name.trim() || !dueDate || !(selectedCourseData || editHomework) || isLoading}
           >
-            Save
+            {isLoading ? <i className="bx bx-loader-alt bx-spin"></i> : "Save"}
           </button>
           <button type="button" className="cancel-btn" onClick={onClose}>
             Cancel
