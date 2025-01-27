@@ -54,6 +54,11 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
     setModalOpen(true);
   };
 
+  // Capitalize the first letter of the homework name
+  const capitalizeFirstLetter = (text: string) => {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
   // Get style for status
   const getStatusStyle = (status: string) => {
     return status === "COMPLETED"
@@ -98,7 +103,7 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
             {sortedHomework.map((entry) => (
               <tr key={`${entry.id}-${entry.dueDate}`}>
                 <td>
-                  <i className="bx bx-edit"></i> {entry.name}
+                  <i className="bx bx-edit"></i> {capitalizeFirstLetter(entry.name)}
                 </td>
                 <td>
                   <i className="bx bx-calendar-alt"></i> {formatDate(entry.dueDate)}

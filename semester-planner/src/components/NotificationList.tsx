@@ -38,6 +38,11 @@ const NotificationList: React.FC = () => {
     }
   };
 
+  // Capitalize the first letter of the task name
+  const capitalizeFirstLetter = (text: string) => {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+
   // Handle notification click
   const handleNotificationClick = (id: string) => {
     const selectedHomework = homework.find((hw) => hw.id === id);
@@ -84,7 +89,7 @@ const NotificationList: React.FC = () => {
                   key={id}
                   onClick={() => handleNotificationClick(id)}
                   className={`notification-item ${getNotificationClass(daysLeft)}`}>
-                  <strong>{taskName}</strong> is due in{" "}
+                  <strong>{capitalizeFirstLetter(taskName)}</strong> is due in{" "}
                   <span style={getDayStyle(daysLeft)}>
                     {daysLeft} day{daysLeft !== 1 ? "s" : ""}
                   </span>
