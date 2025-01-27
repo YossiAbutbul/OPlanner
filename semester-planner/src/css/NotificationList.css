@@ -1,8 +1,10 @@
 .notification-list {
   border-radius: 10px;
-  padding: 15px;
   margin-top: 15px;
   color: #e0e0e0; /* Softer light text color */
+  display: flex;
+  justify-content: center; /* Center align on the x-axis */
+  
 }
 
 .notification-list ul {
@@ -12,9 +14,10 @@
 }
 
 .notification-list li {
+  width: calc(100% - 1rem);
   font-size: 1rem;
   border-radius: 10px;
-  padding: 15px;
+  /* padding: 15px; */
   margin: 10px 0;
   display: flex;
   align-items: center;
@@ -23,6 +26,7 @@
   color: #f1f1f1; /* Light text color for items */
   cursor: pointer; /* Pointer cursor for hover */
   transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease; /* Smooth animations */
+  gap: 5px; /* Add space between elements inside list items */
 }
 
 .notification-list li:hover {
@@ -58,7 +62,7 @@
 
 /* Scrollbar for notification list */
 .notification-list ul::-webkit-scrollbar {
-  width: 10px;
+  width: 0;
 }
 
 .notification-list ul::-webkit-scrollbar-track {

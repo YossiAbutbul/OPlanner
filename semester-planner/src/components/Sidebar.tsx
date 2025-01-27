@@ -47,11 +47,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   } | null>(null);
   const [renameCourseName, setRenameCourseName] = useState("");
   const [isAddingYear, setIsAddingYear] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // New state for loading
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const fetchYearsAndSemesters = async (preserveState = false) => {
     try {
+      setIsLoading(true); // Start loading
       const existingYears = await getAllYearsAndSemesters();
       const formattedYears = existingYears.map((year) => {
         const existingYear = years.find((y) => y.year === year.year);
@@ -73,6 +75,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
       setYears(formattedYears);
     } catch (error) {
       console.error("Error fetching years and semesters:", error);
+    } finally {
+      setIsLoading(false); // End loading
     }
   };
 
@@ -188,6 +192,19 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     });
   };
 
+  useEffect(() => {
+    if (renameModal) {
+      setRenameCourseName(renameModal.course);
+    }
+  }, [renameModal]);
+
+  useEffect(() => {
+    if (renameModal) {
+      const input = document.querySelector<HTMLInputElement>(".modal-content input");
+    
+    }
+  }, [renameCourseName]);
+
   return (
     <aside className="sidebar">
       <div className="profile-section">
@@ -200,7 +217,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
             title="Add Year"
             disabled={isAddingYear}
           >
-            {isAddingYear ? <i className="bx bx-loader-alt bx-spin"></i> : <i className="bx bx-plus"></i>}
+            {isLoading ? <i className="bx bx-loader-alt bx-spin"></i> : isAddingYear ? <i className="bx bx-loader-alt bx-spin"></i> : <i className="bx bx-plus"></i>}
           </button>
         </div>
       </div>
