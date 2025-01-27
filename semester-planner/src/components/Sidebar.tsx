@@ -198,12 +198,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     }
   }, [renameModal]);
 
-  useEffect(() => {
-    if (renameModal) {
-      const input = document.querySelector<HTMLInputElement>(".modal-content input");
-    
-    }
-  }, [renameCourseName]);
+  
 
   return (
     <aside className="sidebar">
