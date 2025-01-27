@@ -17,6 +17,7 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
   const { homework, fetchHomework, addHomework } = useHomework();
   const [filteredHomework, setFilteredHomework] = useState<HomeworkEntry[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [isLoadingAction, setIsLoadingAction] = useState(false); // New state for action loading
 
   // Fetch homework whenever the selected course changes
   useEffect(() => {
@@ -38,6 +39,10 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
     }
   }, [selectedCourseData, homework]);
 
+  const capitalizeWords = (str: string) => {
+    return str.replace(/\b\w/g, char => char.toUpperCase());
+  };
+
   // Handle saving new homework or updating existing homework
   const handleSaveHomework = async (
     id: string | null,
@@ -51,13 +56,17 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
     }
 
     const { year, semester, course } = selectedCourseData;
+    const capitalizedCourse = capitalizeWords(course);
 
     try {
-      await addHomework(id, name, dueDate, status, year, semester, course);
-      await fetchHomework(year, semester, course); // Refresh homework list after saving
+      setIsLoadingAction(true); // Start loading
+      await addHomework(id, name, dueDate, status, year, semester, capitalizedCourse);
+      await fetchHomework(year, semester, capitalizedCourse); // Refresh homework list after saving
       setModalOpen(false); // Close the modal after saving
     } catch (error) {
       console.error("Error saving homework:", error);
+    } finally {
+      setIsLoadingAction(false); // End loading
     }
   };
 
@@ -68,7 +77,7 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
           <>
             <h1>Course Progress</h1>
             <h2>
-              Progress for {selectedCourseData.course} in{" "}
+              Progress for {capitalizeWords(selectedCourseData.course)} in{" "}
               {selectedCourseData.semester}, {selectedCourseData.year}
             </h2>
             <div className="progress-chart-container">
@@ -97,6 +106,7 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
         onClose={() => setModalOpen(false)}
         onSave={handleSaveHomework}
         selectedCourseData={selectedCourseData}
+        isLoading={isLoadingAction} // Pass loading state to modal
       />
     </div>
   );
