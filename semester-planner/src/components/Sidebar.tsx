@@ -97,38 +97,37 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
           return {
             ...year,
             expanded: semesterIndex === undefined ? !year.expanded : year.expanded,
-            semesters: semesterIndex !== undefined
-              ? year.semesters.map((semester, sIndex) => ({
-                  ...semester,
-                  expanded: sIndex === semesterIndex ? !semester.expanded : semester.expanded,
-                }))
-              : year.semesters,
+            semesters: year.semesters.map((semester, sIndex) => {
+              if (sIndex === semesterIndex) {
+                return { ...semester, expanded: !semester.expanded };
+              }
+              return semester; // Retain the state of other semesters
+            }),
           };
         }
-        return year;
+        return year; // Retain the state of other years
       })
     );
   };
 
   const handleAddYear = async () => {
-  let yearToAdd = new Date().getFullYear();
+    let yearToAdd = new Date().getFullYear();
 
-  while (true) {
-    setIsAddingYear(true);
+    while (true) {
+      setIsAddingYear(true);
 
-    const yearAdded = await initializeYear(yearToAdd);
+      const yearAdded = await initializeYear(yearToAdd);
 
-    if (yearAdded) {
-      await fetchYearsAndSemesters(true); // Preserve expanded state
-      setIsAddingYear(false);
-      break; // Successfully added a year, exit the loop
-    } else {
-      console.warn(`Year ${yearToAdd} already exists. Trying the next year.`);
-      yearToAdd += 1; // Increment to the next year
+      if (yearAdded) {
+        await fetchYearsAndSemesters(true); // Preserve expanded state
+        setIsAddingYear(false);
+        break; // Successfully added a year, exit the loop
+      } else {
+        console.warn(`Year ${yearToAdd} already exists. Trying the next year.`);
+        yearToAdd += 1; // Increment to the next year
+      }
     }
-  }
-};
-
+  };
 
   const handleAddCourse = async () => {
     if (modalData && newCourseName.trim() !== "") {
@@ -201,7 +200,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
             title="Add Year"
             disabled={isAddingYear}
           >
-            {isAddingYear ? <i className='bx bx-loader-alt bx-spin bx-flip-vertical' ></i> : <i className="bx bx-plus"></i>}
+            {isAddingYear ? <i className="bx bx-loader-alt bx-spin"></i> : <i className="bx bx-plus"></i>}
           </button>
         </div>
       </div>
@@ -215,11 +214,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
             {year.expanded && (
               <ul className="semester-list">
                 {year.semesters.map((semester, semesterIndex) => (
-                  <li
-                    key={semester.key}
-                    className={`semester-item ${semester.expanded ? "expanded" : ""}`}
-                  >
-                    <div className="semester-header" onClick={() => toggleExpand(yearIndex, semesterIndex)}>
+                  <li key={semester.key} className={`semester-item ${semester.expanded ? "expanded" : ""}`}>
+                    <div
+                      className="semester-header"
+                      onClick={() => toggleExpand(yearIndex, semesterIndex)}
+                    >
                       {semester.name}
                       <i
                         className="bx bx-plus add-course-icon"

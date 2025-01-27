@@ -17,6 +17,8 @@ button:focus {
 
 .year-item {
   margin-bottom: 10px;
+  overflow: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
 .year-header {
@@ -54,18 +56,21 @@ button:focus {
 .year-item.expanded .semester-list {
   max-height: 1000px; /* Allow space for nested content */
   opacity: 1;
-  transition: max-height 0.5s ease, opacity 0.5s ease;
+  /* transition: max-height 0.5s ease, opacity 0.5s ease; */
 }
 
 .semester-item {
   padding: 10px;
-  margin-bottom: 5px;
+  /* margin-bottom: 5px; */
   margin-left: 20px;
   border-radius: 5px;
   background-color: #1f1f1f;
-  transition: background-color 0.3s ease;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
 }
-
+.semester-item.expanded .course-list {
+  max-height: 1000px; /* Large enough to show all items */
+  opacity: 1;
+}
 .semester-header {
   display: flex;
   justify-content: space-between;
@@ -103,7 +108,7 @@ button:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 5px;
+  /* margin-bottom: 5px; */
   padding: 5px 10px;
   border-radius: 4px;
   color: #ffffff;
