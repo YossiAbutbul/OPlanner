@@ -38,7 +38,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
     };
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (event.target instanceof Node && !event.target.closest(".ReactModal__Content")) {
+      if (event.target instanceof Element && !event.target.closest(".ReactModal__Content")) {
         onClose();
       }
     };
