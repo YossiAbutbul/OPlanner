@@ -123,7 +123,7 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
         onClose={() => {
           setModalOpen(false);
           setEditHomework(null);
-        }}
+        } }
         onSave={(id, name, dueDate, status, year, semester, course) => {
           if (!name || !dueDate) {
             alert("Please fill in all fields before saving.");
@@ -132,10 +132,9 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
           addHomework(id, name, dueDate, status, year, semester, course);
           setModalOpen(false);
           setEditHomework(null);
-        }}
+        } }
         editHomework={editHomework}
-        selectedCourseData={editHomework ? null : null}
-      />
+        selectedCourseData={editHomework ? null : null} isLoading={false}      />
     </div>
   );
 };
