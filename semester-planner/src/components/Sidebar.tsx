@@ -408,6 +408,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
 
       {yearContextMenu && (
         <div
+          ref={contextMenuRef} // Add ref to year context menu
           className="context-menu"
           style={{ top: `${yearContextMenu.y}px`, left: `${yearContextMenu.x}px` }}
         >

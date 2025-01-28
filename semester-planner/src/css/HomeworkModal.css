@@ -26,6 +26,10 @@
   color: #ffffff; /* White text for readability */
 }
 
+.ReactModal__Content.homework-modal {
+  max-width: 450px; /* Limit modal width on larger screens */
+}
+
 /* Modal Header */
 .ReactModal__Content h2 {
   margin-top: 0;
