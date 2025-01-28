@@ -119,20 +119,19 @@
 
 /* Action Buttons Styles */
 .homework-table button {
-  background-color: #fff; /* Gray background */
-  color: #333;
-  /* border: solid 1px #e4e4e7; */
+  background-color: #fff; 
+  color: #716e6e;
+  border: solid 1px #aeaeae;
   padding: 8px 16px;
   border-radius: calc(0.5rem - 2px); /* Rounded buttons */
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.3s;
   margin: 5px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Add shadow */
 }
 
 .homework-table button:hover {
-  background-color: #efefef
+  background-color: #eaeaea
   /* transform: scale(1.05); */
 }
 
