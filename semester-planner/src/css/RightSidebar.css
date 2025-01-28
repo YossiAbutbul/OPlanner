@@ -23,7 +23,7 @@
 
 .notification-list li {
   background: #303030;
-  /* border: 1px solid #ddd; */
+  cursor: pointer;
   border-radius: 6px;
   padding: 15px;
   margin: 10px 0;
@@ -31,6 +31,7 @@
   width: calc(100% - 2rem); /* Full width with 1rem padding on both sides */
   max-width: 450px;
   min-width: 150px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
 }
 
 .notification-list p {
