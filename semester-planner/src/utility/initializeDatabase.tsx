@@ -207,3 +207,25 @@ export const deleteCourse = async (year: number, semester: string, course: strin
     return false;
   }
 };
+
+/**
+ * Deletes a year from the database.
+ */
+export const deleteYear = async (year: number): Promise<boolean> => {
+  try {
+    const yearDoc = doc(db, "years", year.toString());
+    const yearSnapshot = await getDoc(yearDoc);
+
+    if (!yearSnapshot.exists()) {
+      console.error(`Year "${year}" does not exist.`);
+      return false;
+    }
+
+    await deleteDoc(yearDoc);
+    console.log(`Year "${year}" deleted successfully.`);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting year: ${error}`);
+    return false;
+  }
+};

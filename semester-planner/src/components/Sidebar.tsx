@@ -7,6 +7,7 @@ import {
   addCourse,
   renameCourse,
   deleteCourse,
+  deleteYear,
 } from "../utility/initializeDatabase";
 import DeleteModal from "./DeleteModal";
 
@@ -55,6 +56,16 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     semester: string;
     course: string;
   } | null>(null);
+  const [yearContextMenu, setYearContextMenu] = useState<{
+    year: number;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [isDeletingYear, setIsDeletingYear] = useState(false);
+  const [confirmDeleteYear, setConfirmDeleteYear] = useState<{
+    year: number;
+  } | null>(null);
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
@@ -95,6 +106,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     const handleClickOutside = (event: MouseEvent) => {
       if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
         setContextMenu(null);
+        setYearContextMenu(null); // Close year context menu as well
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -218,6 +230,36 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     });
   };
 
+  const openYearContextMenu = (e: React.MouseEvent, year: number) => {
+    e.preventDefault();
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    setYearContextMenu({
+      year,
+      x: rect.right + 10,
+      y: rect.top,
+    });
+  };
+
+  const handleDeleteYear = async (password: string = "") => {
+    if (password.trim() === "admin") {
+      try {
+        setIsDeletingYear(true);
+        if (confirmDeleteYear) {
+          await deleteYear(confirmDeleteYear.year);
+          await fetchYearsAndSemesters(true); // Preserve expanded state
+          setConfirmDeleteYear(null);
+          setAdminPassword(""); // Reset admin password
+        }
+      } catch (error) {
+        console.error("Error deleting year:", error);
+      } finally {
+        setIsDeletingYear(false);
+      }
+    } else {
+      alert("Invalid admin password.");
+    }
+  };
+
   useEffect(() => {
     if (renameModal) {
       setRenameCourseName(renameModal.course);
@@ -248,7 +290,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
       </div>
       <ul className="year-list">
         {years.map((year, yearIndex) => (
-          <li key={year.year} className={`year-item ${year.expanded ? "expanded" : ""}`}>
+          <li
+            key={year.year}
+            className={`year-item ${year.expanded ? "expanded" : ""}`}
+            onContextMenu={(e) => openYearContextMenu(e, year.year)}
+          >
             <div className="year-header" onClick={() => toggleExpand(yearIndex)}>
               {year.year}
               <i className={`bx ${year.expanded ? "bx-chevron-up" : "bx-chevron-down"} toggle-icon`}></i>
@@ -360,6 +406,22 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
         </div>
       )}
 
+      {yearContextMenu && (
+        <div
+          className="context-menu"
+          style={{ top: `${yearContextMenu.y}px`, left: `${yearContextMenu.x}px` }}
+        >
+          <button
+            onClick={() => {
+              setConfirmDeleteYear({ year: yearContextMenu.year });
+              setYearContextMenu(null);
+            }}
+          >
+            Delete Year
+          </button>
+        </div>
+      )}
+
       {renameModal && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -390,6 +452,29 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
           title="Confirm Delete"
           message={`Are you sure you want to delete "${confirmDelete.course}"?`}
         />
+      )}
+
+      {confirmDeleteYear && (
+        <DeleteModal
+          isOpen={!!confirmDeleteYear}
+          onClose={() => {
+            setConfirmDeleteYear(null);
+            setAdminPassword(""); // Reset admin password
+          }}
+          onConfirm={handleDeleteYear}
+          title="Confirm Delete Year"
+          message={`Enter admin password to delete year "${confirmDeleteYear.year}".`}
+        >
+          <div className="modal-content">
+            <input
+              type="password"
+              placeholder="Admin Password"
+              value={adminPassword}
+              onChange={(e) => setAdminPassword(e.target.value)}
+            />
+            {isDeletingYear && <div className="loading-spinner"></div>}
+          </div>
+        </DeleteModal>
       )}
     </aside>
   );
