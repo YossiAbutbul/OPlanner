@@ -16,7 +16,7 @@
 /* Modal Content */
 .ReactModal__Content {
   width: 90%;
-  max-width: 450px; /* Limit modal width on larger screens */
+  max-width: 350px; /* Limit modal width on larger screens */
   background-color: #1e1e1e; /* Dark background */
   border-radius: 16px; /* Rounded corners */
   padding: 30px;
@@ -24,6 +24,10 @@
   animation: scaleIn 0.3s ease-in-out; /* Smooth scale-in animation */
   position: relative; /* Needed for positioning child elements */
   color: #ffffff; /* White text for readability */
+}
+
+.ReactModal__Content.delete-modal {
+  max-width: 350px; /* Limit modal width on larger screens */
 }
 
 /* Modal Header */
