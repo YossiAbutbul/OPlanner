@@ -80,7 +80,7 @@ const NotificationList: React.FC = () => {
         <ul>
           {notifications.map(({ id, message }) => {
             const match = message.match(/(\d+) day/);
-            const daysLeft = match ? parseInt(match[1], 10) : null;
+            const daysLeft = match ? parseInt(match[1], 10) : 0; // Default to 0 if no match
 
             if (daysLeft !== null) {
               const [taskName] = message.split(" is due");
@@ -89,9 +89,9 @@ const NotificationList: React.FC = () => {
                   key={id}
                   onClick={() => handleNotificationClick(id)}
                   className={`notification-item ${getNotificationClass(daysLeft)}`}>
-                  <strong>{capitalizeFirstLetter(taskName)}</strong> is due in{" "}
+                  <strong>{capitalizeFirstLetter(taskName.trim())}</strong> is due{" "}
                   <span style={getDayStyle(daysLeft)}>
-                    {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+                    {daysLeft === 0 ? "today" : `${daysLeft} day${daysLeft !== 1 ? "s" : ""}`}
                   </span>
                 </li>
               );
@@ -108,6 +108,7 @@ const NotificationList: React.FC = () => {
         onSave={handleSave}
         editHomework={editHomework}
         selectedCourseData={null} // Not needed when editing
+        isLoading={false} // Add the isLoading property
       />
     </div>
   );

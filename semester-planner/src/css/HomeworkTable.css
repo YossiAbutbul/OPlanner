@@ -40,10 +40,26 @@
   max-height: calc(5 * 48px); /* Limit to 5 rows */
   overflow-y: auto; /* Add vertical scrollbar */
   overflow-x: hidden; /* Remove horizontal scrollbar */
+  padding-right: 10px; /* Add padding to make space for scrollbar */
 }
 
+/* Custom Scrollbar */
 .homework-table tbody::-webkit-scrollbar {
-  width: 0px; /* Hide scrollbar */
+  width: 4px; /* Thin scrollbar */
+}
+
+.homework-table tbody::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Light background for scrollbar track */
+}
+
+.homework-table tbody::-webkit-scrollbar-thumb {
+  background: #888; /* Darker background for scrollbar thumb */
+  border-radius: 4px; /* Rounded scrollbar thumb */
+  cursor: pointer; /* Pointer cursor for scrollbar */
+}
+
+.homework-table tbody::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Darker on hover */
 }
 
 .homework-table tbody tr {
