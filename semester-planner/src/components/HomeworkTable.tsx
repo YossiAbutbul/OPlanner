@@ -58,9 +58,11 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
 
   // Get style for status
   const getStatusStyle = (status: string) => {
-    return status === "COMPLETED"
-      ? { color: "#00bb77", fontWeight: "bold" }
-      : { color: "#ffbf00", fontWeight: "bold" };
+    const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    const isSmallScreen = window.innerWidth <= 1430;
+    return capitalizedStatus === "Completed"
+      ? { color: "#00bb77", fontWeight: "bold", backgroundColor: "#e6f7f1", padding: "5px 10px", borderRadius: "10px", display: "inline-block", transform: isSmallScreen ? "translateY(150%)" : "translateY(80%)" }
+      : { color: "#ffbf00", fontWeight: "bold", backgroundColor: "#fff7e6", padding: "5px 10px", borderRadius: "10px", display: "inline-block", transform: isSmallScreen ? "translateY(150%)" : "translateY(80%)" };
   };
 
   // Format date
@@ -105,7 +107,7 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
                 <td>
                   <i className="bx bx-calendar-alt"></i> {formatDate(entry.dueDate)}
                 </td>
-                <td style={getStatusStyle(entry.status)}>{entry.status}</td>
+                <td style={getStatusStyle(entry.status)}>{entry.status.charAt(0).toUpperCase() + entry.status.slice(1).toLowerCase()}</td>
                 <td>
                   <button onClick={() => handleEditClick(entry)}>Edit</button>
                   <button onClick={() => handleDelete(entry)}>Delete</button>
