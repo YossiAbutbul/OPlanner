@@ -8,6 +8,7 @@ import {
   renameCourse,
   deleteCourse,
 } from "../utility/initializeDatabase";
+import DeleteModal from "./DeleteModal";
 
 interface YearData {
   year: number;
@@ -49,6 +50,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   const [isAddingYear, setIsAddingYear] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // New state for loading
   const [isLoadingAction, setIsLoadingAction] = useState(false); // New state for action loading
+  const [confirmDelete, setConfirmDelete] = useState<{
+    year: number;
+    semester: string;
+    course: string;
+  } | null>(null);
 
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
@@ -182,16 +188,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   };
 
   const handleDeleteCourse = async (year: number, semester: string, course: string) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete "${course}"?`);
+    setConfirmDelete({ year, semester, course });
+  };
+
+  const confirmDeleteCourse = async () => {
     if (confirmDelete) {
       try {
         setIsLoadingAction(true); // Start loading
-        await deleteCourse(year, semester, course);
+        await deleteCourse(confirmDelete.year, confirmDelete.semester, confirmDelete.course);
         await fetchYearsAndSemesters(true); // Preserve expanded state
       } catch (error) {
         console.error("Error deleting course:", error);
       } finally {
         setIsLoadingAction(false); // End loading
+        setConfirmDelete(null);
       }
     }
   };
@@ -370,6 +380,16 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {confirmDelete && (
+        <DeleteModal
+          isOpen={!!confirmDelete}
+          onClose={() => setConfirmDelete(null)}
+          onConfirm={confirmDeleteCourse}
+          title="Confirm Delete"
+          message={`Are you sure you want to delete "${confirmDelete.course}"?`}
+        />
       )}
     </aside>
   );

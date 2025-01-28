@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import HomeworkModal from "./HomeworkModal";
+import DeleteModal from "./DeleteModal";
 import "../css/HomeworkTable.css";
 import "boxicons/css/boxicons.min.css";
 
@@ -23,27 +24,23 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
   const { removeHomework, addHomework } = useHomework();
   const [isModalOpen, setModalOpen] = useState(false);
   const [editHomework, setEditHomework] = useState<HomeworkEntry | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<HomeworkEntry | null>(null);
 
   // Handle task deletion
-  const handleDelete = async (id: string) => {
-    const homeworkEntry = tasks.find((task) => task.id === id);
+  const handleDelete = (homework: HomeworkEntry) => {
+    setConfirmDelete(homework);
+  };
 
-    if (!homeworkEntry) {
-      console.error("Homework entry not found for deletion.");
-      return;
-    }
-
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete this homework: "${homeworkEntry.name}"?`
-    );
-
+  const confirmDeleteTask = async () => {
     if (confirmDelete) {
-      const { year, semester, course } = homeworkEntry;
+      const { id, year, semester, course } = confirmDelete;
       try {
         await removeHomework(id, year, semester, course);
-        console.log(`Task "${homeworkEntry.name}" deleted successfully.`);
+        console.log(`Task "${confirmDelete.name}" deleted successfully.`);
       } catch (error) {
         console.error("Error deleting homework:", error);
+      } finally {
+        setConfirmDelete(null);
       }
     }
   };
@@ -111,12 +108,21 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
                 <td style={getStatusStyle(entry.status)}>{entry.status}</td>
                 <td>
                   <button onClick={() => handleEditClick(entry)}>Edit</button>
-                  <button onClick={() => handleDelete(entry.id)}>Delete</button>
+                  <button onClick={() => handleDelete(entry)}>Delete</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+      {confirmDelete && (
+        <DeleteModal
+          isOpen={!!confirmDelete}
+          onClose={() => setConfirmDelete(null)}
+          onConfirm={confirmDeleteTask}
+          title="Confirm Delete"
+          message={`Are you sure you want to delete this homework: "${confirmDelete.name}"?`}
+        />
       )}
       <HomeworkModal
         isOpen={isModalOpen}

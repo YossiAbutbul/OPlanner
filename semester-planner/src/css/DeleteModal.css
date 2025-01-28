@@ -1,0 +1,112 @@
+/* Modal Overlay */
+.ReactModal__Overlay {
+  position: fixed; 
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; 
+  backdrop-filter: blur(4px); 
+}
+
+/* Modal Content */
+.ReactModal__Content {
+  width: 90%;
+  max-width: 450px; /* Limit modal width on larger screens */
+  background-color: #1e1e1e; /* Dark background */
+  border-radius: 16px; /* Rounded corners */
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Box shadow for depth */
+  animation: scaleIn 0.3s ease-in-out; /* Smooth scale-in animation */
+  position: relative; /* Needed for positioning child elements */
+  color: #ffffff; /* White text for readability */
+}
+
+/* Modal Header */
+.ReactModal__Content h2 {
+  margin-top: 0;
+  font-size: 1.6rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+/* Modal Paragraph */
+.ReactModal__Content p {
+  color: #cccccc; /* White text */
+  font-weight: 400;
+}
+
+/* Close Button */
+.ReactModal__Content .close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 1.4rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  transition: color 0.3s, transform 0.3s;
+}
+
+.ReactModal__Content .close-btn:hover {
+  color: #fff;
+  transform: scale(1.1);
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Buttons */
+.modal-btn {
+  margin-top: 10px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s; /* Faster transition */
+  color: white; /* White text */
+}
+
+.modal-btn.cancel-btn {
+  background-color: #e53e3e; /* Red */
+  color: white; /* Ensure text is white */
+}
+
+.modal-btn.cancel-btn:hover {
+  background-color: #c53030; /* Darker red */
+  transform: scale(1.05);
+}
+
+.modal-btn.confirm-btn {
+  background-color: #48bb78; 
+  color: white; /* Ensure text is white */
+}
+
+.modal-btn.confirm-btn:hover {
+  background-color: #38a169; /* Darker green */
+  transform: scale(1.05);
+}
+
+/* Animation */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
