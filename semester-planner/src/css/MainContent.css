@@ -11,7 +11,7 @@
   flex-grow: 1; /* Ensures the main content fills the remaining space */
   /* background-color: #ffffff; */
   border-radius: 8px;
-  margin: 20px;
+  margin: 10px;
   height: fit-content;
 }
 
