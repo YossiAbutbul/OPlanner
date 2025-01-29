@@ -119,20 +119,20 @@
 
 /* Action Buttons Styles */
 .homework-table button {
-  background-color: #fff; 
-  color: #716e6e;
-  border: solid 1px #aeaeae;
-  padding: 8px 16px;
-  border-radius: calc(0.5rem - 2px); /* Rounded buttons */
+  background-color: #4a4a4a; /* Dark gray background */
+  color: white; /* White text */
+  border: none; /* Remove border */
+  padding: 8px 16px; /* Reduce padding */
+  border-radius: 5px; /* Rounded buttons */
   cursor: pointer;
   font-size: 0.9rem;
-  transition: all 0.3s;
+  transition: background-color 0.3s, transform 0.2s; /* Smooth transitions */
   margin: 5px;
 }
 
 .homework-table button:hover {
-  background-color: #eaeaea
-  /* transform: scale(1.05); */
+  background-color: #333; /* Darker gray on hover */
+  transform: translateY(-2px); /* Slightly lift on hover */
 }
 
 .homework-table button:focus,
