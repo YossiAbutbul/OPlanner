@@ -77,7 +77,7 @@
   font-size: 1rem;
   font-weight: bold;
   border: none;
-  border-radius: 12px;
+  border-radius: 25px;
   cursor: pointer;
   transition: background-color 0.2s, transform 0.2s; /* Faster transition */
   color: white; /* White text */

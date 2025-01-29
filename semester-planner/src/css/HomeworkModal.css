@@ -100,7 +100,7 @@ form button {
   font-size: 1rem;
   font-weight: bold;
   border: none;
-  border-radius: 12px;
+  border-radius: 25px;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
 }
@@ -119,6 +119,7 @@ form button.cancel-btn {
   background-color: #e53e3e; /* Red */
   color: white;
   margin-left: 10px;
+  border-radius: 25px;
 }
 
 form button.cancel-btn:hover {
