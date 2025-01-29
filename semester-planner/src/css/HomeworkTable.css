@@ -101,10 +101,10 @@
   padding-top: 0.7rem;
   padding-bottom: 0.7rem;
   padding-right: 2rem;
-  border-radius: 8px; /* Rounded button */
+  border-radius: 20px; /* Rounded button */
   font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  transition: background-color 0.3s, box-shadow 0.2s;
 }
 
 .add-homework-btn i {
@@ -115,23 +115,26 @@
 
 .add-homework-btn:hover {
   background-color: #383838; /* Darker gray on hover */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow on hover */
+  transform: translateY(-2px);
 }
 
 /* Action Buttons Styles */
 .homework-table button {
-  background-color: #4a4a4a; /* Dark gray background */
-  color: white; /* White text */
+  background-color: #e9ecef; /* More white background */
+  color: black; /* Black text */
   border: none; /* Remove border */
   padding: 8px 16px; /* Reduce padding */
-  border-radius: 5px; /* Rounded buttons */
+  border-radius: 15px; /* Rounded buttons */
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background-color 0.3s, transform 0.2s; /* Smooth transitions */
+  transition: background-color 0.3s, box-shadow 0.2s; /* Smooth transitions */
   margin: 5px;
 }
 
 .homework-table button:hover {
-  background-color: #333; /* Darker gray on hover */
+  background-color: #dee2e6; /* Slightly darker white on hover */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow on hover */
   transform: translateY(-2px); /* Slightly lift on hover */
 }
 
