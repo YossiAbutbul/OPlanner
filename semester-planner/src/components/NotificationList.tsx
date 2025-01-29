@@ -83,13 +83,13 @@ const NotificationList: React.FC = () => {
             const daysLeft = match ? parseInt(match[1], 10) : 0; // Default to 0 if no match
 
             if (daysLeft !== null) {
-              const [taskName] = message.split(" is due");
+              const taskName = message.split(" is due")[0].replace(" is overdue!", "").trim(); // Ensure correct task name
               return (
                 <li
                   key={id}
                   onClick={() => handleNotificationClick(id)}
                   className={`notification-item ${getNotificationClass(daysLeft)}`}>
-                  <strong>{capitalizeFirstLetter(taskName.trim())}</strong> is due{" "}
+                  <strong>{capitalizeFirstLetter(taskName)}</strong> is due{" "}
                   <span style={getDayStyle(daysLeft)}>
                     {daysLeft === 0 ? "today" : `${daysLeft} day${daysLeft !== 1 ? "s" : ""}`}
                   </span>
