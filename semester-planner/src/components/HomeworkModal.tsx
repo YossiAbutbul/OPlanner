@@ -28,7 +28,7 @@ interface HomeworkModalProps {
   selectedCourseData: {
     year: number;
     semester: string;
-    course: string;
+    course?: string;
   } | null;
   isLoading: boolean; // New prop for loading state
 }
@@ -66,7 +66,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       return;
     }
 
-    const { year, semester, course } = courseData;
+    const { year, semester, course = "" } = courseData;
 
     if (!name.trim()) {
       alert("Please enter a valid name for the homework.");

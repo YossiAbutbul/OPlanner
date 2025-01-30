@@ -9,7 +9,7 @@ interface MainContentProps {
   selectedCourseData: {
     year: number;
     semester: string;
-    course: string;
+    course?: string;
   } | null;
 }
 
@@ -56,7 +56,7 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
     }
 
     const { year, semester, course } = selectedCourseData;
-    const capitalizedCourse = capitalizeWords(course);
+    const capitalizedCourse = course ? capitalizeWords(course) : "";
 
     try {
       setIsLoadingAction(true); // Start loading
@@ -77,7 +77,7 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
           <>
             <h1>Course Progress</h1>
             <h2>
-              Progress for {capitalizeWords(selectedCourseData.course)} in{" "}
+              Progress for {capitalizeWords(selectedCourseData.course ?? "")} in{" "}
               {selectedCourseData.semester}, {selectedCourseData.year}
             </h2>
             <div className="progress-chart-container">
