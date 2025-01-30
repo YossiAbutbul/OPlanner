@@ -43,7 +43,7 @@ const ProgressChart: React.FC<ProgressChartProps> = ({
       },
     },
     hover: {
-      mode: null,
+      mode: undefined,
       animation: false,
     },
   };

@@ -456,26 +456,22 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
       )}
 
       {confirmDeleteYear && (
-        <DeleteModal
+        <><DeleteModal
           isOpen={!!confirmDeleteYear}
           onClose={() => {
             setConfirmDeleteYear(null);
             setAdminPassword(""); // Reset admin password
-          }}
+          } }
           onConfirm={handleDeleteYear}
           title="Confirm Delete Year"
-          message={`Enter admin password to delete year "${confirmDeleteYear.year}".`}
-        >
-          <div className="modal-content">
+          message={`Enter admin password to delete year "${confirmDeleteYear.year}".`} /><div className="modal-content">
             <input
               type="password"
               placeholder="Admin Password"
               value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)}
-            />
+              onChange={(e) => setAdminPassword(e.target.value)} />
             {isDeletingYear && <div className="loading-spinner"></div>}
-          </div>
-        </DeleteModal>
+          </div></>
       )}
     </aside>
   );
