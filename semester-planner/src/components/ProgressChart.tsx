@@ -26,7 +26,7 @@ const ProgressChart: React.FC<ProgressChartProps> = ({
       {
         data: hasData ? [completed, pending] : [1],
         backgroundColor: hasData ? ["#333", "#e0e0e0"] : ["#e0e0e0"], // Updated color
-        hoverBackgroundColor: hasData ? ["#333", "#e0e0e0"] : ["#e0e0e0"], // Updated color
+        hoverBackgroundColor: hasData ? ["#555", "#c0c0c0"] : ["#c0c0c0"], // Updated hover color
       },
     ],
   };
