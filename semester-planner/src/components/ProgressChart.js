@@ -12,8 +12,8 @@ const ProgressChart = ({ completed = 0, pending = 0, size = 300, }) => {
         datasets: [
             {
                 data: hasData ? [completed, pending] : [1],
-                backgroundColor: hasData ? ["#3CAE63", "#e0e0e0"] : ["#e0e0e0"], // Updated color
-                hoverBackgroundColor: hasData ? ["#3CAE63", "#e0e0e0"] : ["#e0e0e0"], // Updated color
+                backgroundColor: hasData ? ["#333", "#e0e0e0"] : ["#e0e0e0"], // Updated color
+                hoverBackgroundColor: hasData ? ["#555", "#c0c0c0"] : ["#c0c0c0"], // Updated hover color
             },
         ],
     };
