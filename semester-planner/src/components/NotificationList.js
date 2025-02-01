@@ -54,9 +54,18 @@ const NotificationList = () => {
         setModalOpen(false);
         setEditHomework(null);
     };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of the day
     return (_jsxs("div", { className: "notification-list", children: [notifications.length === 0 ? (_jsx("p", { children: "No upcoming deadlines yet!" })) : (_jsx("ul", { children: notifications.map(({ id, message }) => {
                     const match = message.match(/(\d+) day/);
                     const daysLeft = match ? parseInt(match[1], 10) : 0; // Default to 0 if no match
+                    const selectedHomework = homework.find((hw) => hw.id === id);
+                    if (selectedHomework) {
+                        const dueDate = new Date(selectedHomework.dueDate);
+                        if (dueDate < today) {
+                            return null; // Skip tasks with due dates before today
+                        }
+                    }
                     if (daysLeft !== null) {
                         const taskName = message.split(" is due")[0].replace(" is overdue!", "").trim(); // Ensure correct task name
                         return (_jsxs("li", { onClick: () => handleNotificationClick(id), className: `notification-item ${getNotificationClass(daysLeft)}`, children: [_jsx("strong", { children: capitalizeFirstLetter(taskName) }), " is due", " ", _jsx("span", { style: getDayStyle(daysLeft), children: daysLeft === 0 ? "today" : `${daysLeft} day${daysLeft !== 1 ? "s" : ""}` })] }, id));

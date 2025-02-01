@@ -72,6 +72,9 @@ const NotificationList: React.FC = () => {
     setEditHomework(null);
   };
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to start of the day
+
   return (
     <div className="notification-list">
       {notifications.length === 0 ? (
@@ -81,6 +84,14 @@ const NotificationList: React.FC = () => {
           {notifications.map(({ id, message }) => {
             const match = message.match(/(\d+) day/);
             const daysLeft = match ? parseInt(match[1], 10) : 0; // Default to 0 if no match
+
+            const selectedHomework = homework.find((hw) => hw.id === id);
+            if (selectedHomework) {
+              const dueDate = new Date(selectedHomework.dueDate);
+              if (dueDate < today) {
+                return null; // Skip tasks with due dates before today
+              }
+            }
 
             if (daysLeft !== null) {
               const taskName = message.split(" is due")[0].replace(" is overdue!", "").trim(); // Ensure correct task name
