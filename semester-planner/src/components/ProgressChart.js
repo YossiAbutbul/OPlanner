@@ -25,7 +25,18 @@ const ProgressChart = ({ completed = 0, pending = 0, size = 300, }) => {
                 display: false,
             },
             tooltip: {
-                enabled: false, // Disable tooltip
+                enabled: true, // Enable tooltip
+                callbacks: {
+                    label: function (tooltipItem) {
+                        return ''; // Remove the name
+                    },
+                    labelColor: function () {
+                        return {
+                            borderColor: 'transparent',
+                            backgroundColor: 'transparent'
+                        };
+                    }
+                },
             },
         },
         hover: {
