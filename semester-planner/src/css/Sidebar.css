@@ -269,12 +269,15 @@ button:focus {
 
 .context-menu-icon {
   font-size: 1.2rem;
-  color: #888;
+  color: #efefef;
   cursor: pointer;
   margin-left: 10px;
   transition: color 0.3s ease;
+  opacity: 0;
 }
-
+.course-item:hover .context-menu-icon {
+  opacity: 1;
+}
 .context-menu-icon:hover {
   color: #fff;
 }
