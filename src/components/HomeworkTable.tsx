@@ -36,7 +36,6 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
       const { id, year, semester, course } = confirmDelete;
       try {
         await removeHomework(id, year, semester, course);
-        console.log(`Task "${confirmDelete.name}" deleted successfully.`);
       } catch (error) {
         console.error("Error deleting homework:", error);
       } finally {
