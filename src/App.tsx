@@ -178,7 +178,12 @@ const App: React.FC = () => {
         onYearsChanged={refreshYears}
         activeTab={activeTab}
       />
-      <RightSidebar />
+      <RightSidebar
+        years={years}
+        selectedYear={selectedYear}
+        selectedSemester={selectedSemester}
+        selectedCourse={selectedCourse}
+      />
     </div>
   );
 };

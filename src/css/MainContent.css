@@ -9,9 +9,12 @@
 
 .main-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 1.5rem 2rem;
+  min-height: 0;
+  overflow: hidden;
+  padding: 1.25rem 2rem;
   border-radius: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Tab bars (OneNote-style 3-level) */
@@ -335,13 +338,129 @@
 
 /* Title */
 .main-content h1 {
-  font-size: 2rem;
-  color: #333; /* Dark text */
-  margin-bottom: 50px;
+  font-size: 1.8rem;
+  color: #1a1a1a;
+  margin: 0;
   text-align: left;
-  margin-top: 0px;
-  margin-bottom: 0;
+  font-weight: 700;
+}
 
+.course-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.course-header-text {
+  min-width: 0;
+}
+
+.course-add-task {
+  padding: 0.5rem 1.1rem;
+  background: #1db954;
+  color: #ffffff;
+  border: 1px solid #19a449;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+  flex-shrink: 0;
+}
+
+.course-add-task:hover {
+  background: #1ed760;
+  border-color: #1bbf52;
+}
+
+.course-add-task:active {
+  transform: scale(0.97);
+}
+
+.course-header h2 {
+  margin: 0.15rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #777;
+}
+
+.course-row {
+  display: grid;
+  grid-template-columns: minmax(260px, 38fr) minmax(0, 62fr);
+  gap: 1rem;
+  align-items: stretch;
+  margin-bottom: 0.85rem;
+  flex-shrink: 0;
+}
+
+.course-progress {
+  background: #fff;
+  border: 1px solid #e3e3e6;
+  border-radius: 10px;
+  padding: 0.85rem 1rem 1rem;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  min-width: 0;
+}
+
+.course-calendar {
+  display: flex;
+}
+
+.course-calendar > .cal {
+  flex: 1;
+}
+
+.course-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.85rem;
+  background: rgba(29, 185, 84, 0.08);
+  border: 1px solid rgba(29, 185, 84, 0.3);
+  border-radius: 8px;
+  margin-bottom: 0.85rem;
+  font-size: 0.85rem;
+  color: #1a1a1a;
+}
+
+.course-filter-bar button {
+  margin-left: auto;
+  padding: 0.25rem 0.7rem;
+  background: transparent;
+  border: 1px solid #cdd0d4;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #444;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.course-filter-bar button:hover {
+  background: #1db954;
+  border-color: #1db954;
+  color: #fff;
+}
+
+.homework-table-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e3e3e6;
+  border-radius: 10px;
+}
+
+@media (max-width: 900px) {
+  .course-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Progress Charts Section */

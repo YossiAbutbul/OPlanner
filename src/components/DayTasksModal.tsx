@@ -1,0 +1,75 @@
+import React from "react";
+import Modal from "./Modal";
+import { HomeworkEntry } from "../context/HomeworkContext";
+import "../css/DayTasksModal.css";
+
+interface Props {
+  isOpen: boolean;
+  date: string;
+  tasks: HomeworkEntry[];
+  onClose: () => void;
+  onEdit: (t: HomeworkEntry) => void;
+  onDelete: (t: HomeworkEntry) => void;
+  onAdd: () => void;
+}
+
+const fmtDate = (iso: string) => {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+};
+
+const statusLabel = (s: string) =>
+  s.charAt(0) + s.slice(1).toLowerCase();
+
+const statusClass = (s: string) =>
+  s === "COMPLETED" ? "status-pill status-completed" : "status-pill status-pending";
+
+const DayTasksModal: React.FC<Props> = ({
+  isOpen,
+  date,
+  tasks,
+  onClose,
+  onEdit,
+  onDelete,
+  onAdd,
+}) => {
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Tasks · ${fmtDate(date)}`}
+      footer={
+        <>
+          <button className="app-modal-btn-cancel" onClick={onClose}>
+            Close
+          </button>
+          <button className="app-modal-btn-primary" onClick={onAdd}>
+            New task
+          </button>
+        </>
+      }
+    >
+      {tasks.length === 0 ? (
+        <p className="day-empty">No tasks on this day.</p>
+      ) : (
+        <ul className="day-tasks">
+          {tasks.map((t) => (
+            <li key={t.id} className="day-task">
+              <div className="day-task-main">
+                <div className="day-task-name">{t.name}</div>
+                <span className={statusClass(t.status)}>{statusLabel(t.status)}</span>
+              </div>
+              <div className="day-task-actions">
+                <button className="day-btn" onClick={() => onEdit(t)}>Edit</button>
+                <button className="day-btn danger" onClick={() => onDelete(t)}>Delete</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Modal>
+  );
+};
+
+export default DayTasksModal;

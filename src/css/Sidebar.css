@@ -179,7 +179,7 @@ button:focus { outline: none; }
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--text-muted);
   padding: 0.5rem 0.5rem 0.4rem 0.65rem;
 }
@@ -453,7 +453,7 @@ button:focus { outline: none; }
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--text-muted);
   background: transparent;
   transition: color 0.2s ease, background-color 0.2s ease;
