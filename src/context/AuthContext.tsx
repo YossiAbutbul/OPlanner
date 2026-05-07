@@ -13,6 +13,33 @@ const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/
   navigator.userAgent
 );
 
+const USER_CACHE_KEY = "oplanner.user";
+
+const readCachedUser = (): User | null => {
+  try {
+    const raw = localStorage.getItem(USER_CACHE_KEY);
+    return raw ? (JSON.parse(raw) as User) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedUser = (u: User | null) => {
+  if (!u) {
+    localStorage.removeItem(USER_CACHE_KEY);
+    return;
+  }
+  localStorage.setItem(
+    USER_CACHE_KEY,
+    JSON.stringify({
+      uid: u.uid,
+      email: u.email,
+      displayName: u.displayName,
+      photoURL: u.photoURL,
+    })
+  );
+};
+
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
@@ -23,13 +50,15 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cachedUser = readCachedUser();
+  const [user, setUser] = useState<User | null>(cachedUser);
+  const [loading, setLoading] = useState(!cachedUser);
 
   useEffect(() => {
     getRedirectResult(auth).catch((e) => console.error("Redirect sign-in error:", e));
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
+      writeCachedUser(u);
       setLoading(false);
     });
     return unsub;
@@ -58,6 +87,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     await signOut(auth);
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("oplanner."))
+      .forEach((k) => localStorage.removeItem(k));
   };
 
   return (

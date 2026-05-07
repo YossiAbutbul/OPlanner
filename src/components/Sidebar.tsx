@@ -1,118 +1,37 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../css/Sidebar.css";
 import "boxicons/css/boxicons.min.css";
-import {
-  getAllYearsAndSemesters,
-  initializeYear,
-  addCourse,
-  renameCourse,
-  deleteCourse,
-  deleteYear,
-} from "../utility/initializeDatabase";
-import DeleteModal from "./DeleteModal";
 import { useAuth } from "../context/AuthContext";
-import { Settings, Plus, LogOut } from "lucide-react";
-
-interface YearData {
-  year: number;
-  semesters: {
-    name: string;
-    key: string;
-    courses: { name: string }[];
-    expanded: boolean;
-  }[];
-  expanded: boolean;
-}
+import { Settings, Plus, LogOut, X } from "lucide-react";
+import { CourseTab, tabKey } from "../App";
 
 interface SidebarProps {
-  onCourseOrSemesterSelect: (
-    year: number,
-    semester: string,
-    course?: string
-  ) => void;
+  openCourses: CourseTab[];
+  activeKey: string | null;
+  onSwitchTab: (key: string) => void;
+  onCloseTab: (key: string) => void;
+  onAddYear: () => void;
+  addingYear: boolean;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
+const capitalizeWords = (str: string) =>
+  str.replace(/\b\w/g, (char) => char.toUpperCase());
+
+const Sidebar: React.FC<SidebarProps> = ({
+  openCourses,
+  activeKey,
+  onSwitchTab,
+  onCloseTab,
+  onAddYear,
+  addingYear,
+}) => {
   const { user, logout } = useAuth();
-  const [years, setYears] = useState<YearData[]>([]);
-  const [isModalOpen, setModalOpen] = useState(false);
-  const [modalData, setModalData] = useState<{ year: number; semester: string } | null>(null);
-  const [newCourseName, setNewCourseName] = useState("");
-  const [contextMenu, setContextMenu] = useState<{
-    year: number;
-    semester: string;
-    course: string;
-    x: number;
-    y: number;
-  } | null>(null);
-  const [renameModal, setRenameModal] = useState<{
-    year: number;
-    semester: string;
-    course: string;
-  } | null>(null);
-  const [renameCourseName, setRenameCourseName] = useState("");
-  const [isAddingYear, setIsAddingYear] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // New state for loading
-  const [isLoadingAction, setIsLoadingAction] = useState(false); // New state for action loading
-  const [confirmDelete, setConfirmDelete] = useState<{
-    year: number;
-    semester: string;
-    course: string;
-  } | null>(null);
-  const [yearContextMenu, setYearContextMenu] = useState<{
-    year: number;
-    x: number;
-    y: number;
-  } | null>(null);
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
-  const [confirmDeleteYear, setConfirmDeleteYear] = useState<{
-    year: number;
-  } | null>(null);
-
-  const contextMenuRef = useRef<HTMLDivElement>(null);
-
-  const fetchYearsAndSemesters = async (preserveState = false) => {
-    try {
-      setIsLoading(true); // Start loading
-      const existingYears = await getAllYearsAndSemesters();
-      const formattedYears = existingYears.map((year) => {
-        const existingYear = years.find((y) => y.year === year.year);
-        return {
-          ...year,
-          expanded: preserveState ? existingYear?.expanded || false : false,
-          semesters: year.semesters.map((semester) => {
-            const existingSemester = existingYear?.semesters.find(
-              (s) => s.name === semester.name
-            );
-            return {
-              ...semester,
-              expanded: preserveState ? existingSemester?.expanded || false : false,
-              courses: semester.courses || [],
-            };
-          }),
-        };
-      });
-      setYears(formattedYears);
-    } catch (error) {
-      console.error("Error fetching years and semesters:", error);
-    } finally {
-      setIsLoading(false); // End loading
-    }
-  };
-
-  useEffect(() => {
-    fetchYearsAndSemesters();
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
-        setContextMenu(null);
-        setYearContextMenu(null);
-      }
       if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
         setSettingsOpen(false);
       }
@@ -120,159 +39,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const toggleExpand = (yearIndex: number, semesterIndex?: number) => {
-    setYears((prevYears) =>
-      prevYears.map((year, yIndex) => {
-        if (yIndex === yearIndex) {
-          return {
-            ...year,
-            expanded: semesterIndex === undefined ? !year.expanded : year.expanded,
-            semesters: year.semesters.map((semester, sIndex) => {
-              if (sIndex === semesterIndex) {
-                return { ...semester, expanded: !semester.expanded };
-              }
-              return semester; // Retain the state of other semesters
-            }),
-          };
-        }
-        return year; // Retain the state of other years
-      })
-    );
-  };
-
-  const handleAddYear = async () => {
-    let yearToAdd = new Date().getFullYear();
-
-    while (true) {
-      setIsAddingYear(true);
-
-      const yearAdded = await initializeYear(yearToAdd);
-
-      if (yearAdded) {
-        await fetchYearsAndSemesters(true); // Preserve expanded state
-        setIsAddingYear(false);
-        break; // Successfully added a year, exit the loop
-      } else {
-        console.warn(`Year ${yearToAdd} already exists. Trying the next year.`);
-        yearToAdd += 1; // Increment to the next year
-      }
-    }
-  };
-
-  const capitalizeWords = (str: string) => {
-    return str.replace(/\b\w/g, char => char.toUpperCase());
-  };
-
-  const handleAddCourse = async () => {
-    if (modalData && newCourseName.trim() !== "") {
-      try {
-        setIsLoadingAction(true); // Start loading
-        const capitalizedCourseName = capitalizeWords(newCourseName.trim());
-        await addCourse(modalData.year, modalData.semester, capitalizedCourseName);
-        await fetchYearsAndSemesters(true); // Preserve expanded state
-        setModalOpen(false);
-        setNewCourseName("");
-      } catch (error) {
-        console.error("Error adding course:", error);
-      } finally {
-        setIsLoadingAction(false); // End loading
-      }
-    } else {
-      alert("Please enter a valid course name.");
-    }
-  };
-
-  const handleRenameCourse = async () => {
-    if (renameModal && renameCourseName.trim() !== "") {
-      try {
-        setIsLoadingAction(true); // Start loading
-        const capitalizedCourseName = capitalizeWords(renameCourseName.trim());
-        await renameCourse(
-          renameModal.year,
-          renameModal.semester,
-          renameModal.course,
-          capitalizedCourseName
-        );
-        await fetchYearsAndSemesters(true); // Preserve expanded state
-        setRenameModal(null);
-        setRenameCourseName("");
-      } catch (error) {
-        console.error("Error renaming course:", error);
-      } finally {
-        setIsLoadingAction(false); // End loading
-      }
-    } else {
-      alert("Please enter a valid course name.");
-    }
-  };
-
-  const handleDeleteCourse = async (year: number, semester: string, course: string) => {
-    setConfirmDelete({ year, semester, course });
-  };
-
-  const confirmDeleteCourse = async () => {
-    if (confirmDelete) {
-      try {
-        setIsLoadingAction(true); // Start loading
-        await deleteCourse(confirmDelete.year, confirmDelete.semester, confirmDelete.course);
-        await fetchYearsAndSemesters(true); // Preserve expanded state
-      } catch (error) {
-        console.error("Error deleting course:", error);
-      } finally {
-        setIsLoadingAction(false); // End loading
-        setConfirmDelete(null);
-      }
-    }
-  };
-
-  const openContextMenu = (e: React.MouseEvent, year: number, semester: string, course: string) => {
-    e.preventDefault();
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    setContextMenu({
-      year,
-      semester,
-      course,
-      x: rect.right + 10,
-      y: rect.top,
-    });
-  };
-
-  const openYearContextMenu = (e: React.MouseEvent, year: number) => {
-    e.preventDefault();
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    setYearContextMenu({
-      year,
-      x: rect.right + 10,
-      y: rect.top,
-    });
-  };
-
-  const handleDeleteYear = async () => {
-    if (!confirmDeleteYear) return;
-    try {
-      setIsLoadingAction(true);
-      await deleteYear(confirmDeleteYear.year);
-      await fetchYearsAndSemesters(true);
-      setConfirmDeleteYear(null);
-    } catch (error) {
-      console.error("Error deleting year:", error);
-    } finally {
-      setIsLoadingAction(false);
-    }
-  };
-
-  useEffect(() => {
-    if (renameModal) {
-      setRenameCourseName(renameModal.course);
-    }
-  }, [renameModal]);
-
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      handleAddCourse();
-    }
-  };
 
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
@@ -288,187 +54,41 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
         <span className="brand-name">OPlanner</span>
       </div>
 
-      {(isLoading || isAddingYear) && (
-        <div className="sidebar-loading">
-          <i className="bx bx-loader-alt bx-spin"></i>
-        </div>
-      )}
-      <ul className="year-list">
-        {years.map((year, yearIndex) => (
-          <li
-            key={year.year}
-            className={`year-item ${year.expanded ? "expanded" : ""}`}
-            onContextMenu={(e) => openYearContextMenu(e, year.year)}
-          >
-            <div className="year-header" onClick={() => toggleExpand(yearIndex)}>
-              {year.year}
-              <i className={`bx ${year.expanded ? "bx-chevron-up" : "bx-chevron-down"} toggle-icon`}></i>
-            </div>
-            {year.expanded && (
-              <ul className="semester-list">
-                {year.semesters.map((semester, semesterIndex) => (
-                  <li key={semester.key} className={`semester-item ${semester.expanded ? "expanded" : ""}`}>
-                    <div
-                      className="semester-header"
-                      onClick={() => toggleExpand(yearIndex, semesterIndex)}
-                    >
-                      {semester.name}
-                      <i
-                        className="bx bx-plus add-course-icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setModalData({ year: year.year, semester: semester.name });
-                          setModalOpen(true);
-                        }}
-                        title="Add New Course"
-                      ></i>
-                    </div>
-                    {semester.expanded && (
-                      <ul className="course-list">
-                        {semester.courses.map((course) => (
-                          <li
-                            key={course.name}
-                            className={`course-item ${
-                              selectedKey === `${year.year}|${semester.name}|${course.name}`
-                                ? "selected"
-                                : ""
-                            }`}
-                            onClick={() => {
-                              setSelectedKey(`${year.year}|${semester.name}|${course.name}`);
-                              onCourseOrSemesterSelect(year.year, semester.name, course.name);
-                            }}
-                          >
-                            {capitalizeWords(course.name)}
-                            <i
-                              className="bx bx-dots-vertical-rounded context-menu-icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openContextMenu(e, year.year, semester.name, course.name);
-                              }}
-                            ></i>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Add New Course</h2>
-            <input
-              type="text"
-              placeholder="Enter Course Name"
-              value={newCourseName}
-              onChange={(e) => setNewCourseName(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isLoadingAction}
-            />
-            <div className="modal-actions">
-              <button className="modal-btn" onClick={handleAddCourse} disabled={isLoadingAction}>
-                {isLoadingAction ? <div className="loading-spinner"></div> : "Add Course"}
-              </button>
-              <button className="modal-btn cancel-btn" onClick={() => setModalOpen(false)} disabled={isLoadingAction}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {contextMenu && (
-        <div
-          ref={contextMenuRef}
-          className="context-menu"
-          style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-        >
-          <button
-            onClick={() => {
-              setRenameModal({
-                year: contextMenu.year,
-                semester: contextMenu.semester,
-                course: contextMenu.course,
-              });
-              setContextMenu(null);
-            }}
-          >
-            Rename
-          </button>
-          <button
-            onClick={() => {
-              handleDeleteCourse(contextMenu.year, contextMenu.semester, contextMenu.course);
-              setContextMenu(null);
-            }}
-          >
-            Delete
-          </button>
-        </div>
-      )}
-
-      {yearContextMenu && (
-        <div
-          ref={contextMenuRef} // Add ref to year context menu
-          className="context-menu"
-          style={{ top: `${yearContextMenu.y}px`, left: `${yearContextMenu.x}px` }}
-        >
-          <button
-            onClick={() => {
-              setConfirmDeleteYear({ year: yearContextMenu.year });
-              setYearContextMenu(null);
-            }}
-          >
-            Delete Year
-          </button>
-        </div>
-      )}
-
-      {renameModal && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h2>Rename Course</h2>
-            <input
-              type="text"
-              placeholder="Enter New Course Name"
-              value={renameCourseName}
-              onChange={(e) => setRenameCourseName(e.target.value)}
-            />
-            <div className="modal-actions">
-              <button className="modal-btn" onClick={handleRenameCourse} disabled={isLoadingAction}>
-                {isLoadingAction ? <i className="bx bx-loader-alt bx-spin"></i> : "Rename"}
-              </button>
-              <button className="modal-btn cancel-btn" onClick={() => setRenameModal(null)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {confirmDelete && (
-        <DeleteModal
-          isOpen={!!confirmDelete}
-          onClose={() => setConfirmDelete(null)}
-          onConfirm={confirmDeleteCourse}
-          title="Confirm Delete"
-          message={`Are you sure you want to delete "${confirmDelete.course}"?`}
-        />
-      )}
-
-      {confirmDeleteYear && (
-        <DeleteModal
-          isOpen={!!confirmDeleteYear}
-          onClose={() => setConfirmDeleteYear(null)}
-          onConfirm={handleDeleteYear}
-          title="Confirm Delete Year"
-          message={`Are you sure you want to delete year "${confirmDeleteYear.year}" and all its data? This cannot be undone.`}
-        />
-      )}
+      <div className="open-list-section">
+        <div className="open-list-header">Open</div>
+        <ul className="open-list">
+          {openCourses.length === 0 && (
+            <li className="open-empty">No courses open</li>
+          )}
+          {openCourses.map((c) => {
+            const key = tabKey(c);
+            const isActive = key === activeKey;
+            return (
+              <li
+                key={key}
+                className={`open-item ${isActive ? "selected" : ""}`}
+                onClick={() => onSwitchTab(key)}
+                title={`${c.semester}, ${c.year}`}
+              >
+                <span className="open-item-label">{capitalizeWords(c.course)}</span>
+                <span className="open-item-meta">
+                  {c.semester.replace("Semester ", "")} · {c.year}
+                </span>
+                <button
+                  className="open-item-close"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCloseTab(key);
+                  }}
+                  title="Close"
+                >
+                  <X size={14} />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
 
       <div className="sidebar-footer" ref={settingsRef}>
         <button
@@ -500,9 +120,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
             <button
               onClick={() => {
                 setSettingsOpen(false);
-                handleAddYear();
+                onAddYear();
               }}
-              disabled={isAddingYear}
+              disabled={addingYear}
             >
               <Plus size={16} />
               <span>Add year</span>
