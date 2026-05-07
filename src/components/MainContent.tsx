@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import ProgressChart from "./ProgressChart";
 import HomeworkTable from "./HomeworkTable";
 import HomeworkModal from "./HomeworkModal";
 import SemesterOverview from "./SemesterOverview";
+import ImportCalendarModal from "./ImportCalendarModal";
 import "../css/MainContent.css";
 import { useHomework, HomeworkEntry } from "../context/HomeworkContext";
 import { CourseTab, YearTreeData } from "../App";
+import { parseIcs, IcsEvent } from "../utility/parseIcs";
 
 interface MainContentProps {
   years: YearTreeData[];
@@ -15,6 +17,7 @@ interface MainContentProps {
   onSelectYear: (y: number) => void;
   onSelectSemester: (s: string) => void;
   onSelectCourse: (c: string) => void;
+  onYearsChanged: () => void;
   activeTab: CourseTab | null;
 }
 
@@ -29,12 +32,15 @@ const MainContent: React.FC<MainContentProps> = ({
   onSelectYear,
   onSelectSemester,
   onSelectCourse,
+  onYearsChanged,
   activeTab,
 }) => {
   const { homework, fetchHomework, addHomework } = useHomework();
   const [filteredHomework, setFilteredHomework] = useState<HomeworkEntry[]>([]);
   const [isHomeworkModalOpen, setHomeworkModalOpen] = useState(false);
   const [isLoadingAction, setIsLoadingAction] = useState(false);
+  const [icsEvents, setIcsEvents] = useState<IcsEvent[] | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (activeTab) {
@@ -77,16 +83,40 @@ const MainContent: React.FC<MainContentProps> = ({
     <div className="main-layout">
       {/* Year tabs */}
       <div className="tab-bar tab-bar-year">
-        {sortedYears.map((y) => (
+        <div className="tab-bar-left">
+          {sortedYears.map((y) => (
+            <button
+              key={y.year}
+              className={`tab year-tab ${selectedYear === y.year ? "active" : ""}`}
+              onClick={() => onSelectYear(y.year)}
+            >
+              {y.year}
+            </button>
+          ))}
+          {addingYear && <div className="tab skeleton skeleton-year"></div>}
+        </div>
+        <div className="tab-bar-right">
           <button
-            key={y.year}
-            className={`tab year-tab ${selectedYear === y.year ? "active" : ""}`}
-            onClick={() => onSelectYear(y.year)}
+            className="tab tab-import"
+            onClick={() => fileInputRef.current?.click()}
+            title="Import calendar (.ics)"
           >
-            {y.year}
+            <span>Import calendar</span>
           </button>
-        ))}
-        {addingYear && <div className="tab skeleton skeleton-year"></div>}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".ics,text/calendar"
+            style={{ display: "none" }}
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              if (!f) return;
+              const text = await f.text();
+              setIcsEvents(parseIcs(text));
+            }}
+          />
+        </div>
       </div>
 
       {/* Semester tabs */}
@@ -139,6 +169,15 @@ const MainContent: React.FC<MainContentProps> = ({
           <div className="empty-state" />
         )}
       </div>
+
+      {icsEvents && (
+        <ImportCalendarModal
+          isOpen={!!icsEvents}
+          onClose={() => setIcsEvents(null)}
+          events={icsEvents}
+          onDone={onYearsChanged}
+        />
+      )}
 
       <HomeworkModal
         isOpen={isHomeworkModalOpen}

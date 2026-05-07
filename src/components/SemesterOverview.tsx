@@ -43,7 +43,7 @@ const SemesterOverview: React.FC<Props> = ({ year, semester, courses, onSelectCo
         return { course, total: list.length, completed, pending, overdue };
       });
       const all = lists.flat();
-      const horizon = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const horizon = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
       const soon = all
         .filter((t) => {
           if (t.status !== "PENDING") return false;
@@ -157,7 +157,7 @@ const SemesterOverview: React.FC<Props> = ({ year, semester, courses, onSelectCo
           <ul className="upcoming-list">
             {upcoming.map((t) => {
               const d = daysLeft(t.dueDate);
-              const cls = d <= 0 ? "danger" : d < 3 ? "warn" : "ok";
+              const cls = d <= 5 ? "danger" : d <= 10 ? "warn" : "ok";
               return (
                 <li
                   key={`${t.course}-${t.id}`}

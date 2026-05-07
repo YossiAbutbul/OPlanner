@@ -175,6 +175,7 @@ const App: React.FC = () => {
           setSelectedCourse(null);
         }}
         onSelectCourse={setSelectedCourse}
+        onYearsChanged={refreshYears}
         activeTab={activeTab}
       />
       <RightSidebar />
