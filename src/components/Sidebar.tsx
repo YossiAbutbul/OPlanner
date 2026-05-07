@@ -10,6 +10,7 @@ import {
   deleteYear,
 } from "../utility/initializeDatabase";
 import DeleteModal from "./DeleteModal";
+import { useAuth } from "../context/AuthContext";
 
 interface YearData {
   year: number;
@@ -31,6 +32,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
+  const { user, logout } = useAuth();
   const [years, setYears] = useState<YearData[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{ year: number; semester: string } | null>(null);
@@ -267,9 +269,16 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   return (
     <aside className="sidebar">
       <div className="profile-section">
-        <img src="./user-svgrepo-com.svg" alt="Profile" className="profile-pic" />
+        <img
+          src={user?.photoURL || "./user-svgrepo-com.svg"}
+          alt="Profile"
+          className="profile-pic"
+          referrerPolicy="no-referrer"
+        />
         <div className="profile-header">
-          <label className="profile-label">OPlanner</label>
+          <label className="profile-label" title={user?.email || ""}>
+            {user?.displayName || "OPlanner"}
+          </label>
           <button
             className="add-year-btn"
             onClick={handleAddYear}
@@ -277,6 +286,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
             disabled={isAddingYear}
           >
             {isLoading ? <i className="bx bx-loader-alt bx-spin"></i> : isAddingYear ? <i className="bx bx-loader-alt bx-spin"></i> : <i className="bx bx-plus"></i>}
+          </button>
+          <button
+            className="add-year-btn"
+            onClick={() => logout()}
+            title="Sign out"
+          >
+            <i className="bx bx-log-out"></i>
           </button>
         </div>
       </div>
