@@ -4,86 +4,118 @@ import HomeworkTable from "./HomeworkTable";
 import HomeworkModal from "./HomeworkModal";
 import "../css/MainContent.css";
 import { useHomework, HomeworkEntry } from "../context/HomeworkContext";
+import { CourseTab, tabKey } from "../App";
+import { X } from "lucide-react";
 
 interface MainContentProps {
-  selectedCourseData: {
-    year: number;
-    semester: string;
-    course?: string;
-  } | null;
+  tabs: CourseTab[];
+  activeKey: string | null;
+  activeTab: CourseTab | null;
+  onSwitchTab: (key: string) => void;
+  onCloseTab: (key: string) => void;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
+const capitalizeWords = (str: string) =>
+  str.replace(/\b\w/g, (char) => char.toUpperCase());
+
+const MainContent: React.FC<MainContentProps> = ({
+  tabs,
+  activeKey,
+  activeTab,
+  onSwitchTab,
+  onCloseTab,
+}) => {
   const { homework, fetchHomework, addHomework } = useHomework();
   const [filteredHomework, setFilteredHomework] = useState<HomeworkEntry[]>([]);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [isLoadingAction, setIsLoadingAction] = useState(false); // New state for action loading
+  const [isLoadingAction, setIsLoadingAction] = useState(false);
 
-  // Fetch homework whenever the selected course changes
   useEffect(() => {
-    if (selectedCourseData) {
-      const { year, semester, course } = selectedCourseData;
-      if (course) {
-        fetchHomework(year, semester, course);
-      }
+    if (activeTab) {
+      fetchHomework(activeTab.year, activeTab.semester, activeTab.course);
     }
-  }, [selectedCourseData, fetchHomework]);
+  }, [activeTab, fetchHomework]);
 
-  // Filter homework for the selected course
   useEffect(() => {
-    if (selectedCourseData) {
-      const { course } = selectedCourseData;
-      setFilteredHomework(homework.filter((hw) => hw.course === course));
+    if (activeTab) {
+      setFilteredHomework(
+        homework.filter((hw) => hw.course === activeTab.course)
+      );
     } else {
       setFilteredHomework([]);
     }
-  }, [selectedCourseData, homework]);
+  }, [activeTab, homework]);
 
-  const capitalizeWords = (str: string) => {
-    return str.replace(/\b\w/g, char => char.toUpperCase());
-  };
-
-  // Handle saving new homework or updating existing homework
   const handleSaveHomework = async (
     id: string | null,
     name: string,
     dueDate: string,
     status: string
   ) => {
-    if (!selectedCourseData) {
+    if (!activeTab) {
       alert("Please select a valid course.");
       return;
     }
-
-    const { year, semester, course } = selectedCourseData;
-    const capitalizedCourse = course ? capitalizeWords(course) : "";
-
+    const { year, semester, course } = activeTab;
+    const capitalizedCourse = capitalizeWords(course);
     try {
-      setIsLoadingAction(true); // Start loading
+      setIsLoadingAction(true);
       await addHomework(id, name, dueDate, status, year, semester, capitalizedCourse);
-      await fetchHomework(year, semester, capitalizedCourse); // Refresh homework list after saving
-      setModalOpen(false); // Close the modal after saving
+      await fetchHomework(year, semester, capitalizedCourse);
+      setModalOpen(false);
     } catch (error) {
       console.error("Error saving homework:", error);
     } finally {
-      setIsLoadingAction(false); // End loading
+      setIsLoadingAction(false);
     }
   };
 
   return (
     <div className="main-layout">
+      {tabs.length > 0 && (
+        <div className="tab-bar">
+          {tabs.map((tab) => {
+            const key = tabKey(tab);
+            const isActive = key === activeKey;
+            return (
+              <div
+                key={key}
+                className={`tab ${isActive ? "active" : ""}`}
+                onClick={() => onSwitchTab(key)}
+                title={`${tab.semester}, ${tab.year}`}
+              >
+                <span className="tab-label">{capitalizeWords(tab.course)}</span>
+                <button
+                  className="tab-close"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCloseTab(key);
+                  }}
+                  title="Close tab"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <div className="main-content">
-        {selectedCourseData ? (
+        {activeTab ? (
           <>
-            <h1>Course Progress</h1>
+            <h1>{capitalizeWords(activeTab.course)}</h1>
             <h2>
-              Progress for {capitalizeWords(selectedCourseData.course ?? "")} in{" "}
-              {selectedCourseData.semester}, {selectedCourseData.year}
+              {activeTab.semester}, {activeTab.year}
             </h2>
             <div className="progress-chart-container">
               <ProgressChart
-                completed={filteredHomework.filter((hw) => hw.status === "COMPLETED").length}
-                pending={filteredHomework.filter((hw) => hw.status === "PENDING").length}
+                completed={
+                  filteredHomework.filter((hw) => hw.status === "COMPLETED").length
+                }
+                pending={
+                  filteredHomework.filter((hw) => hw.status === "PENDING").length
+                }
               />
             </div>
             <div className="homework-table-container">
@@ -94,10 +126,10 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
             </div>
           </>
         ) : (
-          <>
-            <h1>Course Progress</h1>
-            <p>Please select a course from the sidebar to view its progress.</p>
-          </>
+          <div className="empty-state">
+            <h1>No course open</h1>
+            <p>Pick a course from the sidebar to open it as a tab.</p>
+          </div>
         )}
       </div>
 
@@ -105,8 +137,8 @@ const MainContent: React.FC<MainContentProps> = ({ selectedCourseData }) => {
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSaveHomework}
-        selectedCourseData={selectedCourseData}
-        isLoading={isLoadingAction} // Pass loading state to modal
+        selectedCourseData={activeTab}
+        isLoading={isLoadingAction}
       />
     </div>
   );

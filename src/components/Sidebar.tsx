@@ -11,6 +11,7 @@ import {
 } from "../utility/initializeDatabase";
 import DeleteModal from "./DeleteModal";
 import { useAuth } from "../context/AuthContext";
+import { Settings, Plus, LogOut } from "lucide-react";
 
 interface YearData {
   year: number;
@@ -64,6 +65,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     y: number;
   } | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
   const [confirmDeleteYear, setConfirmDeleteYear] = useState<{
     year: number;
   } | null>(null);
@@ -107,7 +111,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     const handleClickOutside = (event: MouseEvent) => {
       if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
         setContextMenu(null);
-        setYearContextMenu(null); // Close year context menu as well
+        setYearContextMenu(null);
+      }
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setSettingsOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -268,26 +275,24 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
   };
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
       <div className="brand">
-        <img src="./Logo.svg" alt="" className="brand-logo" />
+        <button
+          className="brand-logo-btn"
+          onClick={() => setCollapsed((c) => !c)}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <img src="./Logo.svg" alt="" className="brand-logo" />
+        </button>
         <span className="brand-name">OPlanner</span>
       </div>
 
-      <button
-        className="primary-btn add-year-btn"
-        onClick={handleAddYear}
-        disabled={isAddingYear}
-      >
-        {isLoading || isAddingYear ? (
+      {(isLoading || isAddingYear) && (
+        <div className="sidebar-loading">
           <i className="bx bx-loader-alt bx-spin"></i>
-        ) : (
-          <>
-            <i className="bx bx-plus"></i>
-            <span>Add year</span>
-          </>
-        )}
-      </button>
+        </div>
+      )}
       <ul className="year-list">
         {years.map((year, yearIndex) => (
           <li
@@ -465,24 +470,56 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
         />
       )}
 
-      <div className="sidebar-footer">
-        <img
-          src={user?.photoURL || "./user-svgrepo-com.svg"}
-          alt=""
-          className="footer-avatar"
-          referrerPolicy="no-referrer"
-        />
+      <div className="sidebar-footer" ref={settingsRef}>
+        <button
+          className="footer-avatar-btn"
+          onClick={() => collapsed && setSettingsOpen((o) => !o)}
+          title={collapsed ? "Settings" : ""}
+          aria-label={collapsed ? "Open settings" : "Profile"}
+        >
+          <img
+            src={user?.photoURL || "./user-svgrepo-com.svg"}
+            alt=""
+            className="footer-avatar"
+            referrerPolicy="no-referrer"
+          />
+        </button>
         <div className="footer-info">
           <div className="footer-name">{user?.displayName || "User"}</div>
           {user?.email && <div className="footer-email">{user.email}</div>}
         </div>
         <button
-          className="footer-signout"
-          onClick={() => logout()}
-          title="Sign out"
+          className="footer-settings"
+          onClick={() => setSettingsOpen((o) => !o)}
+          title="Settings"
         >
-          <i className="bx bx-log-out"></i>
+          <Settings size={18} />
         </button>
+        {settingsOpen && (
+          <div className="settings-menu">
+            <button
+              onClick={() => {
+                setSettingsOpen(false);
+                handleAddYear();
+              }}
+              disabled={isAddingYear}
+            >
+              <Plus size={16} />
+              <span>Add year</span>
+            </button>
+            <div className="settings-menu-divider"></div>
+            <button
+              onClick={() => {
+                setSettingsOpen(false);
+                logout();
+              }}
+              className="danger"
+            >
+              <LogOut size={16} />
+              <span>Sign out</span>
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );
