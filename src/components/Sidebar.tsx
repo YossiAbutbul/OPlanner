@@ -63,6 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     x: number;
     y: number;
   } | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [confirmDeleteYear, setConfirmDeleteYear] = useState<{
     year: number;
   } | null>(null);
@@ -268,34 +269,25 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
 
   return (
     <aside className="sidebar">
-      <div className="profile-section">
-        <img
-          src={user?.photoURL || "./user-svgrepo-com.svg"}
-          alt="Profile"
-          className="profile-pic"
-          referrerPolicy="no-referrer"
-        />
-        <div className="profile-header">
-          <label className="profile-label" title={user?.email || ""}>
-            {user?.displayName || "OPlanner"}
-          </label>
-          <button
-            className="add-year-btn"
-            onClick={handleAddYear}
-            title="Add Year"
-            disabled={isAddingYear}
-          >
-            {isLoading ? <i className="bx bx-loader-alt bx-spin"></i> : isAddingYear ? <i className="bx bx-loader-alt bx-spin"></i> : <i className="bx bx-plus"></i>}
-          </button>
-          <button
-            className="add-year-btn"
-            onClick={() => logout()}
-            title="Sign out"
-          >
-            <i className="bx bx-log-out"></i>
-          </button>
-        </div>
+      <div className="brand">
+        <img src="./Logo.svg" alt="" className="brand-logo" />
+        <span className="brand-name">OPlanner</span>
       </div>
+
+      <button
+        className="primary-btn add-year-btn"
+        onClick={handleAddYear}
+        disabled={isAddingYear}
+      >
+        {isLoading || isAddingYear ? (
+          <i className="bx bx-loader-alt bx-spin"></i>
+        ) : (
+          <>
+            <i className="bx bx-plus"></i>
+            <span>Add year</span>
+          </>
+        )}
+      </button>
       <ul className="year-list">
         {years.map((year, yearIndex) => (
           <li
@@ -331,8 +323,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
                         {semester.courses.map((course) => (
                           <li
                             key={course.name}
-                            className="course-item"
+                            className={`course-item ${
+                              selectedKey === `${year.year}|${semester.name}|${course.name}`
+                                ? "selected"
+                                : ""
+                            }`}
                             onClick={() => {
+                              setSelectedKey(`${year.year}|${semester.name}|${course.name}`);
                               onCourseOrSemesterSelect(year.year, semester.name, course.name);
                             }}
                           >
@@ -467,6 +464,26 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
           message={`Are you sure you want to delete year "${confirmDeleteYear.year}" and all its data? This cannot be undone.`}
         />
       )}
+
+      <div className="sidebar-footer">
+        <img
+          src={user?.photoURL || "./user-svgrepo-com.svg"}
+          alt=""
+          className="footer-avatar"
+          referrerPolicy="no-referrer"
+        />
+        <div className="footer-info">
+          <div className="footer-name">{user?.displayName || "User"}</div>
+          {user?.email && <div className="footer-email">{user.email}</div>}
+        </div>
+        <button
+          className="footer-signout"
+          onClick={() => logout()}
+          title="Sign out"
+        >
+          <i className="bx bx-log-out"></i>
+        </button>
+      </div>
     </aside>
   );
 };

@@ -1,147 +1,346 @@
-.profile-label {
-  font-weight: 500;
-  padding: 15px;
+/* Spotify dark moody theme */
+:root {
+  --accent: #1db954;
+  --accent-hover: #1ed760;
+  --bg: #000;
+  --bg-elevated: #121212;
+  --bg-hover: #1a1a1a;
+  --bg-row: #181818;
+  --text: #ffffff;
+  --text-muted: #a7a7a7;
+  --border: rgba(255, 255, 255, 0.06);
 }
 
-button:focus {
-  outline: none;
+button:focus { outline: none; }
+
+/* Brand */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1.25rem 1.25rem 0.75rem;
 }
 
+.brand-logo {
+  width: 28px;
+  height: 28px;
+}
+
+.brand-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+/* Primary action: Add year */
+.primary-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.5rem 1.25rem 1rem;
+  padding: 0.7rem 1rem;
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  transition: transform 0.08s ease, background-color 0.2s ease;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: scale(1.02);
+}
+
+.primary-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary-btn .bx {
+  font-size: 1.1rem;
+}
+
+/* Year list */
 .year-list {
   list-style: none;
-  padding: 0;
+  padding: 0 0.75rem 0.5rem;
+  margin: 0;
   width: 100%;
-  flex-grow: 1;
-  overflow-y: auto; /* Enable scrolling for long lists */
+  flex: 1 1 auto;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.year-list::-webkit-scrollbar {
+  width: 8px;
+}
+.year-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+.year-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .year-item {
-  margin-bottom: 10px;
+  margin-bottom: 0.25rem;
   overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
 .year-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
+  padding: 0.6rem 0.75rem;
   cursor: pointer;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: bold;
-  background-color: #1f1f1f;
-  transition: background-color 0.3s ease;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: transparent;
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
 
 .year-header:hover {
-  background-color: #292929;
+  color: var(--text);
+  background: var(--bg-hover);
 }
 
 .toggle-icon {
-  font-size: 1.2rem;
+  font-size: 1rem;
+  color: inherit;
 }
 
-/* Expand/Collapse Animation */
+/* Semester collapse */
 .semester-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.15rem 0 0.35rem;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.25s ease;
+}
+
+.year-item.expanded .semester-list {
+  max-height: 2000px;
+  opacity: 1;
+}
+
+.semester-item {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+
+.semester-item.expanded .course-list {
+  max-height: 2000px;
+  opacity: 1;
+}
+
+.semester-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0.75rem 0.45rem 1.25rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.semester-header:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.add-course-icon {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.semester-header:hover .add-course-icon {
+  opacity: 1;
+}
+
+.add-course-icon:hover {
+  color: var(--accent);
+}
+
+/* Course list */
+.course-list {
   list-style: none;
   padding: 0;
   margin: 0;
   overflow: hidden;
   max-height: 0;
   opacity: 0;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-}
-
-.year-item.expanded .semester-list {
-  max-height: 1000px; /* Allow space for nested content */
-  opacity: 1;
-  /* transition: max-height 0.5s ease, opacity 0.5s ease; */
-}
-
-.semester-item {
-  padding: 10px;
-  /* margin-bottom: 5px; */
-  margin-left: 20px;
-  border-radius: 5px;
-  background-color: #1f1f1f;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-}
-.semester-item.expanded .course-list {
-  max-height: 1000px; /* Large enough to show all items */
-  opacity: 1;
-}
-.semester-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border-radius: 8px;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.semester-header:hover {
-  background-color: #292929;
-}
-
-.add-course-icon {
-  font-size: 1.2rem;
-  color: #888;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.add-course-icon:hover {
-  color: #fff;
-}
-
-/* Course List */
-.course-list {
-  /* list-style: none; */
-  padding-left: 20px;
-  margin: 0;
+  transition: max-height 0.25s ease, opacity 0.25s ease;
 }
 
 .course-item {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  /* margin-bottom: 5px; */
-  padding: 5px 10px;
+  padding: 0.45rem 0.75rem 0.45rem 1.75rem;
   border-radius: 4px;
-  color: #ffffff;
-  background-color: #1f1f1f;
+  color: var(--text-muted);
+  background: transparent;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  font-size: 0.9rem;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  font-size: 0.88rem;
 }
 
 .course-item:hover {
-  background-color: #292929;
+  color: var(--text);
+  background: var(--bg-hover);
 }
 
-.add-year-btn {
-  padding: 8px 8px;
-  background-color: #1f1f1f;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+.course-item.selected {
+  color: var(--text);
+  background: var(--bg-row);
+  font-weight: 600;
 }
 
-.add-year-btn:hover {
-  background-color: #292929;
+.course-item.selected::before {
+  content: "";
+  position: absolute;
+  left: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--accent);
+  border-radius: 2px;
 }
 
-.profile-header {
-  padding-right: 10px;
+.context-menu-icon {
+  color: var(--text-muted);
+  opacity: 0;
+  font-size: 1.05rem;
+  padding: 0.15rem;
+  border-radius: 4px;
+  transition: opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.course-item:hover .context-menu-icon {
+  opacity: 1;
+}
+
+.context-menu-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+/* Footer profile bar */
+.sidebar-footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  height: 40px;
+  gap: 0.7rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+  flex-shrink: 0;
+}
+
+.footer-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--bg-hover);
+  flex-shrink: 0;
+}
+
+.footer-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.footer-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.footer-email {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.footer-signout {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.15rem;
+  padding: 0.4rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.footer-signout:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ff6b6b;
+}
+
+/* Context menus */
+.context-menu {
+  position: fixed;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.25rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  min-width: 140px;
+}
+
+.context-menu button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  transition: background-color 0.15s ease;
+}
+
+.context-menu button:hover {
+  background: var(--bg-hover);
 }
 
 /* Modal Overlay */

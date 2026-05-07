@@ -19,13 +19,16 @@
 
 /* Sidebar Styles */
 .sidebar {
-  flex: 0 0 15%; /* Fixed width of 20% */
-  min-width: 250px; /* Minimum width of 250px */
-  background-color: #282c34;
-  color: white;
-  padding: 1em;
-  overflow-y: auto; /* Scroll for long content */
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  flex: 0 0 15%;
+  min-width: 260px;
+  background-color: #000;
+  color: #e7e7e7;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.6);
 }
 
 .right-sidebar {
@@ -46,14 +49,6 @@
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
-/* Sidebar Image Styling */
-.sidebar img {
-  aspect-ratio: 1 / 1;
-  width: 8.5rem;
-  display: block;
-  margin: 2em auto 0; /* Center and add space from the top */
-  margin-bottom: 30px;
-}
 
 /* Sidebar List/Table Styling */
 .sidebar ul {
