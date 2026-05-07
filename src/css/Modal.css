@@ -1,0 +1,165 @@
+.app-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: appModalFade 0.15s ease-out;
+}
+
+.app-modal {
+  width: 90%;
+  max-width: 420px;
+  background: #16181c;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 1.25rem;
+  color: #ffffff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  position: relative;
+  animation: appModalScaleIn 0.2s ease-out;
+}
+
+.app-modal-title {
+  margin: 0 0 0.85rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #ffffff;
+  padding-right: 1.5rem;
+}
+
+.app-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  font-size: 1.4rem;
+  line-height: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.app-modal-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.app-modal-body {
+  color: #d4d4d4;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.app-modal-body p {
+  margin: 0 0 0.75rem;
+  color: #a7a7a7;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.app-modal-body input[type="text"],
+.app-modal-body input[type="password"],
+.app-modal-body input[type="date"],
+.app-modal-body select {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #2a2d33;
+  border-radius: 6px;
+  background: #23262c;
+  color: #ffffff;
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+
+.app-modal-body label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #a7a7a7;
+  margin: 0.6rem 0 0.3rem;
+  letter-spacing: 0.02em;
+}
+
+.app-modal-body label:first-child {
+  margin-top: 0;
+}
+
+.app-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.app-modal-actions button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.08s ease;
+}
+
+.app-modal-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.app-modal-btn-cancel {
+  background: #2a2d33;
+  color: #e4e4e4;
+}
+
+.app-modal-btn-cancel:hover:not(:disabled) {
+  background: #353940;
+  color: #ffffff;
+}
+
+.app-modal-btn-primary {
+  background: #1db954;
+  color: #000000;
+}
+
+.app-modal-btn-primary:hover:not(:disabled) {
+  background: #1ed760;
+}
+
+.app-modal-btn-danger {
+  background: #e53e3e;
+  color: #ffffff;
+}
+
+.app-modal-btn-danger:hover:not(:disabled) {
+  background: #c53030;
+}
+
+@keyframes appModalFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes appModalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

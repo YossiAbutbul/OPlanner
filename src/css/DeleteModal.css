@@ -1,142 +1,137 @@
-/* Modal Overlay */
 .ReactModal__Overlay {
-  position: fixed; 
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7); 
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000; 
-  backdrop-filter: blur(4px); 
+  z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
-/* Modal Content */
 .ReactModal__Content {
   width: 90%;
-  max-width: 350px; /* Limit modal width on larger screens */
-  background-color: #1e1e1e; /* Dark background */
-  border-radius: 16px; /* Rounded corners */
-  padding: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); /* Box shadow for depth */
-  animation: scaleIn 0.3s ease-in-out; /* Smooth scale-in animation */
-  position: relative; /* Needed for positioning child elements */
-  color: #ffffff; /* White text for readability */
+  max-width: 380px;
+  background: #16181c;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 1.25rem;
+  color: #ffffff;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  animation: scaleIn 0.2s ease-in-out;
+  position: relative;
+  outline: none;
 }
 
-.ReactModal__Content.delete-modal {
-  max-width: 350px; /* Limit modal width on larger screens */
-}
-
-/* Modal Header */
 .ReactModal__Content h2 {
-  margin-top: 0;
-  font-size: 1.6rem;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 20px;
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 600;
   color: #ffffff;
 }
 
-/* Modal Paragraph */
 .ReactModal__Content p {
-  color: #cccccc; /* White text */
+  margin: 0 0 1rem;
+  color: #a7a7a7;
+  font-size: 0.9rem;
   font-weight: 400;
+  line-height: 1.4;
 }
 
-/* Close Button */
 .ReactModal__Content .close-btn {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 10px;
+  right: 12px;
   font-size: 1.4rem;
+  line-height: 1;
   background: none;
   border: none;
   cursor: pointer;
   color: #888;
-  transition: color 0.3s, transform 0.3s;
+  transition: color 0.15s ease;
 }
 
 .ReactModal__Content .close-btn:hover {
   color: #fff;
-  transform: scale(1.1);
 }
 
-/* Modal Actions */
-.modal-actions {
-  display: flex;
-  justify-content: space-between;
-}
-
-/* Buttons */
-.modal-btn {
-  margin-top: 10px;
-  padding: 12px 20px;
-  font-size: 1rem;
-  font-weight: bold;
-  border: none;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s; /* Faster transition */
-  color: white; /* White text */
-}
-
-.modal-btn.cancel-btn {
-  background-color: #e53e3e; /* Red */
-  color: white; /* Ensure text is white */
-}
-
-.modal-btn.cancel-btn:hover {
-  background-color: #c53030; /* Darker red */
-  transform: scale(1.05);
-}
-
-.modal-btn.confirm-btn {
-  background-color: #48bb78; 
-  color: white; /* Ensure text is white */
-}
-
-.modal-btn.confirm-btn:hover {
-  background-color: #38a169; /* Darker green */
-  transform: scale(1.05);
-}
-
-/* Input Field */
 .ReactModal__Content input[type="password"],
 .ReactModal__Content input[type="text"] {
   width: 100%;
-  padding: 12px 40px 12px 12px; /* Add padding for the eye icon */
-  margin-top: 10px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  background-color: #2e2e2e; /* Dark background */
-  color: #fff; /* White text */
-  font-size: 1rem;
+  padding: 0.6rem 2.4rem 0.6rem 0.7rem;
+  margin: 0 0 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  background: #0e0f12;
+  color: #ffffff;
+  font-size: 0.95rem;
+  outline: none;
   box-sizing: border-box;
 }
 
-/* Eye Icon */
 .eye-icon {
   position: absolute;
-  right: 20px;
+  right: 0.7rem;
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
   color: #888;
-  transition: color 0.3s;
+  transition: color 0.15s ease;
 }
 
 .eye-icon:hover {
   color: #fff;
 }
 
-/* Animation */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.modal-btn {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.modal-btn.cancel-btn {
+  background: transparent;
+  color: #a7a7a7;
+}
+
+.modal-btn.cancel-btn:hover:not(:disabled) {
+  background: #1d2026;
+  color: #ffffff;
+}
+
+.modal-btn.confirm-btn {
+  background: #e53e3e;
+  color: #ffffff;
+}
+
+.modal-btn.confirm-btn:hover:not(:disabled) {
+  background: #c53030;
+}
+
+.modal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.95);
   }
   to {
     opacity: 1;

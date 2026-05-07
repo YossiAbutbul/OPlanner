@@ -139,8 +139,11 @@
   color: #666;
   border-radius: 4px;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.7;
   flex-shrink: 0;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 500;
   transition: opacity 0.15s ease, color 0.15s ease;
 }
 
@@ -176,8 +179,13 @@
   border-radius: 5px;
   font-size: 0.85rem;
   background: #fff;
+  color: #111;
   outline: none;
   width: 160px;
+}
+
+.add-course-inline input::placeholder {
+  color: #888;
 }
 
 .add-course-inline input:focus {
@@ -194,6 +202,9 @@
   border-radius: 5px;
   cursor: pointer;
   background: transparent;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
