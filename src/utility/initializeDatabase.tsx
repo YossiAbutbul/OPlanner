@@ -1,4 +1,4 @@
-import { doc, setDoc, getDocs, collection, getDoc, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, getDocs, collection, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
 import { db, requireUid } from "../firebase";
 
 const MAX_NAME_LENGTH = 100;
@@ -89,9 +89,16 @@ export const getAllYearsAndSemesters = async (): Promise<
             );
             const coursesSnapshot = await getDocs(coursesCollection);
 
-            const courses = coursesSnapshot.docs.map((courseDoc) => ({
-              name: courseDoc.id,
-            }));
+            const courseNames = coursesSnapshot.docs.map((d) => d.id);
+            const order: string[] = Array.isArray(semesterData.courseOrder)
+              ? (semesterData.courseOrder as string[])
+              : [];
+            const known = new Set(courseNames);
+            const ordered = [
+              ...order.filter((n) => known.has(n)),
+              ...courseNames.filter((n) => !order.includes(n)).sort(),
+            ];
+            const courses = ordered.map((name) => ({ name }));
 
             return {
               name: semesterData.name || `Semester ${semesterDoc.id}`,
@@ -206,6 +213,22 @@ export const deleteCourse = async (year: number, semester: string, course: strin
     return true;
   } catch (error) {
     console.error(`Error deleting course: ${error}`);
+    return false;
+  }
+};
+
+export const setCourseOrder = async (
+  year: number,
+  semester: string,
+  order: string[]
+): Promise<boolean> => {
+  try {
+    const base = userBase();
+    const semesterDoc = doc(db, `${base}/years/${year}/semesters/${semester}`);
+    await updateDoc(semesterDoc, { courseOrder: order });
+    return true;
+  } catch (error) {
+    console.error("Error saving course order:", error);
     return false;
   }
 };

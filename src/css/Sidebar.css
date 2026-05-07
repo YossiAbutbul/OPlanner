@@ -173,13 +173,35 @@ button:focus { outline: none; }
 }
 
 .open-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
-  padding: 0.5rem 0.65rem 0.4rem;
+  padding: 0.5rem 0.5rem 0.4rem 0.65rem;
 }
+
+.open-list-add {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.open-list-add:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
 
 .open-list {
   list-style: none;
@@ -188,8 +210,8 @@ button:focus { outline: none; }
 }
 
 .open-empty {
-  padding: 0.6rem 0.65rem;
-  font-size: 0.85rem;
+  padding: 0.85rem 1rem;
+  font-size: 1.05rem;
   color: var(--text-muted);
   font-style: italic;
 }
@@ -197,12 +219,12 @@ button:focus { outline: none; }
 .open-item {
   position: relative;
   display: flex;
-  flex-direction: column;
-  padding: 0.55rem 2rem 0.55rem 0.85rem;
-  border-radius: 5px;
+  align-items: center;
+  padding: 0.85rem 2.2rem 0.85rem 1rem;
+  border-radius: 6px;
   cursor: pointer;
   transition: background-color 0.15s ease;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 
 .open-item:hover {
@@ -211,6 +233,44 @@ button:focus { outline: none; }
 
 .open-item.selected {
   background: var(--bg-row);
+}
+
+.open-item.overview-item {
+  margin-bottom: 6px;
+}
+
+.open-item.overview-item .open-item-label {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.open-item.overview-item.selected .open-item-label {
+  color: var(--text);
+}
+
+.open-item.dragging {
+  opacity: 0.4;
+}
+
+.open-item.drop-before::before,
+.open-item.drop-after::after {
+  content: "";
+  position: absolute;
+  left: 0.4rem;
+  right: 0.4rem;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.open-item.drop-before::before {
+  top: -2px;
+}
+
+.open-item.drop-after::after {
+  bottom: -2px;
 }
 
 .open-item.selected::before {
@@ -226,7 +286,7 @@ button:focus { outline: none; }
 }
 
 .open-item-label {
-  font-size: 0.92rem;
+  font-size: 1.05rem;
   font-weight: 500;
   color: var(--text);
   white-space: nowrap;
@@ -255,7 +315,7 @@ button:focus { outline: none; }
   justify-content: center;
   border-radius: 4px;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.7;
   transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
@@ -263,10 +323,91 @@ button:focus { outline: none; }
   opacity: 1;
 }
 
+.open-item-close {
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 500;
+}
+
 .open-item-close:hover {
   background: rgba(255, 255, 255, 0.1);
   color: var(--text);
 }
+
+.open-item-menu-wrap {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.open-item-menu-btn {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.open-item:hover .open-item-menu-btn,
+.open-item.selected .open-item-menu-btn {
+  opacity: 1;
+}
+
+.open-item-menu-btn:hover {
+  color: var(--text);
+}
+
+.open-item-menu {
+  position: fixed;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.25rem;
+  min-width: 130px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.open-item-menu button {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  text-align: left;
+  padding: 0.45rem 0.7rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.open-item-menu button:hover {
+  background: var(--bg-hover);
+}
+
+.open-item-menu button.danger {
+  color: #ff6b6b;
+}
+
+.open-item-menu button.danger:hover {
+  background: rgba(255, 107, 107, 0.12);
+}
+
 
 .sidebar.collapsed .open-list-section {
   display: none;

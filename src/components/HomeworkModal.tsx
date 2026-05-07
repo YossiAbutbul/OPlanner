@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import Modal from "react-modal";
-import "../css/HomeworkModal.css"; // Ensure your styles are correctly imported
-
-Modal.setAppElement("#root");
+import Modal from "./Modal";
 
 interface HomeworkModalProps {
   isOpen: boolean;
@@ -30,7 +27,7 @@ interface HomeworkModalProps {
     semester: string;
     course?: string;
   } | null;
-  isLoading: boolean; // New prop for loading state
+  isLoading: boolean;
 }
 
 const HomeworkModal: React.FC<HomeworkModalProps> = ({
@@ -56,116 +53,90 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       setDueDate("");
       setStatus("PENDING");
     }
-  }, [editHomework]);
+  }, [editHomework, isOpen]);
 
   const handleSave = () => {
     const courseData = editHomework || selectedCourseData;
-
-    if (!courseData) {
-      alert("Please select a valid course to add or edit homework.");
-      return;
-    }
-
+    if (!courseData) return;
     const { year, semester, course = "" } = courseData;
-
-    if (!name.trim()) {
-      alert("Please enter a valid name for the homework.");
-      return;
-    }
-
-    if (!dueDate) {
-      alert("Please select a valid due date for the homework.");
-      return;
-    }
+    if (!name.trim() || !dueDate) return;
 
     onSave(editHomework?.id || null, name.trim(), dueDate, status, year, semester, course);
-
     setName("");
     setDueDate("");
     setStatus("PENDING");
     onClose();
   };
 
-  const handleDateClick = () => {
-    dateInputRef.current?.showPicker();
-  };
-
   useEffect(() => {
+    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && isOpen) {
+      if (e.key === "Enter") {
         e.preventDefault();
         handleSave();
       }
     };
-
     document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => document.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, name, dueDate, status, selectedCourseData, editHomework]);
+
+  const canSave =
+    !!name.trim() && !!dueDate && !!(selectedCourseData || editHomework) && !isLoading;
 
   return (
     <Modal
       isOpen={isOpen}
-      onRequestClose={onClose}
-      className="ReactModal__Content"
-      overlayClassName="ReactModal__Overlay"
-      contentLabel={editHomework ? "Edit Homework" : "Add Homework"}
-    >
-      <button className="close-btn" onClick={onClose}>&times;</button>
-      <h2>{editHomework ? "Edit Homework" : "Add Homework"}</h2>
-      <form>
-        <div>
-          <label htmlFor="homework-name">Name:</label>
-          <input
-            id="homework-name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter homework name"
-            autoComplete="off"
-          />
-        </div>
-        <div>
-          <label htmlFor="due-date">Due Date:</label>
-          <div
-            className="date-input-container"
-            onClick={handleDateClick}
-            style={{ cursor: "pointer" }}
-          >
-            <input
-              id="due-date"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              ref={dateInputRef}
-            />
-          </div>
-        </div>
-        <div>
-          <label htmlFor="status">Status:</label>
-          <select
-            id="status"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="PENDING">PENDING</option>
-            <option value="COMPLETED">COMPLETED</option>
-          </select>
-        </div>
-        <div className="modal-actions">
+      onClose={onClose}
+      title={editHomework ? "Edit homework" : "Add homework"}
+      footer={
+        <>
           <button
             type="button"
-            onClick={handleSave}
-            disabled={!name.trim() || !dueDate || !(selectedCourseData || editHomework) || isLoading}
+            className="app-modal-btn-cancel"
+            onClick={onClose}
+            disabled={isLoading}
           >
-            {isLoading ? <i className="bx bx-loader-alt bx-spin"></i> : "Save"}
-          </button>
-          <button type="button" className="cancel-btn" onClick={onClose}>
             Cancel
           </button>
-        </div>
-      </form>
+          <button
+            type="button"
+            className="app-modal-btn-primary"
+            onClick={handleSave}
+            disabled={!canSave}
+          >
+            {isLoading ? "Saving…" : "Save"}
+          </button>
+        </>
+      }
+    >
+      <label htmlFor="homework-name">Name</label>
+      <input
+        id="homework-name"
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Enter homework name"
+        autoComplete="off"
+        autoFocus
+      />
+      <label htmlFor="due-date">Due date</label>
+      <input
+        id="due-date"
+        type="date"
+        value={dueDate}
+        onChange={(e) => setDueDate(e.target.value)}
+        ref={dateInputRef}
+      />
+      <label htmlFor="status">Status</label>
+      <select
+        id="status"
+        value={status}
+        onChange={(e) => setStatus(e.target.value)}
+      >
+        <option value="PENDING">Pending</option>
+        <option value="COMPLETED">Completed</option>
+      </select>
     </Modal>
   );
 };

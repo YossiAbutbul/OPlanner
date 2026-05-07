@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {
   collection,
   getDocs,
@@ -28,7 +28,8 @@ interface Notification {
 interface HomeworkContextProps {
   homework: HomeworkEntry[];
   notifications: Notification[];
-  fetchHomework: (year: number, semester: string, course: string) => Promise<void>;
+  fetchHomework: (year: number, semester: string, course: string, force?: boolean) => Promise<void>;
+  getCourseTasks: (year: number, semester: string, course: string, force?: boolean) => Promise<HomeworkEntry[]>;
   addHomework: (
     id: string | null,
     name: string,
@@ -54,28 +55,118 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
   const [homework, setHomework] = useState<HomeworkEntry[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  // Fetch homework for a specific course under a semester and year
-  const fetchHomework = async (year: number, semester: string, course: string) => {
-  try {
-    const tasksCollection = collection(
-      db,
-      `users/${requireUid()}/years/${year}/semesters/${semester}/courses/${course}/tasks`
-    );
-    const snapshot = await getDocs(tasksCollection);
-    const homeworkList = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-      year,
-      semester,
-      course,
-    })) as HomeworkEntry[];
+  const cacheKey = (year: number, semester: string, course: string) => {
+    const uid = requireUid();
+    return `oplanner.homework.${uid}.${year}|${semester}|${course}`;
+  };
 
-    setHomework(homeworkList);
-  } catch (error) {
-    console.error("Error fetching homework:", error);
-    setHomework([]); // Set to an empty array if fetching fails
-  }
-};
+  const fetchHomework = useCallback(async (
+    year: number,
+    semester: string,
+    course: string,
+    force = false
+  ) => {
+    let key: string;
+    try {
+      key = cacheKey(year, semester, course);
+    } catch {
+      return;
+    }
+    if (!force) {
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            setHomework(parsed as HomeworkEntry[]);
+            return;
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    try {
+      const tasksCollection = collection(
+        db,
+        `users/${requireUid()}/years/${year}/semesters/${semester}/courses/${course}/tasks`
+      );
+      const snapshot = await getDocs(tasksCollection);
+      const homeworkList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        year,
+        semester,
+        course,
+      })) as HomeworkEntry[];
+
+      setHomework(homeworkList);
+      try {
+        localStorage.setItem(key, JSON.stringify(homeworkList));
+      } catch {
+        /* quota */
+      }
+    } catch (error) {
+      console.error("Error fetching homework:", error);
+      setHomework([]);
+    }
+  }, []);
+
+  const getCourseTasks = useCallback(async (
+    year: number,
+    semester: string,
+    course: string,
+    force = false
+  ): Promise<HomeworkEntry[]> => {
+    let key: string;
+    try {
+      key = cacheKey(year, semester, course);
+    } catch {
+      return [];
+    }
+    if (!force) {
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) return parsed as HomeworkEntry[];
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    try {
+      const tasksCollection = collection(
+        db,
+        `users/${requireUid()}/years/${year}/semesters/${semester}/courses/${course}/tasks`
+      );
+      const snapshot = await getDocs(tasksCollection);
+      const list = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+        year,
+        semester,
+        course,
+      })) as HomeworkEntry[];
+      try {
+        localStorage.setItem(key, JSON.stringify(list));
+      } catch {
+        /* quota */
+      }
+      return list;
+    } catch (e) {
+      console.error("Error fetching course tasks:", e);
+      return [];
+    }
+  }, []);
+
+  const writeCache = (year: number, semester: string, course: string, list: HomeworkEntry[]) => {
+    try {
+      localStorage.setItem(cacheKey(year, semester, course), JSON.stringify(list));
+    } catch {
+      /* ignore */
+    }
+  };
 
 
   // Get style for days left
@@ -146,17 +237,23 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
         const taskDoc = doc(tasksCollection, id);
         await updateDoc(taskDoc, { name, dueDate, status });
 
-        setHomework((prev) =>
-          prev.map((entry) =>
+        setHomework((prev) => {
+          const next = prev.map((entry) =>
             entry.id === id ? { ...entry, name, dueDate, status } : entry
-          )
-        );
+          );
+          writeCache(year, semester, course, next.filter((h) => h.course === course));
+          return next;
+        });
       } else {
         const newTaskRef = doc(tasksCollection);
         const newTask = { id: newTaskRef.id, name, dueDate, status, year, semester, course };
         await setDoc(newTaskRef, newTask);
 
-        setHomework((prev) => [...prev, newTask]);
+        setHomework((prev) => {
+          const next = [...prev, newTask];
+          writeCache(year, semester, course, next.filter((h) => h.course === course));
+          return next;
+        });
       }
     } catch (error) {
       console.error("Error adding/updating homework:", error);
@@ -172,7 +269,11 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
   ) => {
     const previousHomework = [...homework];
     try {
-      setHomework((prev) => prev.filter((entry) => entry.id !== id));
+      setHomework((prev) => {
+        const next = prev.filter((entry) => entry.id !== id);
+        writeCache(year, semester, course, next.filter((h) => h.course === course));
+        return next;
+      });
       const taskDoc = doc(
         db,
         `users/${requireUid()}/years/${year}/semesters/${semester}/courses/${course}/tasks`,
@@ -191,6 +292,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
         homework,
         notifications,
         fetchHomework,
+        getCourseTasks,
         addHomework,
         removeHomework,
       }}

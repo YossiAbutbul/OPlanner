@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from "react";
-import Modal from "react-modal";
-import "../css/DeleteModal.css"; // Use the new styles
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
-
-Modal.setAppElement("#root");
+import Modal from "./Modal";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 interface DeleteModalProps {
   isOpen: boolean;
@@ -22,7 +19,15 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
 }) => {
   const [adminPassword, setAdminPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setAdminPassword("");
+      setShowPassword(false);
+      setIsLoading(false);
+    }
+  }, [isOpen]);
 
   const handleConfirm = async () => {
     setIsLoading(true);
@@ -31,36 +36,41 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
   };
 
   useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "Enter" && isOpen) {
-        handleConfirm();
-      }
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter") handleConfirm();
     };
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (event.target instanceof Element && !event.target.closest(".ReactModal__Content")) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyPress);
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("keydown", handleKeyPress);
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen, onClose]);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, adminPassword]);
 
   return (
     <Modal
       isOpen={isOpen}
-      onRequestClose={onClose}
-      className="ReactModal__Content"
-      overlayClassName="ReactModal__Overlay"
-      contentLabel={title}
+      onClose={onClose}
+      title={title}
+      footer={
+        <>
+          <button
+            type="button"
+            className="app-modal-btn-cancel"
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="app-modal-btn-danger"
+            onClick={handleConfirm}
+            disabled={isLoading}
+          >
+            {isLoading ? "Deleting…" : "Delete"}
+          </button>
+        </>
+      }
     >
-      <button className="close-btn" onClick={onClose}>&times;</button>
-      <h2>{title}</h2>
       <p>{message}</p>
       {title === "Confirm Delete Year" && (
         <div style={{ position: "relative" }}>
@@ -69,28 +79,23 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
             placeholder="Admin Password"
             value={adminPassword}
             onChange={(e) => setAdminPassword(e.target.value)}
+            style={{ paddingRight: "2.4rem" }}
           />
           <span
-            className="eye-icon"
             onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: "absolute",
+              right: "0.7rem",
+              top: "50%",
+              transform: "translateY(-50%)",
+              cursor: "pointer",
+              color: "#888",
+            }}
           >
             {showPassword ? <FaEyeSlash /> : <FaEye />}
           </span>
         </div>
       )}
-      <div className="modal-actions">
-        <button
-          type="button"
-          onClick={handleConfirm}
-          className="modal-btn confirm-btn"
-          disabled={isLoading}
-        >
-          {isLoading ? <div className="loading-spinner"></div> : "Confirm"}
-        </button>
-        <button type="button" className="modal-btn cancel-btn" onClick={onClose} disabled={isLoading}>
-          Cancel
-        </button>
-      </div>
     </Modal>
   );
 };
