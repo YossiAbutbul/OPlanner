@@ -7,7 +7,8 @@ const isValidName = (name: string): boolean => {
   if (typeof name !== "string") return false;
   const trimmed = name.trim();
   if (trimmed.length === 0 || trimmed.length > MAX_NAME_LENGTH) return false;
-  if (/[\/\x00-\x1F\x7F]/.test(trimmed)) return false;
+  // eslint-disable-next-line no-control-regex
+  if (/[/\x00-\x1F\x7F]/.test(trimmed)) return false;
   if (trimmed === "." || trimmed === "..") return false;
   return true;
 };
