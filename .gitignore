@@ -28,3 +28,15 @@ dist-ssr
 .env.*.local
 .env.development
 .env.production
+
+# Firebase admin SDK / service account keys
+*-firebase-adminsdk-*.json
+serviceAccountKey.json
+
+# TypeScript build artifacts
+*.tsbuildinfo
+src/**/*.js
+src/**/*.d.ts
+!src/vite-env.d.ts
+!src/types/**/*.d.ts
+vite.config.d.ts
