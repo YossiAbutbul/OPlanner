@@ -61,8 +61,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     x: number;
     y: number;
   } | null>(null);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [isDeletingYear, setIsDeletingYear] = useState(false);
   const [confirmDeleteYear, setConfirmDeleteYear] = useState<{
     year: number;
   } | null>(null);
@@ -240,23 +238,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
     });
   };
 
-  const handleDeleteYear = async (password: string = "") => {
-    if (password.trim() === "admin") {
-      try {
-        setIsDeletingYear(true);
-        if (confirmDeleteYear) {
-          await deleteYear(confirmDeleteYear.year);
-          await fetchYearsAndSemesters(true); // Preserve expanded state
-          setConfirmDeleteYear(null);
-          setAdminPassword(""); // Reset admin password
-        }
-      } catch (error) {
-        console.error("Error deleting year:", error);
-      } finally {
-        setIsDeletingYear(false);
-      }
-    } else {
-      alert("Invalid admin password.");
+  const handleDeleteYear = async () => {
+    if (!confirmDeleteYear) return;
+    try {
+      setIsLoadingAction(true);
+      await deleteYear(confirmDeleteYear.year);
+      await fetchYearsAndSemesters(true);
+      setConfirmDeleteYear(null);
+    } catch (error) {
+      console.error("Error deleting year:", error);
+    } finally {
+      setIsLoadingAction(false);
     }
   };
 
@@ -456,22 +448,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
       )}
 
       {confirmDeleteYear && (
-        <><DeleteModal
+        <DeleteModal
           isOpen={!!confirmDeleteYear}
-          onClose={() => {
-            setConfirmDeleteYear(null);
-            setAdminPassword(""); // Reset admin password
-          } }
+          onClose={() => setConfirmDeleteYear(null)}
           onConfirm={handleDeleteYear}
           title="Confirm Delete Year"
-          message={`Enter admin password to delete year "${confirmDeleteYear.year}".`} /><div className="modal-content">
-            <input
-              type="password"
-              placeholder="Admin Password"
-              value={adminPassword}
-              onChange={(e) => setAdminPassword(e.target.value)} />
-            {isDeletingYear && <div className="loading-spinner"></div>}
-          </div></>
+          message={`Are you sure you want to delete year "${confirmDeleteYear.year}" and all its data? This cannot be undone.`}
+        />
       )}
     </aside>
   );
