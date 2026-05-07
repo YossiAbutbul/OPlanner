@@ -14,46 +14,112 @@
   border-radius: 8px;
 }
 
-/* Tab bar */
+/* Tab bars (OneNote-style 3-level) */
 .tab-bar {
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 2px;
-  background: #e9e9ec;
-  padding: 0.4rem 0.6rem 0;
-  border-bottom: 1px solid #dadade;
+  flex-shrink: 0;
   overflow-x: auto;
   scrollbar-width: thin;
-  flex-shrink: 0;
+  border: none;
+  background: transparent;
+}
+
+.tab-bar-empty {
+  padding: 0.6rem 1rem;
+  color: #888;
+  font-size: 0.9rem;
+  font-style: italic;
 }
 
 .tab {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.55rem 0.55rem 0.85rem;
-  background: #d8d8dc;
-  color: #555;
-  border-radius: 8px 8px 0 0;
-  font-size: 0.9rem;
-  font-weight: 500;
+  gap: 0.45rem;
+  border: none;
   cursor: pointer;
-  max-width: 220px;
-  min-width: 0;
   user-select: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 0.55rem 0.85rem;
+  background: transparent;
+  color: #555;
+  white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .tab:hover {
-  background: #cfcfd4;
+  background: #efefef;
   color: #222;
 }
 
 .tab.active {
+  color: #111;
+  font-weight: 700;
+}
+
+/* Year level: muted light gray strip */
+.tab-bar-year {
+  background: #ececef;
+  padding: 0.3rem 0.6rem 0;
+  border-bottom: 1px solid #dadade;
+}
+
+.tab-bar-year .tab {
+  color: #666;
+  border-radius: 6px 6px 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.5rem 0.9rem;
+}
+
+.tab-bar-year .tab:hover {
+  background: #e0e0e4;
+  color: #222;
+}
+
+.tab-bar-year .tab.active {
   background: #f9f9f9;
   color: #111;
-  font-weight: 600;
-  box-shadow: 0 -1px 0 0 #dadade;
+  box-shadow: 0 -1px 0 0 #dadade inset;
+}
+
+/* Semester level: light gray strip */
+.tab-bar-semester {
+  background: #f4f4f6;
+  padding: 0.25rem 0.6rem 0;
+  border-bottom: 1px solid #dadade;
+}
+
+.tab-bar-semester .tab {
+  border-radius: 5px 5px 0 0;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.85rem;
+}
+
+.tab-bar-semester .tab.active {
+  background: #fafafb;
+  box-shadow: 0 -1px 0 0 #dadade inset;
+}
+
+/* Course level: lighter strip */
+.tab-bar-course {
+  background: #fafafb;
+  padding: 0.25rem 0.6rem 0;
+  border-bottom: 1px solid #e3e3e6;
+}
+
+.tab-bar-course .tab.course-tab {
+  position: relative;
+  border-radius: 4px 4px 0 0;
+  padding: 0.5rem 0.55rem 0.5rem 0.8rem;
+  max-width: 200px;
+}
+
+.tab-bar-course .tab.active {
+  background: #fff;
+  box-shadow: 0 -1px 0 0 #e3e3e6 inset;
 }
 
 .tab-label {
@@ -66,21 +132,126 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border: none;
   background: transparent;
-  color: inherit;
+  color: #666;
   border-radius: 4px;
   cursor: pointer;
-  opacity: 0.6;
+  opacity: 0;
   flex-shrink: 0;
-  transition: background-color 0.15s ease, opacity 0.15s ease;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.tab.course-tab:hover .tab-close,
+.tab.course-tab.active .tab-close {
+  opacity: 1;
 }
 
 .tab-close:hover {
-  background: rgba(0, 0, 0, 0.12);
-  opacity: 1;
+  color: #d23030;
+}
+
+.tab-add {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.tab-add:hover {
+  color: #333;
+  background: #efefef;
+}
+
+.add-course-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.add-course-inline input {
+  padding: 0.35rem 0.55rem;
+  border: 1px solid #cdd0d4;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  background: #fff;
+  outline: none;
+  width: 160px;
+}
+
+.add-course-inline input:focus {
+  border-color: #1db954;
+}
+
+.add-course-inline button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.add-course-inline button.confirm {
+  color: #1db954;
+}
+
+.add-course-inline button.confirm:hover:not(:disabled) {
+  background: rgba(29, 185, 84, 0.15);
+  color: #128a3a;
+}
+
+.add-course-inline button.cancel {
+  color: #888;
+}
+
+.add-course-inline button.cancel:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.08);
+  color: #d23030;
+}
+
+.add-course-inline button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Skeleton placeholders */
+.skeleton {
+  cursor: default;
+  pointer-events: none;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 0%,
+    rgba(0, 0, 0, 0.12) 50%,
+    rgba(0, 0, 0, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  align-self: center;
+}
+
+.skeleton-year {
+  width: 60px;
+  height: 36px;
+  margin: 0;
+  align-self: flex-end;
+  margin-bottom: 0;
+  border-radius: 6px 6px 0 0;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .empty-state {
