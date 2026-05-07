@@ -7,7 +7,7 @@ import {
   deleteDoc,
   setDoc,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, requireUid } from "../firebase";
 
 export interface HomeworkEntry {
   id: string;
@@ -59,7 +59,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
   try {
     const tasksCollection = collection(
       db,
-      `years/${year}/semesters/${semester}/courses/${course}/tasks`
+      `users/${requireUid()}/years/${year}/semesters/${semester}/courses/${course}/tasks`
     );
     const snapshot = await getDocs(tasksCollection);
     const homeworkList = snapshot.docs.map((doc) => ({
@@ -139,7 +139,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const tasksCollection = collection(
         db,
-        `years/${year}/semesters/${semester}/courses/${course}/tasks`
+        `users/${requireUid()}/years/${year}/semesters/${semester}/courses/${course}/tasks`
       );
 
       if (id) {
@@ -175,7 +175,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
       setHomework((prev) => prev.filter((entry) => entry.id !== id));
       const taskDoc = doc(
         db,
-        `years/${year}/semesters/${semester}/courses/${course}/tasks`,
+        `users/${requireUid()}/years/${year}/semesters/${semester}/courses/${course}/tasks`,
         id
       );
       await deleteDoc(taskDoc);
