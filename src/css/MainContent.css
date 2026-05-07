@@ -64,6 +64,44 @@
   background: #ececef;
   padding: 0.3rem 0.6rem 0;
   border-bottom: 1px solid #dadade;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.tab-bar-left,
+.tab-bar-right {
+  display: flex;
+  align-items: stretch;
+}
+
+.tab-bar-right {
+  align-items: center;
+  padding-bottom: 0.3rem;
+}
+
+.tab-bar-year .tab.tab-import,
+.tab.tab-import {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.85rem;
+  background: #fff;
+  border: 1px solid #cdd0d4;
+  border-radius: 8px;
+  color: #333;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.tab.tab-import:hover {
+  background: #f4f4f6;
+  border-color: #b8bbc0;
+  color: #111;
+}
+
+.tab.tab-import:active {
+  background: #e8e8eb;
 }
 
 .tab-bar-year .tab {

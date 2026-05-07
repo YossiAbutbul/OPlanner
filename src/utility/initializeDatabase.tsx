@@ -22,7 +22,6 @@ export const initializeYear = async (year: number): Promise<boolean> => {
     const yearSnapshot = await getDoc(yearDoc);
 
     if (yearSnapshot.exists()) {
-      console.warn(`Year ${year} already exists.`);
       return false;
     }
 
