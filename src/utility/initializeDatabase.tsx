@@ -1,6 +1,17 @@
 import { doc, setDoc, getDocs, collection, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase";
 
+const MAX_NAME_LENGTH = 100;
+
+const isValidName = (name: string): boolean => {
+  if (typeof name !== "string") return false;
+  const trimmed = name.trim();
+  if (trimmed.length === 0 || trimmed.length > MAX_NAME_LENGTH) return false;
+  if (/[\/\x00-\x1F\x7F]/.test(trimmed)) return false;
+  if (trimmed === "." || trimmed === "..") return false;
+  return true;
+};
+
 /**
  * Initializes a year with its default semesters and empty courses.
  */
@@ -27,7 +38,6 @@ export const initializeYear = async (year: number): Promise<boolean> => {
       await setDoc(semesterDoc, { name: semester.name });
     }
 
-    console.log(`Year ${year} initialized successfully.`);
     return true;
   } catch (error) {
     console.error(`Error initializing year ${year}:`, error);
@@ -46,7 +56,6 @@ export const initializeYearIfEmpty = async (): Promise<void> => {
     if (snapshot.empty) {
       const currentYear = new Date().getFullYear();
       await initializeYear(currentYear);
-      console.log(`No years found. Initialized current year: ${currentYear}.`);
     }
   } catch (error) {
     console.error("Error initializing year if empty:", error);
@@ -115,6 +124,11 @@ export const addCourse = async (
   course: string
 ): Promise<boolean> => {
   try {
+    if (!isValidName(course)) {
+      console.error(`Invalid course name: "${course}"`);
+      return false;
+    }
+    course = course.trim();
     const semesterDoc = doc(db, `years/${year}/semesters/${semester}`);
     const semesterSnapshot = await getDoc(semesterDoc);
 
@@ -126,8 +140,6 @@ export const addCourse = async (
     const coursesCollection = collection(db, `years/${year}/semesters/${semester}/courses`);
     const courseDoc = doc(coursesCollection, course);
     await setDoc(courseDoc, { tasks: [] });
-
-    console.log(`Course "${course}" added successfully to ${semester}, ${year}.`);
     return true;
   } catch (error) {
     console.error(`Error adding course: ${error}`);
@@ -145,6 +157,11 @@ export const renameCourse = async (
   newName: string
 ): Promise<boolean> => {
   try {
+    if (!isValidName(newName)) {
+      console.error(`Invalid course name: "${newName}"`);
+      return false;
+    }
+    newName = newName.trim();
     const coursesCollection = collection(db, `years/${year}/semesters/${semester}/courses`);
     const oldCourseDoc = doc(coursesCollection, oldName);
     const oldCourseSnapshot = await getDoc(oldCourseDoc);
@@ -175,10 +192,7 @@ export const renameCourse = async (
       await setDoc(newTaskDoc, task.data());
     }
 
-    // Delete the old course document
     await deleteDoc(oldCourseDoc);
-
-    console.log(`Course renamed from "${oldName}" to "${newName}" with all data.`);
     return true;
   } catch (error) {
     console.error(`Error renaming course: ${error}`);
@@ -200,7 +214,6 @@ export const deleteCourse = async (year: number, semester: string, course: strin
     }
 
     await deleteDoc(courseDoc);
-    console.log(`Course "${course}" deleted successfully.`);
     return true;
   } catch (error) {
     console.error(`Error deleting course: ${error}`);
@@ -222,7 +235,6 @@ export const deleteYear = async (year: number): Promise<boolean> => {
     }
 
     await deleteDoc(yearDoc);
-    console.log(`Year "${year}" deleted successfully.`);
     return true;
   } catch (error) {
     console.error(`Error deleting year: ${error}`);

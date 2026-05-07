@@ -12,7 +12,6 @@ const App: React.FC = () => {
   } | null>(null);
 
   const onCourseOrSemesterSelect = (year: number, semester: string, course?: string) => {
-    console.log("Course selected:", { year, semester, course });
     setSelectedCourseData({ year, semester, course });
   };
 

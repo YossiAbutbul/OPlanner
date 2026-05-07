@@ -317,11 +317,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onCourseOrSemesterSelect }) => {
                             key={course.name}
                             className="course-item"
                             onClick={() => {
-                              console.log("Switching to course:", {
-                                year: year.year,
-                                semester: semester.name,
-                                course: course.name,
-                              });
                               onCourseOrSemesterSelect(year.year, semester.name, course.name);
                             }}
                           >
