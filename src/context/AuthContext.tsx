@@ -1,6 +1,17 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signOut,
+  User,
+} from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
+
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+  navigator.userAgent
+);
 
 interface AuthContextValue {
   user: User | null;
@@ -16,6 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    getRedirectResult(auth).catch((e) => console.error("Redirect sign-in error:", e));
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
@@ -24,7 +36,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async () => {
-    await signInWithPopup(auth, googleProvider);
+    if (isMobile) {
+      await signInWithRedirect(auth, googleProvider);
+    } else {
+      try {
+        await signInWithPopup(auth, googleProvider);
+      } catch (e: unknown) {
+        const code = (e as { code?: string })?.code;
+        if (
+          code === "auth/popup-blocked" ||
+          code === "auth/popup-closed-by-user" ||
+          code === "auth/cancelled-popup-request"
+        ) {
+          await signInWithRedirect(auth, googleProvider);
+        } else {
+          throw e;
+        }
+      }
+    }
   };
 
   const logout = async () => {
