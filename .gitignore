@@ -40,3 +40,6 @@ src/**/*.d.ts
 !src/vite-env.d.ts
 !src/types/**/*.d.ts
 vite.config.d.ts
+
+# Claude Code internals (worktrees, local settings)
+.claude/
