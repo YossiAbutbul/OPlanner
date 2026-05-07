@@ -1,0 +1,99 @@
+.day-empty {
+  margin: 0;
+  color: #a7a7a7;
+  font-style: italic;
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.day-tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 360px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.day-tasks::-webkit-scrollbar { width: 6px; }
+.day-tasks::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 999px; }
+
+.day-task {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.75rem;
+  background: #23262c;
+  border: 1px solid #2a2d33;
+  border-radius: 8px;
+}
+
+.day-task-main {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.day-task-name {
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.day-task .status-pill {
+  flex-shrink: 0;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.day-task .status-completed {
+  color: #a3e9bc;
+  background: rgba(29, 185, 84, 0.18);
+}
+
+.day-task .status-pending {
+  color: #f3c768;
+  background: rgba(224, 150, 0, 0.2);
+}
+
+.day-task-actions {
+  display: inline-flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.day-btn {
+  background: transparent;
+  color: #d4d4d4;
+  border: 1px solid #2a2d33;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.day-btn:hover {
+  background: #2a2d33;
+  border-color: #3a3d44;
+  color: #ffffff;
+}
+
+.day-btn.danger:hover {
+  background: rgba(229, 62, 62, 0.15);
+  border-color: #e53e3e;
+  color: #ff9b9b;
+}

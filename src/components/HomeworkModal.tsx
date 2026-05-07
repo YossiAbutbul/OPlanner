@@ -27,6 +27,7 @@ interface HomeworkModalProps {
     semester: string;
     course?: string;
   } | null;
+  prefilledDueDate?: string | null;
   isLoading: boolean;
 }
 
@@ -36,6 +37,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   onSave,
   editHomework,
   selectedCourseData,
+  prefilledDueDate,
   isLoading,
 }) => {
   const [name, setName] = useState("");
@@ -50,10 +52,10 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       setStatus(editHomework.status);
     } else {
       setName("");
-      setDueDate("");
+      setDueDate(prefilledDueDate || "");
       setStatus("PENDING");
     }
-  }, [editHomework, isOpen]);
+  }, [editHomework, prefilledDueDate, isOpen]);
 
   const handleSave = () => {
     const courseData = editHomework || selectedCourseData;

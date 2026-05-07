@@ -4,6 +4,9 @@ import HomeworkTable from "./HomeworkTable";
 import HomeworkModal from "./HomeworkModal";
 import SemesterOverview from "./SemesterOverview";
 import ImportCalendarModal from "./ImportCalendarModal";
+import CourseCalendar from "./CourseCalendar";
+import DayTasksModal from "./DayTasksModal";
+import DeleteModal from "./DeleteModal";
 import "../css/MainContent.css";
 import { useHomework, HomeworkEntry } from "../context/HomeworkContext";
 import { CourseTab, YearTreeData } from "../App";
@@ -35,11 +38,16 @@ const MainContent: React.FC<MainContentProps> = ({
   onYearsChanged,
   activeTab,
 }) => {
-  const { homework, fetchHomework, addHomework } = useHomework();
+  const { homework, fetchHomework, addHomework, removeHomework } = useHomework();
   const [filteredHomework, setFilteredHomework] = useState<HomeworkEntry[]>([]);
   const [isHomeworkModalOpen, setHomeworkModalOpen] = useState(false);
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const [icsEvents, setIcsEvents] = useState<IcsEvent[] | null>(null);
+  const [calDate, setCalDate] = useState<string | null>(null);
+  const [prefillDate, setPrefillDate] = useState<string | null>(null);
+  const [dayModalDate, setDayModalDate] = useState<string | null>(null);
+  const [editTask, setEditTask] = useState<HomeworkEntry | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<HomeworkEntry | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -55,6 +63,14 @@ const MainContent: React.FC<MainContentProps> = ({
       setFilteredHomework([]);
     }
   }, [activeTab, homework]);
+
+  useEffect(() => {
+    setCalDate(null);
+  }, [activeTab]);
+
+  const tableTasks = calDate
+    ? filteredHomework.filter((t) => t.dueDate === calDate)
+    : filteredHomework;
 
   const sortedYears = [...years].sort((a, b) => a.year - b.year);
   const currentYear = years.find((y) => y.year === selectedYear) || null;
@@ -137,23 +153,51 @@ const MainContent: React.FC<MainContentProps> = ({
       <div className="main-content">
         {activeTab ? (
           <>
-            <h1>{capitalizeWords(activeTab.course)}</h1>
-            <h2>
-              {activeTab.semester}, {activeTab.year}
-            </h2>
-            <div className="progress-chart-container">
-              <ProgressChart
-                completed={
-                  filteredHomework.filter((hw) => hw.status === "COMPLETED").length
-                }
-                pending={
-                  filteredHomework.filter((hw) => hw.status === "PENDING").length
-                }
-              />
+            <header className="course-header">
+              <div className="course-header-text">
+                <h1>{capitalizeWords(activeTab.course)}</h1>
+                <h2>{activeTab.semester}, {activeTab.year}</h2>
+              </div>
+              <button
+                className="course-add-task"
+                onClick={() => setHomeworkModalOpen(true)}
+              >
+                New task
+              </button>
+            </header>
+            <div className="course-row">
+              <div className="course-progress">
+                <ProgressChart
+                  completed={filteredHomework.filter((hw) => hw.status === "COMPLETED").length}
+                  pending={filteredHomework.filter((hw) => hw.status === "PENDING").length}
+                />
+              </div>
+              <div className="course-calendar">
+                <CourseCalendar
+                  tasks={filteredHomework}
+                  selectedDate={calDate}
+                  onSelectDate={setCalDate}
+                  onCreateOnDate={(date) => {
+                    const has = filteredHomework.some((t) => t.dueDate === date);
+                    if (has) {
+                      setDayModalDate(date);
+                    } else {
+                      setPrefillDate(date);
+                      setHomeworkModalOpen(true);
+                    }
+                  }}
+                />
+              </div>
             </div>
+            {calDate && (
+              <div className="course-filter-bar">
+                Filtered to <strong>{calDate}</strong>
+                <button onClick={() => setCalDate(null)}>Clear</button>
+              </div>
+            )}
             <div className="homework-table-container">
               <HomeworkTable
-                tasks={filteredHomework}
+                tasks={tableTasks}
                 onAddTask={() => setHomeworkModalOpen(true)}
               />
             </div>
@@ -181,11 +225,58 @@ const MainContent: React.FC<MainContentProps> = ({
 
       <HomeworkModal
         isOpen={isHomeworkModalOpen}
-        onClose={() => setHomeworkModalOpen(false)}
+        onClose={() => {
+          setHomeworkModalOpen(false);
+          setPrefillDate(null);
+          setEditTask(null);
+        }}
         onSave={handleSaveHomework}
         selectedCourseData={activeTab}
+        editHomework={editTask}
+        prefilledDueDate={prefillDate}
         isLoading={isLoadingAction}
       />
+
+      {dayModalDate && activeTab && (
+        <DayTasksModal
+          isOpen={!!dayModalDate}
+          date={dayModalDate}
+          tasks={filteredHomework.filter((t) => t.dueDate === dayModalDate)}
+          onClose={() => setDayModalDate(null)}
+          onAdd={() => {
+            setPrefillDate(dayModalDate);
+            setDayModalDate(null);
+            setHomeworkModalOpen(true);
+          }}
+          onEdit={(t) => {
+            setEditTask(t);
+            setDayModalDate(null);
+            setHomeworkModalOpen(true);
+          }}
+          onDelete={(t) => setConfirmDelete(t)}
+        />
+      )}
+
+      {confirmDelete && (
+        <DeleteModal
+          isOpen={!!confirmDelete}
+          onClose={() => setConfirmDelete(null)}
+          onConfirm={async () => {
+            const t = confirmDelete;
+            setConfirmDelete(null);
+            await removeHomework(t.id, t.year, t.semester, t.course);
+            // if the day has no more tasks, close the day modal
+            if (dayModalDate) {
+              const remaining = filteredHomework.filter(
+                (x) => x.dueDate === dayModalDate && x.id !== t.id
+              );
+              if (remaining.length === 0) setDayModalDate(null);
+            }
+          }}
+          title="Confirm Delete"
+          message={`Delete "${confirmDelete.name}"? This cannot be undone.`}
+        />
+      )}
     </div>
   );
 };

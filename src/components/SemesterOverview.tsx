@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useHomework, HomeworkEntry } from "../context/HomeworkContext";
+import { useHomework } from "../context/HomeworkContext";
 import "../css/SemesterOverview.css";
 
 interface Props {
@@ -23,7 +23,6 @@ interface CourseStats {
 const SemesterOverview: React.FC<Props> = ({ year, semester, courses, onSelectCourse }) => {
   const { getCourseTasks } = useHomework();
   const [byCourse, setByCourse] = useState<CourseStats[]>([]);
-  const [upcoming, setUpcoming] = useState<HomeworkEntry[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,17 +41,7 @@ const SemesterOverview: React.FC<Props> = ({ year, semester, courses, onSelectCo
         ).length;
         return { course, total: list.length, completed, pending, overdue };
       });
-      const all = lists.flat();
-      const horizon = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-      const soon = all
-        .filter((t) => {
-          if (t.status !== "PENDING") return false;
-          const d = new Date(t.dueDate);
-          return d >= now && d <= horizon;
-        })
-        .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
       setByCourse(stats);
-      setUpcoming(soon);
     })();
     return () => {
       cancelled = true;
@@ -69,17 +58,6 @@ const SemesterOverview: React.FC<Props> = ({ year, semester, courses, onSelectCo
     { total: 0, completed: 0, pending: 0, overdue: 0 }
   );
   const completionPct = totals.total > 0 ? Math.round((totals.completed / totals.total) * 100) : 0;
-
-  const fmtDate = (s: string) => {
-    const d = new Date(s);
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    return `${dd}/${mm}`;
-  };
-  const daysLeft = (s: string) => {
-    const ms = new Date(s).getTime() - Date.now();
-    return Math.ceil(ms / (1000 * 60 * 60 * 24));
-  };
 
   return (
     <div className="overview">
@@ -149,32 +127,6 @@ const SemesterOverview: React.FC<Props> = ({ year, semester, courses, onSelectCo
         )}
       </section>
 
-      <section className="overview-section">
-        <h2>Upcoming</h2>
-        {upcoming.length === 0 ? (
-          <p className="overview-empty">Nothing due.</p>
-        ) : (
-          <ul className="upcoming-list">
-            {upcoming.map((t) => {
-              const d = daysLeft(t.dueDate);
-              const cls = d <= 5 ? "danger" : d <= 10 ? "warn" : "ok";
-              return (
-                <li
-                  key={`${t.course}-${t.id}`}
-                  className="upcoming-item"
-                  onClick={() => onSelectCourse(t.course)}
-                >
-                  <span className="upcoming-name">{t.name}</span>
-                  <span className="upcoming-course">{capitalizeWords(t.course)}</span>
-                  <span className={`upcoming-due upcoming-due-${cls}`}>
-                    {fmtDate(t.dueDate)} · {d <= 0 ? "today" : `${d} day${d === 1 ? "" : "s"}`}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
     </div>
   );
 };

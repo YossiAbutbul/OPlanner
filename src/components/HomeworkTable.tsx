@@ -55,14 +55,10 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
     return text.charAt(0).toUpperCase() + text.slice(1);
   };
 
-  // Get style for status
-  const getStatusStyle = (status: string) => {
-    const capitalizedStatus = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-    const isSmallScreen = window.innerWidth <= 1430;
-    return capitalizedStatus === "Completed"
-      ? { color: "#00bb77", fontWeight: "bold", backgroundColor: "#e6f7f1", padding: "5px 10px", borderRadius: "10px", display: "inline-block", transform: isSmallScreen ? "translateY(150%)" : "translateY(80%)" }
-      : { color: "#ffbf00", fontWeight: "bold", backgroundColor: "#fff7e6", padding: "5px 10px", borderRadius: "10px", display: "inline-block", transform: isSmallScreen ? "translateY(150%)" : "translateY(80%)" };
-  };
+  const statusClass = (status: string) =>
+    status === "COMPLETED" ? "status-pill status-completed" : "status-pill status-pending";
+  const statusLabel = (status: string) =>
+    status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -77,18 +73,20 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
   });
 
+  void onAddTask;
   return (
-    <div>
-      <div className="header-row">
-        <h2>Tasks List</h2>
-        <button className="add-homework-btn" onClick={onAddTask}>
-          <i className="bx bx-plus"></i> Add Task
-        </button>
-      </div>
+    <div className="homework-table-wrap">
       {sortedHomework.length === 0 ? (
-        <p>No tasks available. Click "Add Task" to get started!</p>
+        <p className="homework-empty">No tasks yet. Click "Add task" above to get started.</p>
       ) : (
-        <table className="homework-table">
+        <>
+        <table className="homework-table homework-table-head">
+          <colgroup>
+            <col style={{ width: "40%" }} />
+            <col style={{ width: "140px" }} />
+            <col style={{ width: "130px" }} />
+            <col style={{ width: "170px" }} />
+          </colgroup>
           <thead>
             <tr>
               <th>Assignment</th>
@@ -97,24 +95,37 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
               <th>Actions</th>
             </tr>
           </thead>
+        </table>
+        <div className="homework-table-scroll">
+        <table className="homework-table homework-table-body">
+          <colgroup>
+            <col style={{ width: "40%" }} />
+            <col style={{ width: "140px" }} />
+            <col style={{ width: "130px" }} />
+            <col style={{ width: "170px" }} />
+          </colgroup>
           <tbody>
             {sortedHomework.map((entry) => (
               <tr key={`${entry.id}-${entry.dueDate}`}>
+                <td>{capitalizeFirstLetter(entry.name)}</td>
+                <td>{formatDate(entry.dueDate)}</td>
                 <td>
-                  <i className="bx bx-edit"></i> {capitalizeFirstLetter(entry.name)}
+                  <span className={statusClass(entry.status)}>
+                    {statusLabel(entry.status)}
+                  </span>
                 </td>
                 <td>
-                  <i className="bx bx-calendar-alt"></i> {formatDate(entry.dueDate)}
-                </td>
-                <td style={getStatusStyle(entry.status)}>{entry.status.charAt(0).toUpperCase() + entry.status.slice(1).toLowerCase()}</td>
-                <td>
-                  <button onClick={() => handleEditClick(entry)}>Edit</button>
-                  <button onClick={() => handleDelete(entry)}>Delete</button>
+                  <div className="row-actions">
+                    <button className="row-btn" onClick={() => handleEditClick(entry)}>Edit</button>
+                    <button className="row-btn danger" onClick={() => handleDelete(entry)}>Delete</button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
+        </>
       )}
       {confirmDelete && (
         <DeleteModal

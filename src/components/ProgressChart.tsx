@@ -6,15 +6,13 @@ import "../css/ProgressChart.css";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface ProgressChartProps {
-  completed?: number; // Optional to allow placeholder mode
-  pending?: number;   // Optional to allow placeholder mode
-  size?: number;      // New prop for size adjustment
+  completed?: number;
+  pending?: number;
 }
 
 const ProgressChart: React.FC<ProgressChartProps> = ({
   completed = 0,
   pending = 0,
-  size = 300,
 }) => {
   const hasData = completed > 0 || pending > 0;
   const total = completed + pending;
@@ -25,8 +23,9 @@ const ProgressChart: React.FC<ProgressChartProps> = ({
     datasets: [
       {
         data: hasData ? [completed, pending] : [1],
-        backgroundColor: hasData ? ["#333", "#e0e0e0"] : ["#e0e0e0"], // Updated color
-        hoverBackgroundColor: hasData ? ["#555", "#c0c0c0"] : ["#c0c0c0"], // Updated hover color
+        backgroundColor: hasData ? ["#1db954", "#e3e3e6"] : ["#e3e3e6"],
+        hoverBackgroundColor: hasData ? ["#1ed760", "#d6d6d9"] : ["#d6d6d9"],
+        borderWidth: 0,
       },
     ],
   };
@@ -34,68 +33,37 @@ const ProgressChart: React.FC<ProgressChartProps> = ({
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    cutout: "55%",
     plugins: {
-      legend: {
-        display: false,
-      },
-      tooltip: {
-        enabled: false, // Disable tooltip
-      },
+      legend: { display: false },
+      tooltip: { enabled: false },
     },
-    hover: {
-      mode: undefined,
-      animation: false,
+    animation: {
+      duration: 900,
+      easing: "easeOutCubic" as const,
+      animateRotate: true,
+      animateScale: false,
     },
+    hover: { mode: undefined, animation: false },
   };
 
   return (
-    <div style={{ textAlign: "center" }}>
-      <div
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          margin: "0 auto",
-          position: "relative",
-          textAlign: "center",
-        }}
-      >
-        <div
-          style={{
-            position: "relative",
-            display: "inline-block",
-            width: "100%",
-            height: "100%",
-          }}
-        >
-          <Doughnut data={data} options={options} />
-          {hasData && (
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                fontSize: "1.5rem",
-                fontWeight: "bold",
-                color: "#333",
-              }}
-            >
-              {percentage}%
-            </div>
-          )}
-        </div>
-        {!hasData && <p style={{ marginTop: "20px", color: "#999" }}></p>}
+    <div className="progress-card">
+      <div className="progress-card-header">Progress</div>
+      <div className="progress-donut-wrap">
+        <Doughnut data={data} options={options} />
+        {hasData && (
+          <div className="progress-center">
+            <span className="progress-pct">{percentage}%</span>
+          </div>
+        )}
+        {!hasData && (
+          <div className="progress-center">
+            <span className="progress-empty">No tasks</span>
+          </div>
+        )}
       </div>
-      {/* Title Below the Chart */}
-      <p
-        style={{
-          marginTop: "15px",
-          fontSize: "1rem",
-          color: "#bdbdbf",
-          fontWeight: "500",
-          fontStyle: "italic",
-        }}
-      >
+      <p className="progress-subtitle">
         {completed} tasks completed out of {total}
       </p>
     </div>
