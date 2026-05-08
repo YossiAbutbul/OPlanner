@@ -1,6 +1,6 @@
 .day-empty {
   margin: 0;
-  color: #a7a7a7;
+  color: #888;
   font-style: italic;
   text-align: center;
   padding: 0.5rem 0;
@@ -16,19 +16,24 @@
   max-height: 360px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  scrollbar-color: #c5c8cc transparent;
 }
 
-.day-tasks::-webkit-scrollbar { width: 6px; }
-.day-tasks::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 999px; }
+.day-tasks::-webkit-scrollbar {
+  width: 6px;
+}
+.day-tasks::-webkit-scrollbar-thumb {
+  background: #c5c8cc;
+  border-radius: 999px;
+}
 
 .day-task {
   display: flex;
   align-items: center;
   gap: 0.7rem;
   padding: 0.6rem 0.75rem;
-  background: #23262c;
-  border: 1px solid #2a2d33;
+  background: #ffffff;
+  border: 1px solid #e3e3e6;
   border-radius: 8px;
 }
 
@@ -41,7 +46,7 @@
 }
 
 .day-task-name {
-  color: #ffffff;
+  color: #1a1a1a;
   font-size: 0.95rem;
   font-weight: 500;
   white-space: nowrap;
@@ -56,16 +61,19 @@
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 600;
+  border: 1px solid transparent;
 }
 
 .day-task .status-completed {
-  color: #a3e9bc;
-  background: rgba(29, 185, 84, 0.18);
+  color: #166534;
+  background: #dcfce7;
+  border-color: #86efac;
 }
 
 .day-task .status-pending {
-  color: #f3c768;
-  background: rgba(224, 150, 0, 0.2);
+  color: #92400e;
+  background: #fef3c7;
+  border-color: #fcd34d;
 }
 
 .day-task-actions {
@@ -75,25 +83,33 @@
 }
 
 .day-btn {
-  background: transparent;
-  color: #d4d4d4;
-  border: 1px solid #2a2d33;
+  background: #ffffff;
+  color: #333;
+  border: 1px solid #d6d6da;
   padding: 0.35rem 0.7rem;
   border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .day-btn:hover {
-  background: #2a2d33;
-  border-color: #3a3d44;
-  color: #ffffff;
+  background: #f0f0f1;
+  border-color: #b8bbc0;
+  color: #1a1a1a;
+}
+
+.day-btn.danger {
+  color: #c53030;
+  border-color: #f5b7b7;
 }
 
 .day-btn.danger:hover {
-  background: rgba(229, 62, 62, 0.15);
+  background: #fde2e2;
   border-color: #e53e3e;
-  color: #ff9b9b;
+  color: #b91c1c;
 }

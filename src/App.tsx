@@ -79,17 +79,88 @@ const App: React.FC = () => {
     if (!hasCache) refreshYears();
   }, [user, refreshYears]);
 
-  useEffect(() => {
-    if (selectedYear !== null || years.length === 0) return;
-    const now = new Date().getFullYear();
-    const match = years.find((y) => y.year === now) || years[years.length - 1];
-    if (match) {
-      setSelectedYear(match.year);
-      if (match.semesters.length > 0) {
-        setSelectedSemester(match.semesters[0].name);
+  // Helper: pick best semester for a given year tree.
+  // Priority: per-year saved → heuristic by month → "Semester A" → first in tree.
+  const pickSemesterForYear = useCallback(
+    (yearTree: YearTreeData): string | null => {
+      if (yearTree.semesters.length === 0) return null;
+      if (user) {
+        try {
+          const raw = localStorage.getItem(`oplanner.lastSemesterByYear.${user.uid}`);
+          if (raw) {
+            const map = JSON.parse(raw) as Record<string, string>;
+            const saved = map[String(yearTree.year)];
+            if (saved && yearTree.semesters.some((s) => s.name === saved)) {
+              return saved;
+            }
+          }
+        } catch {
+          /* ignore */
+        }
       }
+      // Heuristic by current month (Israeli academic calendar)
+      const month = new Date().getMonth();
+      const semesterByMonth =
+        month >= 9 || month <= 1
+          ? "Semester A"
+          : month >= 2 && month <= 6
+          ? "Semester B"
+          : "Semester C";
+      const semMatch = yearTree.semesters.find((s) => s.name === semesterByMonth);
+      if (semMatch) return semMatch.name;
+      const semA = yearTree.semesters.find((s) => s.name === "Semester A");
+      if (semA) return semA.name;
+      return yearTree.semesters[0]?.name ?? null;
+    },
+    [user]
+  );
+
+  useEffect(() => {
+    if (selectedYear !== null || years.length === 0 || !user) return;
+
+    // 1) Try last-opened year persisted
+    let yearToOpen: YearTreeData | null = null;
+    try {
+      const raw = localStorage.getItem(`oplanner.lastSelection.${user.uid}`);
+      if (raw) {
+        const { year } = JSON.parse(raw) as { year?: number };
+        const yMatch = years.find((y) => y.year === year);
+        if (yMatch) yearToOpen = yMatch;
+      }
+    } catch {
+      /* ignore */
     }
-  }, [years, selectedYear]);
+
+    // 2) Fallback to current calendar year, then most recent
+    if (!yearToOpen) {
+      const yearGuess = new Date().getFullYear();
+      yearToOpen = years.find((y) => y.year === yearGuess) || years[years.length - 1];
+    }
+    if (!yearToOpen) return;
+
+    setSelectedYear(yearToOpen.year);
+    setSelectedSemester(pickSemesterForYear(yearToOpen));
+  }, [years, selectedYear, user, pickSemesterForYear]);
+
+  // Persist last-opened year + per-year semester whenever they change.
+  useEffect(() => {
+    if (!user || selectedYear === null) return;
+    try {
+      localStorage.setItem(
+        `oplanner.lastSelection.${user.uid}`,
+        JSON.stringify({ year: selectedYear })
+      );
+      if (selectedSemester) {
+        const key = `oplanner.lastSemesterByYear.${user.uid}`;
+        const raw = localStorage.getItem(key);
+        const map = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+        map[String(selectedYear)] = selectedSemester;
+        localStorage.setItem(key, JSON.stringify(map));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [user, selectedYear, selectedSemester]);
 
   const handleReorderCourses = (year: number, semester: string, names: string[]) => {
     setYears((prev) => {
@@ -292,7 +363,8 @@ const App: React.FC = () => {
         onSelectYear={(y) => {
           if (y === selectedYear) return;
           setSelectedYear(y);
-          setSelectedSemester(null);
+          const yearTree = years.find((yy) => yy.year === y);
+          setSelectedSemester(yearTree ? pickSemesterForYear(yearTree) : null);
           setSelectedCourse(null);
         }}
         onSelectSemester={(s) => {

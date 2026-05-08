@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "./Modal";
+import DatePicker from "./DatePicker";
 
 interface HomeworkModalProps {
   isOpen: boolean;
@@ -43,7 +44,6 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   const [name, setName] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState("PENDING");
-  const dateInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editHomework) {
@@ -122,14 +122,45 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
         autoComplete="off"
         autoFocus
       />
-      <label htmlFor="due-date">Due date</label>
-      <input
-        id="due-date"
-        type="date"
-        value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-        ref={dateInputRef}
-      />
+      <label>Due date</label>
+      <DatePicker
+        value={dueDate || null}
+        onChange={(v) => setDueDate(v ?? "")}
+        block
+      >
+        {(open) => {
+          let display = "Select date";
+          if (dueDate) {
+            const [y, m, d] = dueDate.split("-");
+            display = `${d}/${m}/${y}`;
+          }
+          return (
+            <button
+              type="button"
+              className="hw-date-trigger"
+              onClick={open}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <path d="M16 2v4M8 2v4M3 10h18" />
+              </svg>
+              <span className={dueDate ? "" : "hw-date-trigger-empty"}>
+                {display}
+              </span>
+            </button>
+          );
+        }}
+      </DatePicker>
       <label htmlFor="status">Status</label>
       <select
         id="status"
