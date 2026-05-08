@@ -163,3 +163,23 @@
     transform: scale(1);
   }
 }
+
+.delete-modal-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.delete-modal-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: deleteModalSpin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes deleteModalSpin {
+  to { transform: rotate(360deg); }
+}

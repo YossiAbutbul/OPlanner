@@ -5,7 +5,15 @@ import MainContent from "./components/MainContent";
 import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
 import { useAuth } from "./context/AuthContext";
-import { getAllYearsAndSemesters, initializeYear, setCourseOrder } from "./utility/initializeDatabase";
+import {
+  getAllYearsAndSemesters,
+  initializeYear,
+  setCourseOrder,
+  deleteYear,
+  setYearColor,
+  setSemesterColor,
+  setCourseFinalDate,
+} from "./utility/initializeDatabase";
 
 export interface CourseTab {
   year: number;
@@ -13,9 +21,15 @@ export interface CourseTab {
   course: string;
 }
 
+export interface CourseInfo {
+  name: string;
+  finalDate?: string;
+}
+
 export interface YearTreeData {
   year: number;
-  semesters: { name: string; key: string; courses: { name: string }[] }[];
+  color?: string;
+  semesters: { name: string; key: string; color?: string; courses: CourseInfo[] }[];
 }
 
 const App: React.FC = () => {
@@ -104,6 +118,118 @@ const App: React.FC = () => {
     void setCourseOrder(year, semester, names);
   };
 
+  const persistYears = (next: YearTreeData[]) => {
+    if (user) {
+      try {
+        localStorage.setItem(`oplanner.years.${user.uid}`, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
+  const handleUpdateYearColor = async (year: number, color: string | null) => {
+    let prev: YearTreeData[] = [];
+    setYears((curr) => {
+      prev = curr;
+      const next = curr.map((y) =>
+        y.year === year ? { ...y, color: color ?? undefined } : y
+      );
+      persistYears(next);
+      return next;
+    });
+    const ok = await setYearColor(year, color);
+    if (!ok) {
+      setYears(prev);
+      persistYears(prev);
+      throw new Error("Failed to save year color. Check your connection and try again.");
+    }
+  };
+
+  const handleUpdateSemesterColor = async (
+    year: number,
+    semesterKey: string,
+    color: string | null
+  ) => {
+    let prev: YearTreeData[] = [];
+    setYears((curr) => {
+      prev = curr;
+      const next = curr.map((y) => {
+        if (y.year !== year) return y;
+        return {
+          ...y,
+          semesters: y.semesters.map((s) =>
+            s.key === semesterKey ? { ...s, color: color ?? undefined } : s
+          ),
+        };
+      });
+      persistYears(next);
+      return next;
+    });
+    const ok = await setSemesterColor(year, semesterKey, color);
+    if (!ok) {
+      setYears(prev);
+      persistYears(prev);
+      throw new Error("Failed to save semester color. Check your connection and try again.");
+    }
+  };
+
+  const handleUpdateCourseFinalDate = async (
+    year: number,
+    semesterKey: string,
+    course: string,
+    date: string | null
+  ) => {
+    let prev: YearTreeData[] = [];
+    setYears((curr) => {
+      prev = curr;
+      const next = curr.map((y) => {
+        if (y.year !== year) return y;
+        return {
+          ...y,
+          semesters: y.semesters.map((s) => {
+            if (s.key !== semesterKey) return s;
+            return {
+              ...s,
+              courses: s.courses.map((c) =>
+                c.name === course ? { ...c, finalDate: date ?? undefined } : c
+              ),
+            };
+          }),
+        };
+      });
+      persistYears(next);
+      return next;
+    });
+    const ok = await setCourseFinalDate(year, semesterKey, course, date);
+    if (!ok) {
+      setYears(prev);
+      persistYears(prev);
+      throw new Error("Failed to save final date. Check your connection and try again.");
+    }
+    // Bust homework cache so next read pulls the updated/created/deleted final task.
+    if (user) {
+      try {
+        localStorage.removeItem(
+          `oplanner.homework.${user.uid}.${year}|${semesterKey}|${course}`
+        );
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
+  const handleDeleteYear = async (year: number) => {
+    const ok = await deleteYear(year);
+    if (!ok) return;
+    if (selectedYear === year) {
+      setSelectedYear(null);
+      setSelectedSemester(null);
+      setSelectedCourse(null);
+    }
+    await refreshYears();
+  };
+
   const handleAddYear = async () => {
     setAddingYear(true);
     try {
@@ -176,6 +302,10 @@ const App: React.FC = () => {
         }}
         onSelectCourse={setSelectedCourse}
         onYearsChanged={refreshYears}
+        onDeleteYear={handleDeleteYear}
+        onUpdateYearColor={handleUpdateYearColor}
+        onUpdateSemesterColor={handleUpdateSemesterColor}
+        onUpdateCourseFinalDate={handleUpdateCourseFinalDate}
         activeTab={activeTab}
       />
       <RightSidebar

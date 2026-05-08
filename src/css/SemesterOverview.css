@@ -7,9 +7,38 @@
 
 .overview-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.85rem;
   margin-bottom: 1.25rem;
+}
+
+.overview-header-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  flex: 1;
+}
+
+.overview-import {
+  padding: 0.5rem 1.1rem;
+  background: #1db954;
+  color: #ffffff;
+  border: 1px solid #19a449;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+  flex-shrink: 0;
+}
+
+.overview-import:hover {
+  background: #1ed760;
+  border-color: #1bbf52;
+}
+
+.overview-import:active {
+  transform: scale(0.97);
 }
 
 .overview-header h1 {
@@ -114,6 +143,10 @@
   padding: 0.7rem 0.9rem;
   cursor: pointer;
   transition: border-color 0.15s ease, transform 0.08s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.4rem;
 }
 
 .course-stat:hover {
@@ -185,3 +218,185 @@
 .upcoming-due-ok    { color: #1db954; }
 .upcoming-due-warn  { color: #e09600; }
 .upcoming-due-danger { color: #d23030; }
+
+/* Two-column grid: courses + finals */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1.75rem;
+}
+
+.overview-grid .overview-section {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Finals countdown */
+.finals-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.finals-row,
+.course-stat {
+  min-height: 72px;
+  box-sizing: border-box;
+}
+
+.finals-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+  background: #fff;
+  border: 1px solid #e3e3e6;
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+}
+
+.finals-row-main {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.finals-row-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.finals-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.finals-badge-soon {
+  color: #b91c1c;
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+.finals-badge-near {
+  color: #92400e;
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+.finals-badge-far {
+  color: #166534;
+  background: #dcfce7;
+  border-color: #86efac;
+}
+.finals-badge-past {
+  color: #525252;
+  background: #f4f4f5;
+  border-color: #d4d4d8;
+}
+
+.finals-date {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #555;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.finals-date:hover {
+  background: #f0f4f1;
+  color: #1db954;
+}
+
+.finals-date-icon {
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.finals-date-label {
+  white-space: nowrap;
+}
+
+.finals-date-label.empty {
+  color: #888;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.finals-date-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  font: inherit;
+  color: transparent;
+}
+
+.finals-date-native::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  opacity: 0;
+}
+
+/* Empty Semester C CTA */
+.overview-cta {
+  margin-top: 2rem;
+  background: #fff;
+  border: 1px dashed #c5c8cc;
+  border-radius: 12px;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: #444;
+}
+
+.overview-cta-icon {
+  font-size: 2.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.overview-cta h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.overview-cta p {
+  margin: 0 auto;
+  max-width: 480px;
+  color: #666;
+  line-height: 1.5;
+}

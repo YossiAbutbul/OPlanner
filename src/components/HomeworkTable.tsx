@@ -66,10 +66,11 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
     return date.toLocaleDateString("en-GB");
   };
 
-  // Sort homework for display
+  // Sort: non-completed first (by due date asc), completed at bottom (by due date asc)
   const sortedHomework = [...tasks].sort((a, b) => {
-    if (a.status === "PENDING" && b.status !== "PENDING") return -1;
-    if (a.status !== "PENDING" && b.status === "PENDING") return 1;
+    const aDone = a.status === "COMPLETED";
+    const bDone = b.status === "COMPLETED";
+    if (aDone !== bDone) return aDone ? 1 : -1;
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
   });
 

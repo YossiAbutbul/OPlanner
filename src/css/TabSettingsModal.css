@@ -1,0 +1,148 @@
+.tab-settings-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+
+.tab-settings-row:last-child {
+  margin-bottom: 0;
+}
+
+.tab-settings-label {
+  color: #cfcfd2;
+  font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.tab-settings-value {
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.tab-settings-swatches {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.tab-settings-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.tab-settings-swatch:hover {
+  transform: scale(1.1);
+}
+
+.tab-settings-swatch.selected {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.95);
+}
+
+.tab-settings-check {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: block;
+  pointer-events: none;
+}
+
+.tab-settings-swatch,
+.tab-settings-custom {
+  position: relative;
+}
+
+.tab-settings-custom {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1.5px dashed rgba(255, 255, 255, 0.45);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: transform 0.1s ease, border-color 0.1s ease, background-color 0.1s ease, box-shadow 0.1s ease;
+}
+
+.tab-settings-custom:hover {
+  border-color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.05);
+  transform: scale(1.1);
+}
+
+.tab-settings-custom.selected {
+  border: none;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.95);
+}
+
+.tab-settings-custom.selected::after {
+  display: none;
+}
+
+.tab-settings-custom::after {
+  content: "+";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: none;
+  line-height: 1;
+}
+
+
+.tab-settings-color-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+.tab-settings-clear {
+  margin-left: auto;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #ccc;
+  flex-shrink: 0;
+}
+
+.tab-settings-clear:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tab-settings-clear:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

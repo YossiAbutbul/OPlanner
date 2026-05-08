@@ -66,7 +66,14 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
             onClick={handleConfirm}
             disabled={isLoading}
           >
-            {isLoading ? "Deleting…" : "Delete"}
+            {isLoading ? (
+              <span className="delete-modal-loading">
+                <span className="delete-modal-spinner" />
+                Deleting…
+              </span>
+            ) : (
+              "Delete"
+            )}
           </button>
         </>
       }

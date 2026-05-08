@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
+import { parseIcs, IcsEvent } from "../utility/parseIcs";
+import { CourseInfo } from "../App";
 import "../css/SemesterOverview.css";
 
 interface Props {
   year: number;
   semester: string;
-  courses: string[];
+  semesterKey: string;
+  courses: CourseInfo[];
   onSelectCourse: (c: string) => void;
+  onImport: (events: IcsEvent[]) => void;
+  onUpdateCourseFinalDate: (course: string, date: string | null) => Promise<void>;
+  onError: (msg: string) => void;
 }
 
 const capitalizeWords = (str: string) =>
@@ -20,15 +26,32 @@ interface CourseStats {
   overdue: number;
 }
 
-const SemesterOverview: React.FC<Props> = ({ year, semester, courses, onSelectCourse }) => {
+const daysUntil = (iso: string): number => {
+  const target = new Date(iso + "T00:00:00");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+const SemesterOverview: React.FC<Props> = ({
+  year,
+  semester,
+  semesterKey,
+  courses,
+  onSelectCourse,
+  onImport,
+  onUpdateCourseFinalDate,
+  onError,
+}) => {
   const { getCourseTasks } = useHomework();
   const [byCourse, setByCourse] = useState<CourseStats[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const lists = await Promise.all(
-        courses.map((c) => getCourseTasks(year, semester, c))
+        courses.map((c) => getCourseTasks(year, semesterKey, c.name))
       );
       if (cancelled) return;
       const now = new Date();
@@ -39,14 +62,14 @@ const SemesterOverview: React.FC<Props> = ({ year, semester, courses, onSelectCo
         const overdue = list.filter(
           (t) => t.status === "PENDING" && new Date(t.dueDate) < now
         ).length;
-        return { course, total: list.length, completed, pending, overdue };
+        return { course: course.name, total: list.length, completed, pending, overdue };
       });
       setByCourse(stats);
     })();
     return () => {
       cancelled = true;
     };
-  }, [year, semester, courses, getCourseTasks]);
+  }, [year, semesterKey, courses, getCourseTasks]);
 
   const totals = byCourse.reduce(
     (acc, s) => ({
@@ -59,74 +82,198 @@ const SemesterOverview: React.FC<Props> = ({ year, semester, courses, onSelectCo
   );
   const completionPct = totals.total > 0 ? Math.round((totals.completed / totals.total) * 100) : 0;
 
+  const handleFinalDateChange = (course: string, value: string) => {
+    const next = value ? value : null;
+    onUpdateCourseFinalDate(course, next).catch((err: Error) => {
+      onError(err.message || "Failed to save final date.");
+    });
+  };
+
+  const isEmpty = courses.length === 0;
+  const isSemesterC = semesterKey === "Semester C" || semester === "Semester C";
+
   return (
     <div className="overview">
       <header className="overview-header">
-        <h1>{semester}</h1>
-        <span className="overview-year">{year}</span>
+        <div className="overview-header-title">
+          <h1>{semester}</h1>
+          <span className="overview-year">{year}</span>
+        </div>
+        <button
+          className="overview-import"
+          onClick={() => fileInputRef.current?.click()}
+          title="Import calendar (.ics)"
+        >
+          Import calendar
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".ics,text/calendar"
+          style={{ display: "none" }}
+          onChange={async (e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (!f) return;
+            const text = await f.text();
+            onImport(parseIcs(text));
+          }}
+        />
       </header>
 
-      <section className="overview-stats">
-        <div className="stat-card">
-          <div className="stat-label">Tasks</div>
-          <div className="stat-value">{totals.total}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Completed</div>
-          <div className="stat-value stat-good">{totals.completed}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Pending</div>
-          <div className="stat-value">{totals.pending}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Overdue</div>
-          <div className={`stat-value ${totals.overdue > 0 ? "stat-bad" : ""}`}>
-            {totals.overdue}
-          </div>
-        </div>
-        <div className="stat-card stat-card-wide">
-          <div className="stat-label">Completion</div>
-          <div className="stat-value">{completionPct}%</div>
-          <div className="stat-bar">
-            <div className="stat-bar-fill" style={{ width: `${completionPct}%` }} />
-          </div>
-        </div>
-      </section>
+      {isEmpty && isSemesterC ? (
+        <section className="overview-cta">
+          <div className="overview-cta-icon">📅</div>
+          <h2>Plan your next semester</h2>
+          <p>
+            Semester C is empty. Add courses to start tracking tasks, set final exam
+            dates, and import your calendar.
+          </p>
+        </section>
+      ) : isEmpty ? (
+        <section className="overview-section">
+          <p className="overview-empty">No courses in this semester yet.</p>
+        </section>
+      ) : (
+        <>
+          <section className="overview-stats">
+            <div className="stat-card">
+              <div className="stat-label">Tasks</div>
+              <div className="stat-value">{totals.total}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Completed</div>
+              <div className="stat-value stat-good">{totals.completed}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Pending</div>
+              <div className="stat-value">{totals.pending}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Overdue</div>
+              <div className={`stat-value ${totals.overdue > 0 ? "stat-bad" : ""}`}>
+                {totals.overdue}
+              </div>
+            </div>
+            <div className="stat-card stat-card-wide">
+              <div className="stat-label">Completion</div>
+              <div className="stat-value">{completionPct}%</div>
+              <div className="stat-bar">
+                <div className="stat-bar-fill" style={{ width: `${completionPct}%` }} />
+              </div>
+            </div>
+          </section>
 
-      <section className="overview-section">
-        <h2>Courses</h2>
-        {byCourse.length === 0 ? (
-          <p className="overview-empty">No courses in this semester.</p>
-        ) : (
-          <ul className="course-stats">
-            {byCourse.map((s) => {
-              const pct = s.total > 0 ? Math.round((s.completed / s.total) * 100) : 0;
-              return (
-                <li
-                  key={s.course}
-                  className="course-stat"
-                  onClick={() => onSelectCourse(s.course)}
-                >
-                  <div className="course-stat-row">
-                    <span className="course-stat-name">{capitalizeWords(s.course)}</span>
-                    <span className="course-stat-meta">
-                      {s.completed}/{s.total}
-                      {s.overdue > 0 && (
-                        <span className="course-stat-overdue"> · {s.overdue} overdue</span>
-                      )}
-                    </span>
-                  </div>
-                  <div className="stat-bar">
-                    <div className="stat-bar-fill" style={{ width: `${pct}%` }} />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+          <div className="overview-grid">
+            <section className="overview-section">
+              <h2>Courses</h2>
+              <ul className="course-stats">
+                {byCourse.map((s) => {
+                  const pct = s.total > 0 ? Math.round((s.completed / s.total) * 100) : 0;
+                  return (
+                    <li
+                      key={s.course}
+                      className="course-stat"
+                      onClick={() => onSelectCourse(s.course)}
+                    >
+                      <div className="course-stat-row">
+                        <span className="course-stat-name">{capitalizeWords(s.course)}</span>
+                        <span className="course-stat-meta">
+                          {s.completed}/{s.total}
+                          {s.overdue > 0 && (
+                            <span className="course-stat-overdue"> · {s.overdue} overdue</span>
+                          )}
+                        </span>
+                      </div>
+                      <div className="stat-bar">
+                        <div className="stat-bar-fill" style={{ width: `${pct}%` }} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
 
+            <section className="overview-section">
+              <h2>Finals countdown</h2>
+              <ul className="finals-list">
+                {courses.map((c) => {
+                  const days = c.finalDate ? daysUntil(c.finalDate) : null;
+                  let badge = "";
+                  let badgeClass = "";
+                  if (days !== null) {
+                    if (days < 0) {
+                      badge = `${Math.abs(days)}d ago`;
+                      badgeClass = "finals-badge-past";
+                    } else if (days === 0) {
+                      badge = "Today";
+                      badgeClass = "finals-badge-soon";
+                    } else if (days <= 7) {
+                      badge = `${days}d`;
+                      badgeClass = "finals-badge-soon";
+                    } else if (days <= 30) {
+                      badge = `${days}d`;
+                      badgeClass = "finals-badge-near";
+                    } else {
+                      badge = `${days}d`;
+                      badgeClass = "finals-badge-far";
+                    }
+                  }
+                  let formatted: string | null = null;
+                  if (c.finalDate) {
+                    const d = new Date(c.finalDate + "T00:00:00");
+                    const dd = String(d.getDate()).padStart(2, "0");
+                    const mm = String(d.getMonth() + 1).padStart(2, "0");
+                    const yyyy = d.getFullYear();
+                    formatted = `${dd}/${mm}/${yyyy}`;
+                  }
+                  return (
+                    <li key={c.name} className="finals-row">
+                      <div className="finals-row-main">
+                        <span className="finals-row-name">{capitalizeWords(c.name)}</span>
+                        {badge && (
+                          <span className={`finals-badge ${badgeClass}`}>{badge}</span>
+                        )}
+                      </div>
+                      <label className="finals-date">
+                        <svg
+                          className="finals-date-icon"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <rect x="3" y="4" width="18" height="18" rx="2" />
+                          <path d="M16 2v4M8 2v4M3 10h18" />
+                        </svg>
+                        <span
+                          className={`finals-date-label ${formatted ? "" : "empty"}`}
+                          dir="ltr"
+                        >
+                          {formatted ?? "Set date"}
+                        </span>
+                        <input
+                          type="date"
+                          className="finals-date-native"
+                          value={c.finalDate ?? ""}
+                          onChange={(e) =>
+                            handleFinalDateChange(c.name, e.target.value)
+                          }
+                        />
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          </div>
+        </>
+      )}
     </div>
   );
 };

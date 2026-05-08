@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import ProgressChart from "./ProgressChart";
 import HomeworkTable from "./HomeworkTable";
 import HomeworkModal from "./HomeworkModal";
@@ -7,10 +7,12 @@ import ImportCalendarModal from "./ImportCalendarModal";
 import CourseCalendar from "./CourseCalendar";
 import DayTasksModal from "./DayTasksModal";
 import DeleteModal from "./DeleteModal";
+import TabSettingsModal from "./TabSettingsModal";
+import Modal from "./Modal";
 import "../css/MainContent.css";
 import { useHomework, HomeworkEntry } from "../context/HomeworkContext";
 import { CourseTab, YearTreeData } from "../App";
-import { parseIcs, IcsEvent } from "../utility/parseIcs";
+import { IcsEvent } from "../utility/parseIcs";
 
 interface MainContentProps {
   years: YearTreeData[];
@@ -21,6 +23,15 @@ interface MainContentProps {
   onSelectSemester: (s: string) => void;
   onSelectCourse: (c: string) => void;
   onYearsChanged: () => void;
+  onDeleteYear: (year: number) => Promise<void>;
+  onUpdateYearColor: (year: number, color: string | null) => Promise<void>;
+  onUpdateSemesterColor: (year: number, semesterKey: string, color: string | null) => Promise<void>;
+  onUpdateCourseFinalDate: (
+    year: number,
+    semesterKey: string,
+    course: string,
+    date: string | null
+  ) => Promise<void>;
   activeTab: CourseTab | null;
 }
 
@@ -36,6 +47,10 @@ const MainContent: React.FC<MainContentProps> = ({
   onSelectSemester,
   onSelectCourse,
   onYearsChanged,
+  onDeleteYear,
+  onUpdateYearColor,
+  onUpdateSemesterColor,
+  onUpdateCourseFinalDate,
   activeTab,
 }) => {
   const { homework, fetchHomework, addHomework, removeHomework } = useHomework();
@@ -48,7 +63,13 @@ const MainContent: React.FC<MainContentProps> = ({
   const [dayModalDate, setDayModalDate] = useState<string | null>(null);
   const [editTask, setEditTask] = useState<HomeworkEntry | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<HomeworkEntry | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [confirmDeleteYear, setConfirmDeleteYear] = useState<number | null>(null);
+  const [tabSettings, setTabSettings] = useState<
+    | { kind: "year"; year: number; color?: string }
+    | { kind: "semester"; year: number; semester: string; color?: string }
+    | null
+  >(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab) {
@@ -99,40 +120,43 @@ const MainContent: React.FC<MainContentProps> = ({
     <div className="main-layout">
       {/* Year tabs */}
       <div className="tab-bar tab-bar-year">
-        <div className="tab-bar-left">
-          {sortedYears.map((y) => (
-            <button
-              key={y.year}
-              className={`tab year-tab ${selectedYear === y.year ? "active" : ""}`}
-              onClick={() => onSelectYear(y.year)}
-            >
-              {y.year}
-            </button>
-          ))}
-          {addingYear && <div className="tab skeleton skeleton-year"></div>}
-        </div>
-        <div className="tab-bar-right">
-          <button
-            className="tab tab-import"
-            onClick={() => fileInputRef.current?.click()}
-            title="Import calendar (.ics)"
-          >
-            <span>Import calendar</span>
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".ics,text/calendar"
-            style={{ display: "none" }}
-            onChange={async (e) => {
-              const f = e.target.files?.[0];
-              e.target.value = "";
-              if (!f) return;
-              const text = await f.text();
-              setIcsEvents(parseIcs(text));
+        {sortedYears.map((y) => (
+          <div
+            key={y.year}
+            className={`tab year-tab ${selectedYear === y.year ? "active" : ""}`}
+            style={y.color ? ({ "--tab-color": y.color } as React.CSSProperties) : undefined}
+            onClick={() => onSelectYear(y.year)}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setTabSettings({ kind: "year", year: y.year, color: y.color });
             }}
-          />
-        </div>
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setTabSettings({ kind: "year", year: y.year, color: y.color });
+            }}
+          >
+            {y.color && <span className="tab-color-dot" style={{ background: y.color }} />}
+            <span>{y.year}</span>
+            <button
+              type="button"
+              className="year-tab-delete"
+              title="Delete year"
+              aria-label={`Delete year ${y.year}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirmDeleteYear(y.year);
+              }}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+        {addingYear && (
+          <span className="year-adding" title="Adding year…" aria-label="Adding year">
+            <span className="year-adding-spinner" />
+            <span className="year-adding-label">Adding…</span>
+          </span>
+        )}
       </div>
 
       {/* Semester tabs */}
@@ -142,8 +166,32 @@ const MainContent: React.FC<MainContentProps> = ({
             <button
               key={s.key}
               className={`tab semester-tab ${selectedSemester === s.name ? "active" : ""}`}
+              style={s.color ? ({ "--tab-color": s.color } as React.CSSProperties) : undefined}
               onClick={() => onSelectSemester(s.name)}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                if (currentYear) {
+                  setTabSettings({
+                    kind: "semester",
+                    year: currentYear.year,
+                    semester: s.key,
+                    color: s.color,
+                  });
+                }
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                if (currentYear) {
+                  setTabSettings({
+                    kind: "semester",
+                    year: currentYear.year,
+                    semester: s.key,
+                    color: s.color,
+                  });
+                }
+              }}
             >
+              {s.color && <span className="tab-color-dot" style={{ background: s.color }} />}
               {s.name}
             </button>
           ))}
@@ -206,8 +254,14 @@ const MainContent: React.FC<MainContentProps> = ({
           <SemesterOverview
             year={selectedYear}
             semester={selectedSemester}
-            courses={currentSemester.courses.map((c) => c.name)}
+            semesterKey={currentSemester.key}
+            courses={currentSemester.courses}
             onSelectCourse={onSelectCourse}
+            onImport={setIcsEvents}
+            onUpdateCourseFinalDate={(course, date) =>
+              onUpdateCourseFinalDate(selectedYear, currentSemester.key, course, date)
+            }
+            onError={(msg) => setErrorMsg(msg)}
           />
         ) : (
           <div className="empty-state" />
@@ -263,8 +317,8 @@ const MainContent: React.FC<MainContentProps> = ({
           onClose={() => setConfirmDelete(null)}
           onConfirm={async () => {
             const t = confirmDelete;
-            setConfirmDelete(null);
             await removeHomework(t.id, t.year, t.semester, t.course);
+            setConfirmDelete(null);
             // if the day has no more tasks, close the day modal
             if (dayModalDate) {
               const remaining = filteredHomework.filter(
@@ -275,6 +329,64 @@ const MainContent: React.FC<MainContentProps> = ({
           }}
           title="Confirm Delete"
           message={`Delete "${confirmDelete.name}"? This cannot be undone.`}
+        />
+      )}
+
+      {tabSettings && (
+        <TabSettingsModal
+          isOpen={!!tabSettings}
+          title={tabSettings.kind === "year" ? "Year settings" : "Semester settings"}
+          label={
+            tabSettings.kind === "year"
+              ? String(tabSettings.year)
+              : tabSettings.semester
+          }
+          currentColor={tabSettings.color}
+          onClose={() => setTabSettings(null)}
+          onSave={(color) => {
+            // Fire-and-forget: optimistic UI applied inside handler.
+            // Modal closes via TabSettingsModal after onSave resolves; we resolve immediately.
+            const promise =
+              tabSettings.kind === "year"
+                ? onUpdateYearColor(tabSettings.year, color)
+                : onUpdateSemesterColor(tabSettings.year, tabSettings.semester, color);
+            promise.catch((err: Error) => {
+              setErrorMsg(err.message || "Something went wrong.");
+            });
+          }}
+        />
+      )}
+
+      {errorMsg && (
+        <Modal
+          isOpen={!!errorMsg}
+          onClose={() => setErrorMsg(null)}
+          title="Error"
+          footer={
+            <button
+              type="button"
+              className="app-modal-btn-primary"
+              onClick={() => setErrorMsg(null)}
+            >
+              OK
+            </button>
+          }
+        >
+          <p>{errorMsg}</p>
+        </Modal>
+      )}
+
+      {confirmDeleteYear !== null && (
+        <DeleteModal
+          isOpen={confirmDeleteYear !== null}
+          onClose={() => setConfirmDeleteYear(null)}
+          onConfirm={async () => {
+            const y = confirmDeleteYear;
+            if (y !== null) await onDeleteYear(y);
+            setConfirmDeleteYear(null);
+          }}
+          title="Delete year"
+          message={`Delete year ${confirmDeleteYear} and all its semesters, courses, and tasks? This cannot be undone.`}
         />
       )}
     </div>
