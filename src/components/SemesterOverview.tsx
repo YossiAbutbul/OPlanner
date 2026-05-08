@@ -46,10 +46,12 @@ const SemesterOverview: React.FC<Props> = ({
 }) => {
   const { getCourseTasks } = useHomework();
   const [byCourse, setByCourse] = useState<CourseStats[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
+    setLoaded(false);
     (async () => {
       const lists = await Promise.all(
         courses.map((c) => getCourseTasks(year, semesterKey, c.name))
@@ -66,6 +68,7 @@ const SemesterOverview: React.FC<Props> = ({
         return { course: course.name, total: list.length, completed, pending, overdue };
       });
       setByCourse(stats);
+      setLoaded(true);
     })();
     return () => {
       cancelled = true;
@@ -135,7 +138,7 @@ const SemesterOverview: React.FC<Props> = ({
         <section className="overview-section">
           <p className="overview-empty">No courses in this semester yet.</p>
         </section>
-      ) : (
+      ) : !loaded ? null : (
         <>
           <section className="overview-stats">
             <div className="stat-card">

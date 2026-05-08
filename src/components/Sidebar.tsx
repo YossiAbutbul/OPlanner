@@ -54,6 +54,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const [draggingName, setDraggingName] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<{ name: string; pos: "before" | "after" } | null>(null);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -320,7 +322,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={() => {
                 setSettingsOpen(false);
-                logout();
+                setConfirmSignOut(true);
               }}
               className="danger"
             >
@@ -442,6 +444,51 @@ const Sidebar: React.FC<SidebarProps> = ({
           message={`Delete "${confirmDelete}" and all its tasks? This cannot be undone.`}
         />
       )}
+
+      <Modal
+        isOpen={confirmSignOut}
+        onClose={() => {
+          if (!signingOut) setConfirmSignOut(false);
+        }}
+        title="Sign out"
+        footer={
+          <>
+            <button
+              type="button"
+              className="app-modal-btn-cancel"
+              onClick={() => setConfirmSignOut(false)}
+              disabled={signingOut}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="app-modal-btn-primary"
+              onClick={async () => {
+                setSigningOut(true);
+                try {
+                  await logout();
+                } finally {
+                  setSigningOut(false);
+                  setConfirmSignOut(false);
+                }
+              }}
+              disabled={signingOut}
+            >
+              {signingOut ? (
+                <span className="delete-modal-loading">
+                  <span className="delete-modal-spinner" />
+                  Signing out…
+                </span>
+              ) : (
+                "Sign out"
+              )}
+            </button>
+          </>
+        }
+      >
+        <p>Are you sure you want to sign out? Your data will be saved before signing out.</p>
+      </Modal>
     </aside>
   );
 };
