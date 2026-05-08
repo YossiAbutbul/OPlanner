@@ -19,12 +19,6 @@ const fmtDate = (iso: string) => {
   return `${d}/${m}/${y}`;
 };
 
-const statusLabel = (s: string) =>
-  s.charAt(0) + s.slice(1).toLowerCase();
-
-const statusClass = (s: string) =>
-  s === "COMPLETED" ? "status-pill status-completed" : "status-pill status-pending";
-
 const DayTasksModal: React.FC<Props> = ({
   isOpen,
   date,
@@ -58,7 +52,6 @@ const DayTasksModal: React.FC<Props> = ({
             <li key={t.id} className="day-task">
               <div className="day-task-main">
                 <div className="day-task-name">{t.name}</div>
-                <span className={statusClass(t.status)}>{statusLabel(t.status)}</span>
               </div>
               <div className="day-task-actions">
                 <button className="day-btn" onClick={() => onEdit(t)}>Edit</button>

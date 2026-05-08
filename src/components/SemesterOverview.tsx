@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import { parseIcs, IcsEvent } from "../utility/parseIcs";
 import { CourseInfo } from "../App";
+import DatePicker from "./DatePicker";
 import "../css/SemesterOverview.css";
 
 interface Props {
@@ -235,37 +236,40 @@ const SemesterOverview: React.FC<Props> = ({
                           <span className={`finals-badge ${badgeClass}`}>{badge}</span>
                         )}
                       </div>
-                      <label className="finals-date">
-                        <svg
-                          className="finals-date-icon"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          aria-hidden="true"
-                        >
-                          <rect x="3" y="4" width="18" height="18" rx="2" />
-                          <path d="M16 2v4M8 2v4M3 10h18" />
-                        </svg>
-                        <span
-                          className={`finals-date-label ${formatted ? "" : "empty"}`}
-                          dir="ltr"
-                        >
-                          {formatted ?? "Set date"}
-                        </span>
-                        <input
-                          type="date"
-                          className="finals-date-native"
-                          value={c.finalDate ?? ""}
-                          onChange={(e) =>
-                            handleFinalDateChange(c.name, e.target.value)
-                          }
-                        />
-                      </label>
+                      <DatePicker
+                        value={c.finalDate ?? null}
+                        onChange={(v) => handleFinalDateChange(c.name, v ?? "")}
+                      >
+                        {(open) => (
+                          <button
+                            type="button"
+                            className="finals-date"
+                            onClick={open}
+                          >
+                            <svg
+                              className="finals-date-icon"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <rect x="3" y="4" width="18" height="18" rx="2" />
+                              <path d="M16 2v4M8 2v4M3 10h18" />
+                            </svg>
+                            <span
+                              className={`finals-date-label ${formatted ? "" : "empty"}`}
+                              dir="ltr"
+                            >
+                              {formatted ?? "Set date"}
+                            </span>
+                          </button>
+                        )}
+                      </DatePicker>
                     </li>
                   );
                 })}
