@@ -1,4 +1,4 @@
-import { doc, setDoc, getDocs, collection, getDoc, deleteDoc, updateDoc } from "firebase/firestore";
+import { doc, setDoc, getDocs, collection, getDoc, deleteDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { db, requireUid } from "../firebase";
 
 const MAX_NAME_LENGTH = 100;
@@ -15,6 +15,20 @@ const isValidName = (name: string): boolean => {
 
 const userBase = () => `users/${requireUid()}`;
 
+const YEAR_COLOR_PALETTE = [
+  "#1db954", "#3498db", "#9b59b6", "#e67e22",
+  "#e74c3c", "#f1c40f", "#1abc9c", "#34495e", "#e91e63",
+];
+
+const SEMESTER_DEFAULT_COLORS: Record<string, string> = {
+  "Semester A": "#1db954",
+  "Semester B": "#3498db",
+  "Semester C": "#e67e22",
+};
+
+const randomYearColor = () =>
+  YEAR_COLOR_PALETTE[Math.floor(Math.random() * YEAR_COLOR_PALETTE.length)];
+
 export const initializeYear = async (year: number): Promise<boolean> => {
   try {
     const base = userBase();
@@ -25,7 +39,7 @@ export const initializeYear = async (year: number): Promise<boolean> => {
       return false;
     }
 
-    await setDoc(yearDoc, { year });
+    await setDoc(yearDoc, { year, color: randomYearColor() });
 
     const semesters = [
       { name: "Semester A", key: "Semester A" },
@@ -35,7 +49,10 @@ export const initializeYear = async (year: number): Promise<boolean> => {
 
     for (const semester of semesters) {
       const semesterDoc = doc(db, `${base}/years/${year}/semesters`, semester.key);
-      await setDoc(semesterDoc, { name: semester.name });
+      await setDoc(semesterDoc, {
+        name: semester.name,
+        color: SEMESTER_DEFAULT_COLORS[semester.key],
+      });
     }
 
     return true;
@@ -63,7 +80,13 @@ export const initializeYearIfEmpty = async (): Promise<void> => {
 export const getAllYearsAndSemesters = async (): Promise<
   Array<{
     year: number;
-    semesters: { name: string; key: string; courses: { name: string }[] }[];
+    color?: string;
+    semesters: {
+      name: string;
+      key: string;
+      color?: string;
+      courses: { name: string; finalDate?: string }[];
+    }[];
   }>
 > => {
   try {
@@ -88,7 +111,11 @@ export const getAllYearsAndSemesters = async (): Promise<
             );
             const coursesSnapshot = await getDocs(coursesCollection);
 
-            const courseNames = coursesSnapshot.docs.map((d) => d.id);
+            const courseDocs = coursesSnapshot.docs.map((d) => ({
+              id: d.id,
+              data: d.data(),
+            }));
+            const courseNames = courseDocs.map((c) => c.id);
             const order: string[] = Array.isArray(semesterData.courseOrder)
               ? (semesterData.courseOrder as string[])
               : [];
@@ -97,17 +124,29 @@ export const getAllYearsAndSemesters = async (): Promise<
               ...order.filter((n) => known.has(n)),
               ...courseNames.filter((n) => !order.includes(n)).sort(),
             ];
-            const courses = ordered.map((name) => ({ name }));
+            const dataByName = new Map(courseDocs.map((c) => [c.id, c.data]));
+            const courses = ordered.map((name) => {
+              const d = dataByName.get(name);
+              return {
+                name,
+                finalDate: typeof d?.finalDate === "string" ? d.finalDate : undefined,
+              };
+            });
 
             return {
               name: semesterData.name || `Semester ${semesterDoc.id}`,
               key: semesterDoc.id,
+              color: typeof semesterData.color === "string" ? semesterData.color : undefined,
               courses,
             };
           })
         );
 
-        return { year: yearData.year, semesters };
+        return {
+          year: yearData.year,
+          color: typeof yearData.color === "string" ? yearData.color : undefined,
+          semesters,
+        };
       })
     );
 
@@ -216,6 +255,76 @@ export const deleteCourse = async (year: number, semester: string, course: strin
   }
 };
 
+export const FINAL_TASK_ID = "final-exam";
+
+export const setCourseFinalDate = async (
+  year: number,
+  semester: string,
+  course: string,
+  date: string | null
+): Promise<boolean> => {
+  try {
+    const base = userBase();
+    const courseRef = doc(db, `${base}/years/${year}/semesters/${semester}/courses/${course}`);
+    const finalTaskRef = doc(
+      db,
+      `${base}/years/${year}/semesters/${semester}/courses/${course}/tasks/${FINAL_TASK_ID}`
+    );
+
+    await updateDoc(courseRef, { finalDate: date ?? null });
+
+    if (date) {
+      await setDoc(
+        finalTaskRef,
+        {
+          name: "Final Exam",
+          dueDate: date,
+          status: "PENDING",
+          isFinal: true,
+        },
+        { merge: true }
+      );
+    } else {
+      const snap = await getDoc(finalTaskRef);
+      if (snap.exists()) {
+        await deleteDoc(finalTaskRef);
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error("Error setting course final date:", error);
+    return false;
+  }
+};
+
+export const setYearColor = async (year: number, color: string | null): Promise<boolean> => {
+  try {
+    const base = userBase();
+    const yearDoc = doc(db, `${base}/years`, year.toString());
+    await updateDoc(yearDoc, { color: color ?? null });
+    return true;
+  } catch (error) {
+    console.error("Error setting year color:", error);
+    return false;
+  }
+};
+
+export const setSemesterColor = async (
+  year: number,
+  semester: string,
+  color: string | null
+): Promise<boolean> => {
+  try {
+    const base = userBase();
+    const semDoc = doc(db, `${base}/years/${year}/semesters/${semester}`);
+    await updateDoc(semDoc, { color: color ?? null });
+    return true;
+  } catch (error) {
+    console.error("Error setting semester color:", error);
+    return false;
+  }
+};
+
 export const setCourseOrder = async (
   year: number,
   semester: string,
@@ -235,6 +344,7 @@ export const setCourseOrder = async (
 export const deleteYear = async (year: number): Promise<boolean> => {
   try {
     const base = userBase();
+    const yearPath = `${base}/years/${year}`;
     const yearDoc = doc(db, `${base}/years`, year.toString());
     const yearSnapshot = await getDoc(yearDoc);
 
@@ -243,7 +353,40 @@ export const deleteYear = async (year: number): Promise<boolean> => {
       return false;
     }
 
-    await deleteDoc(yearDoc);
+    // Cascade: tasks → courses → semesters → year. Batched (<=500 ops/batch).
+    let batch = writeBatch(db);
+    let ops = 0;
+    const flushIfNeeded = async () => {
+      if (ops >= 450) {
+        await batch.commit();
+        batch = writeBatch(db);
+        ops = 0;
+      }
+    };
+
+    const semestersSnap = await getDocs(collection(db, `${yearPath}/semesters`));
+    for (const semDoc of semestersSnap.docs) {
+      const semPath = `${yearPath}/semesters/${semDoc.id}`;
+      const coursesSnap = await getDocs(collection(db, `${semPath}/courses`));
+      for (const courseDoc of coursesSnap.docs) {
+        const coursePath = `${semPath}/courses/${courseDoc.id}`;
+        const tasksSnap = await getDocs(collection(db, `${coursePath}/tasks`));
+        for (const taskDoc of tasksSnap.docs) {
+          batch.delete(doc(db, `${coursePath}/tasks/${taskDoc.id}`));
+          ops++;
+          await flushIfNeeded();
+        }
+        batch.delete(doc(db, coursePath));
+        ops++;
+        await flushIfNeeded();
+      }
+      batch.delete(doc(db, semPath));
+      ops++;
+      await flushIfNeeded();
+    }
+    batch.delete(yearDoc);
+    ops++;
+    await batch.commit();
     return true;
   } catch (error) {
     console.error(`Error deleting year: ${error}`);
