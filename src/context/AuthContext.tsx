@@ -7,11 +7,8 @@ import {
   signOut,
   User,
 } from "firebase/auth";
-import { auth, googleProvider } from "../firebase";
-
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-  navigator.userAgent
-);
+import { waitForPendingWrites } from "firebase/firestore";
+import { auth, db, googleProvider } from "../firebase";
 
 const USER_CACHE_KEY = "oplanner.user";
 
@@ -65,27 +62,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async () => {
-    if (isMobile) {
-      await signInWithRedirect(auth, googleProvider);
-    } else {
-      try {
-        await signInWithPopup(auth, googleProvider);
-      } catch (e: unknown) {
-        const code = (e as { code?: string })?.code;
-        if (
-          code === "auth/popup-blocked" ||
-          code === "auth/popup-closed-by-user" ||
-          code === "auth/cancelled-popup-request"
-        ) {
-          await signInWithRedirect(auth, googleProvider);
-        } else {
-          throw e;
-        }
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (e: unknown) {
+      const code = (e as { code?: string })?.code;
+      if (
+        code === "auth/popup-closed-by-user" ||
+        code === "auth/cancelled-popup-request" ||
+        code === "auth/user-cancelled"
+      ) {
+        return;
       }
+      if (code === "auth/popup-blocked") {
+        await signInWithRedirect(auth, googleProvider);
+        return;
+      }
+      throw e;
     }
   };
 
   const logout = async () => {
+    // Flush any in-flight Firestore writes before tearing down the session.
+    try {
+      await Promise.race([
+        waitForPendingWrites(db),
+        new Promise((resolve) => setTimeout(resolve, 5000)),
+      ]);
+    } catch (e) {
+      console.error("waitForPendingWrites failed:", e);
+    }
     await signOut(auth);
     Object.keys(localStorage)
       .filter((k) => k.startsWith("oplanner."))
