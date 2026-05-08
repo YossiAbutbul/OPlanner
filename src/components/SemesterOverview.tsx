@@ -49,9 +49,19 @@ const SemesterOverview: React.FC<Props> = ({
   const [loaded, setLoaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Reset the loaded gate only when the user navigates to a different
+  // semester. Final-date / color edits mutate `courses` reference but
+  // shouldn't blank the overview.
+  useEffect(() => {
+    setLoaded(false);
+  }, [year, semesterKey]);
+
+  // Stable key of course names so changes to per-course fields (finalDate,
+  // color) don't refire the heavy task fetch.
+  const courseNamesKey = courses.map((c) => c.name).sort().join("");
+
   useEffect(() => {
     let cancelled = false;
-    setLoaded(false);
     (async () => {
       const lists = await Promise.all(
         courses.map((c) => getCourseTasks(year, semesterKey, c.name))
@@ -73,7 +83,8 @@ const SemesterOverview: React.FC<Props> = ({
     return () => {
       cancelled = true;
     };
-  }, [year, semesterKey, courses, getCourseTasks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year, semesterKey, courseNamesKey, getCourseTasks]);
 
   const totals = byCourse.reduce(
     (acc, s) => ({
