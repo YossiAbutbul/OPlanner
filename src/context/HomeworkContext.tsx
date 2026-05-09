@@ -7,7 +7,7 @@ import {
   deleteDoc,
   setDoc,
 } from "firebase/firestore";
-import { db, requireUid } from "../firebase";
+import { db, requireUid, auth } from "../firebase";
 
 export interface HomeworkEntry {
   id: string;
@@ -66,6 +66,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     course: string,
     force = false
   ) => {
+    await auth.authStateReady();
     let key: string;
     try {
       key = cacheKey(year, semester, course);
@@ -118,6 +119,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     course: string,
     force = false
   ): Promise<HomeworkEntry[]> => {
+    await auth.authStateReady();
     let key: string;
     try {
       key = cacheKey(year, semester, course);

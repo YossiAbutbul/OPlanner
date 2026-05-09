@@ -1,32 +1,14 @@
-import React, { useRef, useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import React, { useState } from "react";
+import AuthModal from "./AuthModal";
 import "../css/Login.css";
 
 const Login: React.FC = () => {
-  const { signIn } = useAuth();
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const cancelledRef = useRef(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
 
-  const handleSignIn = async () => {
-    setError(null);
-    setBusy(true);
-    cancelledRef.current = false;
-    try {
-      await signIn();
-    } catch (e: unknown) {
-      if (!cancelledRef.current) {
-        const msg = e instanceof Error ? e.message : "Sign-in failed";
-        setError(msg);
-      }
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleCancel = () => {
-    cancelledRef.current = true;
-    setBusy(false);
+  const openAuth = (mode: "signin" | "signup") => {
+    setAuthMode(mode);
+    setAuthOpen(true);
   };
 
   return (
@@ -47,10 +29,9 @@ const Login: React.FC = () => {
           </a>
           <button
             className="landing-nav-btn"
-            onClick={handleSignIn}
-            disabled={busy}
+            onClick={() => openAuth("signin")}
           >
-            {busy ? "Signing in…" : "Sign in"}
+            Sign in
           </button>
         </div>
       </nav>
@@ -72,50 +53,14 @@ const Login: React.FC = () => {
             <div className="landing-cta-row">
               <button
                 className="landing-cta"
-                onClick={handleSignIn}
-                disabled={busy}
+                onClick={() => openAuth("signup")}
               >
-                <svg
-                  className="landing-cta-icon"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 48 48"
-                  aria-hidden="true"
-                >
-                  <path
-                    fill="#FFC107"
-                    d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"
-                  />
-                  <path
-                    fill="#FF3D00"
-                    d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"
-                  />
-                  <path
-                    fill="#4CAF50"
-                    d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.5-4.5 2.4-7.2 2.4-5.3 0-9.7-3.4-11.3-8l-6.5 5C9.6 39.6 16.2 44 24 44z"
-                  />
-                  <path
-                    fill="#1976D2"
-                    d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2C41.4 35.6 44 30.2 44 24c0-1.3-.1-2.4-.4-3.5z"
-                  />
-                </svg>
-                {busy ? "Signing in…" : "Sign in with Google"}
+                Get started — it's free
               </button>
-              {busy ? (
-                <button
-                  type="button"
-                  className="landing-cta-cancel"
-                  onClick={handleCancel}
-                >
-                  Cancel
-                </button>
-              ) : (
-                <span className="landing-cta-note">
-                  Free · 30 seconds · No setup
-                </span>
-              )}
+              <span className="landing-cta-note">
+                Free · 30 seconds · No setup
+              </span>
             </div>
-            {error && <p className="landing-error">{error}</p>}
           </div>
 
           <div className="landing-hero-art" aria-hidden>
@@ -162,10 +107,10 @@ const Login: React.FC = () => {
           <ol className="landing-steps">
             <li>
               <span className="landing-step-num">1</span>
-              <h3>Sign in with Google</h3>
+              <h3>Create your account</h3>
               <p>
-                One click. No password to forget. Your data is scoped to your
-                account.
+                Sign up with email or Google in seconds. Your data is scoped to
+                your account.
               </p>
             </li>
             <li>
@@ -238,34 +183,9 @@ const Login: React.FC = () => {
           <p>Open OPlanner once. Stop forgetting things forever.</p>
           <button
             className="landing-cta"
-            onClick={handleSignIn}
-            disabled={busy}
+            onClick={() => openAuth("signup")}
           >
-            <svg
-              className="landing-cta-icon"
-              width="18"
-              height="18"
-              viewBox="0 0 48 48"
-              aria-hidden="true"
-            >
-              <path
-                fill="#FFC107"
-                d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"
-              />
-              <path
-                fill="#FF3D00"
-                d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"
-              />
-              <path
-                fill="#4CAF50"
-                d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.5-4.5 2.4-7.2 2.4-5.3 0-9.7-3.4-11.3-8l-6.5 5C9.6 39.6 16.2 44 24 44z"
-              />
-              <path
-                fill="#1976D2"
-                d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2C41.4 35.6 44 30.2 44 24c0-1.3-.1-2.4-.4-3.5z"
-              />
-            </svg>
-            {busy ? "Signing in…" : "Sign in with Google"}
+            Get started — it's free
           </button>
         </section>
       </main>
@@ -280,6 +200,12 @@ const Login: React.FC = () => {
           Source on GitHub
         </a>
       </footer>
+
+      <AuthModal
+        isOpen={authOpen}
+        initialMode={authMode}
+        onClose={() => setAuthOpen(false)}
+      />
     </div>
   );
 };
