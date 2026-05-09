@@ -22,6 +22,9 @@ const fmtDate = (iso: string) => {
   return `${d}/${m}/${y.slice(2)}`;
 };
 
+const capitalizeWords = (s: string) =>
+  s.replace(/\b\w/g, (c) => c.toUpperCase());
+
 const dayName = (iso: string) => {
   const d = new Date(iso);
   return d.toLocaleDateString(undefined, { weekday: "short" });
@@ -141,6 +144,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                 </div>
                 <div className="rs-card">
                   <div className="rs-name">{t.name}</div>
+                  <div className="rs-course">{capitalizeWords(t.course)}</div>
                   <div className="rs-date">
                     {dayName(t.dueDate)} {fmtDate(t.dueDate)}
                   </div>
