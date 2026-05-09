@@ -99,7 +99,10 @@ const SemesterOverview: React.FC<Props> = ({
         const completed = list.filter((t) => t.status === "COMPLETED").length;
         const pending = list.filter((t) => t.status === "PENDING").length;
         const overdue = list.filter(
-          (t) => t.status === "PENDING" && new Date(t.dueDate) < now
+          (t) =>
+            t.status === "PENDING" &&
+            !t.ignoreOverdue &&
+            new Date(t.dueDate) < now
         ).length;
         return { course: course.name, total: list.length, completed, pending, overdue };
       });
@@ -275,10 +278,10 @@ const SemesterOverview: React.FC<Props> = ({
                       <div className="course-stat-row">
                         <span className="course-stat-name">{capitalizeWords(s.course)}</span>
                         <span className="course-stat-meta">
-                          {s.completed}/{s.total}
                           {s.overdue > 0 && (
-                            <span className="course-stat-overdue"> · {s.overdue} overdue</span>
+                            <span className="course-stat-overdue">{s.overdue} overdue · </span>
                           )}
+                          {s.completed}/{s.total}
                         </span>
                       </div>
                       <div className="stat-bar">

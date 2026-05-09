@@ -61,10 +61,11 @@ const NotificationList: React.FC = () => {
     status: string,
     year: number,
     semester: string,
-    course: string
+    course: string,
+    ignoreOverdue?: boolean
   ) => {
-    await addHomework(id, name, dueDate, status, year, semester, course); // Save the updated data
-    setModalOpen(false); // Close modal after saving
+    await addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue);
+    setModalOpen(false);
   };
 
   const handleModalClose = () => {

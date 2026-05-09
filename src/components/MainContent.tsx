@@ -102,14 +102,27 @@ const MainContent: React.FC<MainContentProps> = ({
     id: string | null,
     name: string,
     dueDate: string,
-    status: string
+    status: string,
+    _year: number,
+    _semester: string,
+    _course: string,
+    ignoreOverdue?: boolean
   ) => {
     if (!activeTab) return;
     const { year, semester, course } = activeTab;
     const capitalizedCourse = capitalizeWords(course);
     try {
       setIsLoadingAction(true);
-      await addHomework(id, name, dueDate, status, year, semester, capitalizedCourse);
+      await addHomework(
+        id,
+        name,
+        dueDate,
+        status,
+        year,
+        semester,
+        capitalizedCourse,
+        ignoreOverdue
+      );
       setHomeworkModalOpen(false);
     } finally {
       setIsLoadingAction(false);

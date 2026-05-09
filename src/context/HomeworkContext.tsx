@@ -17,6 +17,7 @@ export interface HomeworkEntry {
   year: number;
   semester: string;
   course: string;
+  ignoreOverdue?: boolean;
 }
 
 interface Notification {
@@ -37,7 +38,8 @@ interface HomeworkContextProps {
     status: string,
     year: number,
     semester: string,
-    course: string
+    course: string,
+    ignoreOverdue?: boolean
   ) => Promise<void>;
   removeHomework: (
     id: string,
@@ -186,6 +188,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const now = new Date();
     const overdue = homework.filter((entry) => {
+      if (entry.ignoreOverdue) return false;
       const dueDate = new Date(entry.dueDate);
       return dueDate < now && entry.status === "PENDING";
     });
@@ -227,7 +230,8 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     status: string,
     year: number,
     semester: string,
-    course: string
+    course: string,
+    ignoreOverdue: boolean = false
   ) => {
     try {
       const tasksCollection = collection(
@@ -237,18 +241,27 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (id) {
         const taskDoc = doc(tasksCollection, id);
-        await updateDoc(taskDoc, { name, dueDate, status });
+        await updateDoc(taskDoc, { name, dueDate, status, ignoreOverdue });
 
         setHomework((prev) => {
           const next = prev.map((entry) =>
-            entry.id === id ? { ...entry, name, dueDate, status } : entry
+            entry.id === id ? { ...entry, name, dueDate, status, ignoreOverdue } : entry
           );
           writeCache(year, semester, course, next.filter((h) => h.course === course));
           return next;
         });
       } else {
         const newTaskRef = doc(tasksCollection);
-        const newTask = { id: newTaskRef.id, name, dueDate, status, year, semester, course };
+        const newTask = {
+          id: newTaskRef.id,
+          name,
+          dueDate,
+          status,
+          year,
+          semester,
+          course,
+          ignoreOverdue,
+        };
         await setDoc(newTaskRef, newTask);
 
         setHomework((prev) => {

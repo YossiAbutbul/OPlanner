@@ -143,12 +143,12 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
           setModalOpen(false);
           setEditHomework(null);
         } }
-        onSave={(id, name, dueDate, status, year, semester, course) => {
+        onSave={(id, name, dueDate, status, year, semester, course, ignoreOverdue) => {
           if (!name || !dueDate) {
             alert("Please fill in all fields before saving.");
             return;
           }
-          addHomework(id, name, dueDate, status, year, semester, course);
+          addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue);
           setModalOpen(false);
           setEditHomework(null);
         } }
