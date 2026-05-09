@@ -24,6 +24,13 @@
   margin-bottom: 0.6rem;
 }
 
+.cal-hint {
+  margin: -0.3rem 0 0.6rem;
+  font-size: 0.78rem;
+  color: #888;
+  font-style: italic;
+}
+
 .cal-title {
   font-size: 1rem;
   font-weight: 700;
@@ -126,15 +133,18 @@
   display: none;
 }
 
+.cal-cell.today {
+  border-color: #1db954;
+  background: rgba(29, 185, 84, 0.08);
+}
+
 .cal-cell.today .cal-day-num {
-  background: #1db954;
-  color: #fff;
-  border-radius: 999px;
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  color: #1db954;
+  font-weight: 700;
+}
+
+.cal.cal-has-selection .cal-cell.today:not(.selected) {
+  background: transparent;
 }
 
 .cal-cell.selected {

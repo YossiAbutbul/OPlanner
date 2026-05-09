@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { HomeworkEntry } from "../context/HomeworkContext";
 import "../css/CourseCalendar.css";
 
@@ -7,6 +8,12 @@ interface Props {
   selectedDate: string | null;
   onSelectDate: (date: string | null) => void;
   onCreateOnDate: (date: string) => void;
+  /** Optional: returns a color for a task. When set, overrides the urgency bucket color. */
+  colorOf?: (t: HomeworkEntry) => string | undefined;
+  /** Optional: a small caption rendered inside the calendar card. */
+  hint?: string;
+  /** Max number of task pills to render per day cell before the "+N more" pill. */
+  maxVisibleTasks?: number;
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -44,6 +51,9 @@ const CourseCalendar: React.FC<Props> = ({
   selectedDate,
   onSelectDate,
   onCreateOnDate,
+  colorOf,
+  hint,
+  maxVisibleTasks = 1,
 }) => {
   const today = useMemo(() => startOfDay(new Date()), []);
   const initial = selectedDate ? new Date(selectedDate) : today;
@@ -129,7 +139,7 @@ const CourseCalendar: React.FC<Props> = ({
   const hoverTasks = hoverIso ? tasksByDate.get(hoverIso) || [] : [];
 
   return (
-    <div className={`cal ${isPastMonth ? "cal-past" : ""}`}>
+    <div className={`cal ${isPastMonth ? "cal-past" : ""} ${selectedDate ? "cal-has-selection" : ""}`}>
       <div className="cal-header">
         <div className="cal-title">
           {MONTHS[cursor.month]} {cursor.year}
@@ -140,6 +150,7 @@ const CourseCalendar: React.FC<Props> = ({
           <button onClick={goNext} aria-label="Next month">›</button>
         </div>
       </div>
+      {hint && <div className="cal-hint">{hint}</div>}
       <div className="cal-weekdays">
         {WEEKDAYS.map((w) => (
           <div key={w} className="cal-weekday">{w}</div>
@@ -150,13 +161,14 @@ const CourseCalendar: React.FC<Props> = ({
           const isToday = iso === toIso(today);
           const isSelected = selectedDate === iso;
           const dayTasks = tasksByDate.get(iso) || [];
-          const visible = dayTasks.slice(0, 1);
+          const visible = dayTasks.slice(0, maxVisibleTasks);
           const more = dayTasks.length - visible.length;
           return (
             <button
               key={iso}
               type="button"
               className={`cal-cell ${inMonth ? "" : "out"} ${isToday ? "today" : ""} ${isSelected ? "selected" : ""}`}
+              onClick={() => onSelectDate(isSelected ? null : iso)}
               onDoubleClick={() => onCreateOnDate(iso)}
               onMouseEnter={(e) => handleCellEnter(e, iso, dayTasks.length > 0)}
               onMouseLeave={handleCellLeave}
@@ -164,15 +176,25 @@ const CourseCalendar: React.FC<Props> = ({
               <span className="cal-day-num">{date.getDate()}</span>
               {visible.length > 0 && (
                 <span className="cal-tasks">
-                  {visible.map((t) => (
-                    <span
-                      key={t.id}
-                      className={`cal-task cal-task-${taskBucket(t, today)}`}
-                      title={t.name}
-                    >
-                      {t.name}
-                    </span>
-                  ))}
+                  {visible.map((t) => {
+                    const c = colorOf?.(t);
+                    return (
+                      <span
+                        key={t.id}
+                        className={`cal-task ${c ? "cal-task-custom" : `cal-task-${taskBucket(t, today)}`}`}
+                        style={
+                          c
+                            ? ({
+                                background: c,
+                                color: "#fff",
+                              } as React.CSSProperties)
+                            : undefined
+                        }
+                      >
+                        {t.name}
+                      </span>
+                    );
+                  })}
                   {more > 0 && <span className="cal-task-more">+{more} more</span>}
                 </span>
               )}
@@ -180,7 +202,7 @@ const CourseCalendar: React.FC<Props> = ({
           );
         })}
       </div>
-      {hoverIso && popoverPos && hoverTasks.length > 0 && (
+      {hoverIso && popoverPos && hoverTasks.length > 0 && createPortal(
         <div
           className="cal-popover"
           style={{ top: popoverPos.top, left: popoverPos.left }}
@@ -189,18 +211,25 @@ const CourseCalendar: React.FC<Props> = ({
         >
           <div className="cal-popover-date">{hoverIso}</div>
           <ul>
-            {hoverTasks.map((t) => (
-              <li key={t.id}>
-                <span className={`cal-dot cal-task-${taskBucket(t, today)}`} />
-                <span className="cal-popover-name">{t.name}</span>
-                <span className="cal-popover-status">
-                  {t.status.charAt(0) + t.status.slice(1).toLowerCase()}
-                </span>
-              </li>
-            ))}
+            {hoverTasks.map((t) => {
+              const c = colorOf?.(t);
+              return (
+                <li key={t.id}>
+                  <span
+                    className={`cal-dot ${c ? "" : `cal-task-${taskBucket(t, today)}`}`}
+                    style={c ? { background: c } : undefined}
+                  />
+                  <span className="cal-popover-name">{t.name}</span>
+                  <span className="cal-popover-status">
+                    {t.status.charAt(0) + t.status.slice(1).toLowerCase()}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
           <div className="cal-popover-hint">Double-click a day to add a task</div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

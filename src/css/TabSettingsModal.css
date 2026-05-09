@@ -9,10 +9,37 @@
   margin-bottom: 0;
 }
 
+.tab-settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tab-settings-name {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.tab-settings-color {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.tab-settings-color .tab-settings-label {
+  margin-bottom: 0.2rem;
+}
+
 .tab-settings-label {
   color: #555;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.tab-settings-name .tab-settings-label {
   min-width: 60px;
   flex-shrink: 0;
 }

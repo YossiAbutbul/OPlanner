@@ -26,6 +26,12 @@ interface MainContentProps {
   onDeleteYear: (year: number) => Promise<void>;
   onUpdateYearColor: (year: number, color: string | null) => Promise<void>;
   onUpdateSemesterColor: (year: number, semesterKey: string, color: string | null) => Promise<void>;
+  onUpdateCourseColor: (
+    year: number,
+    semesterKey: string,
+    course: string,
+    color: string | null
+  ) => Promise<void>;
   onUpdateCourseFinalDate: (
     year: number,
     semesterKey: string,
@@ -50,6 +56,7 @@ const MainContent: React.FC<MainContentProps> = ({
   onDeleteYear,
   onUpdateYearColor,
   onUpdateSemesterColor,
+  onUpdateCourseColor,
   onUpdateCourseFinalDate,
   activeTab,
 }) => {
@@ -67,6 +74,7 @@ const MainContent: React.FC<MainContentProps> = ({
   const [tabSettings, setTabSettings] = useState<
     | { kind: "year"; year: number; color?: string }
     | { kind: "semester"; year: number; semester: string; color?: string }
+    | { kind: "course"; year: number; semester: string; course: string; color?: string }
     | null
   >(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -89,9 +97,7 @@ const MainContent: React.FC<MainContentProps> = ({
     setCalDate(null);
   }, [activeTab]);
 
-  const tableTasks = calDate
-    ? filteredHomework.filter((t) => t.dueDate === calDate)
-    : filteredHomework;
+  const tableTasks = filteredHomework;
 
   const sortedYears = [...years].sort((a, b) => a.year - b.year);
   const currentYear = years.find((y) => y.year === selectedYear) || null;
@@ -235,6 +241,7 @@ const MainContent: React.FC<MainContentProps> = ({
               </div>
               <div className="course-calendar">
                 <CourseCalendar
+                  hint="Tip: double-click any day to add a task on that date."
                   tasks={filteredHomework}
                   selectedDate={calDate}
                   onSelectDate={setCalDate}
@@ -250,12 +257,6 @@ const MainContent: React.FC<MainContentProps> = ({
                 />
               </div>
             </div>
-            {calDate && (
-              <div className="course-filter-bar">
-                Filtered to <strong>{calDate}</strong>
-                <button onClick={() => setCalDate(null)}>Clear</button>
-              </div>
-            )}
             <div className="homework-table-container">
               <HomeworkTable
                 tasks={tableTasks}
@@ -349,24 +350,46 @@ const MainContent: React.FC<MainContentProps> = ({
       {tabSettings && (
         <TabSettingsModal
           isOpen={!!tabSettings}
-          title={tabSettings.kind === "year" ? "Year settings" : "Semester settings"}
+          title={
+            tabSettings.kind === "year"
+              ? "Year settings"
+              : tabSettings.kind === "semester"
+              ? "Semester settings"
+              : "Course settings"
+          }
           label={
             tabSettings.kind === "year"
               ? String(tabSettings.year)
-              : tabSettings.semester
+              : tabSettings.kind === "semester"
+              ? tabSettings.semester
+              : capitalizeWords(tabSettings.course)
           }
           currentColor={tabSettings.color}
           onClose={() => setTabSettings(null)}
-          onSave={(color) => {
-            // Fire-and-forget: optimistic UI applied inside handler.
-            // Modal closes via TabSettingsModal after onSave resolves; we resolve immediately.
-            const promise =
-              tabSettings.kind === "year"
-                ? onUpdateYearColor(tabSettings.year, color)
-                : onUpdateSemesterColor(tabSettings.year, tabSettings.semester, color);
-            promise.catch((err: Error) => {
-              setErrorMsg(err.message || "Something went wrong.");
-            });
+          onSave={async (color) => {
+            try {
+              if (tabSettings.kind === "year") {
+                await onUpdateYearColor(tabSettings.year, color);
+              } else if (tabSettings.kind === "semester") {
+                await onUpdateSemesterColor(
+                  tabSettings.year,
+                  tabSettings.semester,
+                  color
+                );
+              } else {
+                await onUpdateCourseColor(
+                  tabSettings.year,
+                  tabSettings.semester,
+                  tabSettings.course,
+                  color
+                );
+              }
+            } catch (err) {
+              setErrorMsg(
+                err instanceof Error ? err.message : "Something went wrong."
+              );
+              throw err;
+            }
           }}
         />
       )}

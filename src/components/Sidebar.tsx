@@ -5,20 +5,29 @@ import "boxicons/css/boxicons.min.css";
 import { useAuth } from "../context/AuthContext";
 import { Settings, Plus, LogOut, HelpCircle } from "lucide-react";
 import { deleteCourse, renameCourse } from "../utility/initializeDatabase";
+import { CourseInfo } from "../App";
+import { courseColor } from "../utility/courseColor";
 import DeleteModal from "./DeleteModal";
 import Modal from "./Modal";
+import CourseEditModal from "./CourseEditModal";
 
 interface SidebarProps {
   selectedYear: number | null;
   selectedSemester: string | null;
   selectedCourse: string | null;
-  courses: string[];
+  courses: CourseInfo[];
   onSelectCourse: (c: string | null) => void;
   onReorderCourses: (year: number, semester: string, names: string[]) => void;
   onYearsChanged: () => void;
   onAddYear: () => void;
   addingYear: boolean;
   onReplayTour: () => void;
+  onUpdateCourseColor: (
+    year: number,
+    semesterKey: string,
+    course: string,
+    color: string | null
+  ) => Promise<void>;
 }
 
 const capitalizeWords = (str: string) =>
@@ -35,6 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onAddYear,
   addingYear,
   onReplayTour,
+  onUpdateCourseColor,
 }) => {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
@@ -45,13 +55,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
-  const [renaming, setRenaming] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
   const [draggingName, setDraggingName] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<{ name: string; pos: "before" | "after" } | null>(null);
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -95,14 +104,15 @@ const Sidebar: React.FC<SidebarProps> = ({
       setDragOver(null);
       return;
     }
-    const from = courses.indexOf(draggingName);
-    const targetIdx = courses.indexOf(target);
+    const courseNames = courses.map((c) => c.name);
+    const from = courseNames.indexOf(draggingName);
+    const targetIdx = courseNames.indexOf(target);
     if (from < 0 || targetIdx < 0) {
       setDraggingName(null);
       setDragOver(null);
       return;
     }
-    const without = courses.filter((_, i) => i !== from);
+    const without = courseNames.filter((_, i) => i !== from);
     let insertAt = without.indexOf(target) + (pos === "after" ? 1 : 0);
     if (insertAt < 0) insertAt = 0;
     const next = [...without];
@@ -112,31 +122,32 @@ const Sidebar: React.FC<SidebarProps> = ({
     onReorderCourses(selectedYear!, selectedSemester!, next);
   };
 
-  const startRename = (name: string) => {
-    setRenaming(name);
-    setRenameValue(capitalizeWords(name));
-    setMenuOpen(null);
-    setMenuPos(null);
-  };
-
-  const commitRename = async () => {
-    if (!canManage || !renaming) return;
-    const next = capitalizeWords(renameValue.trim());
-    if (!next || next === renaming) {
-      setRenaming(null);
-      return;
-    }
-    setBusy(true);
-    try {
-      const ok = await renameCourse(selectedYear!, selectedSemester!, renaming, next);
+  const handleEditSave = async (newName: string, color: string | null) => {
+    if (!canManage || !editing) return;
+    const original = editing;
+    let nameForColor = original;
+    if (newName && newName !== original) {
+      const ok = await renameCourse(
+        selectedYear!,
+        selectedSemester!,
+        original,
+        newName
+      );
       if (ok) {
-        if (selectedCourse === renaming) onSelectCourse(next);
-        onYearsChanged();
+        if (selectedCourse === original) onSelectCourse(newName);
+        nameForColor = newName;
       }
-    } finally {
-      setBusy(false);
-      setRenaming(null);
     }
+    const currentExplicit = courses.find((c) => c.name === original)?.color;
+    if ((color ?? null) !== (currentExplicit ?? null)) {
+      await onUpdateCourseColor(
+        selectedYear!,
+        selectedSemester!,
+        nameForColor,
+        color
+      );
+    }
+    onYearsChanged();
   };
 
   return (
@@ -173,7 +184,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           {canManage && courses.length === 0 && (
             <li className="open-empty">No courses yet</li>
           )}
-          {courses.map((name) => {
+          {courses.map((c, idx) => {
+            const name = c.name;
             const isActive = name === selectedCourse;
             const isDragging = draggingName === name;
             const showBefore =
@@ -220,6 +232,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <span className="open-item-label">{capitalizeWords(name)}</span>
                 <button
                   className="open-item-menu-btn"
+                  data-tour={idx === 0 ? "course-menu" : undefined}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (menuOpen === name) {
@@ -312,7 +325,16 @@ const Sidebar: React.FC<SidebarProps> = ({
             style={{ top: menuPos.top, left: menuPos.left }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button onClick={() => startRename(menuOpen)}>Rename</button>
+            <button
+              onClick={() => {
+                const target = menuOpen;
+                setMenuOpen(null);
+                setMenuPos(null);
+                setEditing(target);
+              }}
+            >
+              Edit
+            </button>
             <button
               className="danger"
               onClick={() => {
@@ -328,40 +350,20 @@ const Sidebar: React.FC<SidebarProps> = ({
           document.body
         )}
 
-      <Modal
-        isOpen={!!renaming}
-        onClose={() => !busy && setRenaming(null)}
-        title="Rename course"
-        footer={
-          <>
-            <button
-              className="app-modal-btn-cancel"
-              onClick={() => setRenaming(null)}
-              disabled={busy}
-            >
-              Cancel
-            </button>
-            <button
-              className="app-modal-btn-primary"
-              onClick={commitRename}
-              disabled={busy || !renameValue.trim()}
-            >
-              {busy ? "Renaming…" : "Rename"}
-            </button>
-          </>
-        }
-      >
-        <input
-          autoFocus
-          type="text"
-          value={renameValue}
-          onChange={(e) => setRenameValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") commitRename();
-          }}
-          disabled={busy}
-        />
-      </Modal>
+      {editing && canManage && (() => {
+        const c = courses.find((co) => co.name === editing);
+        const explicit = c?.color;
+        return (
+          <CourseEditModal
+            isOpen={!!editing}
+            currentName={editing}
+            currentColor={courseColor(editing, explicit)}
+            hasExplicitColor={!!explicit}
+            onClose={() => setEditing(null)}
+            onSave={handleEditSave}
+          />
+        );
+      })()}
 
       {confirmDelete && (
         <DeleteModal

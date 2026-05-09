@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useHomework } from "../context/HomeworkContext";
+import { useHomework, HomeworkEntry } from "../context/HomeworkContext";
 import { parseIcs, IcsEvent } from "../utility/parseIcs";
 import { CourseInfo } from "../App";
 import { addCourse } from "../utility/initializeDatabase";
+import { courseColor } from "../utility/courseColor";
 import DatePicker from "./DatePicker";
 import Modal from "./Modal";
+import CourseCalendar from "./CourseCalendar";
 import { Plus } from "lucide-react";
 import "../css/SemesterOverview.css";
 
@@ -49,13 +51,15 @@ const SemesterOverview: React.FC<Props> = ({
   onYearsChanged,
   onError,
 }) => {
-  const { getCourseTasks } = useHomework();
+  const { getCourseTasks, homework } = useHomework();
   const [byCourse, setByCourse] = useState<CourseStats[]>([]);
+  const [allTasks, setAllTasks] = useState<HomeworkEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [newCourseName, setNewCourseName] = useState("");
   const [adding, setAdding] = useState(false);
+  const [calSelected, setCalSelected] = useState<string | null>(null);
 
   const handleAddCourse = async () => {
     const trimmed = newCourseName.trim();
@@ -107,13 +111,14 @@ const SemesterOverview: React.FC<Props> = ({
         return { course: course.name, total: list.length, completed, pending, overdue };
       });
       setByCourse(stats);
+      setAllTasks(lists.flat());
       setLoaded(true);
     })();
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [year, semesterKey, courseNamesKey, getCourseTasks]);
+  }, [year, semesterKey, courseNamesKey, getCourseTasks, homework]);
 
   const totals = byCourse.reduce(
     (acc, s) => ({
@@ -264,11 +269,27 @@ const SemesterOverview: React.FC<Props> = ({
           </section>
 
           <div className="overview-grid">
+            <section className="overview-section overview-calendar-section">
+              <CourseCalendar
+                tasks={allTasks}
+                selectedDate={calSelected}
+                onSelectDate={setCalSelected}
+                onCreateOnDate={() => {}}
+                maxVisibleTasks={3}
+                colorOf={(t) => {
+                  const c = courses.find((co) => co.name === t.course);
+                  return courseColor(t.course, c?.color);
+                }}
+              />
+            </section>
+            <div className="overview-grid-right">
             <section className="overview-section">
               <h2>Courses</h2>
               <ul className="course-stats">
                 {byCourse.map((s) => {
                   const pct = s.total > 0 ? Math.round((s.completed / s.total) * 100) : 0;
+                  const courseInfo = courses.find((c) => c.name === s.course);
+                  const color = courseColor(s.course, courseInfo?.color);
                   return (
                     <li
                       key={s.course}
@@ -285,7 +306,10 @@ const SemesterOverview: React.FC<Props> = ({
                         </span>
                       </div>
                       <div className="stat-bar">
-                        <div className="stat-bar-fill" style={{ width: `${pct}%` }} />
+                        <div
+                          className="stat-bar-fill"
+                          style={{ width: `${pct}%`, background: color }}
+                        />
                       </div>
                     </li>
                   );
@@ -294,7 +318,7 @@ const SemesterOverview: React.FC<Props> = ({
             </section>
 
             <section className="overview-section">
-              <h2>Finals countdown</h2>
+              <h2>Finals Countdown</h2>
               <ul className="finals-list">
                 {courses.map((c, idx) => {
                   const days = c.finalDate ? daysUntil(c.finalDate) : null;
@@ -374,6 +398,7 @@ const SemesterOverview: React.FC<Props> = ({
                 })}
               </ul>
             </section>
+            </div>
           </div>
         </>
       )}

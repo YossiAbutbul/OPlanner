@@ -85,7 +85,7 @@ export const getAllYearsAndSemesters = async (): Promise<
       name: string;
       key: string;
       color?: string;
-      courses: { name: string; finalDate?: string }[];
+      courses: { name: string; finalDate?: string; color?: string }[];
     }[];
   }>
 > => {
@@ -130,6 +130,7 @@ export const getAllYearsAndSemesters = async (): Promise<
               return {
                 name,
                 finalDate: typeof d?.finalDate === "string" ? d.finalDate : undefined,
+                color: typeof d?.color === "string" ? d.color : undefined,
               };
             });
 
@@ -321,6 +322,26 @@ export const setSemesterColor = async (
     return true;
   } catch (error) {
     console.error("Error setting semester color:", error);
+    return false;
+  }
+};
+
+export const setCourseColor = async (
+  year: number,
+  semester: string,
+  course: string,
+  color: string | null
+): Promise<boolean> => {
+  try {
+    const base = userBase();
+    const courseDoc = doc(
+      db,
+      `${base}/years/${year}/semesters/${semester}/courses/${course}`
+    );
+    await updateDoc(courseDoc, { color: color ?? null });
+    return true;
+  } catch (error) {
+    console.error("Error setting course color:", error);
     return false;
   }
 };

@@ -162,7 +162,7 @@ const Login: React.FC = () => {
               <div className="landing-feature-clock-dot" />
               <div className="landing-feature-clock-hand" />
             </div>
-            <h3>Finals countdown</h3>
+            <h3>Finals Countdown</h3>
             <p>One date per course. The clock starts the moment you set it.</p>
           </div>
           <div className="landing-feature">
