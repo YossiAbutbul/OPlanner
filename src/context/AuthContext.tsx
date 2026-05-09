@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   onAuthStateChanged,
-  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signOut,
@@ -100,20 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (e: unknown) {
-      const code = (e as { code?: string })?.code;
-      if (
-        code === "auth/popup-closed-by-user" ||
-        code === "auth/cancelled-popup-request" ||
-        code === "auth/user-cancelled"
-      ) {
-        return;
-      }
-      if (code === "auth/popup-blocked") {
-        await signInWithRedirect(auth, googleProvider);
-        return;
-      }
+      await signInWithRedirect(auth, googleProvider);
+    } catch (e) {
       throw new Error(mapAuthError(e));
     }
   };
