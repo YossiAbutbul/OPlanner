@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import "../css/DatePicker.css";
 
 interface Props {
@@ -26,21 +27,58 @@ const parseIso = (s: string): Date => {
   return new Date(y, m - 1, d);
 };
 
+const POPOVER_WIDTH = 260;
+
 const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [view, setView] = useState<Date>(() => (value ? parseIso(value) : new Date()));
   const wrapRef = useRef<HTMLDivElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (value) setView(parseIso(value));
   }, [value]);
 
+  // Compute fixed position so the popover escapes overflow:auto containers.
+  // Pick above/below based on actual popover height, measured after render.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const updatePos = () => {
+      const rect = wrapRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const popH = popRef.current?.offsetHeight ?? 290;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const openUp = spaceBelow < popH + 12 && spaceAbove > spaceBelow;
+      const top = openUp ? rect.top - popH - 6 : rect.bottom + 6;
+      // Prefer left-aligning the popover with the trigger; clamp to viewport.
+      const desiredLeft = rect.left;
+      const left = Math.min(
+        Math.max(8, desiredLeft),
+        window.innerWidth - POPOVER_WIDTH - 8
+      );
+      setPos({ top, left });
+    };
+    updatePos();
+    // Re-measure after the popover renders for the first time.
+    const raf = requestAnimationFrame(updatePos);
+    window.addEventListener("resize", updatePos);
+    window.addEventListener("scroll", updatePos, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", updatePos);
+      window.removeEventListener("scroll", updatePos, true);
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const target = e.target as Node;
+      const inWrap = wrapRef.current?.contains(target);
+      const inPop = popRef.current?.contains(target);
+      if (!inWrap && !inPop) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
@@ -84,13 +122,21 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
   const goToday = () => {
     const t = new Date();
     setView(new Date(t.getFullYear(), t.getMonth(), 1));
+    onChange(toIso(t));
+    setOpen(false);
   };
 
   return (
     <div className={`dp-wrap ${block ? "dp-wrap-block" : ""}`} ref={wrapRef}>
       {children(() => setOpen((v) => !v))}
-      {open && (
-        <div className="dp-popover" role="dialog" aria-label="Pick date">
+      {open && pos && createPortal(
+        <div
+          ref={popRef}
+          className="dp-popover"
+          role="dialog"
+          aria-label="Pick date"
+          style={{ top: pos.top, left: pos.left }}
+        >
           <div className="dp-head">
             <button type="button" className="dp-nav" onClick={goPrev} aria-label="Previous month">
               ‹
@@ -149,7 +195,8 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
               Today
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

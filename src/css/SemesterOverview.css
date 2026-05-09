@@ -3,6 +3,10 @@
   max-width: none;
   box-sizing: border-box;
   color: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .overview-header {
@@ -34,7 +38,11 @@
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.08s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.08s ease;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -116,8 +124,12 @@
   line-height: 1.1;
 }
 
-.stat-good { color: #1db954; }
-.stat-bad  { color: #d23030; }
+.stat-good {
+  color: #1db954;
+}
+.stat-bad {
+  color: #d23030;
+}
 
 .stat-bar {
   margin-top: 0.4rem;
@@ -168,7 +180,9 @@
   border-radius: 8px;
   padding: 0.7rem 0.9rem;
   cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.08s ease;
+  transition:
+    border-color 0.15s ease,
+    transform 0.08s ease;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -241,29 +255,83 @@
   font-weight: 600;
 }
 
-.upcoming-due-ok    { color: #1db954; }
-.upcoming-due-warn  { color: #e09600; }
-.upcoming-due-danger { color: #d23030; }
+.upcoming-due-ok {
+  color: #1db954;
+}
+.upcoming-due-warn {
+  color: #e09600;
+}
+.upcoming-due-danger {
+  color: #d23030;
+}
 
-/* Two-column grid: courses + finals */
+/* Two-column grid: calendar (wider) on the left, courses + finals stacked on the right */
 .overview-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
   gap: 1.25rem;
-  margin-top: 1.75rem;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
 }
 
 .overview-grid .overview-section {
   margin-top: 0;
 }
 
-@media (max-width: 900px) {
+.overview-grid-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+}
+
+.overview-grid-right > .overview-section {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 50%;
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-grid-right > .overview-section > h2 {
+  flex-shrink: 0;
+}
+
+.overview-grid-right .course-stats,
+.overview-grid-right .finals-list {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  margin-right: -0.25rem;
+  padding-right: 0.25rem;
+}
+
+.overview-calendar-section {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-calendar-section > .cal {
+  flex: 1;
+  min-height: 0;
+}
+
+.overview-calendar-section .cal-grid {
+  grid-auto-rows: minmax(60px, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 1100px) {
   .overview-grid {
     grid-template-columns: 1fr;
   }
 }
 
-/* Finals countdown */
+/* Finals Countdown */
 .finals-list {
   list-style: none;
   padding: 0;
@@ -355,7 +423,9 @@
   color: #555;
   font-size: 0.85rem;
   font-weight: 500;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
   flex-shrink: 0;
   background: transparent;
   border: 1px solid transparent;
@@ -450,25 +520,42 @@
 
 .course-stat,
 .finals-row,
-.stat-card {
+.stat-card,
+.overview-calendar-section {
   animation: overviewFadeUp 0.35s ease-out both;
+}
+
+.overview-calendar-section {
+  animation-delay: 0.12s;
 }
 
 .course-stat:nth-child(1),
 .finals-row:nth-child(1),
-.stat-card:nth-child(1) { animation-delay: 0.02s; }
+.stat-card:nth-child(1) {
+  animation-delay: 0.02s;
+}
 .course-stat:nth-child(2),
 .finals-row:nth-child(2),
-.stat-card:nth-child(2) { animation-delay: 0.06s; }
+.stat-card:nth-child(2) {
+  animation-delay: 0.06s;
+}
 .course-stat:nth-child(3),
 .finals-row:nth-child(3),
-.stat-card:nth-child(3) { animation-delay: 0.10s; }
+.stat-card:nth-child(3) {
+  animation-delay: 0.1s;
+}
 .course-stat:nth-child(4),
 .finals-row:nth-child(4),
-.stat-card:nth-child(4) { animation-delay: 0.14s; }
+.stat-card:nth-child(4) {
+  animation-delay: 0.14s;
+}
 .course-stat:nth-child(5),
 .finals-row:nth-child(5),
-.stat-card:nth-child(5) { animation-delay: 0.18s; }
+.stat-card:nth-child(5) {
+  animation-delay: 0.18s;
+}
 .course-stat:nth-child(n + 6),
 .finals-row:nth-child(n + 6),
-.stat-card:nth-child(n + 6) { animation-delay: 0.22s; }
+.stat-card:nth-child(n + 6) {
+  animation-delay: 0.22s;
+}

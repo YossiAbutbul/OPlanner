@@ -24,10 +24,17 @@ const steps: Step[] = [
     hideOverlay: true,
   },
   {
+    target: "[data-tour='course-menu']",
+    placement: "right",
+    title: "Color a course",
+    content: "Each course has a ⋮ menu — Rename, Color, or Delete.",
+    hideOverlay: true,
+  },
+  {
     target: "[data-tour='finals']",
     placement: "left",
     title: "Set finals",
-    content: "Pick a date — countdown starts.",
+    content: "Pick a date here — countdown starts.",
     hideOverlay: true,
   },
   {

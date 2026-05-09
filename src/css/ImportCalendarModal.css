@@ -48,13 +48,40 @@
   cursor: not-allowed;
 }
 
-.import-cat input[type="checkbox"] {
+.import-cat input[type="checkbox"],
+.import-toggle input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
   width: 16px;
   height: 16px;
   margin: 0;
   flex-shrink: 0;
-  accent-color: #1db954;
+  background: #ffffff;
+  border: 1px solid #d6d6da;
+  border-radius: 3px;
   cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.import-cat input[type="checkbox"]:hover,
+.import-toggle input[type="checkbox"]:hover {
+  border-color: #b8bbc0;
+}
+
+.import-cat input[type="checkbox"]:checked,
+.import-toggle input[type="checkbox"]:checked {
+  background-color: #1db954;
+  border-color: #1db954;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M4 8.5l3 3 5-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px 14px;
+}
+
+.import-cat input[type="checkbox"]:disabled {
+  background: #f1f1f3;
+  border-color: #e3e3e6;
+  cursor: not-allowed;
 }
 
 .import-cat-label {
@@ -90,12 +117,6 @@
   cursor: pointer;
 }
 
-.import-toggle input[type="checkbox"] {
-  width: auto;
-  margin: 0;
-  accent-color: #1db954;
-  cursor: pointer;
-}
 
 .import-progress {
   margin-top: 0.75rem;

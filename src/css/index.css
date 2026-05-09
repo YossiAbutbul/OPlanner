@@ -60,3 +60,34 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* App-wide light-theme scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c4c6ca #f4f4f6;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f4f4f6;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c4c6ca;
+  border: 2px solid #f4f4f6;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9da0a5;
+}
+
+::-webkit-scrollbar-corner {
+  background: #f4f4f6;
+}

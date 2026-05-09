@@ -14,6 +14,7 @@ import {
   setYearColor,
   setSemesterColor,
   setCourseFinalDate,
+  setCourseColor,
 } from "./utility/initializeDatabase";
 
 export interface CourseTab {
@@ -25,6 +26,7 @@ export interface CourseTab {
 export interface CourseInfo {
   name: string;
   finalDate?: string;
+  color?: string;
 }
 
 export interface YearTreeData {
@@ -288,6 +290,41 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpdateCourseColor = async (
+    year: number,
+    semesterKey: string,
+    course: string,
+    color: string | null
+  ) => {
+    let prev: YearTreeData[] = [];
+    setYears((curr) => {
+      prev = curr;
+      const next = curr.map((y) => {
+        if (y.year !== year) return y;
+        return {
+          ...y,
+          semesters: y.semesters.map((s) => {
+            if (s.key !== semesterKey) return s;
+            return {
+              ...s,
+              courses: s.courses.map((c) =>
+                c.name === course ? { ...c, color: color ?? undefined } : c
+              ),
+            };
+          }),
+        };
+      });
+      persistYears(next);
+      return next;
+    });
+    const ok = await setCourseColor(year, semesterKey, course, color);
+    if (!ok) {
+      setYears(prev);
+      persistYears(prev);
+      throw new Error("Failed to save course color. Check your connection and try again.");
+    }
+  };
+
   const handleUpdateCourseFinalDate = async (
     year: number,
     semesterKey: string,
@@ -367,7 +404,7 @@ const App: React.FC = () => {
   const currentYear = years.find((y) => y.year === selectedYear) || null;
   const currentSemester =
     currentYear?.semesters.find((s) => s.name === selectedSemester) || null;
-  const semesterCourses = currentSemester?.courses.map((c) => c.name) || [];
+  const semesterCourses: CourseInfo[] = currentSemester?.courses ?? [];
 
   if (loading) {
     return (
@@ -396,6 +433,9 @@ const App: React.FC = () => {
         onAddYear={handleAddYear}
         addingYear={addingYear}
         onReplayTour={replayTour}
+        onUpdateCourseColor={(year, semKey, course, color) =>
+          handleUpdateCourseColor(year, semKey, course, color)
+        }
       />
       <MainContent
         years={years}
@@ -419,6 +459,7 @@ const App: React.FC = () => {
         onDeleteYear={handleDeleteYear}
         onUpdateYearColor={handleUpdateYearColor}
         onUpdateSemesterColor={handleUpdateSemesterColor}
+        onUpdateCourseColor={handleUpdateCourseColor}
         onUpdateCourseFinalDate={handleUpdateCourseFinalDate}
         activeTab={activeTab}
       />

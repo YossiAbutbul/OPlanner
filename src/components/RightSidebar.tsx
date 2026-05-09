@@ -49,7 +49,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   selectedCourse,
 }) => {
   void selectedCourse;
-  const { getCourseTasks, addHomework } = useHomework();
+  const { getCourseTasks, addHomework, homework } = useHomework();
   const [items, setItems] = useState<HomeworkEntry[]>([]);
   const [editTask, setEditTask] = useState<HomeworkEntry | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -88,7 +88,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [sources, getCourseTasks]);
+  }, [sources, getCourseTasks, homework]);
 
   const handleClick = (t: HomeworkEntry) => {
     setEditTask(t);
