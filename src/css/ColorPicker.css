@@ -94,6 +94,16 @@
   gap: 0.4rem;
 }
 
+.cp-current-swatch {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  align-self: center;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  display: inline-block;
+}
+
 .cp-hex {
   flex: 1;
   min-width: 0;
