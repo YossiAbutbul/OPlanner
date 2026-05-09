@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   onAuthStateChanged,
+  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signOut,
@@ -98,9 +99,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async () => {
+    // Localhost can't use redirect (the auth session would land on
+    // firebaseapp.com origin which our local dev page can't read), so
+    // fall back to popup. Deployed hosts use redirect via the vercel
+    // rewrite that proxies /__/auth/* to firebase.
+    const isLocalhost =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1");
     try {
-      await signInWithRedirect(auth, googleProvider);
-    } catch (e) {
+      if (isLocalhost) {
+        await signInWithPopup(auth, googleProvider);
+      } else {
+        await signInWithRedirect(auth, googleProvider);
+      }
+    } catch (e: unknown) {
+      const code = (e as { code?: string })?.code;
+      if (
+        code === "auth/popup-closed-by-user" ||
+        code === "auth/cancelled-popup-request" ||
+        code === "auth/user-cancelled"
+      ) {
+        return;
+      }
       throw new Error(mapAuthError(e));
     }
   };
