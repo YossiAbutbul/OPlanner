@@ -3,8 +3,8 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import "boxicons/css/boxicons.min.css";
 import { useAuth } from "../context/AuthContext";
-import { Settings, Plus, LogOut, RefreshCw } from "lucide-react";
-import { addCourse, deleteCourse, renameCourse } from "../utility/initializeDatabase";
+import { Settings, Plus, LogOut, HelpCircle } from "lucide-react";
+import { deleteCourse, renameCourse } from "../utility/initializeDatabase";
 import DeleteModal from "./DeleteModal";
 import Modal from "./Modal";
 
@@ -18,8 +18,7 @@ interface SidebarProps {
   onYearsChanged: () => void;
   onAddYear: () => void;
   addingYear: boolean;
-  onSync: () => void;
-  syncing: boolean;
+  onReplayTour: () => void;
 }
 
 const capitalizeWords = (str: string) =>
@@ -35,16 +34,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   onYearsChanged,
   onAddYear,
   addingYear,
-  onSync,
-  syncing,
+  onReplayTour,
 }) => {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
 
-  const [addOpen, setAddOpen] = useState(false);
-  const [newCourseName, setNewCourseName] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
@@ -79,21 +75,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, []);
 
   const canManage = selectedYear !== null && !!selectedSemester;
-
-  const handleAdd = async () => {
-    if (!canManage || !newCourseName.trim()) return;
-    setBusy(true);
-    try {
-      const name = capitalizeWords(newCourseName.trim());
-      await addCourse(selectedYear!, selectedSemester!, name);
-      setNewCourseName("");
-      setAddOpen(false);
-      onYearsChanged();
-      onSelectCourse(name);
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const handleDelete = async () => {
     if (!canManage || !confirmDelete) return;
@@ -175,16 +156,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="open-list-section">
         <div className="open-list-header">
           <span>Courses</span>
-          {canManage && (
-            <button
-              className="open-list-add"
-              onClick={() => setAddOpen(true)}
-              title="Add course"
-              aria-label="Add course"
-            >
-              <Plus size={16} />
-            </button>
-          )}
         </div>
 
         <ul className="open-list">
@@ -291,6 +262,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
         <button
           className="footer-settings"
+          data-tour="settings"
           onClick={() => setSettingsOpen((o) => !o)}
           title="Settings"
         >
@@ -311,12 +283,11 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={() => {
                 setSettingsOpen(false);
-                onSync();
+                onReplayTour();
               }}
-              disabled={syncing}
             >
-              <RefreshCw size={16} />
-              <span>{syncing ? "Syncing…" : "Sync now"}</span>
+              <HelpCircle size={16} />
+              <span>Replay tour</span>
             </button>
             <div className="settings-menu-divider"></div>
             <button
@@ -356,49 +327,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>,
           document.body
         )}
-
-      <Modal
-        isOpen={addOpen}
-        onClose={() => {
-          if (busy) return;
-          setAddOpen(false);
-          setNewCourseName("");
-        }}
-        title="Add course"
-        footer={
-          <>
-            <button
-              className="app-modal-btn-cancel"
-              onClick={() => {
-                setAddOpen(false);
-                setNewCourseName("");
-              }}
-              disabled={busy}
-            >
-              Cancel
-            </button>
-            <button
-              className="app-modal-btn-primary"
-              onClick={handleAdd}
-              disabled={busy || !newCourseName.trim()}
-            >
-              {busy ? "Adding…" : "Add"}
-            </button>
-          </>
-        }
-      >
-        <input
-          autoFocus
-          type="text"
-          value={newCourseName}
-          placeholder="Course name"
-          onChange={(e) => setNewCourseName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleAdd();
-          }}
-          disabled={busy}
-        />
-      </Modal>
 
       <Modal
         isOpen={!!renaming}

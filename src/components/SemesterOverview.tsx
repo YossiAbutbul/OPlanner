@@ -2,7 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import { parseIcs, IcsEvent } from "../utility/parseIcs";
 import { CourseInfo } from "../App";
+import { addCourse } from "../utility/initializeDatabase";
 import DatePicker from "./DatePicker";
+import Modal from "./Modal";
+import { Plus } from "lucide-react";
 import "../css/SemesterOverview.css";
 
 interface Props {
@@ -13,6 +16,7 @@ interface Props {
   onSelectCourse: (c: string) => void;
   onImport: (events: IcsEvent[]) => void;
   onUpdateCourseFinalDate: (course: string, date: string | null) => Promise<void>;
+  onYearsChanged: () => void;
   onError: (msg: string) => void;
 }
 
@@ -42,12 +46,34 @@ const SemesterOverview: React.FC<Props> = ({
   onSelectCourse,
   onImport,
   onUpdateCourseFinalDate,
+  onYearsChanged,
   onError,
 }) => {
   const { getCourseTasks } = useHomework();
   const [byCourse, setByCourse] = useState<CourseStats[]>([]);
   const [loaded, setLoaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [newCourseName, setNewCourseName] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const handleAddCourse = async () => {
+    const trimmed = newCourseName.trim();
+    if (!trimmed) return;
+    setAdding(true);
+    try {
+      const name = capitalizeWords(trimmed);
+      await addCourse(year, semesterKey, name);
+      setNewCourseName("");
+      setAddOpen(false);
+      onYearsChanged();
+      onSelectCourse(name);
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "Failed to add course.");
+    } finally {
+      setAdding(false);
+    }
+  };
 
   // Reset the loaded gate only when the user navigates to a different
   // semester. Final-date / color edits mutate `courses` reference but
@@ -114,13 +140,25 @@ const SemesterOverview: React.FC<Props> = ({
           <h1>{semester}</h1>
           <span className="overview-year">{year}</span>
         </div>
-        <button
-          className="overview-import"
-          onClick={() => fileInputRef.current?.click()}
-          title="Import calendar (.ics)"
-        >
-          Import calendar
-        </button>
+        <div className="overview-header-actions">
+          <button
+            className="overview-import"
+            data-tour="import"
+            onClick={() => fileInputRef.current?.click()}
+            title="Import calendar (.ics)"
+          >
+            Import calendar
+          </button>
+          <button
+            className="overview-add-course"
+            data-tour="add-course"
+            onClick={() => setAddOpen(true)}
+            title="Add course"
+          >
+            <Plus size={16} />
+            <span>Add course</span>
+          </button>
+        </div>
         <input
           ref={fileInputRef}
           type="file"
@@ -135,6 +173,49 @@ const SemesterOverview: React.FC<Props> = ({
           }}
         />
       </header>
+
+      <Modal
+        isOpen={addOpen}
+        onClose={() => {
+          if (adding) return;
+          setAddOpen(false);
+          setNewCourseName("");
+        }}
+        title="Add course"
+        footer={
+          <>
+            <button
+              className="app-modal-btn-cancel"
+              onClick={() => {
+                setAddOpen(false);
+                setNewCourseName("");
+              }}
+              disabled={adding}
+            >
+              Cancel
+            </button>
+            <button
+              className="app-modal-btn-primary"
+              onClick={handleAddCourse}
+              disabled={adding || !newCourseName.trim()}
+            >
+              {adding ? "Adding…" : "Add"}
+            </button>
+          </>
+        }
+      >
+        <input
+          autoFocus
+          type="text"
+          value={newCourseName}
+          placeholder="Course name"
+          onChange={(e) => setNewCourseName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleAddCourse();
+          }}
+          disabled={adding}
+        />
+      </Modal>
 
       {isEmpty && isSemesterC ? (
         <section className="overview-cta">
@@ -212,7 +293,7 @@ const SemesterOverview: React.FC<Props> = ({
             <section className="overview-section">
               <h2>Finals countdown</h2>
               <ul className="finals-list">
-                {courses.map((c) => {
+                {courses.map((c, idx) => {
                   const days = c.finalDate ? daysUntil(c.finalDate) : null;
                   let badge = "";
                   let badgeClass = "";
@@ -258,6 +339,7 @@ const SemesterOverview: React.FC<Props> = ({
                           <button
                             type="button"
                             className="finals-date"
+                            data-tour={idx === 0 ? "finals" : undefined}
                             onClick={open}
                           >
                             <svg
