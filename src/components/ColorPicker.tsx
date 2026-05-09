@@ -238,6 +238,11 @@ const ColorPicker: React.FC<Props> = ({ value, onChange, disabled }) => {
       <div className="cp-hex-row">
         <span className="cp-hex-label">Hex</span>
         <div className="cp-hex-wrap">
+          <span
+            className="cp-current-swatch"
+            style={{ background: currentHex }}
+            aria-label="Current color"
+          />
           <input
             type="text"
             className={`cp-hex ${hexInvalid ? "invalid" : ""}`}
