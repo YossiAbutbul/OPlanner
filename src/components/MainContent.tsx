@@ -261,6 +261,7 @@ const MainContent: React.FC<MainContentProps> = ({
             onUpdateCourseFinalDate={(course, date) =>
               onUpdateCourseFinalDate(selectedYear, currentSemester.key, course, date)
             }
+            onYearsChanged={onYearsChanged}
             onError={(msg) => setErrorMsg(msg)}
           />
         ) : (

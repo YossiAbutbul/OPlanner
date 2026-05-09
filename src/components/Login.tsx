@@ -53,7 +53,7 @@ const Login: React.FC = () => {
             <div className="landing-cta-row">
               <button
                 className="landing-cta"
-                onClick={() => openAuth("signup")}
+                onClick={() => openAuth("signin")}
               >
                 Get started — it's free
               </button>
@@ -183,7 +183,7 @@ const Login: React.FC = () => {
           <p>Open OPlanner once. Stop forgetting things forever.</p>
           <button
             className="landing-cta"
-            onClick={() => openAuth("signup")}
+            onClick={() => openAuth("signin")}
           >
             Get started — it's free
           </button>

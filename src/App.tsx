@@ -4,6 +4,7 @@ import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
 import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
+import Tour from "./components/Tour";
 import { useAuth } from "./context/AuthContext";
 import {
   getAllYearsAndSemesters,
@@ -40,6 +41,28 @@ const App: React.FC = () => {
   const [selectedSemester, setSelectedSemester] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [addingYear, setAddingYear] = useState(false);
+  const [tourRun, setTourRun] = useState(false);
+
+  const tourKey = user ? `oplanner.tour.done.${user.uid}` : null;
+
+  useEffect(() => {
+    if (!tourKey) return;
+    const done = localStorage.getItem(tourKey);
+    if (!done) {
+      const t = setTimeout(() => setTourRun(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, [tourKey]);
+
+  const finishTour = () => {
+    if (tourKey) localStorage.setItem(tourKey, "1");
+    setTourRun(false);
+  };
+
+  const replayTour = () => {
+    if (tourKey) localStorage.removeItem(tourKey);
+    setTourRun(true);
+  };
 
   const refreshYears = useCallback(async () => {
     if (!user) return;
@@ -78,6 +101,26 @@ const App: React.FC = () => {
     }
     if (!hasCache) refreshYears();
   }, [user, refreshYears]);
+
+  // Bootstrap: brand-new account with zero years gets the current calendar
+  // year auto-created so the overview is immediately useful. One-shot per
+  // user — if they delete the year later we don't recreate it.
+  useEffect(() => {
+    if (!user || yearsLoading) return;
+    if (years.length > 0) return;
+    const flagKey = `oplanner.bootstrapped.${user.uid}`;
+    if (localStorage.getItem(flagKey)) return;
+    localStorage.setItem(flagKey, "1");
+    (async () => {
+      let yearToAdd = new Date().getFullYear();
+      while (true) {
+        const added = await initializeYear(yearToAdd);
+        if (added) break;
+        yearToAdd += 1;
+      }
+      await refreshYears();
+    })();
+  }, [user, years, yearsLoading, refreshYears]);
 
   // Helper: pick best semester for a given year tree.
   // Priority: per-year saved → heuristic by month → "Semester A" → first in tree.
@@ -352,8 +395,7 @@ const App: React.FC = () => {
         onYearsChanged={refreshYears}
         onAddYear={handleAddYear}
         addingYear={addingYear}
-        onSync={refreshYears}
-        syncing={yearsLoading}
+        onReplayTour={replayTour}
       />
       <MainContent
         years={years}
@@ -386,6 +428,7 @@ const App: React.FC = () => {
         selectedSemester={selectedSemester}
         selectedCourse={selectedCourse}
       />
+      <Tour run={tourRun} onFinish={finishTour} />
     </div>
   );
 };
