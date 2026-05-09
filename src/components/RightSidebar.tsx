@@ -161,8 +161,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           setModalOpen(false);
           setEditTask(null);
         }}
-        onSave={async (id, name, dueDate, status, year, semester, course) => {
-          await addHomework(id, name, dueDate, status, year, semester, course);
+        onSave={async (id, name, dueDate, status, year, semester, course, ignoreOverdue) => {
+          await addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue);
           setModalOpen(false);
           setEditTask(null);
         }}

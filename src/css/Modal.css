@@ -321,3 +321,50 @@
 .hw-date-trigger-empty {
   color: #888;
 }
+
+.hw-ignore-overdue {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  color: #444 !important;
+  cursor: pointer;
+}
+
+.hw-ignore-overdue input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid #d6d6da;
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.hw-ignore-overdue input[type="checkbox"]:hover {
+  border-color: #b8bbc0;
+}
+
+.hw-ignore-overdue input[type="checkbox"]:checked {
+  background: #1db954;
+  border-color: #1db954;
+}
+
+.hw-ignore-overdue input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 4px;
+  height: 8px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}

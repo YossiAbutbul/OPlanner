@@ -12,7 +12,8 @@ interface HomeworkModalProps {
     status: string,
     year: number,
     semester: string,
-    course: string
+    course: string,
+    ignoreOverdue?: boolean
   ) => void;
   editHomework?: {
     id: string;
@@ -22,6 +23,7 @@ interface HomeworkModalProps {
     year: number;
     semester: string;
     course: string;
+    ignoreOverdue?: boolean;
   } | null;
   selectedCourseData: {
     year: number;
@@ -44,16 +46,19 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   const [name, setName] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState("PENDING");
+  const [ignoreOverdue, setIgnoreOverdue] = useState(false);
 
   useEffect(() => {
     if (editHomework) {
       setName(editHomework.name);
       setDueDate(editHomework.dueDate);
       setStatus(editHomework.status);
+      setIgnoreOverdue(!!editHomework.ignoreOverdue);
     } else {
       setName("");
       setDueDate(prefilledDueDate || "");
       setStatus("PENDING");
+      setIgnoreOverdue(false);
     }
   }, [editHomework, prefilledDueDate, isOpen]);
 
@@ -63,10 +68,20 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
     const { year, semester, course = "" } = courseData;
     if (!name.trim() || !dueDate) return;
 
-    onSave(editHomework?.id || null, name.trim(), dueDate, status, year, semester, course);
+    onSave(
+      editHomework?.id || null,
+      name.trim(),
+      dueDate,
+      status,
+      year,
+      semester,
+      course,
+      ignoreOverdue
+    );
     setName("");
     setDueDate("");
     setStatus("PENDING");
+    setIgnoreOverdue(false);
     onClose();
   };
 
@@ -170,6 +185,14 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
         <option value="PENDING">Pending</option>
         <option value="COMPLETED">Completed</option>
       </select>
+      <label className="hw-ignore-overdue">
+        <input
+          type="checkbox"
+          checked={ignoreOverdue}
+          onChange={(e) => setIgnoreOverdue(e.target.checked)}
+        />
+        <span>Don't flag this task as overdue when past its due date</span>
+      </label>
     </Modal>
   );
 };
