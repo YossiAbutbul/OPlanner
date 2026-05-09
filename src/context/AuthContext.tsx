@@ -166,8 +166,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("waitForPendingWrites failed:", e);
     }
     await signOut(auth);
+    // Wipe app data on logout but keep per-uid one-shot flags (tour done,
+    // bootstrap done) so re-signing in doesn't replay onboarding.
     Object.keys(localStorage)
       .filter((k) => k.startsWith("oplanner."))
+      .filter(
+        (k) =>
+          !k.startsWith("oplanner.tour.done.") &&
+          !k.startsWith("oplanner.bootstrapped.")
+      )
       .forEach((k) => localStorage.removeItem(k));
   };
 
