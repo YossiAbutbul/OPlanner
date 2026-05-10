@@ -66,8 +66,7 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
     const groups = new Map<string, { year: number; semester: string; course: string; events: IcsEvent[] }>();
     for (const e of toImport) {
       if (!e.year || !e.semester || !e.course) {
-        failed++;
-        reasons.push(`Could not parse course/semester for: ${e.summary}`);
+        skipped++;
         continue;
       }
       const course = capitalizeWords(e.course.trim());
