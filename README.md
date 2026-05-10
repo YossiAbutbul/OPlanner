@@ -8,7 +8,7 @@ Your courses, assignments, and finals — one place. Drop your university calend
 
 ---
 
-![Semester overview](docs/screenshots/overview.png)
+![Landing page](docs/screenshots/landing.png)
 
 ## Why OPlanner?
 
@@ -23,10 +23,10 @@ OPlanner does one thing: keeps every assignment, exam, and deadline in front of 
 ### 🗓️ Drop your calendar. Done.
 Export the `.ics` from your university portal, drag it in. Every course, every assignment, every due date — already there. No typing.
 
-![Landing page](docs/screenshots/landing.png)
-
 ### 📊 See the whole semester at a glance
 Tasks done. Tasks left. What's overdue. How close you are to crushing it. One screen.
+
+![Semester overview](docs/screenshots/overview.png)
 
 ### ⏰ Finals countdown
 Set the date. Watch the clock. Stop "wait, when's the exam again?"
@@ -42,7 +42,7 @@ Color-code years, semesters, courses. Make the screen actually feel like your ye
 ### 📱 Built for your phone
 Full mobile layout. Drawer sidebar. Sticky topbar. Tap-to-add tasks on the calendar. Works exactly like a real app.
 
-![Mobile](docs/screenshots/mobile.png)
+<img src="docs/screenshots/mobile.png" alt="Mobile" width="280" />
 
 ### 🔁 Re-import without fear
 Updated `.ics` from school? Drop it again. Tasks update in place. Nothing duplicates. Nothing breaks.
