@@ -39,6 +39,7 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
   const [result, setResult] = useState<{
     added: number;
     skipped: number;
+    unparseable: number;
     failed: number;
     reasons: string[];
   } | null>(null);
@@ -55,18 +56,20 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
   );
 
   const handleImport = async () => {
+    if (busy) return;
     setBusy(true);
     setResult(null);
     const reasons: string[] = [];
     let added = 0;
     let skipped = 0;
+    let unparseable = 0;
     let failed = 0;
 
     // Group events by (year, semester, course) to dedupe lookups
     const groups = new Map<string, { year: number; semester: string; course: string; events: IcsEvent[] }>();
     for (const e of toImport) {
       if (!e.year || !e.semester || !e.course) {
-        skipped++;
+        unparseable++;
         continue;
       }
       const course = capitalizeWords(e.course.trim());
@@ -97,8 +100,10 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
           skipped++;
           continue;
         }
+        // Deterministic doc ID so re-imports overwrite instead of duplicate.
+        const stableId = `imp_${dueDate}_${name}`.replace(/[\\/]/g, "_").slice(0, 500);
         try {
-          await addHomework(null, name, dueDate, "PENDING", g.year, g.semester, g.course);
+          await addHomework(stableId, name, dueDate, "PENDING", g.year, g.semester, g.course);
           seen.add(key);
           added++;
         } catch (err) {
@@ -109,7 +114,7 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
     }
 
     setProgress("");
-    setResult({ added, skipped, failed, reasons });
+    setResult({ added, skipped, unparseable, failed, reasons });
     setBusy(false);
     onDone();
   };
@@ -141,7 +146,14 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
               onClick={handleImport}
               disabled={busy || toImport.length === 0}
             >
-              {busy ? "Importing…" : `Import (${toImport.length})`}
+              {busy ? (
+                <span className="import-btn-busy">
+                  <span className="import-spinner" />
+                  Importing…
+                </span>
+              ) : (
+                `Import (${toImport.length})`
+              )}
             </button>
           </>
         )
@@ -149,11 +161,24 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
     >
       {result ? (
         <div className="import-result">
-          <p>
-            Added <strong>{result.added}</strong>, skipped{" "}
-            <strong>{result.skipped}</strong> duplicates,{" "}
-            <strong>{result.failed}</strong> failed.
-          </p>
+          <ul className="import-result-list">
+            <li className="import-stat import-stat-added">
+              <span className="import-stat-num">{result.added}</span>
+              <span className="import-stat-label">Added</span>
+            </li>
+            <li className="import-stat import-stat-skipped">
+              <span className="import-stat-num">{result.skipped}</span>
+              <span className="import-stat-label">Already in DB</span>
+            </li>
+            <li className="import-stat import-stat-unparseable">
+              <span className="import-stat-num">{result.unparseable}</span>
+              <span className="import-stat-label">Non-course events</span>
+            </li>
+            <li className="import-stat import-stat-failed">
+              <span className="import-stat-num">{result.failed}</span>
+              <span className="import-stat-label">Failed</span>
+            </li>
+          </ul>
           {result.reasons.length > 0 && (
             <ul className="import-reasons">
               {result.reasons.slice(0, 6).map((r, i) => (
