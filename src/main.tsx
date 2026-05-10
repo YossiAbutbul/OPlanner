@@ -5,6 +5,11 @@ import App from "./App";
 import { HomeworkProvider } from "./context/HomeworkContext";
 import { AuthProvider } from "./context/AuthContext";
 
+// Mobile debug console: visit ?debug=1 to enable on phones.
+if (new URLSearchParams(location.search).get("debug") === "1") {
+  import("eruda").then(({ default: eruda }) => eruda.init());
+}
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <AuthProvider>
