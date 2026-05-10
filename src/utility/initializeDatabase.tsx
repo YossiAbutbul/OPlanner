@@ -91,6 +91,7 @@ export const getAllYearsAndSemesters = async (): Promise<
 > => {
   try {
     await auth.authStateReady();
+    if (!auth.currentUser) return [];
     const base = userBase();
     const yearsCollection = collection(db, `${base}/years`);
     const snapshot = await getDocs(yearsCollection);
