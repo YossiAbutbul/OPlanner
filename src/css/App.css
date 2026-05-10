@@ -217,7 +217,7 @@
 
   .main-content {
     width: 100%;
-    padding: 0.5rem 0.85rem 2rem !important;
+    padding: 0.5rem 0.85rem calc(2rem + env(safe-area-inset-bottom, 0px)) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
@@ -229,10 +229,19 @@
 
 
   .main-layout {
-    height: 100vh;
+    height: 100dvh;
     width: 100%;
-    padding-top: 56px;
+    padding-top: calc(56px + env(safe-area-inset-top, 0px));
     box-sizing: border-box;
+  }
+
+  .mobile-topbar {
+    padding-top: env(safe-area-inset-top, 0px);
+    height: calc(56px + env(safe-area-inset-top, 0px));
+  }
+
+  .sidebar {
+    height: 100dvh;
   }
 
   .overview-header {
