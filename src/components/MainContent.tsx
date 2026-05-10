@@ -143,12 +143,26 @@ const MainContent: React.FC<MainContentProps> = ({
     <div className="main-layout">
       {/* Year tabs */}
       <div className="tab-bar tab-bar-year">
-        {sortedYears.map((y) => (
+        {sortedYears.map((y) => {
+          let pressTimer: ReturnType<typeof setTimeout> | null = null;
+          let pressFired = false;
+          const startPress = () => {
+            pressFired = false;
+            pressTimer = setTimeout(() => {
+              pressFired = true;
+              setTabSettings({ kind: "year", year: y.year, color: y.color });
+            }, 500);
+          };
+          const cancelPress = () => {
+            if (pressTimer) clearTimeout(pressTimer);
+            pressTimer = null;
+          };
+          return (
           <div
             key={y.year}
             className={`tab year-tab ${selectedYear === y.year ? "active" : ""}`}
             style={y.color ? ({ "--tab-color": y.color } as React.CSSProperties) : undefined}
-            onClick={() => onSelectYear(y.year)}
+            onClick={() => { if (!pressFired) onSelectYear(y.year); }}
             onDoubleClick={(e) => {
               e.stopPropagation();
               setTabSettings({ kind: "year", year: y.year, color: y.color });
@@ -157,6 +171,10 @@ const MainContent: React.FC<MainContentProps> = ({
               e.preventDefault();
               setTabSettings({ kind: "year", year: y.year, color: y.color });
             }}
+            onTouchStart={startPress}
+            onTouchEnd={cancelPress}
+            onTouchMove={cancelPress}
+            onTouchCancel={cancelPress}
           >
             {y.color && <span className="tab-color-dot" style={{ background: y.color }} />}
             <span>{y.year}</span>
@@ -174,7 +192,8 @@ const MainContent: React.FC<MainContentProps> = ({
               ×
             </button>
           </div>
-        ))}
+          );
+        })}
         {addingYear && (
           <span className="year-adding" title="Adding year…" aria-label="Adding year">
             <span className="year-adding-spinner" />

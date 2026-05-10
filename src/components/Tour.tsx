@@ -27,7 +27,11 @@ const desktopSteps: Step[] = [
     target: "[data-tour='course-menu']",
     placement: "right",
     title: "Color a course",
-    content: "Each course has a ⋮ menu — Rename, Color, or Delete.",
+    content: (
+      <span>
+        Tap the <span className="tour-kbd">⋮</span> next to a course to edit (rename, color) or delete it.
+      </span>
+    ),
     hideOverlay: true,
   },
   {
@@ -78,7 +82,11 @@ const mobileSteps: Step[] = [
     target: "[data-tour='course-menu']",
     placement: "right",
     title: "Manage course",
-    content: "Each course has a ⋮ menu — Rename, Color, or Delete.",
+    content: (
+      <span>
+        Tap the <span className="tour-kbd">⋮</span> next to a course to edit (rename, color) or delete it.
+      </span>
+    ),
     hideOverlay: true,
   },
   {
