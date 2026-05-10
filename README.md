@@ -1,64 +1,72 @@
 # OPlanner
 
-OPlanner is a semester planner application that helps students organize their courses and semesters efficiently.
+### Stop juggling tabs. Ship the semester.
 
-## Features
+Your courses, assignments, and finals — one place. Drop your university calendar in and you're set up in 30 seconds.
 
-- Add, rename, and delete courses.
-- Expand and collapse years and semesters.
-- Preserve the expanded state of years and semesters.
-- Context menu for course actions.
+**[Try it free →](https://oplanner-one.vercel.app/)**
 
-## Installation
+---
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/yourusername/OPlanner.git
-    ```
-2. Navigate to the project directory:
-    ```bash
-    cd OPlanner/semester-planner
-    ```
-3. Install the dependencies:
-    ```bash
-    npm install
-    ```
+![Semester overview](docs/screenshots/overview.png)
 
-## Usage
+## Why OPlanner?
 
-1. Start the development server:
-    ```bash
-    npm start
-    ```
-2. Open your browser and navigate to `http://localhost:3000`.
+Built by a student, for students. Spreadsheets are a mess. Sticky notes get lost. Generic todo apps don't understand semesters.
 
-## Components
+OPlanner does one thing: keeps every assignment, exam, and deadline in front of you — and out of your head.
 
-### Sidebar
+---
 
-The `Sidebar` component is responsible for displaying the list of years, semesters, and courses. It allows users to add, rename, and delete courses.
+## What you get
 
-#### Props
+### 🗓️ Drop your calendar. Done.
+Export the `.ics` from your university portal, drag it in. Every course, every assignment, every due date — already there. No typing.
 
-- `onCourseOrSemesterSelect`: Function to handle the selection of a course or semester.
+![Landing page](docs/screenshots/landing.png)
 
-#### State
+### 📊 See the whole semester at a glance
+Tasks done. Tasks left. What's overdue. How close you are to crushing it. One screen.
 
-- `years`: Array of year data.
-- `isModalOpen`: Boolean to control the visibility of the add course modal.
-- `modalData`: Data for the add course modal.
-- `newCourseName`: Name of the new course to be added.
-- `contextMenu`: Data for the context menu.
-- `renameModal`: Data for the rename course modal.
-- `renameCourseName`: Name of the course to be renamed.
-- `isAddingYear`: Boolean to control the state of adding a new year.
-- `isLoading`: Boolean to control the loading state for fetching years and semesters.
-- `isLoadingAction`: Boolean to control the loading state for actions like adding, renaming, and deleting courses.
+### ⏰ Finals countdown
+Set the date. Watch the clock. Stop "wait, when's the exam again?"
 
-## Contributing
+### 🎯 One course at a time
+Click into any course. Get its calendar, its progress, its task list. No clutter from other classes.
 
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
+![Course view](docs/screenshots/course.png)
 
-## License
+### 🎨 Make it yours
+Color-code years, semesters, courses. Make the screen actually feel like your year, not a generic spreadsheet.
 
-This project is licensed under the MIT License.
+### 📱 Built for your phone
+Full mobile layout. Drawer sidebar. Sticky topbar. Tap-to-add tasks on the calendar. Works exactly like a real app.
+
+![Mobile](docs/screenshots/mobile.png)
+
+### 🔁 Re-import without fear
+Updated `.ics` from school? Drop it again. Tasks update in place. Nothing duplicates. Nothing breaks.
+
+### 🛟 Guided tour
+First time you log in, a 30-second tour shows you every button. Replay it whenever from the gear menu.
+
+### ☁️ Anywhere you sign in
+Sign in with Google or email. Your data follows you — phone, laptop, lab computer.
+
+---
+
+## How long does setup take?
+
+About 30 seconds. Sign in. Drop the calendar. Done.
+
+---
+
+## How much?
+
+Free.
+
+**[Get started →](https://oplanner-one.vercel.app/)**
+
+---
+
+<sub>Built with ❤️ by [Yossi Abutbul](https://github.com/YossiAbutbul). MIT licensed.</sub>
