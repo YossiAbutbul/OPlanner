@@ -75,6 +75,8 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch {
       return;
     }
+    // Show cache immediately for fast paint, but always pull fresh from Firestore
+    // afterwards so cross-device edits propagate.
     if (!force) {
       try {
         const cached = localStorage.getItem(key);
@@ -82,7 +84,6 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed)) {
             setHomework(parsed as HomeworkEntry[]);
-            return;
           }
         }
       } catch {
@@ -119,7 +120,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     year: number,
     semester: string,
     course: string,
-    force = false
+    force = true
   ): Promise<HomeworkEntry[]> => {
     await auth.authStateReady();
     let key: string;
