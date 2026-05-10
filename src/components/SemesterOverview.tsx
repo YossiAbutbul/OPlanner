@@ -139,7 +139,6 @@ const SemesterOverview: React.FC<Props> = ({
   };
 
   const isEmpty = courses.length === 0;
-  const isSemesterC = semesterKey === "Semester C" || semester === "Semester C";
 
   return (
     <div className="overview">
@@ -225,18 +224,14 @@ const SemesterOverview: React.FC<Props> = ({
         />
       </Modal>
 
-      {isEmpty && isSemesterC ? (
+      {isEmpty ? (
         <section className="overview-cta">
           <div className="overview-cta-icon">📅</div>
           <h2>Plan your next semester</h2>
           <p>
-            Semester C is empty. Add courses to start tracking tasks, set final exam
+            {semester} is empty. Add courses to start tracking tasks, set final exam
             dates, and import your calendar.
           </p>
-        </section>
-      ) : isEmpty ? (
-        <section className="overview-section">
-          <p className="overview-empty">No courses in this semester yet.</p>
         </section>
       ) : !loaded ? null : (
         <>

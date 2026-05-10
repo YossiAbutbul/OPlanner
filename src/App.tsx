@@ -15,6 +15,7 @@ import {
   setSemesterColor,
   setCourseFinalDate,
   setCourseColor,
+  addCourse,
 } from "./utility/initializeDatabase";
 
 export interface CourseTab {
@@ -47,23 +48,9 @@ const App: React.FC = () => {
 
   const tourKey = user ? `oplanner.tour.done.${user.uid}` : null;
 
-  useEffect(() => {
-    if (!tourKey) return;
-    const done = localStorage.getItem(tourKey);
-    if (!done) {
-      const t = setTimeout(() => setTourRun(true), 600);
-      return () => clearTimeout(t);
-    }
-  }, [tourKey]);
-
   const finishTour = () => {
     if (tourKey) localStorage.setItem(tourKey, "1");
     setTourRun(false);
-  };
-
-  const replayTour = () => {
-    if (tourKey) localStorage.removeItem(tourKey);
-    setTourRun(true);
   };
 
   const refreshYears = useCallback(async () => {
@@ -120,9 +107,48 @@ const App: React.FC = () => {
         if (added) break;
         yearToAdd += 1;
       }
+      await addCourse(yearToAdd, "Semester A", "Course 1");
       await refreshYears();
     })();
   }, [user, years, yearsLoading, refreshYears]);
+
+  const ensureSampleCourse = useCallback(async () => {
+    const sem = years
+      .find((y) => y.year === selectedYear)
+      ?.semesters.find((s) => s.name === selectedSemester);
+    if (sem && sem.courses.length === 0 && selectedYear && selectedSemester) {
+      await addCourse(selectedYear, selectedSemester, "Course 1");
+      await refreshYears();
+    }
+  }, [years, selectedYear, selectedSemester, refreshYears]);
+
+  const replayTour = async () => {
+    if (tourKey) localStorage.removeItem(tourKey);
+    await ensureSampleCourse();
+    setTourRun(true);
+  };
+
+  useEffect(() => {
+    if (!tourKey || yearsLoading) return;
+    const done = localStorage.getItem(tourKey);
+    if (done) return;
+    const hasAnyCourse = years.some((y) =>
+      y.semesters.some((s) => s.courses.length > 0)
+    );
+    if (!hasAnyCourse) {
+      const firstYear = years[0];
+      const firstSem = firstYear?.semesters[0];
+      if (firstYear && firstSem) {
+        (async () => {
+          await addCourse(firstYear.year, firstSem.name, "Course 1");
+          await refreshYears();
+        })();
+      }
+      return;
+    }
+    const t = setTimeout(() => setTourRun(true), 600);
+    return () => clearTimeout(t);
+  }, [tourKey, yearsLoading, years, refreshYears]);
 
   // Helper: pick best semester for a given year tree.
   // Priority: per-year saved → heuristic by month → "Semester A" → first in tree.
