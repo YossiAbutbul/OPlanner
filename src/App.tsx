@@ -45,6 +45,7 @@ const App: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
   const [addingYear, setAddingYear] = useState(false);
   const [tourRun, setTourRun] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const tourKey = user ? `oplanner.tour.done.${user.uid}` : null;
 
@@ -52,6 +53,10 @@ const App: React.FC = () => {
     if (tourKey) localStorage.setItem(tourKey, "1");
     setTourRun(false);
   };
+
+  useEffect(() => {
+    if (tourRun) setMobileNavOpen(false);
+  }, [tourRun]);
 
   const refreshYears = useCallback(async () => {
     if (!user) return;
@@ -448,6 +453,23 @@ const App: React.FC = () => {
 
   return (
     <div className="app-container">
+      <div className="mobile-topbar">
+        <button
+          className="mobile-nav-toggle"
+          onClick={() => setMobileNavOpen(true)}
+          aria-label="Open menu"
+        >
+          <span /><span /><span />
+        </button>
+        <img src="./Logo.svg" alt="" className="mobile-topbar-logo" />
+        <span className="mobile-topbar-name">OPlanner</span>
+      </div>
+      {mobileNavOpen && (
+        <div
+          className="mobile-nav-backdrop"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
       <Sidebar
         selectedYear={selectedYear}
         selectedSemester={selectedSemester}
@@ -462,6 +484,8 @@ const App: React.FC = () => {
         onUpdateCourseColor={(year, semKey, course, color) =>
           handleUpdateCourseColor(year, semKey, course, color)
         }
+        mobileOpen={mobileNavOpen}
+        onCloseMobile={() => setMobileNavOpen(false)}
       />
       <MainContent
         years={years}

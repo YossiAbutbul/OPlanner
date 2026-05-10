@@ -28,6 +28,8 @@ interface SidebarProps {
     course: string,
     color: string | null
   ) => Promise<void>;
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
 }
 
 const capitalizeWords = (str: string) =>
@@ -45,9 +47,20 @@ const Sidebar: React.FC<SidebarProps> = ({
   addingYear,
   onReplayTour,
   onUpdateCourseColor,
+  mobileOpen,
+  onCloseMobile,
 }) => {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const handle = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handle);
+    return () => mq.removeEventListener("change", handle);
+  }, []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
 
@@ -151,13 +164,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
+    <aside className={`sidebar ${!isMobile && collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="brand">
         <button
           className="brand-logo-btn"
-          onClick={() => setCollapsed((c) => !c)}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          onClick={() => {
+            if (isMobile) onCloseMobile();
+            else setCollapsed((c) => !c);
+          }}
+          title={isMobile ? "Close menu" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={isMobile ? "Close menu" : collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <img src="./Logo.svg" alt="" className="brand-logo" />
         </button>
@@ -173,7 +189,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {canManage && (
             <li
               className={`open-item overview-item ${selectedCourse === null ? "selected" : ""}`}
-              onClick={() => onSelectCourse(null)}
+              onClick={() => { onSelectCourse(null); onCloseMobile(); }}
             >
               <span className="open-item-label">Overview</span>
             </li>
@@ -196,7 +212,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <li
                 key={name}
                 className={`open-item ${isActive ? "selected" : ""} ${isDragging ? "dragging" : ""} ${showBefore ? "drop-before" : ""} ${showAfter ? "drop-after" : ""}`}
-                onClick={() => onSelectCourse(name)}
+                onClick={() => { onSelectCourse(name); onCloseMobile(); }}
                 draggable
                 onDragStart={(e) => {
                   setDraggingName(name);
@@ -331,6 +347,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 setMenuOpen(null);
                 setMenuPos(null);
                 setEditing(target);
+                onCloseMobile();
               }}
             >
               Edit
@@ -342,6 +359,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 setMenuOpen(null);
                 setMenuPos(null);
                 setConfirmDelete(target);
+                onCloseMobile();
               }}
             >
               Delete
