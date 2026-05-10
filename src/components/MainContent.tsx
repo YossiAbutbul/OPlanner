@@ -39,6 +39,7 @@ interface MainContentProps {
     date: string | null
   ) => Promise<void>;
   activeTab: CourseTab | null;
+  onCloseMobile: () => void;
 }
 
 const capitalizeWords = (str: string) =>
@@ -59,6 +60,7 @@ const MainContent: React.FC<MainContentProps> = ({
   onUpdateCourseColor,
   onUpdateCourseFinalDate,
   activeTab,
+  onCloseMobile,
 }) => {
   const { homework, fetchHomework, addHomework, removeHomework } = useHomework();
   const [filteredHomework, setFilteredHomework] = useState<HomeworkEntry[]>([]);
@@ -166,6 +168,7 @@ const MainContent: React.FC<MainContentProps> = ({
               onClick={(e) => {
                 e.stopPropagation();
                 setConfirmDeleteYear(y.year);
+                onCloseMobile();
               }}
             >
               ×
