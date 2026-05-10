@@ -68,17 +68,24 @@ const mobileSteps: Step[] = [
     hideOverlay: true,
   },
   {
+    target: ".mobile-nav-toggle",
+    placement: "bottom",
+    title: "Menu",
+    content: "Tap to open the course list.",
+    hideOverlay: true,
+  },
+  {
+    target: "[data-tour='course-menu']",
+    placement: "right",
+    title: "Manage course",
+    content: "Each course has a ⋮ menu — Rename, Color, or Delete.",
+    hideOverlay: true,
+  },
+  {
     target: "[data-tour='finals']",
     placement: "top",
     title: "Set finals",
     content: "Tap a course to set its final exam date — countdown starts.",
-    hideOverlay: true,
-  },
-  {
-    target: ".mobile-nav-toggle",
-    placement: "bottom",
-    title: "Menu",
-    content: "Tap here to open courses, settings, and replay this tour.",
     hideOverlay: true,
   },
 ];
@@ -86,9 +93,10 @@ const mobileSteps: Step[] = [
 interface Props {
   run: boolean;
   onFinish: () => void;
+  onSetMobileNav?: (open: boolean) => void;
 }
 
-const Tour: React.FC<Props> = ({ run, onFinish }) => {
+const Tour: React.FC<Props> = ({ run, onFinish, onSetMobileNav }) => {
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches
   );
@@ -101,7 +109,22 @@ const Tour: React.FC<Props> = ({ run, onFinish }) => {
 
   const handleEvent = (data: EventData) => {
     const finished: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
-    if (finished.includes(data.status)) onFinish();
+    if (finished.includes(data.status)) {
+      if (isMobile) onSetMobileNav?.(false);
+      onFinish();
+      return;
+    }
+    if (!isMobile || !onSetMobileNav) return;
+    const steps = mobileSteps;
+    const targetIdx = steps.findIndex((s) => s.target === "[data-tour='course-menu']");
+    if (targetIdx < 0) return;
+    if (data.index === targetIdx - 1 && data.action === "next") {
+      onSetMobileNav(true);
+    } else if (data.index === targetIdx && data.action === "prev") {
+      onSetMobileNav(false);
+    } else if (data.index === targetIdx + 1) {
+      onSetMobileNav(false);
+    }
   };
 
   return (
