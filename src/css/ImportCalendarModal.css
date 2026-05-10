@@ -130,6 +130,93 @@
   color: #1a1a1a;
 }
 
+.import-btn-busy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.import-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: import-spin 0.7s linear infinite;
+}
+
+@keyframes import-spin {
+  to { transform: rotate(360deg); }
+}
+
+.import-result-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.7rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.import-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid;
+  background: #fff;
+}
+
+.import-stat-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.import-stat-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.02em;
+}
+
+.import-stat-added {
+  background: rgba(29, 185, 84, 0.08);
+  border-color: rgba(29, 185, 84, 0.35);
+}
+
+.import-stat-added .import-stat-num {
+  color: #117a35;
+}
+
+.import-stat-skipped {
+  background: #f6f6f7;
+  border-color: #e3e3e6;
+}
+
+.import-stat-skipped .import-stat-num {
+  color: #555;
+}
+
+.import-stat-unparseable {
+  background: rgba(243, 199, 104, 0.12);
+  border-color: rgba(243, 199, 104, 0.5);
+}
+
+.import-stat-unparseable .import-stat-num {
+  color: #946100;
+}
+
+.import-stat-failed {
+  background: rgba(224, 60, 60, 0.08);
+  border-color: rgba(224, 60, 60, 0.4);
+}
+
+.import-stat-failed .import-stat-num {
+  color: #c0392b;
+}
+
 .import-reasons {
   margin: 0;
   padding-left: 1.1rem;

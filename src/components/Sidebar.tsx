@@ -18,7 +18,7 @@ interface SidebarProps {
   courses: CourseInfo[];
   onSelectCourse: (c: string | null) => void;
   onReorderCourses: (year: number, semester: string, names: string[]) => void;
-  onYearsChanged: () => void;
+  onYearsChanged: () => void | Promise<void>;
   onAddYear: () => void;
   addingYear: boolean;
   onReplayTour: () => void;
@@ -104,8 +104,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     try {
       await deleteCourse(selectedYear!, selectedSemester!, confirmDelete);
       if (selectedCourse === confirmDelete) onSelectCourse(null);
+      await Promise.resolve(onYearsChanged());
       setConfirmDelete(null);
-      onYearsChanged();
     } finally {
       setBusy(false);
     }

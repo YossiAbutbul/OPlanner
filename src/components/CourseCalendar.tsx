@@ -62,7 +62,7 @@ const CourseCalendar: React.FC<Props> = ({
     month: initial.getMonth(),
   });
   const [hoverIso, setHoverIso] = useState<string | null>(null);
-  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top?: number; bottom?: number; left: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const tasksByDate = useMemo(() => {
@@ -129,12 +129,17 @@ const CourseCalendar: React.FC<Props> = ({
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     setHoverIso(iso);
     const popWidth = 240;
+    const popHeight = 220;
     const margin = 8;
     let left = rect.left;
     if (left + popWidth + margin > window.innerWidth) {
       left = Math.max(margin, window.innerWidth - popWidth - margin);
     }
-    setPopoverPos({ top: rect.bottom + 6, left });
+    if (rect.bottom + popHeight + margin > window.innerHeight) {
+      setPopoverPos({ bottom: window.innerHeight - rect.top + 2, left });
+    } else {
+      setPopoverPos({ top: rect.bottom + 2, left });
+    }
   };
 
   const handleCellLeave = () => {
@@ -213,7 +218,7 @@ const CourseCalendar: React.FC<Props> = ({
       {hoverIso && popoverPos && hoverTasks.length > 0 && createPortal(
         <div
           className="cal-popover"
-          style={{ top: popoverPos.top, left: popoverPos.left }}
+          style={{ top: popoverPos.top, bottom: popoverPos.bottom, left: popoverPos.left }}
           onMouseEnter={() => setHoverIso(hoverIso)}
           onMouseLeave={handleCellLeave}
         >

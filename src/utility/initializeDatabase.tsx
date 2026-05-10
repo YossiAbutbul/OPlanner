@@ -229,6 +229,15 @@ export const renameCourse = async (
       await setDoc(newTaskDoc, task.data());
     }
 
+    // Delete old task docs so the orphan subcollection isn't left behind.
+    for (let i = 0; i < oldTasksSnapshot.docs.length; i += 450) {
+      const batch = writeBatch(db);
+      for (const t of oldTasksSnapshot.docs.slice(i, i + 450)) {
+        batch.delete(doc(db, `${base}/years/${year}/semesters/${semester}/courses/${oldName}/tasks/${t.id}`));
+      }
+      await batch.commit();
+    }
+
     await deleteDoc(oldCourseDoc);
     return true;
   } catch (error) {
@@ -240,12 +249,24 @@ export const renameCourse = async (
 export const deleteCourse = async (year: number, semester: string, course: string): Promise<boolean> => {
   try {
     const base = userBase();
-    const courseDoc = doc(db, `${base}/years/${year}/semesters/${semester}/courses/${course}`);
+    const coursePath = `${base}/years/${year}/semesters/${semester}/courses/${course}`;
+    const courseDoc = doc(db, coursePath);
     const courseSnapshot = await getDoc(courseDoc);
 
     if (!courseSnapshot.exists()) {
       console.error(`Course "${course}" does not exist.`);
       return false;
+    }
+
+    // Cascade-delete tasks subcollection (Firestore does not auto-cascade).
+    const tasksSnap = await getDocs(collection(db, `${coursePath}/tasks`));
+    const taskDocs = tasksSnap.docs;
+    for (let i = 0; i < taskDocs.length; i += 450) {
+      const batch = writeBatch(db);
+      for (const t of taskDocs.slice(i, i + 450)) {
+        batch.delete(doc(db, `${coursePath}/tasks/${t.id}`));
+      }
+      await batch.commit();
     }
 
     await deleteDoc(courseDoc);

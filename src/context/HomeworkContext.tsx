@@ -241,12 +241,16 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (id) {
         const taskDoc = doc(tasksCollection, id);
-        await updateDoc(taskDoc, { name, dueDate, status, ignoreOverdue });
+        const task = { id, name, dueDate, status, year, semester, course, ignoreOverdue };
+        await setDoc(taskDoc, task, { merge: true });
 
         setHomework((prev) => {
-          const next = prev.map((entry) =>
-            entry.id === id ? { ...entry, name, dueDate, status, ignoreOverdue } : entry
-          );
+          const exists = prev.some((entry) => entry.id === id);
+          const next = exists
+            ? prev.map((entry) =>
+                entry.id === id ? { ...entry, name, dueDate, status, ignoreOverdue } : entry
+              )
+            : [...prev, task];
           writeCache(year, semester, course, next.filter((h) => h.course === course));
           return next;
         });
