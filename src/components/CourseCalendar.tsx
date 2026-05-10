@@ -148,6 +148,7 @@ const CourseCalendar: React.FC<Props> = ({
   };
 
   const swipeRef = useRef<{ x: number; y: number } | null>(null);
+  const [slideDir, setSlideDir] = useState<"left" | "right" | null>(null);
   const handleTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];
     swipeRef.current = { x: t.clientX, y: t.clientY };
@@ -159,9 +160,19 @@ const CourseCalendar: React.FC<Props> = ({
     const dy = t.clientY - swipeRef.current.y;
     swipeRef.current = null;
     if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    if (dx < 0) goNext();
-    else goPrev();
+    if (dx < 0) {
+      setSlideDir("left");
+      goNext();
+    } else {
+      setSlideDir("right");
+      goPrev();
+    }
   };
+  useEffect(() => {
+    if (!slideDir) return;
+    const t = setTimeout(() => setSlideDir(null), 220);
+    return () => clearTimeout(t);
+  }, [slideDir]);
 
   const hoverTasks = hoverIso ? tasksByDate.get(hoverIso) || [] : [];
 
@@ -172,9 +183,9 @@ const CourseCalendar: React.FC<Props> = ({
           {MONTHS[cursor.month]} {cursor.year}
         </div>
         <div className="cal-nav">
-          <button onClick={goPrev} aria-label="Previous month">‹</button>
+          <button onClick={() => { setSlideDir("right"); goPrev(); }} aria-label="Previous month">‹</button>
           <button onClick={goToday} className="cal-today-btn">Today</button>
-          <button onClick={goNext} aria-label="Next month">›</button>
+          <button onClick={() => { setSlideDir("left"); goNext(); }} aria-label="Next month">›</button>
         </div>
       </div>
       {hint && <div className="cal-hint">{hint}</div>}
@@ -183,7 +194,14 @@ const CourseCalendar: React.FC<Props> = ({
           <div key={w} className="cal-weekday">{w}</div>
         ))}
       </div>
-      <div className="cal-grid" ref={gridRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      <div
+        className="cal-grid"
+        ref={gridRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        key={`${cursor.year}-${cursor.month}`}
+        data-slide={slideDir || undefined}
+      >
         {grid.map(({ date, iso, inMonth }) => {
           const isToday = iso === toIso(today);
           const isSelected = selectedDate === iso;

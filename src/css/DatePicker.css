@@ -80,6 +80,21 @@
   gap: 2px;
 }
 
+@keyframes dp-slide-in-left {
+  from { transform: translateX(16px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes dp-slide-in-right {
+  from { transform: translateX(-16px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.dp-grid[data-slide="left"] {
+  animation: dp-slide-in-left 0.18s ease;
+}
+.dp-grid[data-slide="right"] {
+  animation: dp-slide-in-right 0.18s ease;
+}
+
 .dp-cell {
   background: transparent;
   border: 1px solid transparent;

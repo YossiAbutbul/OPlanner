@@ -121,6 +121,7 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
   const goNext = () => setView(new Date(view.getFullYear(), view.getMonth() + 1, 1));
 
   const swipeRef = useRef<{ x: number; y: number } | null>(null);
+  const [slideDir, setSlideDir] = useState<"left" | "right" | null>(null);
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];
     swipeRef.current = { x: t.clientX, y: t.clientY };
@@ -132,9 +133,19 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
     const dy = t.clientY - swipeRef.current.y;
     swipeRef.current = null;
     if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    if (dx < 0) goNext();
-    else goPrev();
+    if (dx < 0) {
+      setSlideDir("left");
+      goNext();
+    } else {
+      setSlideDir("right");
+      goPrev();
+    }
   };
+  useEffect(() => {
+    if (!slideDir) return;
+    const t = setTimeout(() => setSlideDir(null), 220);
+    return () => clearTimeout(t);
+  }, [slideDir]);
   const goToday = () => {
     const t = new Date();
     setView(new Date(t.getFullYear(), t.getMonth(), 1));
@@ -154,13 +165,13 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
           style={{ top: pos.top, left: pos.left }}
         >
           <div className="dp-head">
-            <button type="button" className="dp-nav" onClick={goPrev} aria-label="Previous month">
+            <button type="button" className="dp-nav" onClick={() => { setSlideDir("right"); goPrev(); }} aria-label="Previous month">
               ‹
             </button>
             <div className="dp-title">
               {MONTHS[view.getMonth()]} {view.getFullYear()}
             </div>
-            <button type="button" className="dp-nav" onClick={goNext} aria-label="Next month">
+            <button type="button" className="dp-nav" onClick={() => { setSlideDir("left"); goNext(); }} aria-label="Next month">
               ›
             </button>
           </div>
@@ -169,7 +180,13 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
               <span key={w} className="dp-weekday">{w}</span>
             ))}
           </div>
-          <div className="dp-grid" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+          <div
+            className="dp-grid"
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+            key={`${view.getFullYear()}-${view.getMonth()}`}
+            data-slide={slideDir || undefined}
+          >
             {grid.map(({ date, inMonth }, i) => {
               const iso = toIso(date);
               const isSelected = iso === selectedIso;
