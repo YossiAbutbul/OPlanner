@@ -1,5 +1,5 @@
 import { doc, setDoc, getDocs, collection, getDoc, deleteDoc, updateDoc, writeBatch } from "firebase/firestore";
-import { db, requireUid } from "../firebase";
+import { db, requireUid, auth } from "../firebase";
 
 const MAX_NAME_LENGTH = 100;
 
@@ -90,6 +90,7 @@ export const getAllYearsAndSemesters = async (): Promise<
   }>
 > => {
   try {
+    await auth.authStateReady();
     const base = userBase();
     const yearsCollection = collection(db, `${base}/years`);
     const snapshot = await getDocs(yearsCollection);
