@@ -528,7 +528,7 @@ const App: React.FC = () => {
         selectedSemester={selectedSemester}
         selectedCourse={selectedCourse}
       />
-      <Tour run={tourRun} onFinish={finishTour} />
+      <Tour run={tourRun} onFinish={finishTour} onSetMobileNav={setMobileNavOpen} />
     </div>
   );
 };
