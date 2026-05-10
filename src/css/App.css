@@ -89,6 +89,14 @@
   display: none;
 }
 
+.tab-bar {
+  scrollbar-width: none;
+}
+
+.tab-bar::-webkit-scrollbar {
+  display: none;
+}
+
 .mobile-nav-backdrop {
   display: none;
 }
@@ -202,6 +210,7 @@
   .overview-grid-right > .overview-section:last-child {
     margin-bottom: 2rem !important;
   }
+
 
   .main-layout {
     height: 100vh;
