@@ -93,7 +93,10 @@ const App: React.FC = () => {
     } catch {
       /* ignore */
     }
-    if (!hasCache) refreshYears();
+    // Always pull fresh from Firestore so changes from another device show up.
+    // Cache is only an optimistic first paint.
+    refreshYears();
+    void hasCache;
   }, [user, refreshYears]);
 
   // Bootstrap: brand-new account with zero years gets the current calendar
