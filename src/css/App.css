@@ -89,6 +89,22 @@
   display: none;
 }
 
+.tour-kbd {
+  display: inline-block;
+  min-width: 10px;
+  padding: 1px 2px;
+  margin: 0 1px;
+  background: #f3f3f5;
+  color: #444;
+  border: 1px solid #d4d6da;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1;
+  text-align: center;
+  vertical-align: 1px;
+}
+
 .tab-bar {
   scrollbar-width: none;
 }
