@@ -97,6 +97,21 @@
   flex: 0 0 auto;
 }
 
+@keyframes cal-slide-in-left {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes cal-slide-in-right {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.cal-grid[data-slide="left"] {
+  animation: cal-slide-in-left 0.2s ease;
+}
+.cal-grid[data-slide="right"] {
+  animation: cal-slide-in-right 0.2s ease;
+}
+
 .cal-cell {
   position: relative;
   display: flex;
