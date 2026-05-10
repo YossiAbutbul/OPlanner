@@ -137,23 +137,20 @@ const App: React.FC = () => {
     if (!tourKey || yearsLoading) return;
     const done = localStorage.getItem(tourKey);
     if (done) return;
-    const hasAnyCourse = years.some((y) =>
-      y.semesters.some((s) => s.courses.length > 0)
-    );
-    if (!hasAnyCourse) {
-      const firstYear = years[0];
-      const firstSem = firstYear?.semesters[0];
-      if (firstYear && firstSem) {
-        (async () => {
-          await addCourse(firstYear.year, firstSem.name, "Course 1");
-          await refreshYears();
-        })();
-      }
+    const sem = years
+      .find((y) => y.year === selectedYear)
+      ?.semesters.find((s) => s.name === selectedSemester);
+    if (sem && sem.courses.length === 0 && selectedYear && selectedSemester) {
+      (async () => {
+        await addCourse(selectedYear, selectedSemester, "Course 1");
+        await refreshYears();
+      })();
       return;
     }
+    if (!sem || sem.courses.length === 0) return;
     const t = setTimeout(() => setTourRun(true), 600);
     return () => clearTimeout(t);
-  }, [tourKey, yearsLoading, years, refreshYears]);
+  }, [tourKey, yearsLoading, years, selectedYear, selectedSemester, refreshYears]);
 
   // Helper: pick best semester for a given year tree.
   // Priority: per-year saved → heuristic by month → "Semester A" → first in tree.
