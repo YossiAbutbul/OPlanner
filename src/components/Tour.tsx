@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Joyride, STATUS, EventData, Step } from "react-joyride";
 
-const steps: Step[] = [
+const desktopSteps: Step[] = [
   {
     target: "body",
     placement: "center",
@@ -46,12 +46,59 @@ const steps: Step[] = [
   },
 ];
 
+const mobileSteps: Step[] = [
+  {
+    target: "body",
+    placement: "center",
+    title: "Welcome to OPlanner",
+    content: "Quick tour — tap Next to walk through the basics.",
+  },
+  {
+    target: "[data-tour='import']",
+    placement: "bottom",
+    title: "Import calendar",
+    content: "Drop your university .ics file to fill courses + tasks.",
+    hideOverlay: true,
+  },
+  {
+    target: "[data-tour='add-course']",
+    placement: "bottom",
+    title: "Add a course",
+    content: "Or add courses manually here.",
+    hideOverlay: true,
+  },
+  {
+    target: "[data-tour='finals']",
+    placement: "top",
+    title: "Set finals",
+    content: "Tap a course to set its final exam date — countdown starts.",
+    hideOverlay: true,
+  },
+  {
+    target: ".mobile-nav-toggle",
+    placement: "bottom",
+    title: "Menu",
+    content: "Tap here to open courses, settings, and replay this tour.",
+    hideOverlay: true,
+  },
+];
+
 interface Props {
   run: boolean;
   onFinish: () => void;
 }
 
 const Tour: React.FC<Props> = ({ run, onFinish }) => {
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const handle = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handle);
+    return () => mq.removeEventListener("change", handle);
+  }, []);
+
   const handleEvent = (data: EventData) => {
     const finished: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
     if (finished.includes(data.status)) onFinish();
@@ -59,7 +106,7 @@ const Tour: React.FC<Props> = ({ run, onFinish }) => {
 
   return (
     <Joyride
-      steps={steps}
+      steps={isMobile ? mobileSteps : desktopSteps}
       run={run}
       continuous
       onEvent={handleEvent}

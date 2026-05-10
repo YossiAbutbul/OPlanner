@@ -128,7 +128,13 @@ const CourseCalendar: React.FC<Props> = ({
     }
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     setHoverIso(iso);
-    setPopoverPos({ top: rect.bottom + 6, left: rect.left });
+    const popWidth = 240;
+    const margin = 8;
+    let left = rect.left;
+    if (left + popWidth + margin > window.innerWidth) {
+      left = Math.max(margin, window.innerWidth - popWidth - margin);
+    }
+    setPopoverPos({ top: rect.bottom + 6, left });
   };
 
   const handleCellLeave = () => {
@@ -168,8 +174,10 @@ const CourseCalendar: React.FC<Props> = ({
               key={iso}
               type="button"
               className={`cal-cell ${inMonth ? "" : "out"} ${isToday ? "today" : ""} ${isSelected ? "selected" : ""}`}
-              onClick={() => onSelectDate(isSelected ? null : iso)}
-              onDoubleClick={() => onCreateOnDate(iso)}
+              onClick={() => {
+                if (isSelected) onCreateOnDate(iso);
+                else onSelectDate(iso);
+              }}
               onMouseEnter={(e) => handleCellEnter(e, iso, dayTasks.length > 0)}
               onMouseLeave={handleCellLeave}
             >
@@ -227,7 +235,7 @@ const CourseCalendar: React.FC<Props> = ({
               );
             })}
           </ul>
-          <div className="cal-popover-hint">Double-click a day to add a task</div>
+          <div className="cal-popover-hint">Tap a day twice to add a task</div>
         </div>,
         document.body
       )}

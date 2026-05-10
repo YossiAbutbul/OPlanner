@@ -39,6 +39,7 @@ button:focus { outline: none; }
 .sidebar.collapsed .sidebar-footer {
   padding: 0.75rem 0.5rem;
   justify-content: center;
+  margin-top: auto;
 }
 
 .sidebar.collapsed .footer-info,

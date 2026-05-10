@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import HomeworkModal from "./HomeworkModal";
 import DeleteModal from "./DeleteModal";
 import "../css/HomeworkTable.css";
 import "boxicons/css/boxicons.min.css";
+import { Pencil, Trash2, Check, Clock } from "lucide-react";
 
 interface HomeworkEntry {
   id: string;
@@ -60,9 +61,24 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
   const statusLabel = (status: string) =>
     status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const handle = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handle);
+    return () => mq.removeEventListener("change", handle);
+  }, []);
+
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+    if (isMobile) {
+      const dd = String(date.getDate()).padStart(2, "0");
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      return `${dd}/${mm}`;
+    }
     return date.toLocaleDateString("en-GB");
   };
 
@@ -81,6 +97,7 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
         <p className="homework-empty">No tasks yet. Click "Add task" above to get started.</p>
       ) : (
         <>
+        {!isMobile && (
         <table className="homework-table homework-table-head">
           <colgroup>
             <col style={{ width: "40%" }} />
@@ -97,28 +114,61 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
             </tr>
           </thead>
         </table>
+        )}
         <div className="homework-table-scroll">
         <table className="homework-table homework-table-body">
+          {!isMobile && (
           <colgroup>
             <col style={{ width: "40%" }} />
             <col style={{ width: "140px" }} />
             <col style={{ width: "130px" }} />
             <col style={{ width: "170px" }} />
           </colgroup>
+          )}
+          {isMobile && (
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          )}
           <tbody>
             {sortedHomework.map((entry) => (
               <tr key={`${entry.id}-${entry.dueDate}`}>
                 <td>{capitalizeFirstLetter(entry.name)}</td>
                 <td>{formatDate(entry.dueDate)}</td>
                 <td>
-                  <span className={statusClass(entry.status)}>
-                    {statusLabel(entry.status)}
+                  <span className={statusClass(entry.status)} title={statusLabel(entry.status)} aria-label={statusLabel(entry.status)}>
+                    {isMobile ? (
+                      entry.status === "COMPLETED" ? <Check size={14} /> : <Clock size={14} />
+                    ) : (
+                      statusLabel(entry.status)
+                    )}
                   </span>
                 </td>
                 <td>
                   <div className="row-actions">
-                    <button className="row-btn" onClick={() => handleEditClick(entry)}>Edit</button>
-                    <button className="row-btn danger" onClick={() => handleDelete(entry)}>Delete</button>
+                    <button
+                      className="row-btn"
+                      onClick={() => handleEditClick(entry)}
+                      aria-label="Edit"
+                      title="Edit"
+                    >
+                      <Pencil size={14} />
+                      <span className="btn-text">Edit</span>
+                    </button>
+                    <button
+                      className="row-btn danger"
+                      onClick={() => handleDelete(entry)}
+                      aria-label="Delete"
+                      title="Delete"
+                    >
+                      <Trash2 size={14} />
+                      <span className="btn-text">Delete</span>
+                    </button>
                   </div>
                 </td>
               </tr>

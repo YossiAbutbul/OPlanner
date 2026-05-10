@@ -67,7 +67,6 @@
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
-
 /* Sidebar List/Table Styling */
 .sidebar ul {
   margin: 0;
@@ -83,4 +82,338 @@
 /* Main Content Styles */
 .main-content {
   flex-grow: 1;
+  min-width: 0;
+}
+
+.mobile-topbar {
+  display: none;
+}
+
+.mobile-nav-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  body {
+    display: block;
+  }
+
+  .app-container {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  .right-sidebar,
+  .rs {
+    display: none !important;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1100;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .mobile-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+  }
+
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    padding: 0 0.85rem;
+    background: #0e0f12;
+    color: #fff;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .mobile-nav-toggle {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 36px;
+    height: 36px;
+    padding: 6px;
+    background: transparent;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .mobile-nav-toggle span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: currentColor;
+    border-radius: 1px;
+  }
+
+  .mobile-topbar-logo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .mobile-topbar-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .main-content {
+    width: 100%;
+    padding: 0.5rem 0.85rem 2rem !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .overview-grid-right > .overview-section:last-child {
+    margin-bottom: 2rem !important;
+  }
+
+  .main-layout {
+    height: 100vh;
+    width: 100%;
+    padding-top: 56px;
+    box-sizing: border-box;
+  }
+
+  .overview-header {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.7rem !important;
+  }
+
+  .overview-header-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .overview-header-actions > button {
+    flex: 1 1 0;
+    padding: 0.6rem 0.85rem !important;
+    font-size: 0.9rem !important;
+    justify-content: center;
+  }
+
+  .overview-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .stat-card-wide {
+    grid-column: span 2 !important;
+  }
+
+  .overview-grid {
+    grid-template-columns: 1fr !important;
+    flex: none !important;
+    min-height: 0 !important;
+  }
+
+  .overview-grid-right > .overview-section {
+    max-height: none !important;
+    flex: none !important;
+  }
+
+  .overview-grid-right .course-stats,
+  .overview-grid-right .finals-list {
+    overflow: visible !important;
+    flex: none !important;
+  }
+
+  .overview-calendar-section,
+  .overview-calendar-section > .cal,
+  .overview-calendar-section .cal-grid {
+    flex: none !important;
+    min-height: 0 !important;
+  }
+
+  .overview-cta {
+    padding: 1.5rem 1rem;
+  }
+
+  .htable-wrap,
+  .htable {
+    font-size: 0.85rem;
+  }
+
+  .homework-table-container {
+    flex: none !important;
+    overflow: visible !important;
+    margin: 0 0.25rem;
+  }
+
+  .homework-table thead th:first-child,
+  .homework-table tbody td:first-child {
+    padding-left: 0.6rem !important;
+  }
+
+  .homework-table thead th:last-child,
+  .homework-table tbody td:last-child {
+    padding-right: 0.6rem !important;
+  }
+
+  .homework-table-wrap {
+    flex: none !important;
+    min-height: 0 !important;
+  }
+
+  .homework-table-scroll {
+    flex: none !important;
+    overflow: visible !important;
+  }
+
+  .course-progress,
+  .course-calendar {
+    min-height: 240px;
+  }
+
+  .homework-table {
+    font-size: 0.8rem;
+  }
+
+  .homework-table {
+    table-layout: auto !important;
+    width: 100% !important;
+  }
+
+  .homework-table thead th:first-child,
+  .homework-table tbody td:first-child {
+    width: 50%;
+  }
+
+  .homework-table thead th:nth-child(3),
+  .homework-table tbody td:nth-child(3) {
+    text-align: center;
+  }
+
+  .homework-table thead th:last-child,
+  .homework-table tbody td:last-child {
+    text-align: center;
+  }
+
+  .homework-table tbody td:last-child .row-actions {
+    justify-content: flex-end;
+  }
+
+  .homework-table tbody td:first-child,
+  .homework-table thead th:first-child {
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .homework-table thead th,
+  .homework-table tbody td {
+    padding: 0.5rem 0.2rem !important;
+  }
+
+  .row-actions {
+    gap: 2px !important;
+  }
+
+  .row-btn {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .homework-table .status-pill {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .homework-table thead th:nth-child(2),
+  .homework-table tbody td:nth-child(2) {
+    white-space: nowrap !important;
+  }
+
+  .homework-table thead th,
+  .homework-table tbody td {
+    padding: 0.5rem 0.35rem;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .homework-table thead th {
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+  }
+
+  .homework-table thead th:first-child {
+    text-align: left;
+  }
+
+  .homework-table tbody td:nth-child(2) {
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .homework-table thead th:nth-child(2) {
+    text-align: center;
+  }
+
+  .row-btn .btn-text {
+    display: none;
+  }
+
+  .row-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .homework-table .status-pill {
+    width: 28px;
+    height: 28px;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+  }
+}
+
+.row-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }

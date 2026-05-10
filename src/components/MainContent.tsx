@@ -95,6 +95,8 @@ const MainContent: React.FC<MainContentProps> = ({
 
   useEffect(() => {
     setCalDate(null);
+    const el = document.querySelector(".main-content") as HTMLElement | null;
+    if (el) el.scrollTop = 0;
   }, [activeTab]);
 
   const tableTasks = filteredHomework;
@@ -241,7 +243,7 @@ const MainContent: React.FC<MainContentProps> = ({
               </div>
               <div className="course-calendar">
                 <CourseCalendar
-                  hint="Tip: double-click any day to add a task on that date."
+                  hint="Tip: tap a day to select it, tap again to add a task."
                   tasks={filteredHomework}
                   selectedDate={calDate}
                   onSelectDate={setCalDate}
