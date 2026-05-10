@@ -119,6 +119,22 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
 
   const goPrev = () => setView(new Date(view.getFullYear(), view.getMonth() - 1, 1));
   const goNext = () => setView(new Date(view.getFullYear(), view.getMonth() + 1, 1));
+
+  const swipeRef = useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    swipeRef.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!swipeRef.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipeRef.current.x;
+    const dy = t.clientY - swipeRef.current.y;
+    swipeRef.current = null;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0) goNext();
+    else goPrev();
+  };
   const goToday = () => {
     const t = new Date();
     setView(new Date(t.getFullYear(), t.getMonth(), 1));
@@ -153,7 +169,7 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
               <span key={w} className="dp-weekday">{w}</span>
             ))}
           </div>
-          <div className="dp-grid">
+          <div className="dp-grid" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
             {grid.map(({ date, inMonth }, i) => {
               const iso = toIso(date);
               const isSelected = iso === selectedIso;
