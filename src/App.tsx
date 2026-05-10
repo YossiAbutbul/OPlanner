@@ -405,9 +405,17 @@ const App: React.FC = () => {
     const ok = await deleteYear(year);
     if (!ok) return;
     if (selectedYear === year) {
-      setSelectedYear(null);
-      setSelectedSemester(null);
-      setSelectedCourse(null);
+      const remaining = years.filter((y) => y.year !== year);
+      if (remaining.length > 0) {
+        const next = remaining.reduce((a, b) => (a.year > b.year ? a : b));
+        setSelectedYear(next.year);
+        setSelectedSemester(pickSemesterForYear(next));
+        setSelectedCourse(null);
+      } else {
+        setSelectedYear(null);
+        setSelectedSemester(null);
+        setSelectedCourse(null);
+      }
     }
     await refreshYears();
   };
@@ -512,6 +520,7 @@ const App: React.FC = () => {
         onUpdateCourseColor={handleUpdateCourseColor}
         onUpdateCourseFinalDate={handleUpdateCourseFinalDate}
         activeTab={activeTab}
+        onCloseMobile={() => setMobileNavOpen(false)}
       />
       <RightSidebar
         years={years}

@@ -303,6 +303,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => {
                 setSettingsOpen(false);
                 onAddYear();
+                onCloseMobile();
               }}
               disabled={addingYear}
             >
@@ -323,6 +324,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => {
                 setSettingsOpen(false);
                 setConfirmSignOut(true);
+                onCloseMobile();
               }}
               className="danger"
             >

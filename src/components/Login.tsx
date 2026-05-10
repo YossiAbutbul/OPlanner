@@ -1,10 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AuthModal from "./AuthModal";
 import "../css/Login.css";
 
 const Login: React.FC = () => {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handle = () => setScrolled(window.scrollY > 8);
+    handle();
+    window.addEventListener("scroll", handle, { passive: true });
+    return () => window.removeEventListener("scroll", handle);
+  }, []);
 
   const openAuth = (mode: "signin" | "signup") => {
     setAuthMode(mode);
@@ -13,7 +21,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="landing">
-      <nav className="landing-nav">
+      <nav className={`landing-nav ${scrolled ? "scrolled" : ""}`}>
         <div className="landing-brand">
           <img src="./Logo.svg" alt="" className="landing-logo" />
           <span>OPlanner</span>
