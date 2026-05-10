@@ -97,7 +97,8 @@ const SemesterOverview: React.FC<Props> = ({
         courses.map((c) => getCourseTasks(year, semesterKey, c.name))
       );
       if (cancelled) return;
-      const now = new Date();
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
       const stats: CourseStats[] = courses.map((course, i) => {
         const list = lists[i];
         const completed = list.filter((t) => t.status === "COMPLETED").length;
@@ -106,7 +107,7 @@ const SemesterOverview: React.FC<Props> = ({
           (t) =>
             t.status === "PENDING" &&
             !t.ignoreOverdue &&
-            new Date(t.dueDate) < now
+            t.dueDate < todayStr
         ).length;
         return { course: course.name, total: list.length, completed, pending, overdue };
       });

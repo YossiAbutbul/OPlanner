@@ -187,21 +187,17 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
   // Calculate notifications
   useEffect(() => {
     const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const overdue = homework.filter((entry) => {
       if (entry.ignoreOverdue) return false;
-      const dueDate = new Date(entry.dueDate);
-      return dueDate < now && entry.status === "PENDING";
+      return entry.dueDate < todayStr && entry.status === "PENDING";
     });
 
+    const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14);
+    const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}-${String(cutoff.getDate()).padStart(2, "0")}`;
     const upcoming = homework
-      .filter((entry) => {
-        const dueDate = new Date(entry.dueDate);
-        return (
-          dueDate >= now &&
-          dueDate <= new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000)
-        );
-      })
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+      .filter((entry) => entry.dueDate >= todayStr && entry.dueDate <= cutoffStr)
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 
     setNotifications([
       ...overdue.map((entry) => ({
@@ -210,9 +206,10 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
         style: { color: "red", fontWeight: "bold" },
       })),
       ...upcoming.map((entry) => {
-        const dueDate = new Date(entry.dueDate);
-        const diffInTime = dueDate.getTime() - now.getTime();
-        const daysLeft = Math.ceil(diffInTime / (1000 * 60 * 60 * 24));
+        const [yy, mm, dd] = entry.dueDate.split("-").map(Number);
+        const dueLocal = new Date(yy, (mm || 1) - 1, dd || 1);
+        const todayLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const daysLeft = Math.round((dueLocal.getTime() - todayLocal.getTime()) / 86400000);
         return {
           id: entry.id,
           message: `${entry.name} is due in ${daysLeft} day${daysLeft > 1 ? "s" : ""}`,
