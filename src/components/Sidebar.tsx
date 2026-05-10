@@ -53,10 +53,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(
-    typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches
+    typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches
   );
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 768px)");
+    const mq = window.matchMedia("(max-width: 1024px)");
     const handle = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     mq.addEventListener("change", handle);
     return () => mq.removeEventListener("change", handle);
