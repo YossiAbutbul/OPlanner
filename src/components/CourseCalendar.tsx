@@ -147,6 +147,22 @@ const CourseCalendar: React.FC<Props> = ({
     setPopoverPos(null);
   };
 
+  const swipeRef = useRef<{ x: number; y: number } | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    swipeRef.current = { x: t.clientX, y: t.clientY };
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!swipeRef.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - swipeRef.current.x;
+    const dy = t.clientY - swipeRef.current.y;
+    swipeRef.current = null;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0) goNext();
+    else goPrev();
+  };
+
   const hoverTasks = hoverIso ? tasksByDate.get(hoverIso) || [] : [];
 
   return (
@@ -167,7 +183,7 @@ const CourseCalendar: React.FC<Props> = ({
           <div key={w} className="cal-weekday">{w}</div>
         ))}
       </div>
-      <div className="cal-grid" ref={gridRef}>
+      <div className="cal-grid" ref={gridRef} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
         {grid.map(({ date, iso, inMonth }) => {
           const isToday = iso === toIso(today);
           const isSelected = selectedDate === iso;
