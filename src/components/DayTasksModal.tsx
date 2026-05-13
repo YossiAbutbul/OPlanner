@@ -21,7 +21,7 @@ const fmtDate = (iso: string) => {
 };
 
 const courseLabel = (c: string) =>
-  c === "__reminders__" ? "Reminder" : c;
+  c === "reminders" ? "Reminder" : c;
 
 const DayTasksModal: React.FC<Props> = ({
   isOpen,

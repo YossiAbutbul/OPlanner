@@ -13,7 +13,7 @@ import DeleteModal from "./DeleteModal";
 import { Plus } from "lucide-react";
 import "../css/SemesterOverview.css";
 
-const REMINDERS_COURSE = "__reminders__";
+const REMINDERS_COURSE = "reminders";
 
 interface Props {
   year: number;
