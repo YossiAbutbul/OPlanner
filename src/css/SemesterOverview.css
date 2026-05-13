@@ -299,8 +299,7 @@
   flex-shrink: 0;
 }
 
-.overview-grid-right .course-stats,
-.overview-grid-right .finals-list {
+.overview-grid-right .course-stats {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
@@ -331,13 +330,19 @@
   }
 }
 
+@media (max-width: 600px) {
+  .finals-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 /* Finals Countdown */
 .finals-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
 }
 
@@ -355,30 +360,24 @@
 
 .finals-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.7rem;
+  flex-direction: column;
+  gap: 0.45rem;
   background: #fff;
   border: 1px solid #e3e3e6;
   border-radius: 8px;
-  padding: 0.7rem 0.9rem;
+  padding: 0.75rem 0.9rem;
 }
 
 .finals-row-main {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  flex: 1;
   min-width: 0;
 }
 
 .finals-row-right {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.4rem;
-  flex-shrink: 0;
-  min-width: 10rem;
+  gap: 0.5rem;
 }
 
 .finals-row-name {
