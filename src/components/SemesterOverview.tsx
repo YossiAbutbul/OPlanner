@@ -390,13 +390,10 @@ const SemesterOverview: React.FC<Props> = ({
                   }
                   return (
                     <li key={c.name} className="finals-row">
-                      <div className="finals-row-main">
-                        <span className="finals-row-name">{capitalizeWords(c.name)}</span>
-                      </div>
-                      <div className="finals-row-right">
-                        {badge && (
-                          <span className={`finals-badge ${badgeClass}`}>{badge}</span>
-                        )}
+                      <span className="finals-row-name">{capitalizeWords(c.name)}</span>
+                      <span className={`finals-badge${badge ? ` ${badgeClass}` : " finals-badge-empty"}`}>
+                        {badge}
+                      </span>
                       <DatePicker
                         value={c.finalDate ?? null}
                         onChange={(v) => handleFinalDateChange(c.name, v ?? "")}
@@ -432,7 +429,6 @@ const SemesterOverview: React.FC<Props> = ({
                           </button>
                         )}
                       </DatePicker>
-                      </div>
                     </li>
                   );
                 })}

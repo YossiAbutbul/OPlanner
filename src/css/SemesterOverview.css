@@ -354,31 +354,14 @@
 }
 
 .finals-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.6rem;
   background: #fff;
   border: 1px solid #e3e3e6;
   border-radius: 8px;
   padding: 0.7rem 0.9rem;
-}
-
-.finals-row-main {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex: 1;
-  min-width: 0;
-}
-
-.finals-row-right {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.4rem;
-  flex-shrink: 0;
-  min-width: 10rem;
 }
 
 .finals-row-name {
@@ -393,13 +376,16 @@
 .finals-badge {
   font-size: 0.75rem;
   font-weight: 700;
-  flex-shrink: 0;
   letter-spacing: 0.02em;
-  padding: 0.18rem 0;
+  padding: 0.18rem 0.55rem;
   border-radius: 999px;
   border: 1px solid transparent;
-  min-width: 3.2rem;
   text-align: center;
+  white-space: nowrap;
+}
+
+.finals-badge-empty {
+  visibility: hidden;
 }
 
 .finals-badge-soon {
