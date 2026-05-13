@@ -11,6 +11,7 @@ interface Props {
   onEdit: (t: HomeworkEntry) => void;
   onDelete: (t: HomeworkEntry) => void;
   onAdd: () => void;
+  showCourse?: boolean;
 }
 
 const fmtDate = (iso: string) => {
@@ -18,6 +19,9 @@ const fmtDate = (iso: string) => {
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
 };
+
+const courseLabel = (c: string) =>
+  c === "__reminders__" ? "Reminder" : c;
 
 const DayTasksModal: React.FC<Props> = ({
   isOpen,
@@ -27,6 +31,7 @@ const DayTasksModal: React.FC<Props> = ({
   onEdit,
   onDelete,
   onAdd,
+  showCourse,
 }) => {
   return (
     <Modal
@@ -50,8 +55,11 @@ const DayTasksModal: React.FC<Props> = ({
         <ul className="day-tasks">
           {tasks.map((t) => (
             <li key={t.id} className="day-task">
-              <div className="day-task-main">
+              <div className={`day-task-main${showCourse && t.course ? " has-course" : ""}`}>
                 <div className="day-task-name">{t.name}</div>
+                {showCourse && t.course && (
+                  <div className="day-task-course">{courseLabel(t.course)}</div>
+                )}
               </div>
               <div className="day-task-actions">
                 <button className="day-btn" onClick={() => onEdit(t)}>Edit</button>

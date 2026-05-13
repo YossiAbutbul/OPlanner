@@ -372,6 +372,13 @@
   min-width: 0;
 }
 
+.finals-row-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
 .finals-row-name {
   font-size: 0.95rem;
   font-weight: 600;
