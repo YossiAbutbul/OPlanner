@@ -32,7 +32,10 @@ interface HomeworkModalProps {
   } | null;
   prefilledDueDate?: string | null;
   isLoading: boolean;
+  availableCourses?: string[];
 }
+
+const REMINDERS_COURSE = "__reminders__";
 
 const HomeworkModal: React.FC<HomeworkModalProps> = ({
   isOpen,
@@ -42,11 +45,13 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   selectedCourseData,
   prefilledDueDate,
   isLoading,
+  availableCourses,
 }) => {
   const [name, setName] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState("PENDING");
   const [ignoreOverdue, setIgnoreOverdue] = useState(false);
+  const [courseChoice, setCourseChoice] = useState(REMINDERS_COURSE);
 
   useEffect(() => {
     if (editHomework) {
@@ -54,18 +59,21 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       setDueDate(editHomework.dueDate);
       setStatus(editHomework.status);
       setIgnoreOverdue(!!editHomework.ignoreOverdue);
+      setCourseChoice(editHomework.course || REMINDERS_COURSE);
     } else {
       setName("");
       setDueDate(prefilledDueDate || "");
       setStatus("PENDING");
       setIgnoreOverdue(false);
+      setCourseChoice(REMINDERS_COURSE);
     }
   }, [editHomework, prefilledDueDate, isOpen]);
 
   const handleSave = () => {
     const courseData = editHomework || selectedCourseData;
     if (!courseData) return;
-    const { year, semester, course = "" } = courseData;
+    const { year, semester } = courseData;
+    const course = availableCourses !== undefined ? courseChoice : (courseData.course ?? "");
     if (!name.trim() || !dueDate) return;
 
     onSave(
@@ -176,6 +184,21 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
           );
         }}
       </DatePicker>
+      {availableCourses !== undefined && (
+        <>
+          <label htmlFor="hw-course">Course</label>
+          <select
+            id="hw-course"
+            value={courseChoice}
+            onChange={(e) => setCourseChoice(e.target.value)}
+          >
+            <option value={REMINDERS_COURSE}>No course (reminder)</option>
+            {availableCourses.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </>
+      )}
       <label htmlFor="status">Status</label>
       <select
         id="status"

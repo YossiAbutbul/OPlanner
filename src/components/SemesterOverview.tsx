@@ -7,8 +7,13 @@ import { courseColor } from "../utility/courseColor";
 import DatePicker from "./DatePicker";
 import Modal from "./Modal";
 import CourseCalendar from "./CourseCalendar";
+import HomeworkModal from "./HomeworkModal";
+import DayTasksModal from "./DayTasksModal";
+import DeleteModal from "./DeleteModal";
 import { Plus } from "lucide-react";
 import "../css/SemesterOverview.css";
+
+const REMINDERS_COURSE = "__reminders__";
 
 interface Props {
   year: number;
@@ -51,7 +56,7 @@ const SemesterOverview: React.FC<Props> = ({
   onYearsChanged,
   onError,
 }) => {
-  const { getCourseTasks, homework } = useHomework();
+  const { getCourseTasks, homework, addHomework, removeHomework } = useHomework();
   const [byCourse, setByCourse] = useState<CourseStats[]>([]);
   const [allTasks, setAllTasks] = useState<HomeworkEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -60,6 +65,12 @@ const SemesterOverview: React.FC<Props> = ({
   const [newCourseName, setNewCourseName] = useState("");
   const [adding, setAdding] = useState(false);
   const [calSelected, setCalSelected] = useState<string | null>(null);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [taskPrefillDate, setTaskPrefillDate] = useState<string | null>(null);
+  const [taskEditTask, setTaskEditTask] = useState<HomeworkEntry | null>(null);
+  const [dayModalDate, setDayModalDate] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<HomeworkEntry | null>(null);
+  const [isLoadingAction, setIsLoadingAction] = useState(false);
 
   const handleAddCourse = async () => {
     const trimmed = newCourseName.trim();
@@ -79,6 +90,27 @@ const SemesterOverview: React.FC<Props> = ({
     }
   };
 
+  const handleSaveTask = async (
+    id: string | null,
+    name: string,
+    dueDate: string,
+    status: string,
+    _year: number,
+    _semester: string,
+    course: string,
+    ignoreOverdue?: boolean
+  ) => {
+    try {
+      setIsLoadingAction(true);
+      await addHomework(id, name, dueDate, status, year, semesterKey, course, ignoreOverdue);
+      setTaskModalOpen(false);
+      setTaskEditTask(null);
+      setTaskPrefillDate(null);
+    } finally {
+      setIsLoadingAction(false);
+    }
+  };
+
   // Reset the loaded gate only when the user navigates to a different
   // semester. Final-date / color edits mutate `courses` reference but
   // shouldn't blank the overview.
@@ -93,9 +125,10 @@ const SemesterOverview: React.FC<Props> = ({
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const lists = await Promise.all(
-        courses.map((c) => getCourseTasks(year, semesterKey, c.name))
-      );
+      const [lists, reminders] = await Promise.all([
+        Promise.all(courses.map((c) => getCourseTasks(year, semesterKey, c.name))),
+        getCourseTasks(year, semesterKey, REMINDERS_COURSE),
+      ]);
       if (cancelled) return;
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -112,7 +145,7 @@ const SemesterOverview: React.FC<Props> = ({
         return { course: course.name, total: list.length, completed, pending, overdue };
       });
       setByCourse(stats);
-      setAllTasks(lists.flat());
+      setAllTasks([...lists.flat(), ...reminders]);
       setLoaded(true);
     })();
     return () => {
@@ -267,10 +300,19 @@ const SemesterOverview: React.FC<Props> = ({
           <div className="overview-grid">
             <section className="overview-section overview-calendar-section">
               <CourseCalendar
+                hint="Tip: tap a day to select it, tap again to add a task."
                 tasks={allTasks}
                 selectedDate={calSelected}
                 onSelectDate={setCalSelected}
-                onCreateOnDate={() => {}}
+                onCreateOnDate={(date) => {
+                  const has = allTasks.some((t) => t.dueDate === date);
+                  if (has) {
+                    setDayModalDate(date);
+                  } else {
+                    setTaskPrefillDate(date);
+                    setTaskModalOpen(true);
+                  }
+                }}
                 maxVisibleTasks={3}
                 colorOf={(t) => {
                   const c = courses.find((co) => co.name === t.course);
@@ -350,10 +392,11 @@ const SemesterOverview: React.FC<Props> = ({
                     <li key={c.name} className="finals-row">
                       <div className="finals-row-main">
                         <span className="finals-row-name">{capitalizeWords(c.name)}</span>
+                      </div>
+                      <div className="finals-row-right">
                         {badge && (
                           <span className={`finals-badge ${badgeClass}`}>{badge}</span>
                         )}
-                      </div>
                       <DatePicker
                         value={c.finalDate ?? null}
                         onChange={(v) => handleFinalDateChange(c.name, v ?? "")}
@@ -389,6 +432,7 @@ const SemesterOverview: React.FC<Props> = ({
                           </button>
                         )}
                       </DatePicker>
+                      </div>
                     </li>
                   );
                 })}
@@ -397,6 +441,61 @@ const SemesterOverview: React.FC<Props> = ({
             </div>
           </div>
         </>
+      )}
+      <HomeworkModal
+        isOpen={taskModalOpen}
+        onClose={() => {
+          setTaskModalOpen(false);
+          setTaskPrefillDate(null);
+          setTaskEditTask(null);
+        }}
+        onSave={handleSaveTask}
+        selectedCourseData={{ year, semester: semesterKey }}
+        editHomework={taskEditTask}
+        prefilledDueDate={taskPrefillDate}
+        isLoading={isLoadingAction}
+        availableCourses={courses.map((c) => c.name)}
+      />
+
+      {dayModalDate && (
+        <DayTasksModal
+          isOpen={!!dayModalDate}
+          date={dayModalDate}
+          tasks={allTasks.filter((t) => t.dueDate === dayModalDate)}
+          showCourse
+          onClose={() => setDayModalDate(null)}
+          onAdd={() => {
+            setTaskPrefillDate(dayModalDate);
+            setDayModalDate(null);
+            setTaskModalOpen(true);
+          }}
+          onEdit={(t) => {
+            setTaskEditTask(t);
+            setDayModalDate(null);
+            setTaskModalOpen(true);
+          }}
+          onDelete={(t) => setConfirmDelete(t)}
+        />
+      )}
+
+      {confirmDelete && (
+        <DeleteModal
+          isOpen={!!confirmDelete}
+          onClose={() => setConfirmDelete(null)}
+          onConfirm={async () => {
+            const t = confirmDelete;
+            await removeHomework(t.id, t.year, t.semester, t.course);
+            setConfirmDelete(null);
+            if (dayModalDate) {
+              const remaining = allTasks.filter(
+                (x) => x.dueDate === dayModalDate && x.id !== t.id
+              );
+              if (remaining.length === 0) setDayModalDate(null);
+            }
+          }}
+          title="Confirm Delete"
+          message={`Delete "${confirmDelete.name}"? This cannot be undone.`}
+        />
       )}
     </div>
   );
