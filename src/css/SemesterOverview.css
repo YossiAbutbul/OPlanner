@@ -375,8 +375,10 @@
 .finals-row-right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.4rem;
   flex-shrink: 0;
+  min-width: 10rem;
 }
 
 .finals-row-name {
@@ -393,9 +395,11 @@
   font-weight: 700;
   flex-shrink: 0;
   letter-spacing: 0.02em;
-  padding: 0.18rem 0.55rem;
+  padding: 0.18rem 0;
   border-radius: 999px;
   border: 1px solid transparent;
+  min-width: 3.2rem;
+  text-align: center;
 }
 
 .finals-badge-soon {

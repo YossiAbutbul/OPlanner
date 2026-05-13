@@ -35,7 +35,7 @@ interface HomeworkModalProps {
   availableCourses?: string[];
 }
 
-const REMINDERS_COURSE = "__reminders__";
+const REMINDERS_COURSE = "reminders";
 
 const HomeworkModal: React.FC<HomeworkModalProps> = ({
   isOpen,
