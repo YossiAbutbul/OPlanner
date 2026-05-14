@@ -69,11 +69,14 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const lists = await Promise.all(
-        sources.map((s) => getCourseTasks(s.year, s.semester, s.course))
-      );
+      const [lists, reminders] = await Promise.all([
+        Promise.all(sources.map((s) => getCourseTasks(s.year, s.semester, s.course))),
+        selectedYear !== null && selectedSemester
+          ? getCourseTasks(selectedYear, selectedSemester, "reminders")
+          : Promise.resolve([] as HomeworkEntry[]),
+      ]);
       if (cancelled) return;
-      const all = lists.flat();
+      const all = [...lists.flat(), ...reminders];
       const now = startOfDay(new Date());
       const horizon = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
       const filtered = all
