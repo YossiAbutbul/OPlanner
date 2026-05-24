@@ -508,6 +508,7 @@ export const VillageStructure: React.FC<{
         center
         distanceFactor={22}
         zIndexRange={[2, 0]}
+        pointerEvents="none"
       >
         <div className="structure-new-badge">
           <span className="structure-new-text">NEW</span>
@@ -747,7 +748,6 @@ export const EmptyPlot: React.FC<{
           affordable ? "plot-card-on" : "plot-card-off"
         } ${affordable && onBuy ? "plot-card-buyable" : ""}`}
         disabled={!affordable || !onBuy}
-        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           if (affordable && onBuy) onBuy();

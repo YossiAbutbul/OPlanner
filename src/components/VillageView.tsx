@@ -439,6 +439,7 @@ const Villager: React.FC<{
         distanceFactor={22}
         occlude={false}
         zIndexRange={[2, 0]}
+        pointerEvents="none"
       >
         <div className={`villager-tag rarity-${v.rarity}`}>
           {isNew && <span className="villager-tag-new">NEW</span>}
