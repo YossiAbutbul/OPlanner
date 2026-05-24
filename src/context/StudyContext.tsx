@@ -19,6 +19,7 @@ import {
   limit,
 } from "firebase/firestore";
 import { auth, db, requireUid } from "../firebase";
+import { useAuth } from "./AuthContext";
 
 export type SessionType = "focus" | "break" | "long_break";
 
@@ -99,23 +100,36 @@ const yesterdayStr = () => {
 const StudyContext = createContext<StudyContextProps | undefined>(undefined);
 
 export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
   const [state, setState] = useState<StudyState>(DEFAULT_STATE);
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [timer, setTimer] = useState<RunningTimer | null>(null);
   const [now, setNow] = useState<number>(Date.now());
   const [cycleCount, setCycleCount] = useState(0);
   const loadedRef = useRef(false);
+  const userUidRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // Reset on user change (login/logout/switch).
+    setState(DEFAULT_STATE);
+    setSessions([]);
+    setTimer(null);
+    setCycleCount(0);
+    loadedRef.current = false;
+    userUidRef.current = user?.uid ?? null;
+
+    if (!user) return;
     let cancelled = false;
     (async () => {
       await auth.authStateReady();
-      if (!auth.currentUser) return;
+      if (cancelled) return;
+      if (!auth.currentUser || auth.currentUser.uid !== user.uid) return;
       try {
         const uid = requireUid();
         const stateRef = doc(db, `users/${uid}/study/state`);
         const snap = await getDoc(stateRef);
-        if (!cancelled && snap.exists()) {
+        if (cancelled || userUidRef.current !== uid) return;
+        if (snap.exists()) {
           const data = snap.data() as Partial<StudyState>;
           setState({
             ...DEFAULT_STATE,
@@ -129,11 +143,10 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           limit(200)
         );
         const sessSnap = await getDocs(sessQ);
-        if (!cancelled) {
-          setSessions(
-            sessSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<StudySession, "id">) }))
-          );
-        }
+        if (cancelled || userUidRef.current !== uid) return;
+        setSessions(
+          sessSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<StudySession, "id">) }))
+        );
       } catch (e) {
         console.error("StudyContext load error:", e);
       } finally {
@@ -143,7 +156,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!timer || timer.paused) return;
