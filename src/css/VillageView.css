@@ -46,7 +46,12 @@
   width: 100%;
   height: 100%;
   outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  touch-action: none;
 }
+.village-view, .village-view * { -webkit-tap-highlight-color: transparent; }
 
 /* ============================================================
    Top HUD — three frosted-glass pill clusters

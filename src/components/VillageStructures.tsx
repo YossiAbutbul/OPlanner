@@ -307,7 +307,7 @@ const DustPuff: React.FC<{
     mat.opacity = (1 - t) * 0.65;
   });
   return (
-    <mesh ref={ref}>
+    <mesh ref={ref} raycast={() => null}>
       <sphereGeometry args={[0.5, 10, 10]} />
       <meshStandardMaterial
         color="#d6c8a8"
@@ -659,7 +659,7 @@ const LightPillar: React.FC = () => {
     mat.opacity = pulse * 0.3;
   });
   return (
-    <mesh ref={ref} position={[0, 1.5, 0]}>
+    <mesh ref={ref} position={[0, 1.5, 0]} raycast={() => null}>
       <cylinderGeometry args={[0.18, 1.0, 3.0, 16, 1, true]} />
       <meshStandardMaterial
         color="#fde68a"
@@ -684,7 +684,7 @@ const FloatingCoin: React.FC = () => {
   });
   return (
     <group ref={ref}>
-      <mesh castShadow>
+      <mesh castShadow raycast={() => null}>
         <cylinderGeometry args={[0.22, 0.22, 0.05, 18]} />
         <meshStandardMaterial
           color="#fbbf24"
@@ -694,7 +694,7 @@ const FloatingCoin: React.FC = () => {
           roughness={0.3}
         />
       </mesh>
-      <mesh position={[0, 0.03, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh position={[0, 0.03, 0]} rotation={[Math.PI / 2, 0, 0]} raycast={() => null}>
         <ringGeometry args={[0.14, 0.18, 18]} />
         <meshStandardMaterial
           color="#b45309"
@@ -1017,7 +1017,7 @@ export const Motes: React.FC<{ count?: number; area?: number }> = ({
   return (
     <group ref={groupRef}>
       {motes.map((m, i) => (
-        <mesh key={i}>
+        <mesh key={i} raycast={() => null}>
           <sphereGeometry args={[m.size, 6, 6]} />
           <meshStandardMaterial
             color="#fffce6"
@@ -1060,12 +1060,12 @@ const Butterfly: React.FC<{
   return (
     <group ref={groupRef}>
       {/* Body */}
-      <mesh>
+      <mesh raycast={() => null}>
         <cylinderGeometry args={[0.02, 0.02, 0.18, 4]} />
         <meshStandardMaterial color="#222" />
       </mesh>
       {/* Wings — thin double-sided planes */}
-      <mesh ref={wingL} position={[-0.05, 0, 0]}>
+      <mesh ref={wingL} position={[-0.05, 0, 0]} raycast={() => null}>
         <planeGeometry args={[0.22, 0.18]} />
         <meshStandardMaterial
           color={color}
@@ -1074,7 +1074,7 @@ const Butterfly: React.FC<{
           opacity={0.95}
         />
       </mesh>
-      <mesh ref={wingR} position={[0.05, 0, 0]}>
+      <mesh ref={wingR} position={[0.05, 0, 0]} raycast={() => null}>
         <planeGeometry args={[0.22, 0.18]} />
         <meshStandardMaterial
           color={color}
@@ -1140,7 +1140,7 @@ export const Smoke: React.FC<{
   return (
     <group ref={groupRef} position={position}>
       {puffs.map((_, i) => (
-        <mesh key={i}>
+        <mesh key={i} raycast={() => null}>
           <sphereGeometry args={[0.35, 8, 8]} />
           <meshStandardMaterial
             color={color}
