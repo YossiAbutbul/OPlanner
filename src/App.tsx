@@ -5,6 +5,7 @@ import MainContent from "./components/MainContent";
 import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
 import Tour from "./components/Tour";
+import StudyWidget from "./components/StudyWidget";
 import { useAuth } from "./context/AuthContext";
 import {
   getAllYearsAndSemesters,
@@ -529,6 +530,7 @@ const App: React.FC = () => {
         selectedCourse={selectedCourse}
       />
       <Tour run={tourRun} onFinish={finishTour} onSetMobileNav={setMobileNavOpen} />
+      <StudyWidget />
     </div>
   );
 };
