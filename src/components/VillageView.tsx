@@ -432,21 +432,23 @@ const Villager: React.FC<{
         legLRef={legL}
         legRRef={legR}
       />
-      {/* Name tag */}
-      <Html
-        position={[0, 1.95, 0]}
-        center
-        distanceFactor={22}
-        occlude={false}
-        zIndexRange={[2, 0]}
-        pointerEvents="none"
-      >
-        <div className={`villager-tag rarity-${v.rarity}`}>
-          {isNew && <span className="villager-tag-new">NEW</span>}
-          <span className="villager-tag-emoji">{v.emoji}</span>
-          <span className="villager-tag-name">{v.name}</span>
-        </div>
-      </Html>
+      {/* Name tag — only visible on hover or when flagged NEW. */}
+      {(hovered || isNew) && (
+        <Html
+          position={[0, 1.95, 0]}
+          center
+          distanceFactor={22}
+          occlude={false}
+          zIndexRange={[2, 0]}
+          pointerEvents="none"
+        >
+          <div className={`villager-tag rarity-${v.rarity}`}>
+            {isNew && <span className="villager-tag-new">NEW</span>}
+            <span className="villager-tag-emoji">{v.emoji}</span>
+            <span className="villager-tag-name">{v.name}</span>
+          </div>
+        </Html>
+      )}
     </group>
   );
 };
