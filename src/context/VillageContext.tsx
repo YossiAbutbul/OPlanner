@@ -175,7 +175,10 @@ export const VillageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       computeSpentCoins(purchasedVillagers, VILLAGERS),
     [purchasedStructures, purchasedVillagers]
   );
-  const coinBalance = earned.total - coinsSpent;
+  // Clamp to 0 — purchases are guarded by canAfford, but historical state
+  // (e.g. dev-bonus purchases viewed in a non-dev session) can leave spent
+  // higher than earned. Never surface a negative balance.
+  const coinBalance = Math.max(0, earned.total - coinsSpent);
 
   const realVillagers: VillagerInstance[] = useMemo(() => {
     const out: VillagerInstance[] = [];
