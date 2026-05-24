@@ -1,6 +1,13 @@
 import React, { useMemo, useState } from "react";
 import { useStudy, SessionType } from "../context/StudyContext";
 import Modal from "./Modal";
+import {
+  VILLAGERS,
+  RARITY_META,
+  computeVillageStats,
+  isUnlocked,
+  unlockProgress,
+} from "../utility/village";
 import "../css/StudyWidget.css";
 
 const ACHIEVEMENT_META: Record<string, { label: string; icon: string }> = {
@@ -14,7 +21,7 @@ const ACHIEVEMENT_META: Record<string, { label: string; icon: string }> = {
   "focus-100h": { label: "100 hours focused", icon: "🎓" },
 };
 
-type Tab = "timer" | "stats" | "achievements";
+type Tab = "timer" | "stats" | "achievements" | "village";
 
 const fmt = (ms: number) => {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -29,6 +36,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 const StudyWidget: React.FC = () => {
   const {
     state,
+    sessions,
     timer,
     remainingMs,
     cycleCount,
@@ -70,6 +78,17 @@ const StudyWidget: React.FC = () => {
   const unlockedCount = state.achievements.length;
   const totalAchievements = Object.keys(ACHIEVEMENT_META).length;
 
+  const villageStats = useMemo(
+    () => computeVillageStats(state, sessions),
+    [state, sessions]
+  );
+  const villagerStatuses = useMemo(
+    () => VILLAGERS.map((v) => ({ v, unlocked: isUnlocked(v, villageStats) })),
+    [villageStats]
+  );
+  const villagersUnlocked = villagerStatuses.filter((x) => x.unlocked).length;
+  const unlockedVillagers = villagerStatuses.filter((x) => x.unlocked);
+
   return (
     <>
       <button
@@ -107,6 +126,16 @@ const StudyWidget: React.FC = () => {
               <span>Awards</span>
               <span className="study-tab-meta">
                 {unlockedCount}/{totalAchievements}
+              </span>
+            </button>
+            <button
+              role="tab"
+              className={`study-tab ${tab === "village" ? "active" : ""}`}
+              onClick={() => setTab("village")}
+            >
+              <span>Village</span>
+              <span className="study-tab-meta">
+                {villagersUnlocked}/{VILLAGERS.length}
               </span>
             </button>
           </nav>
@@ -229,6 +258,106 @@ const StudyWidget: React.FC = () => {
                       <span className="study-stat-unit"> / {totalAchievements}</span>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {tab === "village" && (
+              <div className="village">
+                <div className="village-scene">
+                  <div className="village-sky" />
+                  <div className="village-ground" />
+                  <div className="village-residents">
+                    {unlockedVillagers.length === 0 ? (
+                      <div className="village-empty-scene">
+                        Complete a focus session to plant your first villager.
+                      </div>
+                    ) : (
+                      unlockedVillagers.map(({ v }, i) => (
+                        <span
+                          key={v.id}
+                          className="village-resident"
+                          style={{
+                            left: `${5 + ((i * 17) % 85)}%`,
+                            animationDelay: `${(i % 5) * 0.3}s`,
+                          }}
+                          title={`${v.name} — ${v.title}`}
+                        >
+                          {v.emoji}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="village-summary">
+                  <span>
+                    <strong>{villagersUnlocked}</strong> / {VILLAGERS.length} villagers
+                  </span>
+                  <span className="village-summary-hint">
+                    Earn focus hours, streaks, and awards to recruit more.
+                  </span>
+                </div>
+
+                <div className="village-grid">
+                  {villagerStatuses.map(({ v, unlocked }) => {
+                    const prog = unlockProgress(v, villageStats);
+                    const pctV =
+                      prog.target > 0
+                        ? Math.min(100, Math.round((prog.current / prog.target) * 100))
+                        : 0;
+                    const rarity = RARITY_META[v.rarity];
+                    return (
+                      <div
+                        key={v.id}
+                        className={`village-card ${unlocked ? "unlocked" : "locked"} rarity-${v.rarity}`}
+                        style={{ borderColor: unlocked ? rarity.color : rarity.ring }}
+                      >
+                        <div
+                          className="village-card-avatar"
+                          style={{
+                            background: unlocked
+                              ? `linear-gradient(135deg, ${rarity.ring}, #fff)`
+                              : "#f3f4f6",
+                          }}
+                        >
+                          <span className="village-card-emoji">
+                            {unlocked ? v.emoji : "❔"}
+                          </span>
+                        </div>
+                        <div className="village-card-body">
+                          <div className="village-card-head">
+                            <div className="village-card-name">
+                              {unlocked ? v.name : "???"}
+                            </div>
+                            <div
+                              className="village-card-rarity"
+                              style={{ color: rarity.color }}
+                            >
+                              {rarity.label}
+                            </div>
+                          </div>
+                          <div className="village-card-title">
+                            {unlocked ? v.title : "Locked"}
+                          </div>
+                          <div className="village-card-blurb">
+                            {unlocked ? v.blurb : prog.label}
+                          </div>
+                          {!unlocked && (
+                            <div className="study-progress thin">
+                              <div
+                                className="study-progress-bar"
+                                style={{
+                                  width: `${pctV}%`,
+                                  background: rarity.color,
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
