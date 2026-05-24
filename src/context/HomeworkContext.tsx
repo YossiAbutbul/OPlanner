@@ -39,7 +39,8 @@ interface HomeworkContextProps {
     year: number,
     semester: string,
     course: string,
-    ignoreOverdue?: boolean
+    ignoreOverdue?: boolean,
+    prevLocation?: { year: number; semester: string; course: string }
   ) => Promise<void>;
   removeHomework: (
     id: string,
@@ -229,7 +230,8 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     year: number,
     semester: string,
     course: string,
-    ignoreOverdue: boolean = false
+    ignoreOverdue: boolean = false,
+    prevLocation?: { year: number; semester: string; course: string }
   ) => {
     try {
       const tasksCollection = collection(
@@ -238,7 +240,8 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
       );
 
       if (id) {
-        const prevEntry = homework.find((h) => h.id === id);
+        const prevEntry: { year: number; semester: string; course: string } | undefined =
+          prevLocation ?? homework.find((h) => h.id === id);
         const movedLocation =
           !!prevEntry &&
           (prevEntry.course !== course ||

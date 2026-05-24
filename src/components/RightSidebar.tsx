@@ -165,13 +165,21 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           setEditTask(null);
         }}
         onSave={async (id, name, dueDate, status, year, semester, course, ignoreOverdue) => {
-          await addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue);
+          const prevLocation = id && editTask
+            ? { year: editTask.year, semester: editTask.semester, course: editTask.course }
+            : undefined;
+          await addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, prevLocation);
           setModalOpen(false);
           setEditTask(null);
         }}
         editHomework={editTask}
-        selectedCourseData={null}
+        selectedCourseData={editTask ? { year: editTask.year, semester: editTask.semester } : null}
         isLoading={false}
+        availableCourses={editTask ? (years
+          .find((y) => y.year === editTask.year)?.semesters
+          .find((s) => s.name === editTask.semester || s.key === editTask.semester)?.courses
+          .map((c) => c.name)
+          .filter((n) => n !== "reminders") ?? []) : undefined}
       />
     </aside>
   );
