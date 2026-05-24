@@ -15,7 +15,15 @@ export interface Villager {
   blurb: string;
   unlock: UnlockMetric;
   rarity: "common" | "rare" | "epic" | "legendary";
+  /**
+   * Optional GLTF model URL. If set, renders 3D model instead of procedural body.
+   * Drop .glb into `public/models/villagers/<id>.glb` and reference here:
+   *   modelUrl: "/models/villagers/baker.glb"
+   */
+  modelUrl?: string;
 }
+
+const _model = (id: string) => `${import.meta.env.BASE_URL}models/villagers/${id}.glb`;
 
 export const VILLAGERS: Villager[] = [
   {
@@ -26,6 +34,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Every village starts with one tiny sprout.",
     unlock: { kind: "focusCount", count: 1 },
     rarity: "common",
+    modelUrl: _model("sprout"),
   },
   {
     id: "baker",
@@ -35,6 +44,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Bakes croissants timed to your breaks.",
     unlock: { kind: "focusCount", count: 5 },
     rarity: "common",
+    modelUrl: _model("baker"),
   },
   {
     id: "scholar",
@@ -44,6 +54,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Keeps tomes on every focused hour.",
     unlock: { kind: "totalHours", hours: 5 },
     rarity: "common",
+    modelUrl: _model("scholar"),
   },
   {
     id: "knight",
@@ -53,6 +64,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Guards your daily streak from the void.",
     unlock: { kind: "streak", days: 3 },
     rarity: "rare",
+    modelUrl: _model("knight"),
   },
   {
     id: "fox",
@@ -62,6 +74,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Slinks in after ten finished sessions.",
     unlock: { kind: "focusCount", count: 10 },
     rarity: "rare",
+    modelUrl: _model("fox"),
   },
   {
     id: "wizard",
@@ -71,6 +84,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Bends pomodoros with arcane focus.",
     unlock: { kind: "totalHours", hours: 10 },
     rarity: "rare",
+    modelUrl: _model("wizard"),
   },
   {
     id: "owl",
@@ -80,6 +94,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Awakens after a week-long streak.",
     unlock: { kind: "streak", days: 7 },
     rarity: "epic",
+    modelUrl: _model("owl"),
   },
   {
     id: "smith",
@@ -89,6 +104,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Hammers a token for every goal day.",
     unlock: { kind: "dailyGoalHits", days: 5 },
     rarity: "epic",
+    modelUrl: _model("smith"),
   },
   {
     id: "bard",
@@ -98,6 +114,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Sings ballads of your fifty sessions.",
     unlock: { kind: "focusCount", count: 50 },
     rarity: "epic",
+    modelUrl: _model("bard"),
   },
   {
     id: "dragon",
@@ -107,6 +124,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Roosts only for the truly relentless.",
     unlock: { kind: "streak", days: 30 },
     rarity: "legendary",
+    modelUrl: _model("dragon"),
   },
   {
     id: "phoenix",
@@ -116,6 +134,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Reborn after one hundred focused hours.",
     unlock: { kind: "totalHours", hours: 100 },
     rarity: "legendary",
+    modelUrl: _model("phoenix"),
   },
   {
     id: "elder",
@@ -125,6 +144,7 @@ export const VILLAGERS: Villager[] = [
     blurb: "Appears once your village is well lived in.",
     unlock: { kind: "awards", count: 8 },
     rarity: "legendary",
+    modelUrl: _model("elder"),
   },
 ];
 
@@ -163,6 +183,21 @@ export const computeVillageStats = (
     awardsCount: state.achievements.length,
     dailyGoalHits,
   };
+};
+
+export const checkUnlock = (unlock: UnlockMetric, s: VillageStats): boolean => {
+  switch (unlock.kind) {
+    case "streak":
+      return s.streakDays >= unlock.days;
+    case "totalHours":
+      return s.totalHours >= unlock.hours;
+    case "focusCount":
+      return s.focusCount >= unlock.count;
+    case "awards":
+      return s.awardsCount >= unlock.count;
+    case "dailyGoalHits":
+      return s.dailyGoalHits >= unlock.days;
+  }
 };
 
 export const isUnlocked = (v: Villager, s: VillageStats): boolean => {

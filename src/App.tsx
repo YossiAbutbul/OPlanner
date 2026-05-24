@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense, lazy } from "react";
 import "./css/App.css";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
@@ -6,6 +6,8 @@ import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
 import Tour from "./components/Tour";
 import StudyWidget from "./components/StudyWidget";
+const VillageView = lazy(() => import("./components/VillageView"));
+import { useView } from "./context/ViewContext";
 import { useAuth } from "./context/AuthContext";
 import {
   getAllYearsAndSemesters,
@@ -39,6 +41,7 @@ export interface YearTreeData {
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
+  const { view } = useView();
   const [years, setYears] = useState<YearTreeData[]>([]);
   const [yearsLoading, setYearsLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -459,6 +462,22 @@ const App: React.FC = () => {
   }
 
   if (!user) return <Login />;
+
+  if (view === "village") {
+    return (
+      <Suspense
+        fallback={
+          <div className="village-loading">
+            <div className="village-loading-spinner" />
+            <div className="village-loading-text">Loading village…</div>
+          </div>
+        }
+      >
+        <VillageView />
+        <StudyWidget />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="app-container">

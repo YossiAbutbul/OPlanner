@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useStudy, SessionType } from "../context/StudyContext";
+import { useView } from "../context/ViewContext";
 import Modal from "./Modal";
 import {
   VILLAGERS,
@@ -21,7 +22,7 @@ const ACHIEVEMENT_META: Record<string, { label: string; icon: string }> = {
   "focus-100h": { label: "100 hours focused", icon: "🎓" },
 };
 
-type Tab = "timer" | "stats" | "achievements" | "village";
+type Tab = "timer" | "stats" | "village";
 
 const fmt = (ms: number) => {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -51,6 +52,7 @@ const StudyWidget: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("timer");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { setView } = useView();
 
   const goalMs = state.settings.dailyGoalMin * 60_000;
   const pct = goalMs > 0 ? Math.min(100, Math.round((todayFocusMs / goalMs) * 100)) : 0;
@@ -117,16 +119,6 @@ const StudyWidget: React.FC = () => {
               onClick={() => setTab("stats")}
             >
               Stats
-            </button>
-            <button
-              role="tab"
-              className={`study-tab ${tab === "achievements" ? "active" : ""}`}
-              onClick={() => setTab("achievements")}
-            >
-              <span>Awards</span>
-              <span className="study-tab-meta">
-                {unlockedCount}/{totalAchievements}
-              </span>
             </button>
             <button
               role="tab"
@@ -208,6 +200,17 @@ const StudyWidget: React.FC = () => {
                     </button>
                   )}
                 </div>
+
+                <button
+                  type="button"
+                  className="village-enter-btn timer-enter-btn"
+                  onClick={() => {
+                    setOpen(false);
+                    setView("village");
+                  }}
+                >
+                  Enter village (3D)
+                </button>
 
                 <button
                   className="study-link"
@@ -362,23 +365,6 @@ const StudyWidget: React.FC = () => {
               </div>
             )}
 
-            {tab === "achievements" && (
-              <div className="study-achievements">
-                {Object.entries(ACHIEVEMENT_META).map(([id, meta]) => {
-                  const unlocked = state.achievements.includes(id);
-                  return (
-                    <div
-                      key={id}
-                      className={`study-ach ${unlocked ? "unlocked" : "locked"}`}
-                    >
-                      <span className="study-ach-icon">{meta.icon}</span>
-                      <span className="study-ach-label">{meta.label}</span>
-                      {unlocked && <span className="study-ach-badge">✓</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
           </div>
         </div>
       </Modal>
