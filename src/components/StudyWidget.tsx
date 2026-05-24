@@ -224,6 +224,7 @@ const StudyWidget: React.FC = () => {
             </button>
           </nav>
 
+          <div className="study-tab-content">
           {tab === "timer" && (
             <div className={`study-panel ${phaseClass}`}>
               <div className="study-ring-wrap">
@@ -613,6 +614,7 @@ const StudyWidget: React.FC = () => {
               })}
             </div>
           )}
+          </div>
         </div>
       </Modal>
 

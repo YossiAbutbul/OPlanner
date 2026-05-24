@@ -48,6 +48,14 @@
   min-width: 360px;
 }
 
+.study-tab-content {
+  min-height: 480px;
+  max-height: 65vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
 .study-tabs {
   display: flex;
   gap: 4px;
