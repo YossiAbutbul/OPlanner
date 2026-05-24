@@ -19,6 +19,8 @@ interface CameraView {
 interface VillagePersistShape {
   seenVillagers: string[];
   seenStructures: string[];
+  purchasedStructures?: string[];
+  purchasedVillagers?: string[];
   camera?: CameraView;
   lastEnteredAt?: number;
 }
@@ -26,10 +28,16 @@ interface VillagePersistShape {
 interface VillageStateContextProps {
   seenVillagers: Set<string>;
   seenStructures: Set<string>;
+  purchasedStructures: Set<string>;
+  purchasedVillagers: Set<string>;
   camera: CameraView | null;
   markVillagerSeen: (id: string) => void;
   markStructureSeen: (id: string) => void;
   markAllSeen: (villagerIds: string[], structureIds: string[]) => void;
+  purchaseStructure: (id: string) => void;
+  refundStructure: (id: string) => void;
+  purchaseVillager: (id: string) => void;
+  refundVillager: (id: string) => void;
   setCamera: (c: CameraView) => void;
   loaded: boolean;
 }
@@ -44,6 +52,12 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
   const { user } = useAuth();
   const [seenVillagers, setSeenVillagers] = useState<Set<string>>(new Set());
   const [seenStructures, setSeenStructures] = useState<Set<string>>(new Set());
+  const [purchasedStructures, setPurchasedStructures] = useState<Set<string>>(
+    new Set()
+  );
+  const [purchasedVillagers, setPurchasedVillagers] = useState<Set<string>>(
+    new Set()
+  );
   const [camera, setCameraState] = useState<CameraView | null>(null);
   const [loaded, setLoaded] = useState(false);
   const uidRef = useRef<string | null>(null);
@@ -52,6 +66,8 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     setSeenVillagers(new Set());
     setSeenStructures(new Set());
+    setPurchasedStructures(new Set());
+    setPurchasedVillagers(new Set());
     setCameraState(null);
     setLoaded(false);
     uidRef.current = user?.uid ?? null;
@@ -66,6 +82,8 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
           const d = snap.data() as Partial<VillagePersistShape>;
           setSeenVillagers(new Set(d.seenVillagers || []));
           setSeenStructures(new Set(d.seenStructures || []));
+          setPurchasedStructures(new Set(d.purchasedStructures || []));
+          setPurchasedVillagers(new Set(d.purchasedVillagers || []));
           if (d.camera) setCameraState(d.camera);
         }
       } catch (e) {
@@ -162,24 +180,88 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
     [scheduleSave]
   );
 
+  const purchaseStructure = useCallback(
+    (id: string) => {
+      setPurchasedStructures((prev) => {
+        if (prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.add(id);
+        scheduleSave({ purchasedStructures: Array.from(next) });
+        return next;
+      });
+    },
+    [scheduleSave]
+  );
+
+  const refundStructure = useCallback(
+    (id: string) => {
+      setPurchasedStructures((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        scheduleSave({ purchasedStructures: Array.from(next) });
+        return next;
+      });
+    },
+    [scheduleSave]
+  );
+
+  const purchaseVillager = useCallback(
+    (id: string) => {
+      setPurchasedVillagers((prev) => {
+        if (prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.add(id);
+        scheduleSave({ purchasedVillagers: Array.from(next) });
+        return next;
+      });
+    },
+    [scheduleSave]
+  );
+
+  const refundVillager = useCallback(
+    (id: string) => {
+      setPurchasedVillagers((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        scheduleSave({ purchasedVillagers: Array.from(next) });
+        return next;
+      });
+    },
+    [scheduleSave]
+  );
+
   const value = useMemo(
     () => ({
       seenVillagers,
       seenStructures,
+      purchasedStructures,
+      purchasedVillagers,
       camera,
       markVillagerSeen,
       markStructureSeen,
       markAllSeen,
+      purchaseStructure,
+      refundStructure,
+      purchaseVillager,
+      refundVillager,
       setCamera,
       loaded,
     }),
     [
       seenVillagers,
       seenStructures,
+      purchasedStructures,
+      purchasedVillagers,
       camera,
       markVillagerSeen,
       markStructureSeen,
       markAllSeen,
+      purchaseStructure,
+      refundStructure,
+      purchaseVillager,
+      refundVillager,
       setCamera,
       loaded,
     ]

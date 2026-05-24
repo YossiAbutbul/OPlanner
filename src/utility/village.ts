@@ -13,7 +13,10 @@ export interface Villager {
   emoji: string;
   title: string;
   blurb: string;
+  /** Legacy unlock condition — kept for reference but no longer gates recruit. */
   unlock: UnlockMetric;
+  /** Coin cost to recruit. */
+  cost: number;
   rarity: "common" | "rare" | "epic" | "legendary";
   /**
    * Optional GLTF model URL. If set, renders 3D model instead of procedural body.
@@ -33,6 +36,7 @@ export const VILLAGERS: Villager[] = [
     title: "The Seedling",
     blurb: "Every village starts with one tiny sprout.",
     unlock: { kind: "focusCount", count: 1 },
+    cost: 80,
     rarity: "common",
     modelUrl: _model("sprout"),
   },
@@ -43,6 +47,7 @@ export const VILLAGERS: Villager[] = [
     title: "Village Baker",
     blurb: "Bakes croissants timed to your breaks.",
     unlock: { kind: "focusCount", count: 5 },
+    cost: 120,
     rarity: "common",
     modelUrl: _model("baker"),
   },
@@ -53,6 +58,7 @@ export const VILLAGERS: Villager[] = [
     title: "Old Scholar",
     blurb: "Keeps tomes on every focused hour.",
     unlock: { kind: "totalHours", hours: 5 },
+    cost: 160,
     rarity: "common",
     modelUrl: _model("scholar"),
   },
@@ -63,6 +69,7 @@ export const VILLAGERS: Villager[] = [
     title: "Streak Knight",
     blurb: "Guards your daily streak from the void.",
     unlock: { kind: "streak", days: 3 },
+    cost: 300,
     rarity: "rare",
     modelUrl: _model("knight"),
   },
@@ -73,6 +80,7 @@ export const VILLAGERS: Villager[] = [
     title: "Cunning Fox",
     blurb: "Slinks in after ten finished sessions.",
     unlock: { kind: "focusCount", count: 10 },
+    cost: 250,
     rarity: "rare",
     modelUrl: _model("fox"),
   },
@@ -83,6 +91,7 @@ export const VILLAGERS: Villager[] = [
     title: "Time Wizard",
     blurb: "Bends pomodoros with arcane focus.",
     unlock: { kind: "totalHours", hours: 10 },
+    cost: 350,
     rarity: "rare",
     modelUrl: _model("wizard"),
   },
@@ -93,6 +102,7 @@ export const VILLAGERS: Villager[] = [
     title: "Night Owl",
     blurb: "Awakens after a week-long streak.",
     unlock: { kind: "streak", days: 7 },
+    cost: 500,
     rarity: "epic",
     modelUrl: _model("owl"),
   },
@@ -103,6 +113,7 @@ export const VILLAGERS: Villager[] = [
     title: "Forge Master",
     blurb: "Hammers a token for every goal day.",
     unlock: { kind: "dailyGoalHits", days: 5 },
+    cost: 600,
     rarity: "epic",
     modelUrl: _model("smith"),
   },
@@ -113,6 +124,7 @@ export const VILLAGERS: Villager[] = [
     title: "Wandering Bard",
     blurb: "Sings ballads of your fifty sessions.",
     unlock: { kind: "focusCount", count: 50 },
+    cost: 700,
     rarity: "epic",
     modelUrl: _model("bard"),
   },
@@ -123,6 +135,7 @@ export const VILLAGERS: Villager[] = [
     title: "Dragon of Discipline",
     blurb: "Roosts only for the truly relentless.",
     unlock: { kind: "streak", days: 30 },
+    cost: 1500,
     rarity: "legendary",
     modelUrl: _model("dragon"),
   },
@@ -133,6 +146,7 @@ export const VILLAGERS: Villager[] = [
     title: "Phoenix of Hours",
     blurb: "Reborn after one hundred focused hours.",
     unlock: { kind: "totalHours", hours: 100 },
+    cost: 1200,
     rarity: "legendary",
     modelUrl: _model("phoenix"),
   },
@@ -143,6 +157,7 @@ export const VILLAGERS: Villager[] = [
     title: "Village Elder",
     blurb: "Appears once your village is well lived in.",
     unlock: { kind: "awards", count: 8 },
+    cost: 1000,
     rarity: "legendary",
     modelUrl: _model("elder"),
   },

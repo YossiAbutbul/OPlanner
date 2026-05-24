@@ -1,66 +1,56 @@
 import React, { Suspense, useRef, useState, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls, Sky, ContactShadows, Html, Stars } from "@react-three/drei";
+import { OrbitControls, Sky, ContactShadows, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useView } from "../context/ViewContext";
 import { useVillage, VillagerInstance } from "../context/VillageContext";
 import { useVillageState } from "../context/VillageStateContext";
-import { VillageStructure, DecorTrees, StreetLamps } from "./VillageStructures";
+import {
+  VillageStructure,
+  DecorTrees,
+  StreetLamps,
+  EmptyPlot,
+  Motes,
+  Butterflies,
+  Smoke,
+} from "./VillageStructures";
 import { VillageEnvironment } from "./VillageEnvironment";
 import { VillageTerrain, VillageLake } from "./VillageTerrain";
-import { VillagerModel } from "./VillagerModel";
-import { ModelErrorBoundary } from "./ModelErrorBoundary";
 import { StructureDef } from "../utility/structures";
+import { VILLAGERS } from "../utility/village";
+import { VILLAGER_PAIRS } from "../utility/villagerBonus";
 import "../css/VillageView.css";
+
+const VILLAGER_BY_ID = new Map(VILLAGERS.map((v) => [v.id, v]));
+
 
 // Approximate footprint per structure kind for villager avoidance.
 const FOOTPRINT: Record<StructureDef["kind"], number> = {
-  house: 1.2,
-  bakery: 1.4,
-  tower: 0.9,
-  well: 0.9,
-  library: 1.7,
-  forge: 1.2,
-  tavern: 1.7,
-  windmill: 1.0,
-  shrine: 1.4,
-  garden: 1.2,
-};
-
-const todLabel = (t: number): string => {
-  const h = Math.floor(t * 24);
-  const m = Math.floor((t * 24 - h) * 60);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  house: 2.0,
+  bakery: 2.0,
+  tower: 2.0,
+  well: 1.2,
+  library: 2.2,
+  forge: 2.7,
+  tavern: 3.0,
+  windmill: 2.5,
+  shrine: 1.0,
+  garden: 1.5,
 };
 
 const structureKindLabel = (k: StructureDef["kind"]): string =>
   ({
     house: "Cottage",
-    bakery: "Bakery",
-    tower: "Watchtower",
+    bakery: "Townhouse",
+    tower: "Bell Tower",
     well: "Well",
-    library: "Library",
-    forge: "Forge",
-    tavern: "Tavern",
-    windmill: "Windmill",
-    shrine: "Shrine",
-    garden: "Garden",
+    library: "Old House",
+    forge: "Blacksmith",
+    tavern: "Inn",
+    windmill: "Mill",
+    shrine: "Bonfire",
+    garden: "Gazebo",
   }[k]);
-
-const unlockMetricLabel = (u: StructureDef["unlock"]): string => {
-  switch (u.kind) {
-    case "streak":
-      return `${u.days}-day streak`;
-    case "totalHours":
-      return `${u.hours} total hours focused`;
-    case "focusCount":
-      return `${u.count} focus sessions`;
-    case "awards":
-      return `${u.count} awards`;
-    case "dailyGoalHits":
-      return `${u.days} days hitting daily goal`;
-  }
-};
 
 // Wander bounds (square radius).
 const BOUND = 16;
@@ -161,24 +151,38 @@ const Lighting: React.FC<{ tod: number }> = ({ tod }) => {
   );
 };
 
+const CLEARANCE = 1.4;
+
+const isClear = (
+  x: number,
+  z: number,
+  obstacles: Array<{ x: number; z: number; r: number }>
+): boolean => {
+  for (const o of obstacles) {
+    if (Math.hypot(x - o.x, z - o.z) < o.r + CLEARANCE) return false;
+  }
+  return true;
+};
+
 const randomTargetAvoiding = (
   obstacles: Array<{ x: number; z: number; r: number }>
 ): THREE.Vector3 => {
-  for (let attempt = 0; attempt < 8; attempt++) {
+  for (let attempt = 0; attempt < 30; attempt++) {
     const a = Math.random() * Math.PI * 2;
     const r = Math.random() * BOUND;
     const x = Math.cos(a) * r;
     const z = Math.sin(a) * r;
-    let ok = true;
-    for (const o of obstacles) {
-      if (Math.hypot(x - o.x, z - o.z) < o.r + 0.6) {
-        ok = false;
-        break;
-      }
-    }
-    if (ok) return new THREE.Vector3(x, 0, z);
+    if (isClear(x, z, obstacles)) return new THREE.Vector3(x, 0, z);
   }
-  return new THREE.Vector3(0, 0, 0);
+  // Fallback: scan the south plaza ring (open area near camera) for a clear
+  // spot. Never default to (0,0,0) — that's the well and causes pile-ups.
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * Math.PI * 2;
+    const x = Math.cos(a) * 5;
+    const z = Math.sin(a) * 5;
+    if (isClear(x, z, obstacles)) return new THREE.Vector3(x, 0, z);
+  }
+  return new THREE.Vector3(0, 0, 12); // south open area as last resort
 };
 
 interface ProceduralBodyProps {
@@ -191,6 +195,13 @@ interface ProceduralBodyProps {
   legRRef: React.RefObject<THREE.Mesh | null>;
 }
 
+const SKIN = "#f4cfa3";
+const SHOE = "#3a2a18";
+
+/**
+ * Chibi villager — big head, small round body, stubby limbs. Tinted by v.color.
+ * Anim refs (body / arms / legs) preserved so walking + bob still works.
+ */
 const ProceduralBody: React.FC<ProceduralBodyProps> = ({
   v,
   hovered,
@@ -201,48 +212,83 @@ const ProceduralBody: React.FC<ProceduralBodyProps> = ({
   legRRef,
 }) => (
   <>
-    {/* Legs */}
-    <mesh ref={legLRef} position={[-0.1, 0.22, 0]} castShadow>
-      <boxGeometry args={[0.14, 0.42, 0.16]} />
-      <meshStandardMaterial color="#2c3e50" />
+    {/* Stubby legs (shoes). */}
+    <mesh ref={legLRef} position={[-0.11, 0.12, 0]} castShadow>
+      <boxGeometry args={[0.16, 0.22, 0.2]} />
+      <meshStandardMaterial color={SHOE} />
     </mesh>
-    <mesh ref={legRRef} position={[0.1, 0.22, 0]} castShadow>
-      <boxGeometry args={[0.14, 0.42, 0.16]} />
-      <meshStandardMaterial color="#2c3e50" />
+    <mesh ref={legRRef} position={[0.11, 0.12, 0]} castShadow>
+      <boxGeometry args={[0.16, 0.22, 0.2]} />
+      <meshStandardMaterial color={SHOE} />
     </mesh>
-    {/* Body group */}
-    <group ref={bodyRef} position={[0, 0.55, 0]}>
+
+    {/* Body + head group — bobs while walking. */}
+    <group ref={bodyRef} position={[0, 0.45, 0]}>
+      {/* Round torso */}
       <mesh castShadow>
-        <capsuleGeometry args={[0.28, 0.45, 6, 12]} />
+        <sphereGeometry args={[0.28, 18, 14]} />
         <meshStandardMaterial
           color={v.color}
           emissive={hovered ? v.color : "#000"}
-          emissiveIntensity={hovered ? 0.35 : 0}
+          emissiveIntensity={hovered ? 0.4 : 0}
         />
       </mesh>
-      <mesh ref={armLRef} position={[-0.32, 0.1, 0]} castShadow>
-        <boxGeometry args={[0.1, 0.45, 0.12]} />
+      {/* Belt */}
+      <mesh position={[0, -0.05, 0]} castShadow>
+        <cylinderGeometry args={[0.29, 0.29, 0.06, 16]} />
+        <meshStandardMaterial color="#3a2a18" />
+      </mesh>
+      {/* Tiny arm nubs */}
+      <mesh ref={armLRef} position={[-0.28, 0.02, 0]} castShadow>
+        <sphereGeometry args={[0.1, 10, 10]} />
         <meshStandardMaterial color={v.color} />
       </mesh>
-      <mesh ref={armRRef} position={[0.32, 0.1, 0]} castShadow>
-        <boxGeometry args={[0.1, 0.45, 0.12]} />
+      <mesh ref={armRRef} position={[0.28, 0.02, 0]} castShadow>
+        <sphereGeometry args={[0.1, 10, 10]} />
         <meshStandardMaterial color={v.color} />
       </mesh>
-      <mesh position={[0, 0.65, 0]} castShadow>
-        <sphereGeometry args={[0.22, 16, 16]} />
-        <meshStandardMaterial color="#fde6c8" />
+
+      {/* Big head */}
+      <mesh position={[0, 0.45, 0]} castShadow>
+        <sphereGeometry args={[0.3, 20, 16]} />
+        <meshStandardMaterial color={SKIN} />
       </mesh>
-      <mesh position={[-0.08, 0.68, 0.2]}>
-        <sphereGeometry args={[0.03, 8, 8]} />
+      {/* Cheeks */}
+      <mesh position={[-0.21, 0.4, 0.18]}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshStandardMaterial color="#f4a3a3" transparent opacity={0.7} />
+      </mesh>
+      <mesh position={[0.21, 0.4, 0.18]}>
+        <sphereGeometry args={[0.05, 8, 8]} />
+        <meshStandardMaterial color="#f4a3a3" transparent opacity={0.7} />
+      </mesh>
+      {/* Eyes */}
+      <mesh position={[-0.1, 0.48, 0.26]}>
+        <sphereGeometry args={[0.045, 10, 10]} />
         <meshStandardMaterial color="#111" />
       </mesh>
-      <mesh position={[0.08, 0.68, 0.2]}>
-        <sphereGeometry args={[0.03, 8, 8]} />
+      <mesh position={[0.1, 0.48, 0.26]}>
+        <sphereGeometry args={[0.045, 10, 10]} />
         <meshStandardMaterial color="#111" />
       </mesh>
-      <mesh position={[0, 0.86, 0]} castShadow>
-        <coneGeometry args={[0.24, 0.3, 12]} />
+      {/* Eye highlight */}
+      <mesh position={[-0.085, 0.495, 0.295]}>
+        <sphereGeometry args={[0.012, 6, 6]} />
+        <meshStandardMaterial color="#fff" />
+      </mesh>
+      <mesh position={[0.115, 0.495, 0.295]}>
+        <sphereGeometry args={[0.012, 6, 6]} />
+        <meshStandardMaterial color="#fff" />
+      </mesh>
+      {/* Hood/beanie — half-sphere matching body color */}
+      <mesh position={[0, 0.58, -0.02]} rotation={[Math.PI, 0, 0]} castShadow>
+        <sphereGeometry args={[0.31, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial color={v.color} />
+      </mesh>
+      {/* Beanie pom */}
+      <mesh position={[0, 0.78, -0.02]} castShadow>
+        <sphereGeometry args={[0.06, 10, 10]} />
+        <meshStandardMaterial color="#fff" />
       </mesh>
     </group>
   </>
@@ -272,6 +318,12 @@ const Villager: React.FC<{
   const bobPhase = useRef<number>(Math.random() * Math.PI * 2);
   const yawRef = useRef<number>(Math.random() * Math.PI * 2);
   const walkAnim = useRef<number>(0);
+  // Stuck detection — track position + time of last meaningful progress.
+  const lastPos = useRef<{ x: number; z: number; t: number }>({
+    x: 0,
+    z: 0,
+    t: 0,
+  });
 
   useFrame((state, delta) => {
     const g = group.current;
@@ -304,15 +356,32 @@ const Villager: React.FC<{
       return;
     }
 
-    // Soft obstacle push: nudge away if too close to any building.
+    // If target became blocked (an obstacle moved/changed), pick a new one.
+    if (!isClear(target.current.x, target.current.z, obstacles)) {
+      target.current = randomTargetAvoiding(obstacles);
+      return;
+    }
+
+    // Stuck detection — if we haven't moved >0.3 units in 1.5s, repath.
+    const moved = Math.hypot(pos.x - lastPos.current.x, pos.z - lastPos.current.z);
+    if (moved > 0.3) {
+      lastPos.current = { x: pos.x, z: pos.z, t: now };
+    } else if (now - lastPos.current.t > 1.5) {
+      target.current = randomTargetAvoiding(obstacles);
+      lastPos.current = { x: pos.x, z: pos.z, t: now };
+      return;
+    }
+
+    // Strong obstacle push — inflate radius so villagers never enter buildings.
     for (const o of obstacles) {
       const ox = pos.x - o.x;
       const oz = pos.z - o.z;
       const od = Math.hypot(ox, oz);
-      if (od < o.r && od > 0.001) {
-        const push = (o.r - od) * 1.2;
-        pos.x += (ox / od) * push * delta * 4;
-        pos.z += (oz / od) * push * delta * 4;
+      const safeR = o.r + 0.3;
+      if (od < safeR && od > 0.001) {
+        const push = (safeR - od);
+        pos.x += (ox / od) * push;
+        pos.z += (oz / od) * push;
       }
     }
 
@@ -354,54 +423,22 @@ const Villager: React.FC<{
       }}
       onPointerOut={() => setHovered(false)}
     >
-      {v.modelUrl ? (
-        <ModelErrorBoundary
-          fallback={
-            <ProceduralBody
-              v={v}
-              hovered={hovered}
-              bodyRef={body}
-              armLRef={armL}
-              armRRef={armR}
-              legLRef={legL}
-              legRRef={legR}
-            />
-          }
-        >
-          <Suspense
-            fallback={
-              <ProceduralBody
-                v={v}
-                hovered={hovered}
-                bodyRef={body}
-                armLRef={armL}
-                armRRef={armR}
-                legLRef={legL}
-                legRRef={legR}
-              />
-            }
-          >
-            <VillagerModel url={v.modelUrl} color={v.color} scale={0.75} />
-          </Suspense>
-        </ModelErrorBoundary>
-      ) : (
-        <ProceduralBody
-          v={v}
-          hovered={hovered}
-          bodyRef={body}
-          armLRef={armL}
-          armRRef={armR}
-          legLRef={legL}
-          legRRef={legR}
-        />
-      )}
+      <ProceduralBody
+        v={v}
+        hovered={hovered}
+        bodyRef={body}
+        armLRef={armL}
+        armRRef={armR}
+        legLRef={legL}
+        legRRef={legR}
+      />
       {/* Name tag */}
       <Html
         position={[0, 1.95, 0]}
         center
-        distanceFactor={10}
+        distanceFactor={22}
         occlude={false}
-        zIndexRange={[10, 0]}
+        zIndexRange={[2, 0]}
       >
         <div className={`villager-tag rarity-${v.rarity}`}>
           {isNew && <span className="villager-tag-new">NEW</span>}
@@ -423,12 +460,34 @@ const VillageView: React.FC = () => {
     addDevVillager,
     removeLastDev,
     clearDev,
+    allStructures,
     structures,
+    availableStructures,
     structureUnlockedCount,
     structureTotalCount,
     devAllStructures,
     toggleDevAllStructures,
+    coinBalance,
+    canAfford,
+    purchase,
+    refund,
+    focusMultiplier,
+    activePairs,
+    pairsForBuilding,
+    allVillagers,
+    availableVillagers,
+    canAffordVillager,
+    purchaseVillager,
+    refundVillager,
+    devVillagerShop,
+    toggleDevVillagerShop,
   } = useVillage();
+  const [shopTab, setShopTab] = useState<"buildings" | "villagers">(
+    "buildings"
+  );
+  React.useEffect(() => {
+    if (!devVillagerShop && shopTab === "villagers") setShopTab("buildings");
+  }, [devVillagerShop, shopTab]);
 
   const obstacles = React.useMemo(
     () =>
@@ -475,21 +534,47 @@ const VillageView: React.FC = () => {
     return out;
   }, [structures, seenStructures, stateLoaded]);
 
+  // Build-in animation: any structure that appears since last render plays a
+  // rise+scale tween for 1.3s. Skipped on first mount (initial load).
+  const [buildingIds, setBuildingIds] = useState<Set<string>>(new Set());
+  const prevStructIds = React.useRef<Set<string> | null>(null);
+  React.useEffect(() => {
+    const current = new Set(structures.map((s) => s.id));
+    if (prevStructIds.current === null) {
+      prevStructIds.current = current;
+      return;
+    }
+    const newly: string[] = [];
+    for (const id of current) {
+      if (!prevStructIds.current.has(id)) newly.push(id);
+    }
+    prevStructIds.current = current;
+    if (newly.length === 0) return;
+    setBuildingIds((prev) => {
+      const next = new Set(prev);
+      for (const id of newly) next.add(id);
+      return next;
+    });
+    const timers = newly.map((id) =>
+      window.setTimeout(() => {
+        setBuildingIds((prev) => {
+          if (!prev.has(id)) return prev;
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }, 2000)
+    );
+    return () => {
+      for (const t of timers) window.clearTimeout(t);
+    };
+  }, [structures]);
+
   const hasNew = newVillagerIds.size > 0 || newStructureIds.size > 0;
 
-  // Time of day: 0..1 (0.5 = noon). Auto-advance unless paused.
-  const [tod, setTod] = useState(0.5);
-  const [todPaused, setTodPaused] = useState(true);
-  useEffect(() => {
-    if (todPaused) return;
-    const id = window.setInterval(() => {
-      setTod((t) => (t + 0.0025) % 1);
-    }, 120);
-    return () => window.clearInterval(id);
-  }, [todPaused]);
-
-  const day = Math.max(0, Math.sin(tod * Math.PI * 2 - Math.PI / 2));
-  const isNight = day < 0.08;
+  // Locked to noon — TOD controls removed for a static daylight scene.
+  const tod = 0.5;
+  const day = 1;
 
   const sunPos = sunPositionFor(tod);
 
@@ -497,26 +582,96 @@ const VillageView: React.FC = () => {
   const [selected, setSelected] = useState<
     | { kind: "villager"; v: VillagerInstance }
     | { kind: "structure"; s: StructureDef }
+    | { kind: "shop"; s: StructureDef }
     | null
   >(null);
+  const [shopOpen, setShopOpen] = useState(false);
 
   return (
     <div className="village-view">
-      <div className="village-view-topbar">
-        <button
-          type="button"
-          className="village-back-btn"
-          onClick={() => setView("main")}
-          aria-label="Back to planner"
-        >
-          ← Back
-        </button>
-        <div className="village-view-title">Village</div>
-        <div className="village-view-stage-row">
+      <div className="village-hud">
+        <div className="village-hud-cluster village-hud-left">
+          <button
+            type="button"
+            className="village-hud-back"
+            onClick={() => setView("main")}
+            aria-label="Back to planner"
+            title="Back to planner"
+          >
+            ←
+          </button>
+          <div className="village-hud-title">
+            <span className="village-hud-title-emoji">🏘️</span>
+            <span className="village-hud-title-text">Village</span>
+          </div>
+        </div>
+
+        <div className="village-hud-cluster village-hud-center">
+          <div className="village-hud-stat" title="Buildings purchased">
+            <span className="village-hud-stat-icon">🏠</span>
+            <div className="village-hud-stat-body">
+              <div className="village-hud-stat-value">
+                {structureUnlockedCount}
+                <span className="village-hud-stat-total">
+                  /{structureTotalCount}
+                </span>
+              </div>
+              <div className="village-hud-stat-bar">
+                <div
+                  className="village-hud-stat-bar-fill village-hud-stat-bar-bldg"
+                  style={{
+                    width: `${
+                      (structureUnlockedCount / structureTotalCount) * 100
+                    }%`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="village-hud-stat" title="Villagers recruited">
+            <span className="village-hud-stat-icon">👥</span>
+            <div className="village-hud-stat-body">
+              <div className="village-hud-stat-value">
+                {unlockedCount}
+                <span className="village-hud-stat-total">
+                  /{totalCount}
+                </span>
+              </div>
+              <div className="village-hud-stat-bar">
+                <div
+                  className="village-hud-stat-bar-fill village-hud-stat-bar-vill"
+                  style={{
+                    width: `${(unlockedCount / totalCount) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="village-hud-cluster village-hud-right">
+          <div className="village-hud-coins" title="Coin balance">
+            <span className="village-hud-coins-icon">🪙</span>
+            <span className="village-hud-coins-value">
+              {coinBalance.toLocaleString()}
+            </span>
+          </div>
+          {focusMultiplier > 1 && (
+            <div
+              className="village-hud-mult"
+              title={`Villager synergy: ${activePairs.length} active pair${
+                activePairs.length === 1 ? "" : "s"
+              }`}
+            >
+              <span>⚡</span>
+              <span>×{focusMultiplier.toFixed(2)}</span>
+            </div>
+          )}
           {hasNew && (
             <button
               type="button"
-              className="village-ack-btn"
+              className="village-hud-ack"
+              title="Acknowledge new items"
               onClick={() =>
                 markAllSeen(
                   villagers
@@ -526,14 +681,17 @@ const VillageView: React.FC = () => {
                 )
               }
             >
-              Acknowledge {newVillagerIds.size + newStructureIds.size} new
+              🔔 {newVillagerIds.size + newStructureIds.size}
             </button>
           )}
-          <div className="village-view-stage">
-            {unlockedCount}/{totalCount} villagers · {structureUnlockedCount}/
-            {structureTotalCount} buildings
-            {devExtras > 0 && ` · +${devExtras} dev`}
-          </div>
+          <button
+            type="button"
+            className="village-hud-shop"
+            onClick={() => setShopOpen((o) => !o)}
+            title="Open shop"
+          >
+            🏪 <span>Shop</span>
+          </button>
         </div>
       </div>
 
@@ -560,36 +718,160 @@ const VillageView: React.FC = () => {
         <button
           className={`village-dev-btn ${devAllStructures ? "primary" : ""}`}
           onClick={toggleDevAllStructures}
-          title="Show all buildings regardless of unlock"
+          title="Show all buildings regardless of purchase"
         >
-          {devAllStructures ? "All buildings ✓" : "Show all buildings"}
+          {devAllStructures ? "Show-all ✓" : "Show all"}
+        </button>
+        <button
+          className={`village-dev-btn ${devVillagerShop ? "primary" : ""}`}
+          onClick={toggleDevVillagerShop}
+          title="Allow buying villagers (dev / testing)"
+        >
+          {devVillagerShop ? "Buy villagers ✓" : "Buy villagers"}
+        </button>
+        <button
+          className="village-dev-btn danger"
+          onClick={() => {
+            for (const s of allStructures) refund(s.id);
+            for (const v of allVillagers) refundVillager(v.id);
+          }}
+          title="Refund every purchased building + villager (testing)"
+        >
+          Sell all
         </button>
       </div>
 
-      <div className="village-tod-panel">
-        <button
-          className="village-tod-btn"
-          onClick={() => setTodPaused((p) => !p)}
-          title={todPaused ? "Auto cycle" : "Pause time"}
-        >
-          {todPaused ? "▶" : "⏸"}
-        </button>
-        <input
-          type="range"
-          className="village-tod-slider"
-          min={0}
-          max={1}
-          step={0.005}
-          value={tod}
-          onChange={(e) => {
-            setTodPaused(true);
-            setTod(parseFloat(e.target.value));
-          }}
-        />
-        <div className="village-tod-label">
-          {todLabel(tod)}
+      {shopOpen && (
+        <div className="village-shop-panel">
+          <div className="village-shop-header">
+            <div className="village-shop-title">
+              <span>🏪 Village Shop</span>
+              <span className="village-shop-title-coins">
+                🪙 {coinBalance.toLocaleString()}
+              </span>
+            </div>
+            <button
+              className="village-shop-close"
+              onClick={() => setShopOpen(false)}
+              aria-label="Close shop"
+            >
+              ×
+            </button>
+          </div>
+          <div className="village-shop-tabs">
+            <button
+              className={`village-shop-tab ${
+                shopTab === "buildings" ? "village-shop-tab-on" : ""
+              }`}
+              onClick={() => setShopTab("buildings")}
+            >
+              🏠 Buildings
+            </button>
+            {devVillagerShop && (
+              <button
+                className={`village-shop-tab ${
+                  shopTab === "villagers" ? "village-shop-tab-on" : ""
+                }`}
+                onClick={() => setShopTab("villagers")}
+              >
+                👤 Villagers <span className="village-shop-tab-dev">dev</span>
+              </button>
+            )}
+          </div>
+          <div className="village-shop-body">
+            {shopTab === "buildings" &&
+              (availableStructures.length === 0 ? (
+                <div className="village-shop-empty">
+                  <div className="village-shop-empty-emoji">🎉</div>
+                  <div>Every plot has been built!</div>
+                </div>
+              ) : (
+                availableStructures.map((s) => {
+                  const afford = canAfford(s.id);
+                  return (
+                    <div
+                      key={s.id}
+                      className={`village-shop-item ${
+                        afford ? "" : "village-shop-item-disabled"
+                      }`}
+                    >
+                      <div
+                        className="village-shop-item-icon"
+                        style={{ background: s.color }}
+                      >
+                        🏠
+                      </div>
+                      <div className="village-shop-item-info">
+                        <div className="village-shop-item-name">{s.name}</div>
+                        <div className="village-shop-item-kind">
+                          {structureKindLabel(s.kind)}
+                        </div>
+                      </div>
+                      <button
+                        className="village-shop-item-buy"
+                        disabled={!afford}
+                        onClick={() => purchase(s.id)}
+                      >
+                        🪙 {s.cost.toLocaleString()}
+                      </button>
+                    </div>
+                  );
+                })
+              ))}
+            {shopTab === "villagers" &&
+              (availableVillagers.length === 0 ? (
+                <div className="village-shop-empty">
+                  <div className="village-shop-empty-emoji">👋</div>
+                  <div>All villagers have moved in!</div>
+                </div>
+              ) : (
+                availableVillagers.map((v) => {
+                  const afford = canAffordVillager(v.id);
+                  const pair = VILLAGER_PAIRS[v.id];
+                  return (
+                    <div
+                      key={v.id}
+                      className={`village-shop-item ${
+                        afford ? "" : "village-shop-item-disabled"
+                      }`}
+                    >
+                      <div
+                        className={`village-shop-item-icon rarity-${v.rarity}`}
+                      >
+                        {v.emoji}
+                      </div>
+                      <div className="village-shop-item-info">
+                        <div className="village-shop-item-name">
+                          {v.name}
+                          {v.rarity !== "common" && (
+                            <span
+                              className={`village-shop-item-rarity rarity-${v.rarity}`}
+                            >
+                              {v.rarity}
+                            </span>
+                          )}
+                          {pair && (
+                            <span className="village-shop-item-pair">
+                              ⚡+{pair.bonusPct}%
+                            </span>
+                          )}
+                        </div>
+                        <div className="village-shop-item-kind">{v.title}</div>
+                      </div>
+                      <button
+                        className="village-shop-item-buy"
+                        disabled={!afford}
+                        onClick={() => purchaseVillager(v.id)}
+                      >
+                        🪙 {v.cost.toLocaleString()}
+                      </button>
+                    </div>
+                  );
+                })
+              ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {selected && (
         <div
@@ -607,7 +889,7 @@ const VillageView: React.FC = () => {
             >
               ×
             </button>
-            {selected.kind === "villager" ? (
+            {selected.kind === "villager" && (
               <>
                 <div className="village-info-icon" style={{ background: selected.v.color }}>
                   {selected.v.emoji}
@@ -617,8 +899,39 @@ const VillageView: React.FC = () => {
                 <div className={`village-info-rarity rarity-${selected.v.rarity}`}>
                   {selected.v.rarity}
                 </div>
+                {(() => {
+                  const rid = realIdOf(selected.v.id);
+                  const pair = VILLAGER_PAIRS[rid];
+                  if (!pair) return null;
+                  const building = allStructures.find(
+                    (s) => s.id === pair.buildingId
+                  );
+                  const active = activePairs.some(
+                    (p) => p.villagerId === rid
+                  );
+                  return (
+                    <div className="village-bonus-list">
+                      <div className="village-bonus-title">
+                        ⚡ Pairs with {building?.name ?? pair.buildingId}
+                      </div>
+                      <div
+                        className={`village-bonus-row ${
+                          active ? "village-bonus-active" : "village-bonus-idle"
+                        }`}
+                      >
+                        <span className="village-bonus-name">
+                          {active ? "Active" : "Inactive — build it"}
+                        </span>
+                        <span className="village-bonus-pct">
+                          +{pair.bonusPct}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </>
-            ) : (
+            )}
+            {selected.kind === "structure" && (
               <>
                 <div
                   className="village-info-icon"
@@ -630,8 +943,57 @@ const VillageView: React.FC = () => {
                 <div className="village-info-title">
                   {structureKindLabel(selected.s.kind)}
                 </div>
-                <div className="village-info-unlock">
-                  Unlock: {unlockMetricLabel(selected.s.unlock)}
+                {(() => {
+                  const pairs = pairsForBuilding.get(selected.s.id) || [];
+                  if (pairs.length === 0) return null;
+                  const totalPct = pairs.reduce((a, p) => a + p.bonusPct, 0);
+                  return (
+                    <div className="village-bonus-list">
+                      <div className="village-bonus-title">
+                        ⚡ +{totalPct}% coin rate
+                      </div>
+                      {pairs.map((p) => {
+                        const v = VILLAGER_BY_ID.get(p.villagerId);
+                        if (!v) return null;
+                        return (
+                          <div key={p.villagerId} className="village-bonus-row">
+                            <span className="village-bonus-emoji">{v.emoji}</span>
+                            <span className="village-bonus-name">{v.name}</span>
+                            <span className="village-bonus-pct">+{p.bonusPct}%</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+            {selected.kind === "shop" && (
+              <>
+                <div
+                  className="village-info-icon"
+                  style={{ background: selected.s.color }}
+                >
+                  🏗️
+                </div>
+                <div className="village-info-name">{selected.s.name}</div>
+                <div className="village-info-title">
+                  {structureKindLabel(selected.s.kind)}
+                </div>
+                <div className="village-shop-cost">🪙 {selected.s.cost}</div>
+                <button
+                  className="village-shop-buy"
+                  disabled={!canAfford(selected.s.id)}
+                  onClick={() => {
+                    const id = selected.s.id;
+                    const ok = purchase(id);
+                    if (ok) setSelected(null);
+                  }}
+                >
+                  {canAfford(selected.s.id) ? "Build" : "Not enough coins"}
+                </button>
+                <div className="village-shop-balance">
+                  Balance: 🪙 {coinBalance}
                 </div>
               </>
             )}
@@ -639,32 +1001,21 @@ const VillageView: React.FC = () => {
         </div>
       )}
 
-      {unlockedCount === 0 && devExtras === 0 && (
-        <div className="village-empty-overlay">
-          <div className="village-empty-card">
-            <div className="village-empty-title">Your village is empty</div>
-            <div className="village-empty-body">
-              Complete a focus session to recruit your first villager.
-            </div>
-          </div>
-        </div>
-      )}
-
       <Canvas
         shadows
-        camera={{ position: [14, 12, 14], fov: 50 }}
+        camera={{ position: [0, 18, 26], fov: 50 }}
         dpr={[1, 2]}
         gl={{ outputColorSpace: THREE.SRGBColorSpace, toneMapping: THREE.ACESFilmicToneMapping }}
       >
         <Suspense fallback={null}>
           <Sky
             sunPosition={sunPos}
-            turbidity={isNight ? 0.1 : 6}
-            rayleigh={isNight ? 0.05 : 1}
+            turbidity={6}
+            rayleigh={1}
             mieCoefficient={0.005}
             mieDirectionalG={0.8}
           />
-          {isNight && <Stars radius={120} depth={50} count={2500} factor={3} fade speed={1} />}
+          <fog attach="fog" args={["#cfe8e3", 45, 110]} />
           <Lighting tod={tod} />
           <VillageTerrain />
           <VillageLake />
@@ -674,15 +1025,36 @@ const VillageView: React.FC = () => {
             structures={structures.map((s) => ({ position: s.position }))}
           />
           <DecorTrees />
+          <Motes count={60} />
+          <Butterflies />
+          {structures.some((s) => s.id === "shrine") && (
+            <Smoke position={[5, 0.8, 8]} color="#e8b87a" count={8} />
+          )}
+          {structures.some((s) => s.id === "forge") && (
+            <Smoke position={[-13, 2.4, -3]} color="#8b8b8b" count={6} />
+          )}
+          {structures.some((s) => s.id === "starter-house") && (
+            <Smoke position={[-12, 2.8, 5]} color="#aab0b6" count={5} />
+          )}
           {structures.map((s) => (
             <VillageStructure
               key={s.id}
               s={s}
               isNew={newStructureIds.has(s.id)}
+              isBuilding={buildingIds.has(s.id)}
               onClick={() => {
                 markStructureSeen(s.id);
                 setSelected({ kind: "structure", s });
               }}
+            />
+          ))}
+          {availableStructures.map((s) => (
+            <EmptyPlot
+              key={`plot-${s.id}`}
+              s={s}
+              affordable={canAfford(s.id)}
+              onClick={() => setSelected({ kind: "shop", s })}
+              onBuy={() => purchase(s.id)}
             />
           ))}
           {villagers.map((v) => (

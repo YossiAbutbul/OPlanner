@@ -16,130 +16,157 @@ export interface StructureDef {
   id: string;
   name: string;
   kind: StructureKind;
+  /** Legacy unlock condition — kept for reference but no longer gates placement. */
   unlock: UnlockMetric;
-  /** Fixed plot in world coords. */
+  /** Coin cost to purchase and place. */
+  cost: number;
   position: [number, number];
-  /** Y-axis rotation in radians. */
   rotation?: number;
-  /** Primary palette color (roof / accent). */
   color: string;
-  /**
-   * Optional GLTF model URL. If set, renders 3D model in place of procedural.
-   * Default convention: drop file at `public/models/structures/<id>.glb`
-   * and set `modelUrl: "/models/structures/<id>.glb"`.
-   */
   modelUrl?: string;
-  /** Optional uniform scale to fit GLB (default 1). */
+  modelFootprint?: number;
   modelScale?: number;
-  /** Optional Y offset to seat GLB on ground (default 0). */
   modelYOffset?: number;
 }
 
-// Plots arranged around the central square in a loose ring.
+const MODEL = (id: string) =>
+  `${import.meta.env.BASE_URL}models/structures/${id}.glb`;
+
+/** Rotation so building's +z (front) faces a target point. */
+const faceTowards = (
+  pos: [number, number],
+  target: [number, number]
+): number => Math.atan2(target[0] - pos[0], target[1] - pos[1]);
+
+const CENTER: [number, number] = [0, 0];
+
+// Horseshoe layout opening south (toward default camera at z=+26).
+// Buildings ring around a central plaza, leaving the south side open so the
+// camera looking north can see all 10 at once.
 export const STRUCTURES: StructureDef[] = [
+  // Back center — tallest landmark, anchors the far side.
+  {
+    id: "tower",
+    name: "Bell Tower",
+    kind: "tower",
+    unlock: { kind: "streak", days: 3 },
+    cost: 350,
+    position: [0, -12],
+    rotation: faceTowards([0, -12], CENTER),
+    color: "#0ea5e9",
+    modelUrl: MODEL("tower"),
+    modelFootprint: 4.0,
+  },
+  // Back-left cluster.
+  {
+    id: "windmill",
+    name: "Mill",
+    kind: "windmill",
+    unlock: { kind: "focusCount", count: 25 },
+    cost: 600,
+    position: [-8, -11],
+    rotation: faceTowards([-8, -11], CENTER),
+    color: "#fef3c7",
+    modelUrl: MODEL("windmill"),
+    modelFootprint: 5.0,
+  },
+  // Back-right cluster.
+  {
+    id: "tavern",
+    name: "The Inn",
+    kind: "tavern",
+    unlock: { kind: "totalHours", hours: 10 },
+    cost: 500,
+    position: [9, -10],
+    rotation: faceTowards([9, -10], CENTER),
+    color: "#b45309",
+    modelUrl: MODEL("tavern"),
+    modelFootprint: 6.0,
+  },
+  // Left flank.
+  {
+    id: "forge",
+    name: "Blacksmith",
+    kind: "forge",
+    unlock: { kind: "dailyGoalHits", days: 5 },
+    cost: 400,
+    position: [-13, -3],
+    rotation: faceTowards([-13, -3], CENTER),
+    color: "#7f1d1d",
+    modelUrl: MODEL("forge"),
+    modelFootprint: 5.5,
+  },
   {
     id: "starter-house",
-    name: "Starter Cottage",
+    name: "Cottage",
     kind: "house",
     unlock: { kind: "focusCount", count: 1 },
-    position: [-4, -4],
-    rotation: Math.PI / 6,
+    cost: 50,
+    position: [-12, 5],
+    rotation: faceTowards([-12, 5], CENTER),
     color: "#dc2626",
-    modelUrl: `${import.meta.env.BASE_URL}models/structures/starter-house.glb`,
-    modelScale: 0.5,
+    modelUrl: MODEL("starter-house"),
+    modelFootprint: 4.0,
   },
+  // Right flank.
+  {
+    id: "library",
+    name: "Old House",
+    kind: "library",
+    unlock: { kind: "totalHours", hours: 5 },
+    cost: 250,
+    position: [13, -3],
+    rotation: faceTowards([13, -3], CENTER),
+    color: "#7c3aed",
+    modelUrl: MODEL("library"),
+    modelFootprint: 4.5,
+  },
+  {
+    id: "bakery",
+    name: "Townhouse",
+    kind: "bakery",
+    unlock: { kind: "focusCount", count: 5 },
+    cost: 150,
+    position: [12, 5],
+    rotation: faceTowards([12, 5], CENTER),
+    color: "#f59e0b",
+    modelUrl: MODEL("bakery"),
+    modelFootprint: 4.0,
+  },
+  // Open south side — small props near the camera.
   {
     id: "well",
     name: "Village Well",
     kind: "well",
     unlock: { kind: "focusCount", count: 3 },
+    cost: 100,
     position: [0, 0],
     color: "#475569",
-    modelUrl: `${import.meta.env.BASE_URL}models/structures/well.glb`,
-    modelScale: 1.3,
-  },
-  {
-    id: "bakery",
-    name: "Pippa's Bakery",
-    kind: "bakery",
-    unlock: { kind: "focusCount", count: 5 },
-    position: [5, -3],
-    rotation: -Math.PI / 8,
-    color: "#f59e0b",
-    modelUrl: `${import.meta.env.BASE_URL}models/structures/bakery.glb`,
-    modelScale: 0.5,
-  },
-  {
-    id: "library",
-    name: "Old Library",
-    kind: "library",
-    unlock: { kind: "totalHours", hours: 5 },
-    position: [-7, 2],
-    rotation: Math.PI / 4,
-    color: "#7c3aed",
-    modelUrl: `${import.meta.env.BASE_URL}models/structures/library.glb`,
-    modelScale: 0.5,
-  },
-  {
-    id: "tower",
-    name: "Watchtower",
-    kind: "tower",
-    unlock: { kind: "streak", days: 3 },
-    position: [7, 4],
-    color: "#0ea5e9",
-    modelUrl: `${import.meta.env.BASE_URL}models/structures/tower.glb`,
-    modelScale: 1.4,
+    modelUrl: MODEL("well"),
+    modelFootprint: 2.5,
   },
   {
     id: "garden",
-    name: "Herb Garden",
+    name: "Gazebo",
     kind: "garden",
     unlock: { kind: "focusCount", count: 10 },
-    position: [3, 6],
+    cost: 200,
+    position: [-5, 8],
+    rotation: faceTowards([-5, 8], CENTER),
     color: "#10b981",
-    modelUrl: `${import.meta.env.BASE_URL}models/structures/garden.glb`,
-    modelScale: 1.4,
-  },
-  {
-    id: "forge",
-    name: "Forge",
-    kind: "forge",
-    unlock: { kind: "dailyGoalHits", days: 5 },
-    position: [-6, -7],
-    rotation: -Math.PI / 5,
-    color: "#7f1d1d",
-    modelUrl: `${import.meta.env.BASE_URL}models/structures/forge.glb`,
-    modelScale: 0.5,
-  },
-  {
-    id: "tavern",
-    name: "Tavern",
-    kind: "tavern",
-    unlock: { kind: "totalHours", hours: 10 },
-    position: [8, -6],
-    rotation: Math.PI / 7,
-    color: "#b45309",
-    modelUrl: `${import.meta.env.BASE_URL}models/structures/tavern.glb`,
-    modelScale: 0.5,
+    modelUrl: MODEL("garden"),
+    modelFootprint: 3.0,
   },
   {
     id: "shrine",
-    name: "Moonlit Shrine",
+    name: "Bonfire",
     kind: "shrine",
     unlock: { kind: "streak", days: 7 },
-    position: [-9, 7],
-    color: "#e0e7ff",
-    modelUrl: `${import.meta.env.BASE_URL}models/structures/shrine.glb`,
-    modelScale: 1.3,
-  },
-  {
-    id: "windmill",
-    name: "Windmill",
-    kind: "windmill",
-    unlock: { kind: "focusCount", count: 25 },
-    position: [10, 0],
-    color: "#fef3c7",
-    modelUrl: `${import.meta.env.BASE_URL}models/structures/windmill.glb`,
-    modelScale: 1.5,
+    cost: 300,
+    position: [5, 8],
+    rotation: faceTowards([5, 8], CENTER),
+    color: "#fb923c",
+    modelUrl: MODEL("shrine"),
+    modelFootprint: 2.2,
   },
 ];
