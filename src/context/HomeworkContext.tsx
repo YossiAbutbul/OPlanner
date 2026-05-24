@@ -238,6 +238,26 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
       );
 
       if (id) {
+        const prevEntry = homework.find((h) => h.id === id);
+        const movedLocation =
+          !!prevEntry &&
+          (prevEntry.course !== course ||
+            prevEntry.year !== year ||
+            prevEntry.semester !== semester);
+        if (movedLocation && prevEntry) {
+          try {
+            await deleteDoc(
+              doc(
+                db,
+                `users/${requireUid()}/years/${prevEntry.year}/semesters/${prevEntry.semester}/courses/${prevEntry.course}/tasks`,
+                id
+              )
+            );
+          } catch (e) {
+            console.error("Error deleting old task location:", e);
+          }
+        }
+
         const taskDoc = doc(tasksCollection, id);
         const task = { id, name, dueDate, status, year, semester, course, ignoreOverdue };
         await setDoc(taskDoc, task, { merge: true });
@@ -246,10 +266,32 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
           const exists = prev.some((entry) => entry.id === id);
           const next = exists
             ? prev.map((entry) =>
-                entry.id === id ? { ...entry, name, dueDate, status, ignoreOverdue } : entry
+                entry.id === id
+                  ? { ...entry, name, dueDate, status, year, semester, course, ignoreOverdue }
+                  : entry
               )
             : [...prev, task];
-          writeCache(year, semester, course, next.filter((h) => h.course === course));
+          if (movedLocation && prevEntry) {
+            writeCache(
+              prevEntry.year,
+              prevEntry.semester,
+              prevEntry.course,
+              next.filter(
+                (h) =>
+                  h.course === prevEntry.course &&
+                  h.year === prevEntry.year &&
+                  h.semester === prevEntry.semester
+              )
+            );
+          }
+          writeCache(
+            year,
+            semester,
+            course,
+            next.filter(
+              (h) => h.course === course && h.year === year && h.semester === semester
+            )
+          );
           return next;
         });
       } else {
