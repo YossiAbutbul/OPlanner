@@ -102,7 +102,10 @@ const SemesterOverview: React.FC<Props> = ({
   ) => {
     try {
       setIsLoadingAction(true);
-      await addHomework(id, name, dueDate, status, year, semesterKey, course, ignoreOverdue);
+      const prevLocation = id && taskEditTask
+        ? { year: taskEditTask.year, semester: taskEditTask.semester, course: taskEditTask.course }
+        : undefined;
+      await addHomework(id, name, dueDate, status, year, semesterKey, course, ignoreOverdue, prevLocation);
       setTaskModalOpen(false);
       setTaskEditTask(null);
       setTaskPrefillDate(null);
