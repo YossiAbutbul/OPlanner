@@ -1048,15 +1048,16 @@ const VillageView: React.FC = () => {
               }}
             />
           ))}
-          {availableStructures.map((s) => (
-            <EmptyPlot
-              key={`plot-${s.id}`}
-              s={s}
-              affordable={canAfford(s.id)}
-              onClick={() => setSelected({ kind: "shop", s })}
-              onBuy={() => purchase(s.id)}
-            />
-          ))}
+          {!devAllStructures &&
+            availableStructures.map((s) => (
+              <EmptyPlot
+                key={`plot-${s.id}`}
+                s={s}
+                affordable={canAfford(s.id)}
+                onClick={() => setSelected({ kind: "shop", s })}
+                onBuy={() => purchase(s.id)}
+              />
+            ))}
           {villagers.map((v) => (
             <Villager
               key={v.id}
