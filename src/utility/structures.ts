@@ -82,9 +82,9 @@ export const getStageScale = (level: number): number =>
 const MODEL = (id: string) =>
   `${import.meta.env.BASE_URL}models/structures/${id}.glb`;
 
-/** Per-stage GLB path (Kenney variants live in /stages). */
-const STAGE = (id: string, lvl: number) =>
-  `${import.meta.env.BASE_URL}models/structures/stages/${id}-L${lvl}.glb`;
+/** Per-stage GLB path. `kit` is the Kenney subdir (each pack has its own Textures/colormap.png). */
+const STAGE = (kit: "td" | "town", id: string, lvl: number) =>
+  `${import.meta.env.BASE_URL}models/structures/stages/${kit}/${id}-L${lvl}.glb`;
 
 /** Rotation so building's +z (front) faces a target point. */
 const faceTowards = (
@@ -108,13 +108,13 @@ export const STRUCTURES: StructureDef[] = [
     position: [0, -12],
     rotation: faceTowards([0, -12], CENTER),
     color: "#0ea5e9",
-    modelUrl: STAGE("tower", 1),
+    modelUrl: STAGE("td", "tower", 1),
     modelByLevel: {
-      1: STAGE("tower", 1),
-      2: STAGE("tower", 2),
-      3: STAGE("tower", 3),
-      4: STAGE("tower", 4),
-      5: STAGE("tower", 5),
+      1: STAGE("td", "tower", 1),
+      2: STAGE("td", "tower", 2),
+      3: STAGE("td", "tower", 3),
+      4: STAGE("td", "tower", 4),
+      5: STAGE("td", "tower", 5),
     },
     modelFootprint: 4.0,
   },
@@ -131,8 +131,8 @@ export const STRUCTURES: StructureDef[] = [
     modelUrl: MODEL("windmill"),
     modelByLevel: {
       1: MODEL("windmill"),
-      2: STAGE("windmill", 2),
-      3: STAGE("windmill", 3),
+      2: STAGE("town", "windmill", 2),
+      3: STAGE("town", "windmill", 3),
     },
     maxLevel: 3,
     modelFootprint: 5.0,
@@ -160,13 +160,13 @@ export const STRUCTURES: StructureDef[] = [
     position: [-13, -3],
     rotation: faceTowards([-13, -3], CENTER),
     color: "#7f1d1d",
-    modelUrl: STAGE("forge", 1),
+    modelUrl: STAGE("td", "forge", 1),
     modelByLevel: {
-      1: STAGE("forge", 1),
-      2: STAGE("forge", 2),
-      3: STAGE("forge", 3),
-      4: STAGE("forge", 4),
-      5: STAGE("forge", 5),
+      1: STAGE("td", "forge", 1),
+      2: STAGE("td", "forge", 2),
+      3: STAGE("td", "forge", 3),
+      4: STAGE("td", "forge", 4),
+      5: STAGE("td", "forge", 5),
     },
     modelFootprint: 5.5,
   },
@@ -179,12 +179,12 @@ export const STRUCTURES: StructureDef[] = [
     position: [-12, 5],
     rotation: faceTowards([-12, 5], CENTER),
     color: "#dc2626",
-    modelUrl: STAGE("starter-house", 1),
+    modelUrl: STAGE("td", "starter-house", 1),
     modelByLevel: {
-      1: STAGE("starter-house", 1),
-      2: STAGE("starter-house", 2),
-      3: STAGE("starter-house", 3),
-      4: STAGE("starter-house", 4),
+      1: STAGE("td", "starter-house", 1),
+      2: STAGE("td", "starter-house", 2),
+      3: STAGE("td", "starter-house", 3),
+      4: STAGE("td", "starter-house", 4),
     },
     maxLevel: 4,
     modelFootprint: 4.0,
