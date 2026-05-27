@@ -27,16 +27,16 @@ const RoadTile: React.FC<{
  * Avenues run E-W between rows; cross streets run N-S between column groups.
  */
 export const CityRoads: React.FC = () => {
-  // Avenue z-positions (between building rows).
-  const avenues = [-16, -4, 8];
+  // Avenue z-positions (between building rows). Rows live at z=-30/-20/-10/2.
+  const avenues = [-25, -15, -4, 8];
   // Cross-street x-positions (between column groups).
   const crosses = [-12, -4, 4, 12];
   // X range for avenues (one tile every 4 units, centered).
   const xs: number[] = [];
   for (let x = -20; x <= 20; x += TILE) xs.push(x);
-  // Z range for cross streets (cover all 3 avenues).
+  // Z range for cross streets — span back-most avenue to front-most.
   const zs: number[] = [];
-  for (let z = -20; z <= 8; z += TILE) zs.push(z);
+  for (let z = -28; z <= 8; z += TILE) zs.push(z);
 
   const intersection = (x: number, z: number) =>
     avenues.includes(z) && crosses.includes(x);

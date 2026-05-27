@@ -45,12 +45,13 @@ const faceTowards = (
 
 const CENTER: [number, number] = [0, 0];
 
-// City block layout: 3 rows × 5 columns = 15 buildings.
-// Row 1 (back, z=-22) = skyscrapers / tall.
-// Row 2 (mid, z=-10) = mid-rise commercial.
-// Row 3 (front, z=2) = small commercial + industrial props.
-// Camera at z=+26 looks north → rows are stacked back→front visibly.
-const ROW_BACK_Z = -22;
+// City block layout. Camera at z=+26 looks north → smaller z is "further back".
+// Row 1 (deep back, z=-30) = 5 skyscrapers.
+// Row 2 (back, z=-20)      = small shops (Kiosk/Café/Shop) tucked behind skyscrapers.
+// Row 3 (mid, z=-10)       = 5 mid-rise commercial.
+// Row 4 (front, z=2)       = industrial props.
+const ROW_BACK_Z = -30;
+const ROW_SHOPS_Z = -20;
 const ROW_MID_Z = -10;
 const ROW_FRONT_Z = 2;
 const COL_X = [-16, -8, 0, 8, 16] as const;
@@ -182,15 +183,15 @@ export const STRUCTURES: StructureDef[] = [
     modelFootprint: 4.0,
   },
 
-  // ── Front row (small commercial + industrial) ─────────────────────────
+  // ── Shops row (tucked between skyscrapers and mid-rises) ──────────────
   {
     id: "shop-a",
     name: "Shop",
     kind: "bakery",
     unlock: { kind: "focusCount", count: 3 },
     cost: 80,
-    position: [COL_X[0], ROW_FRONT_Z],
-    rotation: faceCam([COL_X[0], ROW_FRONT_Z]),
+    position: [COL_X[0], ROW_SHOPS_Z],
+    rotation: faceCam([COL_X[0], ROW_SHOPS_Z]),
     color: "#10b981",
     modelUrl: COMM("low-detail-building-a"),
     modelFootprint: 2.5,
@@ -201,8 +202,8 @@ export const STRUCTURES: StructureDef[] = [
     kind: "garden",
     unlock: { kind: "focusCount", count: 10 },
     cost: 120,
-    position: [COL_X[1], ROW_FRONT_Z],
-    rotation: faceCam([COL_X[1], ROW_FRONT_Z]),
+    position: [COL_X[2], ROW_SHOPS_Z],
+    rotation: faceCam([COL_X[2], ROW_SHOPS_Z]),
     color: "#059669",
     modelUrl: COMM("low-detail-building-b"),
     modelFootprint: 2.5,
@@ -213,20 +214,21 @@ export const STRUCTURES: StructureDef[] = [
     kind: "well",
     unlock: { kind: "focusCount", count: 3 },
     cost: 60,
-    position: [COL_X[2], ROW_FRONT_Z],
-    rotation: faceCam([COL_X[2], ROW_FRONT_Z]),
+    position: [COL_X[4], ROW_SHOPS_Z],
+    rotation: faceCam([COL_X[4], ROW_SHOPS_Z]),
     color: "#475569",
     modelUrl: COMM("low-detail-building-c"),
     modelFootprint: 2.5,
   },
+  // ── Front row (industrial only) ───────────────────────────────────────
   {
     id: "industrial-a",
     name: "Workshop",
     kind: "forge",
     unlock: { kind: "dailyGoalHits", days: 5 },
     cost: 250,
-    position: [COL_X[3], ROW_FRONT_Z],
-    rotation: faceCam([COL_X[3], ROW_FRONT_Z]),
+    position: [COL_X[1], ROW_FRONT_Z],
+    rotation: faceCam([COL_X[1], ROW_FRONT_Z]),
     color: "#7f1d1d",
     modelUrl: IND("building-a"),
     modelFootprint: 2.8,
@@ -237,8 +239,8 @@ export const STRUCTURES: StructureDef[] = [
     kind: "forge",
     unlock: { kind: "focusCount", count: 25 },
     cost: 700,
-    position: [COL_X[4], ROW_FRONT_Z],
-    rotation: faceCam([COL_X[4], ROW_FRONT_Z]),
+    position: [COL_X[3], ROW_FRONT_Z],
+    rotation: faceCam([COL_X[3], ROW_FRONT_Z]),
     color: "#fb923c",
     modelUrl: IND("building-c"),
     modelFootprint: 2.8,
