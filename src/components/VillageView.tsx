@@ -1005,7 +1005,7 @@ const VillageView: React.FC = () => {
       )}
 
       <Canvas
-        shadows
+        shadows="percentage"
         camera={{ position: [0, 18, 26], fov: 50 }}
         dpr={[1, 2]}
         gl={{ outputColorSpace: THREE.SRGBColorSpace, toneMapping: THREE.ACESFilmicToneMapping }}

@@ -1,4 +1,15 @@
 import './css/index.css';
+
+// Suppress THREE.Clock deprecation noise from @react-three/fiber 9.x.
+// r3f still constructs THREE.Clock internally; warning is harmless until lib updates.
+{
+  const origWarn = console.warn;
+  console.warn = (...args: unknown[]) => {
+    if (typeof args[0] === "string" && args[0].includes("THREE.Clock")) return;
+    origWarn(...args);
+  };
+}
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
