@@ -1093,6 +1093,44 @@
   border: 1px solid #ddd6fe;
   border-radius: 999px;
 }
+.village-upgrade-dev {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: #f1f5f9;
+  border: 1px dashed #94a3b8;
+  border-radius: 8px;
+}
+.village-upgrade-dev-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+.village-upgrade-dev-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+.village-upgrade-dev-btn:hover {
+  background: #e2e8f0;
+}
+.village-upgrade-dev-btn.active {
+  background: #0ea5e9;
+  border-color: #0284c7;
+  color: #fff;
+}
 
 /* === Plot signs (purchase placeholders) === */
 .plot-sign {

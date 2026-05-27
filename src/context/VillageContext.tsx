@@ -84,6 +84,10 @@ interface VillageContextProps {
   canAfford: (id: string) => boolean;
   purchase: (id: string) => boolean;
   refund: (id: string) => void;
+  /** Whether current user is in the dev allowlist (VITE_DEV_EMAILS). */
+  isDev: boolean;
+  /** Direct level setter — used by dev tools, bypasses cost+milestone gating. */
+  devSetLevel: (id: string, level: number) => void;
   // Evolution
   /** Current stage 0-MAX_LEVEL. 0 = not built. */
   levelOf: (id: string) => number;
@@ -428,6 +432,8 @@ export const VillageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         canAfford,
         purchase,
         refund,
+        isDev,
+        devSetLevel: setStructureLevel,
         levelOf,
         canUpgrade,
         nextStage,

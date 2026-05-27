@@ -478,6 +478,8 @@ const VillageView: React.FC = () => {
     canUpgrade,
     nextStage,
     upgrade,
+    isDev,
+    devSetLevel,
     focusMultiplier,
     activePairs,
     pairsForBuilding,
@@ -1006,6 +1008,24 @@ const VillageView: React.FC = () => {
                           ✨ Fully evolved
                         </div>
                       )}
+                      {isDev && (
+                        <div className="village-upgrade-dev">
+                          <span className="village-upgrade-dev-label">Dev</span>
+                          {[0, 1, 2, 3, 4, 5].map((n) => (
+                            <button
+                              key={n}
+                              className={
+                                "village-upgrade-dev-btn" +
+                                (n === lvl ? " active" : "")
+                              }
+                              onClick={() => devSetLevel(id, n)}
+                              title={n === 0 ? "Demolish" : `Set to stage ${n}`}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -1061,6 +1081,24 @@ const VillageView: React.FC = () => {
                 <div className="village-shop-balance">
                   Balance: 🪙 {coinBalance}
                 </div>
+                {isDev && (
+                  <div className="village-upgrade-dev">
+                    <span className="village-upgrade-dev-label">Dev</span>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        className="village-upgrade-dev-btn"
+                        onClick={() => {
+                          devSetLevel(selected.s.id, n);
+                          setSelected(null);
+                        }}
+                        title={`Build directly at stage ${n}`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>
