@@ -145,7 +145,7 @@
 }
 
 .cal-cell.out .cal-tasks {
-  display: none;
+  opacity: 0.55;
 }
 
 .cal-cell.today {
@@ -224,11 +224,12 @@
 }
 
 .cal-dot {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   border-radius: 999px;
   display: inline-block;
   border-left: none;
+  flex-shrink: 0;
 }
 
 .cal-popover {

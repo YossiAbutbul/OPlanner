@@ -3,6 +3,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { HomeworkProvider } from "./context/HomeworkContext";
+import { TimeBlockProvider } from "./context/TimeBlockContext";
 import { AuthProvider } from "./context/AuthContext";
 
 // Mobile debug console: visit ?debug=1 to enable on phones.
@@ -14,7 +15,9 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <AuthProvider>
       <HomeworkProvider>
-        <App />
+        <TimeBlockProvider>
+          <App />
+        </TimeBlockProvider>
       </HomeworkProvider>
     </AuthProvider>
   </React.StrictMode>

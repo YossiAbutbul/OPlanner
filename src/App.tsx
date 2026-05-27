@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import "./css/App.css";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
@@ -6,6 +6,7 @@ import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
 import Tour from "./components/Tour";
 import { useAuth } from "./context/AuthContext";
+import { useHomework } from "./context/HomeworkContext";
 import {
   getAllYearsAndSemesters,
   initializeYear,
@@ -38,6 +39,7 @@ export interface YearTreeData {
 
 const App: React.FC = () => {
   const { user, loading } = useAuth();
+  const { fetchHomework } = useHomework();
   const [years, setYears] = useState<YearTreeData[]>([]);
   const [yearsLoading, setYearsLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
@@ -399,6 +401,8 @@ const App: React.FC = () => {
         /* ignore */
       }
     }
+    // Refresh in-memory homework so calendar and lists update immediately.
+    await fetchHomework(year, semesterKey, course, true);
   };
 
   const handleDeleteYear = async (year: number) => {
@@ -435,10 +439,13 @@ const App: React.FC = () => {
     }
   };
 
-  const activeTab: CourseTab | null =
-    selectedYear !== null && selectedSemester && selectedCourse
-      ? { year: selectedYear, semester: selectedSemester, course: selectedCourse }
-      : null;
+  const activeTab: CourseTab | null = useMemo(
+    () =>
+      selectedYear !== null && selectedSemester && selectedCourse
+        ? { year: selectedYear, semester: selectedSemester, course: selectedCourse }
+        : null,
+    [selectedYear, selectedSemester, selectedCourse]
+  );
 
   const currentYear = years.find((y) => y.year === selectedYear) || null;
   const currentSemester =

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Modal from "./Modal";
 import DatePicker from "./DatePicker";
+import TimePicker from "./TimePicker";
 
 interface HomeworkModalProps {
   isOpen: boolean;
@@ -13,7 +14,9 @@ interface HomeworkModalProps {
     year: number,
     semester: string,
     course: string,
-    ignoreOverdue?: boolean
+    ignoreOverdue?: boolean,
+    startTime?: string,
+    endTime?: string
   ) => void;
   editHomework?: {
     id: string;
@@ -24,6 +27,8 @@ interface HomeworkModalProps {
     semester: string;
     course: string;
     ignoreOverdue?: boolean;
+    startTime?: string;
+    endTime?: string;
   } | null;
   selectedCourseData: {
     year: number;
@@ -52,6 +57,9 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   const [status, setStatus] = useState("PENDING");
   const [ignoreOverdue, setIgnoreOverdue] = useState(false);
   const [courseChoice, setCourseChoice] = useState(REMINDERS_COURSE);
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [allDay, setAllDay] = useState(false);
 
   useEffect(() => {
     if (editHomework) {
@@ -60,12 +68,30 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       setStatus(editHomework.status);
       setIgnoreOverdue(!!editHomework.ignoreOverdue);
       setCourseChoice(editHomework.course || REMINDERS_COURSE);
+      const initStart = editHomework.startTime || "";
+      const initEnd = editHomework.endTime || "";
+      // Legacy entries (no times) are also treated as all-day to match calendar rendering.
+      const isAll =
+        (initStart === "00:00" && initEnd === "23:59") ||
+        (initStart === "07:00" && initEnd === "23:00") ||
+        (!initStart && !initEnd);
+      setAllDay(isAll);
+      setStartTime(isAll ? "07:00" : initStart);
+      setEndTime(isAll ? "23:00" : initEnd);
     } else {
+      const now = new Date();
+      const curStart = `${String(now.getHours()).padStart(2, "0")}:${now.getMinutes() < 30 ? "00" : "30"}`;
+      const total = parseInt(curStart.slice(0, 2)) * 60 + parseInt(curStart.slice(3));
+      const endTotal = total + 30;
+      const curEnd = `${String(Math.min(23, Math.floor(endTotal / 60))).padStart(2, "0")}:${String(endTotal % 60).padStart(2, "0")}`;
       setName("");
       setDueDate(prefilledDueDate || "");
       setStatus("PENDING");
       setIgnoreOverdue(false);
       setCourseChoice(REMINDERS_COURSE);
+      setStartTime(curStart);
+      setEndTime(curEnd);
+      setAllDay(false);
     }
   }, [editHomework, prefilledDueDate, isOpen]);
 
@@ -84,12 +110,16 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       year,
       semester,
       course,
-      ignoreOverdue
+      ignoreOverdue,
+      allDay ? "07:00" : (startTime || undefined),
+      allDay ? "23:00" : (endTime || undefined)
     );
     setName("");
     setDueDate("");
     setStatus("PENDING");
     setIgnoreOverdue(false);
+    setStartTime("");
+    setEndTime("");
     onClose();
   };
 
@@ -184,6 +214,59 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
           );
         }}
       </DatePicker>
+      <div className="hw-time-row">
+        <div className="hw-time-col">
+          <TimePicker
+            label="Start with"
+            value={startTime}
+            onChange={(v) => {
+              setStartTime(v);
+              // Auto-set end = start + 30min if empty or <= start.
+              if (v && (!endTime || endTime <= v)) {
+                const [h, m] = v.split(":").map(Number);
+                const total = h * 60 + m + 30;
+                const eh = Math.min(23, Math.floor(total / 60));
+                const em = total % 60;
+                setEndTime(`${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`);
+              }
+            }}
+            placeholder="--:--"
+            disabled={allDay}
+          />
+        </div>
+        <div className="hw-time-col">
+          <TimePicker
+            label="End with"
+            value={endTime}
+            onChange={setEndTime}
+            placeholder="--:--"
+            minTime={startTime || undefined}
+            disabled={allDay}
+          />
+        </div>
+      </div>
+      <label className="tb-allday">
+        <input
+          type="checkbox"
+          checked={allDay}
+          onChange={(e) => {
+            const on = e.target.checked;
+            setAllDay(on);
+            if (on) {
+              setStartTime("07:00");
+              setEndTime("23:00");
+            } else {
+              const now = new Date();
+              const cs = `${String(now.getHours()).padStart(2, "0")}:${now.getMinutes() < 30 ? "00" : "30"}`;
+              const total = parseInt(cs.slice(0, 2)) * 60 + parseInt(cs.slice(3)) + 30;
+              const ce = `${String(Math.min(23, Math.floor(total / 60))).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+              setStartTime(cs);
+              setEndTime(ce);
+            }
+          }}
+        />
+        <span>All day</span>
+      </label>
       {availableCourses !== undefined && (
         <>
           <label htmlFor="hw-course">Course</label>

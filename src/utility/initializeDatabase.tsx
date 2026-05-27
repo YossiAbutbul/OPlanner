@@ -298,13 +298,16 @@ export const setCourseFinalDate = async (
     await updateDoc(courseRef, { finalDate: date ?? null });
 
     if (date) {
+      const courseTitle = course.replace(/\b\w/g, (c) => c.toUpperCase());
       await setDoc(
         finalTaskRef,
         {
-          name: "Final Exam",
+          name: `Final Exam – ${courseTitle}`,
           dueDate: date,
           status: "PENDING",
           isFinal: true,
+          startTime: "07:00",
+          endTime: "23:00",
         },
         { merge: true }
       );

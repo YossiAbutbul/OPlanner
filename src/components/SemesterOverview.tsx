@@ -98,14 +98,17 @@ const SemesterOverview: React.FC<Props> = ({
     _year: number,
     _semester: string,
     course: string,
-    ignoreOverdue?: boolean
+    ignoreOverdue?: boolean,
+    startTime?: string,
+    endTime?: string
   ) => {
     try {
       setIsLoadingAction(true);
       const prevLocation = id && taskEditTask
         ? { year: taskEditTask.year, semester: taskEditTask.semester, course: taskEditTask.course }
         : undefined;
-      await addHomework(id, name, dueDate, status, year, semesterKey, course, ignoreOverdue, prevLocation);
+      await addHomework(id, name, dueDate, status, year, semesterKey, course, ignoreOverdue, prevLocation, startTime, endTime);
+      setCalSelected(dueDate);
       setTaskModalOpen(false);
       setTaskEditTask(null);
       setTaskPrefillDate(null);
@@ -306,7 +309,10 @@ const SemesterOverview: React.FC<Props> = ({
                 hint="Tip: tap a day to select it, tap again to add a task."
                 tasks={allTasks}
                 selectedDate={calSelected}
-                onSelectDate={setCalSelected}
+                onSelectDate={(d) => {
+                  setCalSelected(d);
+                  if (d) window.dispatchEvent(new CustomEvent("oplanner:select-day", { detail: { date: d } }));
+                }}
                 onCreateOnDate={(date) => {
                   const has = allTasks.some((t) => t.dueDate === date);
                   if (has) {
