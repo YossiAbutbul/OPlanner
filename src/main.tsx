@@ -6,7 +6,6 @@ import { HomeworkProvider } from "./context/HomeworkContext";
 import { TimeBlockProvider } from "./context/TimeBlockContext";
 import { AuthProvider } from "./context/AuthContext";
 import { StudyProvider } from "./context/StudyContext";
-import { SocialProvider } from "./context/SocialContext";
 import { ViewProvider } from "./context/ViewContext";
 import { VillageProvider } from "./context/VillageContext";
 import { VillageStateProvider } from "./context/VillageStateContext";
@@ -20,19 +19,17 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <AuthProvider>
       <HomeworkProvider>
-        <SocialProvider>
-          <StudyProvider>
-            <ViewProvider>
-              <VillageStateProvider>
-                <VillageProvider>
-                  <TimeBlockProvider>
-                    <App />
-                  </TimeBlockProvider>
-                </VillageProvider>
-              </VillageStateProvider>
-            </ViewProvider>
-          </StudyProvider>
-        </SocialProvider>
+        <StudyProvider>
+          <ViewProvider>
+            <VillageStateProvider>
+              <VillageProvider>
+                <TimeBlockProvider>
+                  <App />
+                </TimeBlockProvider>
+              </VillageProvider>
+            </VillageStateProvider>
+          </ViewProvider>
+        </StudyProvider>
       </HomeworkProvider>
     </AuthProvider>
   </React.StrictMode>
