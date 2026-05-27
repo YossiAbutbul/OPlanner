@@ -61,6 +61,17 @@ const CourseCalendar: React.FC<Props> = ({
     year: initial.getFullYear(),
     month: initial.getMonth(),
   });
+
+  // Jump cursor when selectedDate moves to a different month (e.g. user just
+  // saved a task on another month).
+  useEffect(() => {
+    if (!selectedDate) return;
+    const d = new Date(selectedDate);
+    if (d.getFullYear() !== cursor.year || d.getMonth() !== cursor.month) {
+      setCursor({ year: d.getFullYear(), month: d.getMonth() });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
   const [hoverIso, setHoverIso] = useState<string | null>(null);
   const [popoverPos, setPopoverPos] = useState<{ top?: number; bottom?: number; left: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
