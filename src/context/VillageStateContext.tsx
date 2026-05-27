@@ -20,6 +20,8 @@ interface VillagePersistShape {
   seenVillagers: string[];
   seenStructures: string[];
   purchasedStructures?: string[];
+  /** id → level (1..MAX_LEVEL). Absent or 0 = not built. Authoritative since evolution. */
+  structureLevels?: Record<string, number>;
   purchasedVillagers?: string[];
   camera?: CameraView;
   lastEnteredAt?: number;
@@ -28,7 +30,10 @@ interface VillagePersistShape {
 interface VillageStateContextProps {
   seenVillagers: Set<string>;
   seenStructures: Set<string>;
+  /** Derived: ids with level > 0. Kept for legacy callers. */
   purchasedStructures: Set<string>;
+  /** Canonical level per structure. Missing key = level 0 (not built). */
+  structureLevels: Record<string, number>;
   purchasedVillagers: Set<string>;
   camera: CameraView | null;
   markVillagerSeen: (id: string) => void;
@@ -36,6 +41,8 @@ interface VillageStateContextProps {
   markAllSeen: (villagerIds: string[], structureIds: string[]) => void;
   purchaseStructure: (id: string) => void;
   refundStructure: (id: string) => void;
+  /** Direct level setter for evolution. Pass 0 to demolish. */
+  setStructureLevel: (id: string, level: number) => void;
   purchaseVillager: (id: string) => void;
   refundVillager: (id: string) => void;
   setCamera: (c: CameraView) => void;
@@ -52,8 +59,17 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
   const { user } = useAuth();
   const [seenVillagers, setSeenVillagers] = useState<Set<string>>(new Set());
   const [seenStructures, setSeenStructures] = useState<Set<string>>(new Set());
-  const [purchasedStructures, setPurchasedStructures] = useState<Set<string>>(
-    new Set()
+  const [structureLevels, setStructureLevels] = useState<Record<string, number>>(
+    {}
+  );
+  const purchasedStructures = useMemo(
+    () =>
+      new Set(
+        Object.entries(structureLevels)
+          .filter(([, lvl]) => (lvl ?? 0) > 0)
+          .map(([id]) => id)
+      ),
+    [structureLevels]
   );
   const [purchasedVillagers, setPurchasedVillagers] = useState<Set<string>>(
     new Set()
@@ -66,7 +82,7 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     setSeenVillagers(new Set());
     setSeenStructures(new Set());
-    setPurchasedStructures(new Set());
+    setStructureLevels({});
     setPurchasedVillagers(new Set());
     setCameraState(null);
     setLoaded(false);
@@ -82,7 +98,13 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
           const d = snap.data() as Partial<VillagePersistShape>;
           setSeenVillagers(new Set(d.seenVillagers || []));
           setSeenStructures(new Set(d.seenStructures || []));
-          setPurchasedStructures(new Set(d.purchasedStructures || []));
+          // Migration: pre-evolution saves only have purchasedStructures[]. Each
+          // such id starts at level 1 so existing buildings stay placed.
+          const levels: Record<string, number> = { ...(d.structureLevels || {}) };
+          for (const id of d.purchasedStructures || []) {
+            if (!(id in levels) || levels[id] < 1) levels[id] = 1;
+          }
+          setStructureLevels(levels);
           setPurchasedVillagers(new Set(d.purchasedVillagers || []));
           if (d.camera) setCameraState(d.camera);
         }
@@ -180,30 +202,36 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
     [scheduleSave]
   );
 
-  const purchaseStructure = useCallback(
-    (id: string) => {
-      setPurchasedStructures((prev) => {
-        if (prev.has(id)) return prev;
-        const next = new Set(prev);
-        next.add(id);
-        scheduleSave({ purchasedStructures: Array.from(next) });
+  const setStructureLevel = useCallback(
+    (id: string, level: number) => {
+      setStructureLevels((prev) => {
+        const current = prev[id] || 0;
+        const safe = Math.max(0, Math.floor(level));
+        if (current === safe) return prev;
+        const next = { ...prev };
+        if (safe === 0) delete next[id];
+        else next[id] = safe;
+        // Persist both shapes so older clients still see purchases.
+        scheduleSave({
+          structureLevels: next,
+          purchasedStructures: Object.entries(next)
+            .filter(([, lvl]) => (lvl ?? 0) > 0)
+            .map(([k]) => k),
+        });
         return next;
       });
     },
     [scheduleSave]
   );
 
+  const purchaseStructure = useCallback(
+    (id: string) => setStructureLevel(id, 1),
+    [setStructureLevel]
+  );
+
   const refundStructure = useCallback(
-    (id: string) => {
-      setPurchasedStructures((prev) => {
-        if (!prev.has(id)) return prev;
-        const next = new Set(prev);
-        next.delete(id);
-        scheduleSave({ purchasedStructures: Array.from(next) });
-        return next;
-      });
-    },
-    [scheduleSave]
+    (id: string) => setStructureLevel(id, 0),
+    [setStructureLevel]
   );
 
   const purchaseVillager = useCallback(
@@ -237,6 +265,7 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
       seenVillagers,
       seenStructures,
       purchasedStructures,
+      structureLevels,
       purchasedVillagers,
       camera,
       markVillagerSeen,
@@ -244,6 +273,7 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
       markAllSeen,
       purchaseStructure,
       refundStructure,
+      setStructureLevel,
       purchaseVillager,
       refundVillager,
       setCamera,
@@ -253,6 +283,7 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
       seenVillagers,
       seenStructures,
       purchasedStructures,
+      structureLevels,
       purchasedVillagers,
       camera,
       markVillagerSeen,
@@ -260,6 +291,7 @@ export const VillageStateProvider: React.FC<{ children: React.ReactNode }> = ({
       markAllSeen,
       purchaseStructure,
       refundStructure,
+      setStructureLevel,
       purchaseVillager,
       refundVillager,
       setCamera,

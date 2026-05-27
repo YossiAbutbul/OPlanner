@@ -2,7 +2,7 @@ import React, { Suspense, useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
-import { StructureDef } from "../utility/structures";
+import { StructureDef, getStageScale } from "../utility/structures";
 import { StructureModel } from "./StructureModel";
 import { ModelErrorBoundary } from "./ModelErrorBoundary";
 
@@ -474,8 +474,14 @@ export const VillageStructure: React.FC<{
   s: StructureDef;
   isNew?: boolean;
   isBuilding?: boolean;
+  /** 1-5. Defaults to 1 if owned, 0 otherwise. */
+  level?: number;
   onClick?: () => void;
-}> = ({ s, isNew, isBuilding, onClick }) => (
+}> = ({ s, isNew, isBuilding, level, onClick }) => {
+  const lvl = level && level > 0 ? level : 1;
+  const url = s.modelByLevel?.[lvl] ?? s.modelUrl;
+  const stageScale = getStageScale(lvl);
+  return (
   <group
     position={[s.position[0], 0, s.position[1]]}
     rotation={[0, s.rotation || 0, 0]}
@@ -487,14 +493,16 @@ export const VillageStructure: React.FC<{
   >
     {isBuilding && <ConstructionFX />}
     <BuildAnim active={!!isBuilding}>
-      {s.modelUrl ? (
+      {url ? (
         <ModelErrorBoundary fallback={<StructureRender s={s} />}>
           <Suspense fallback={<StructureRender s={s} />}>
             <StructureModel
-              url={s.modelUrl}
+              url={url}
               scale={s.modelScale}
               yOffset={s.modelYOffset}
               targetFootprint={s.modelFootprint}
+              level={lvl}
+              stageScale={stageScale}
             />
           </Suspense>
         </ModelErrorBoundary>
@@ -517,7 +525,8 @@ export const VillageStructure: React.FC<{
       </Html>
     )}
   </group>
-);
+  );
+};
 
 /* === Empty plot helpers === */
 

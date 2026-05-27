@@ -25,8 +25,18 @@ import {
   isUnlocked,
   RARITY_META,
 } from "../utility/village";
-import { STRUCTURES, StructureDef } from "../utility/structures";
-import { computeEarnedCoins, computeSpentCoins } from "../utility/currency";
+import {
+  STRUCTURES,
+  StructureDef,
+  MAX_LEVEL,
+  getUpgrade,
+} from "../utility/structures";
+import { checkUnlock } from "../utility/village";
+import {
+  computeEarnedCoins,
+  computeSpentCoins,
+  computeSpentOnStructureLevels,
+} from "../utility/currency";
 import {
   ActivePair,
   computeActivePairs,
@@ -74,6 +84,15 @@ interface VillageContextProps {
   canAfford: (id: string) => boolean;
   purchase: (id: string) => boolean;
   refund: (id: string) => void;
+  // Evolution
+  /** Current stage 0-MAX_LEVEL. 0 = not built. */
+  levelOf: (id: string) => number;
+  /** Returns true if user has both coins AND milestone met for the next stage. */
+  canUpgrade: (id: string) => boolean;
+  /** Cost + milestone for the NEXT stage, or null if at max. */
+  nextStage: (id: string) => { level: number; cost: number; milestoneMet: boolean; milestoneLabel: string | null } | null;
+  /** Pay cost + advance level by 1. Returns true on success. */
+  upgrade: (id: string) => boolean;
   // Villager synergy
   activePairs: ActivePair[];
   focusMultiplier: number;
@@ -98,6 +117,21 @@ const PALETTE = [
 ];
 
 const VillageContext = createContext<VillageContextProps | undefined>(undefined);
+
+const milestoneText = (m: import("../utility/village").UnlockMetric): string => {
+  switch (m.kind) {
+    case "streak":
+      return `${m.days}-day streak`;
+    case "totalHours":
+      return `${m.hours}h focused`;
+    case "focusCount":
+      return `${m.count} sessions`;
+    case "dailyGoalHits":
+      return `${m.days} goal days`;
+    case "awards":
+      return `${m.count} awards`;
+  }
+};
 
 // Deterministic hash for stable positions across reloads.
 const hashStr = (s: string): number => {
@@ -126,8 +160,10 @@ export const VillageProvider: React.FC<{ children: React.ReactNode }> = ({ child
     !!user?.email && DEV_EMAILS.has(user.email.toLowerCase());
   const {
     purchasedStructures,
+    structureLevels,
     purchaseStructure,
     refundStructure,
+    setStructureLevel,
     purchasedVillagers,
     purchaseVillager: storePurchaseVillager,
     refundVillager: storeRefundVillager,
@@ -171,9 +207,12 @@ export const VillageProvider: React.FC<{ children: React.ReactNode }> = ({ child
   );
   const coinsSpent = useMemo(
     () =>
-      computeSpentCoins(purchasedStructures, STRUCTURES) +
-      computeSpentCoins(purchasedVillagers, VILLAGERS),
-    [purchasedStructures, purchasedVillagers]
+      computeSpentOnStructureLevels(
+        structureLevels,
+        STRUCTURES,
+        (s, lvl) => getUpgrade(s as StructureDef, lvl)?.cost ?? 0
+      ) + computeSpentCoins(purchasedVillagers, VILLAGERS),
+    [structureLevels, purchasedVillagers]
   );
   // Clamp to 0 — purchases are guarded by canAfford, but historical state
   // (e.g. dev-bonus purchases viewed in a non-dev session) can leave spent
@@ -249,7 +288,9 @@ export const VillageProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const canAfford = useCallback(
     (id: string) => {
       const s = STRUCTURES.find((x) => x.id === id);
-      return !!s && coinBalance >= s.cost;
+      if (!s) return false;
+      const stage = getUpgrade(s, 1);
+      return !!stage && coinBalance >= stage.cost;
     },
     [coinBalance]
   );
@@ -259,7 +300,8 @@ export const VillageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const s = STRUCTURES.find((x) => x.id === id);
       if (!s) return false;
       if (purchasedStructures.has(id)) return false;
-      if (coinBalance < s.cost) return false;
+      const stage = getUpgrade(s, 1);
+      if (!stage || coinBalance < stage.cost) return false;
       purchaseStructure(id);
       return true;
     },
@@ -269,6 +311,47 @@ export const VillageProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const refund = useCallback(
     (id: string) => refundStructure(id),
     [refundStructure]
+  );
+
+  const levelOf = useCallback(
+    (id: string) => structureLevels[id] || 0,
+    [structureLevels]
+  );
+
+  const nextStage = useCallback(
+    (id: string) => {
+      const s = STRUCTURES.find((x) => x.id === id);
+      if (!s) return null;
+      const cur = structureLevels[id] || 0;
+      if (cur >= MAX_LEVEL) return null;
+      const stage = getUpgrade(s, cur + 1);
+      if (!stage) return null;
+      const milestoneMet = !stage.milestone || checkUnlock(stage.milestone, stats);
+      const milestoneLabel = stage.milestone
+        ? milestoneText(stage.milestone)
+        : null;
+      return { level: cur + 1, cost: stage.cost, milestoneMet, milestoneLabel };
+    },
+    [structureLevels, stats]
+  );
+
+  const canUpgrade = useCallback(
+    (id: string) => {
+      const ns = nextStage(id);
+      return !!ns && ns.milestoneMet && coinBalance >= ns.cost;
+    },
+    [nextStage, coinBalance]
+  );
+
+  const upgrade = useCallback(
+    (id: string): boolean => {
+      const ns = nextStage(id);
+      if (!ns) return false;
+      if (!ns.milestoneMet || coinBalance < ns.cost) return false;
+      setStructureLevel(id, ns.level);
+      return true;
+    },
+    [nextStage, coinBalance, setStructureLevel]
   );
 
   // Shop hides anyone already recruited (purchased OR achievement-unlocked).
@@ -345,6 +428,10 @@ export const VillageProvider: React.FC<{ children: React.ReactNode }> = ({ child
         canAfford,
         purchase,
         refund,
+        levelOf,
+        canUpgrade,
+        nextStage,
+        upgrade,
         activePairs,
         focusMultiplier,
         pairsForBuilding,

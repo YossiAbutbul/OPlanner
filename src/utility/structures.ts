@@ -18,7 +18,7 @@ export interface StructureDef {
   kind: StructureKind;
   /** Legacy unlock condition — kept for reference but no longer gates placement. */
   unlock: UnlockMetric;
-  /** Coin cost to purchase and place. */
+  /** Coin cost to purchase and place (= cost to reach level 1). Higher stages multiply this. */
   cost: number;
   position: [number, number];
   rotation?: number;
@@ -27,7 +27,51 @@ export interface StructureDef {
   modelFootprint?: number;
   modelScale?: number;
   modelYOffset?: number;
+  /** Per-level model overrides. Falls back to modelUrl with auto-scale when missing. */
+  modelByLevel?: Record<number, string>;
 }
+
+/** Max evolution stage. Level 0 = not built, 1 = base, up to MAX_LEVEL fully evolved. */
+export const MAX_LEVEL = 5;
+
+/** Cost multiplier vs base structure.cost per stage. Index = level. */
+const STAGE_COST_MULT: readonly number[] = [0, 1, 2.5, 6, 15, 35];
+
+/** Visual scale boost per level when a per-level model isn't supplied. Index = level. */
+const STAGE_SCALE_BUMP: readonly number[] = [1, 1, 1.12, 1.25, 1.4, 1.6];
+
+/** Milestone gating each stage. Index = level. Null = no gate (cost only). */
+const STAGE_MILESTONE: readonly (UnlockMetric | null)[] = [
+  null,
+  null,
+  { kind: "totalHours", hours: 5 },
+  { kind: "focusCount", count: 20 },
+  { kind: "streak", days: 7 },
+  { kind: "totalHours", hours: 50 },
+];
+
+export interface UpgradeStage {
+  /** Coin cost to reach this stage from the previous one. */
+  cost: number;
+  /** Extra requirement on top of coins. Null = coins-only. */
+  milestone: UnlockMetric | null;
+}
+
+/** Stage info for a building going to `toLevel`. Returns null for invalid levels. */
+export const getUpgrade = (
+  s: StructureDef,
+  toLevel: number
+): UpgradeStage | null => {
+  if (toLevel < 1 || toLevel > MAX_LEVEL) return null;
+  return {
+    cost: Math.round(s.cost * STAGE_COST_MULT[toLevel]),
+    milestone: STAGE_MILESTONE[toLevel],
+  };
+};
+
+/** Visual scale multiplier to apply at a given level (used when no per-level GLB). */
+export const getStageScale = (level: number): number =>
+  STAGE_SCALE_BUMP[Math.max(0, Math.min(MAX_LEVEL, level))] ?? 1;
 
 const MODEL = (id: string) =>
   `${import.meta.env.BASE_URL}models/structures/${id}.glb`;

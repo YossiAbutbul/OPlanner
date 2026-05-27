@@ -87,3 +87,23 @@ export const computeSpentCoins = (
   for (const id of purchasedIds) spent += byId.get(id) ?? 0;
   return spent;
 };
+
+/**
+ * Sum of every stage cost paid across all owned structures, given current levels.
+ * A building at level N has paid cost(1) + cost(2) + ... + cost(N).
+ */
+export const computeSpentOnStructureLevels = (
+  levels: Record<string, number>,
+  allStructures: Array<{ id: string; cost: number }>,
+  costFor: (
+    s: { id: string; cost: number },
+    level: number
+  ) => number
+): number => {
+  let spent = 0;
+  for (const s of allStructures) {
+    const lvl = Math.max(0, levels[s.id] || 0);
+    for (let i = 1; i <= lvl; i++) spent += costFor(s, i);
+  }
+  return spent;
+};

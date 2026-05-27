@@ -474,6 +474,10 @@ const VillageView: React.FC = () => {
     canAfford,
     purchase,
     refund,
+    levelOf,
+    canUpgrade,
+    nextStage,
+    upgrade,
     focusMultiplier,
     activePairs,
     pairsForBuilding,
@@ -947,6 +951,65 @@ const VillageView: React.FC = () => {
                   {structureKindLabel(selected.s.kind)}
                 </div>
                 {(() => {
+                  const id = selected.s.id;
+                  const lvl = levelOf(id);
+                  const ns = nextStage(id);
+                  return (
+                    <div className="village-upgrade">
+                      <div className="village-upgrade-dots">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <span
+                            key={n}
+                            className={
+                              "village-upgrade-dot" + (n <= lvl ? " filled" : "")
+                            }
+                          />
+                        ))}
+                      </div>
+                      <div className="village-upgrade-level">
+                        Stage {lvl}/5
+                      </div>
+                      {ns ? (
+                        <>
+                          <div className="village-upgrade-cost">
+                            Next: 🪙 {ns.cost}
+                            {ns.milestoneLabel && (
+                              <span
+                                className={
+                                  "village-upgrade-milestone" +
+                                  (ns.milestoneMet ? " met" : "")
+                                }
+                              >
+                                {ns.milestoneMet ? "✓" : "🔒"} {ns.milestoneLabel}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            className="village-shop-buy"
+                            disabled={!canUpgrade(id)}
+                            onClick={() => {
+                              if (upgrade(id)) setSelected(null);
+                            }}
+                          >
+                            {!ns.milestoneMet
+                              ? "Milestone locked"
+                              : coinBalance < ns.cost
+                                ? "Not enough coins"
+                                : `Upgrade to stage ${ns.level}`}
+                          </button>
+                          <div className="village-shop-balance">
+                            Balance: 🪙 {coinBalance}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="village-upgrade-max">
+                          ✨ Fully evolved
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+                {(() => {
                   const pairs = pairsForBuilding.get(selected.s.id) || [];
                   if (pairs.length === 0) return null;
                   const totalPct = pairs.reduce((a, p) => a + p.bonusPct, 0);
@@ -1045,6 +1108,7 @@ const VillageView: React.FC = () => {
               s={s}
               isNew={newStructureIds.has(s.id)}
               isBuilding={buildingIds.has(s.id)}
+              level={levelOf(s.id)}
               onClick={() => {
                 markStructureSeen(s.id);
                 setSelected({ kind: "structure", s });

@@ -1035,6 +1035,65 @@
   margin-top: 6px;
 }
 
+.village-upgrade {
+  margin: 10px 0 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.village-upgrade-dots {
+  display: flex;
+  gap: 4px;
+}
+.village-upgrade-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+}
+.village-upgrade-dot.filled {
+  background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+  border-color: #b45309;
+  box-shadow: 0 0 4px rgba(217, 119, 6, 0.6);
+}
+.village-upgrade-level {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.village-upgrade-cost {
+  font-size: 13px;
+  color: #1f2937;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.village-upgrade-milestone {
+  font-size: 11px;
+  color: #b91c1c;
+  background: #fee2e2;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.village-upgrade-milestone.met {
+  color: #166534;
+  background: #dcfce7;
+}
+.village-upgrade-max {
+  font-size: 13px;
+  font-weight: 700;
+  color: #7c3aed;
+  padding: 6px 12px;
+  background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 1px solid #ddd6fe;
+  border-radius: 999px;
+}
+
 /* === Plot signs (purchase placeholders) === */
 .plot-sign {
   pointer-events: none;
