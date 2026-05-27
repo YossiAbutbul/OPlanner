@@ -29,9 +29,15 @@ export interface StructureDef {
   modelYOffset?: number;
   /** Per-level model overrides. Falls back to modelUrl with auto-scale when missing. */
   modelByLevel?: Record<number, string>;
+  /** Per-level display name override (e.g. Cottage → Skyscraper). Falls back to .name. */
+  namesByLevel?: Record<number, string>;
   /** Max evolution stage for this building. Defaults to MAX_LEVEL (5). */
   maxLevel?: number;
 }
+
+/** Display name for a building at a given level. Falls back to base name. */
+export const getName = (s: StructureDef, level: number): string =>
+  s.namesByLevel?.[level] ?? s.name;
 
 /** Default cap on evolution stages. Buildings may override via StructureDef.maxLevel. */
 export const MAX_LEVEL = 5;
@@ -86,6 +92,10 @@ const MODEL = (id: string) =>
 const STAGE = (kit: "td" | "town", id: string, lvl: number) =>
   `${import.meta.env.BASE_URL}models/structures/stages/${kit}/${id}-L${lvl}.glb`;
 
+/** Commercial kit asset (full city buildings). */
+const COMM = (file: string) =>
+  `${import.meta.env.BASE_URL}models/structures/stages/commercial/${file}.glb`;
+
 /** Rotation so building's +z (front) faces a target point. */
 const faceTowards = (
   pos: [number, number],
@@ -111,10 +121,17 @@ export const STRUCTURES: StructureDef[] = [
     modelUrl: STAGE("td", "tower", 1),
     modelByLevel: {
       1: STAGE("td", "tower", 1),
-      2: STAGE("td", "tower", 2),
-      3: STAGE("td", "tower", 3),
-      4: STAGE("td", "tower", 4),
-      5: STAGE("td", "tower", 5),
+      2: STAGE("td", "tower", 3),
+      3: STAGE("td", "tower", 5),
+      4: COMM("building-skyscraper-c"),
+      5: COMM("building-skyscraper-d"),
+    },
+    namesByLevel: {
+      1: "Watchtower",
+      2: "Bell Tower",
+      3: "Stone Spire",
+      4: "Clock Tower",
+      5: "Skyscraper",
     },
     modelFootprint: 4.0,
   },
@@ -147,7 +164,21 @@ export const STRUCTURES: StructureDef[] = [
     position: [9, -10],
     rotation: faceTowards([9, -10], CENTER),
     color: "#b45309",
-    modelUrl: MODEL("tavern"),
+    modelUrl: STAGE("td", "starter-house", 2),
+    modelByLevel: {
+      1: STAGE("td", "starter-house", 2),
+      2: STAGE("td", "starter-house", 4),
+      3: COMM("low-detail-building-e"),
+      4: COMM("building-e"),
+      5: COMM("building-m"),
+    },
+    namesByLevel: {
+      1: "Inn",
+      2: "Tavern",
+      3: "Hotel",
+      4: "Grand Hotel",
+      5: "Resort Tower",
+    },
     modelFootprint: 6.0,
   },
   // Left flank.
@@ -163,10 +194,17 @@ export const STRUCTURES: StructureDef[] = [
     modelUrl: STAGE("td", "forge", 1),
     modelByLevel: {
       1: STAGE("td", "forge", 1),
-      2: STAGE("td", "forge", 2),
-      3: STAGE("td", "forge", 3),
-      4: STAGE("td", "forge", 4),
-      5: STAGE("td", "forge", 5),
+      2: STAGE("td", "forge", 3),
+      3: STAGE("td", "forge", 5),
+      4: COMM("building-c"),
+      5: COMM("building-skyscraper-e"),
+    },
+    namesByLevel: {
+      1: "Forge",
+      2: "Smithy",
+      3: "Workshop",
+      4: "Factory",
+      5: "Industrial Tower",
     },
     modelFootprint: 5.5,
   },
@@ -183,10 +221,17 @@ export const STRUCTURES: StructureDef[] = [
     modelByLevel: {
       1: STAGE("td", "starter-house", 1),
       2: STAGE("td", "starter-house", 2),
-      3: STAGE("td", "starter-house", 3),
-      4: STAGE("td", "starter-house", 4),
+      3: COMM("low-detail-building-a"),
+      4: COMM("building-a"),
+      5: COMM("building-skyscraper-a"),
     },
-    maxLevel: 4,
+    namesByLevel: {
+      1: "Cottage",
+      2: "House",
+      3: "Apartment",
+      4: "Condo",
+      5: "Skyscraper",
+    },
     modelFootprint: 4.0,
   },
   // Right flank.
@@ -200,6 +245,20 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceTowards([13, -3], CENTER),
     color: "#7c3aed",
     modelUrl: MODEL("library"),
+    modelByLevel: {
+      1: MODEL("library"),
+      2: STAGE("td", "starter-house", 4),
+      3: COMM("low-detail-building-d"),
+      4: COMM("building-d"),
+      5: COMM("building-l"),
+    },
+    namesByLevel: {
+      1: "Old House",
+      2: "Reading Room",
+      3: "Library",
+      4: "Archive",
+      5: "Knowledge Tower",
+    },
     modelFootprint: 4.5,
   },
   {
@@ -212,6 +271,20 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceTowards([12, 5], CENTER),
     color: "#f59e0b",
     modelUrl: MODEL("bakery"),
+    modelByLevel: {
+      1: MODEL("bakery"),
+      2: STAGE("td", "starter-house", 3),
+      3: COMM("low-detail-building-b"),
+      4: COMM("building-b"),
+      5: COMM("building-skyscraper-b"),
+    },
+    namesByLevel: {
+      1: "Townhouse",
+      2: "Brick House",
+      3: "Café",
+      4: "Restaurant",
+      5: "Office Tower",
+    },
     modelFootprint: 4.0,
   },
   // Open south side — small props near the camera.

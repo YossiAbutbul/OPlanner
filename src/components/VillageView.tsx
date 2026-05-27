@@ -16,7 +16,7 @@ import {
 } from "./VillageStructures";
 import { VillageEnvironment } from "./VillageEnvironment";
 import { VillageTerrain, VillageLake } from "./VillageTerrain";
-import { StructureDef, maxLevelOf } from "../utility/structures";
+import { StructureDef, maxLevelOf, getName } from "../utility/structures";
 import { VILLAGERS } from "../utility/village";
 import { VILLAGER_PAIRS } from "../utility/villagerBonus";
 import "../css/VillageView.css";
@@ -948,7 +948,9 @@ const VillageView: React.FC = () => {
                 >
                   🏠
                 </div>
-                <div className="village-info-name">{selected.s.name}</div>
+                <div className="village-info-name">
+                  {getName(selected.s, levelOf(selected.s.id) || 1)}
+                </div>
                 <div className="village-info-title">
                   {structureKindLabel(selected.s.kind)}
                 </div>
