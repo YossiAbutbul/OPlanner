@@ -1,9 +1,10 @@
 import React from "react";
 import { StructureDef } from "../utility/structures";
 
-const STONE_DARK = "#6e6557";
-const STONE_MID = "#a89878";
-const FENCE_COLOR = "#5c4a32";
+// City palette: dark asphalt plaza, lighter concrete pavers, dark steel railing.
+const STONE_DARK = "#3a3d42";
+const STONE_MID = "#5a5d63";
+const FENCE_COLOR = "#2a2d32";
 const FLOWER_COLORS = ["#ef4444", "#f59e0b", "#ec4899", "#a855f7"];
 const Y_TILE = 0.08;
 

@@ -24,11 +24,12 @@ const LAKE_CENTER = new THREE.Vector2(-32, -28);
 const LAKE_RADIUS = 18;
 const LAKE_LEVEL = -1.2;
 
-const COL_SAND = new THREE.Color("#e8d8a0");
-const COL_GRASS = new THREE.Color("#7ec27e");
-const COL_GRASS_DARK = new THREE.Color("#5fae5f");
-const COL_STONE = new THREE.Color("#a6a6a6");
-const COL_SNOW = new THREE.Color("#f5f5f5");
+// City palette: asphalt plaza, concrete sidewalks, distant hills muted gray.
+const COL_SAND = new THREE.Color("#c0bfb8");      // sidewalk concrete
+const COL_GRASS = new THREE.Color("#6e7480");     // asphalt mid
+const COL_GRASS_DARK = new THREE.Color("#535862"); // asphalt deep
+const COL_STONE = new THREE.Color("#8b8e93");      // building-base stone
+const COL_SNOW = new THREE.Color("#dde0e3");       // light gravel
 
 const smoothstep = (e0: number, e1: number, x: number) => {
   const t = Math.max(0, Math.min(1, (x - e0) / (e1 - e0)));
