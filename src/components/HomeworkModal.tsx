@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import Modal from "./Modal";
 import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
+import NotesEditor from "./NotesEditor";
+import CustomSelect from "./CustomSelect";
 
 interface HomeworkModalProps {
   isOpen: boolean;
@@ -16,7 +18,9 @@ interface HomeworkModalProps {
     course: string,
     ignoreOverdue?: boolean,
     startTime?: string,
-    endTime?: string
+    endTime?: string,
+    notes?: string,
+    color?: string
   ) => void;
   editHomework?: {
     id: string;
@@ -29,6 +33,8 @@ interface HomeworkModalProps {
     ignoreOverdue?: boolean;
     startTime?: string;
     endTime?: string;
+    notes?: string;
+    color?: string;
   } | null;
   selectedCourseData: {
     year: number;
@@ -36,11 +42,21 @@ interface HomeworkModalProps {
     course?: string;
   } | null;
   prefilledDueDate?: string | null;
+  prefilledStartTime?: string | null;
+  prefilledEndTime?: string | null;
   isLoading: boolean;
   availableCourses?: string[];
+  onDelete?: () => void | Promise<void>;
 }
 
 const REMINDERS_COURSE = "reminders";
+
+const DEFAULT_COLORS = [
+  "#7c4dff", "#5e35b1", "#3949ab", "#1e88e5", "#42a5f5", "#039be5",
+  "#00acc1", "#26a69a", "#43a047", "#66bb6a", "#9ccc65", "#c0ca33",
+  "#ffb300", "#fb8c00", "#f4511e", "#ef5350", "#e53935", "#d81b60",
+  "#ec407a", "#ab47bc", "#8d6e63", "#78909c", "#546e7a", "#37474f",
+];
 
 const HomeworkModal: React.FC<HomeworkModalProps> = ({
   isOpen,
@@ -49,24 +65,27 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   editHomework,
   selectedCourseData,
   prefilledDueDate,
+  prefilledStartTime,
+  prefilledEndTime,
   isLoading,
   availableCourses,
+  onDelete,
 }) => {
   const [name, setName] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState("PENDING");
-  const [ignoreOverdue, setIgnoreOverdue] = useState(false);
   const [courseChoice, setCourseChoice] = useState(REMINDERS_COURSE);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [allDay, setAllDay] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [color, setColor] = useState<string>("");
 
   useEffect(() => {
     if (editHomework) {
       setName(editHomework.name);
       setDueDate(editHomework.dueDate);
       setStatus(editHomework.status);
-      setIgnoreOverdue(!!editHomework.ignoreOverdue);
       setCourseChoice(editHomework.course || REMINDERS_COURSE);
       const initStart = editHomework.startTime || "";
       const initEnd = editHomework.endTime || "";
@@ -78,6 +97,8 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       setAllDay(isAll);
       setStartTime(isAll ? "07:00" : initStart);
       setEndTime(isAll ? "23:00" : initEnd);
+      setNotes(editHomework.notes || "");
+      setColor(editHomework.color || "");
     } else {
       const now = new Date();
       const curStart = `${String(now.getHours()).padStart(2, "0")}:${now.getMinutes() < 30 ? "00" : "30"}`;
@@ -87,13 +108,15 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       setName("");
       setDueDate(prefilledDueDate || "");
       setStatus("PENDING");
-      setIgnoreOverdue(false);
-      setCourseChoice(REMINDERS_COURSE);
-      setStartTime(curStart);
-      setEndTime(curEnd);
+      // Pre-select active course if provided, else fall back to reminders.
+      setCourseChoice(selectedCourseData?.course || REMINDERS_COURSE);
+      setStartTime(prefilledStartTime || curStart);
+      setEndTime(prefilledEndTime || curEnd);
       setAllDay(false);
+      setNotes("");
+      setColor("");
     }
-  }, [editHomework, prefilledDueDate, isOpen]);
+  }, [editHomework, prefilledDueDate, prefilledStartTime, prefilledEndTime, isOpen]);
 
   const handleSave = () => {
     const courseData = editHomework || selectedCourseData;
@@ -110,14 +133,15 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       year,
       semester,
       course,
-      ignoreOverdue,
+      true, // ignoreOverdue: always true
       allDay ? "07:00" : (startTime || undefined),
-      allDay ? "23:00" : (endTime || undefined)
+      allDay ? "23:00" : (endTime || undefined),
+      notes || undefined,
+      color || undefined
     );
     setName("");
     setDueDate("");
     setStatus("PENDING");
-    setIgnoreOverdue(false);
     setStartTime("");
     setEndTime("");
     onClose();
@@ -146,6 +170,19 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       title={editHomework ? "Edit homework" : "Add homework"}
       footer={
         <>
+          {editHomework && onDelete && (
+            <button
+              type="button"
+              className="app-modal-btn-cancel"
+              onClick={async () => {
+                await onDelete();
+                onClose();
+              }}
+              disabled={isLoading}
+            >
+              Delete
+            </button>
+          )}
           <button
             type="button"
             className="app-modal-btn-cancel"
@@ -175,7 +212,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
         autoComplete="off"
         autoFocus
       />
-      <label>Due date</label>
+      <label>Date</label>
       <DatePicker
         value={dueDate || null}
         onChange={(v) => setDueDate(v ?? "")}
@@ -270,35 +307,42 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       {availableCourses !== undefined && (
         <>
           <label htmlFor="hw-course">Course</label>
-          <select
+          <CustomSelect
             id="hw-course"
             value={courseChoice}
-            onChange={(e) => setCourseChoice(e.target.value)}
-          >
-            <option value={REMINDERS_COURSE}>No course (reminder)</option>
-            {availableCourses.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+            onChange={setCourseChoice}
+            options={[
+              { value: REMINDERS_COURSE, label: "No course" },
+              ...availableCourses.map((c) => ({ value: c, label: c })),
+            ]}
+          />
         </>
       )}
       <label htmlFor="status">Status</label>
-      <select
+      <CustomSelect
         id="status"
         value={status}
-        onChange={(e) => setStatus(e.target.value)}
-      >
-        <option value="PENDING">Pending</option>
-        <option value="COMPLETED">Completed</option>
-      </select>
-      <label className="hw-ignore-overdue">
-        <input
-          type="checkbox"
-          checked={ignoreOverdue}
-          onChange={(e) => setIgnoreOverdue(e.target.checked)}
-        />
-        <span>Don't flag this task as overdue when past its due date</span>
-      </label>
+        onChange={setStatus}
+        options={[
+          { value: "PENDING", label: "Pending" },
+          { value: "COMPLETED", label: "Completed" },
+        ]}
+      />
+      <label>Color</label>
+      <div className="tb-color-row">
+        {DEFAULT_COLORS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            className={`tb-color-swatch ${c === color ? "tb-color-swatch-active" : ""}`}
+            style={{ background: c }}
+            aria-label={`Color ${c}`}
+            onClick={() => setColor(c)}
+          />
+        ))}
+      </div>
+      <label>Notes</label>
+      <NotesEditor value={notes} onChange={setNotes} placeholder="Optional" />
     </Modal>
   );
 };

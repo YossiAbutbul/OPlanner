@@ -69,6 +69,16 @@ const MainContent: React.FC<MainContentProps> = ({
   const [isLoadingAction, setIsLoadingAction] = useState(false);
   const [icsEvents, setIcsEvents] = useState<IcsEvent[] | null>(null);
   const [calDate, setCalDate] = useState<string | null>(null);
+
+  // Sync calendar with day-tab selections (e.g. sidebar Today button).
+  useEffect(() => {
+    const onPick = (e: Event) => {
+      const detail = (e as CustomEvent<{ date: string }>).detail;
+      if (detail?.date) setCalDate(detail.date);
+    };
+    window.addEventListener("oplanner:select-day", onPick);
+    return () => window.removeEventListener("oplanner:select-day", onPick);
+  }, []);
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [dayModalDate, setDayModalDate] = useState<string | null>(null);
   const [editTask, setEditTask] = useState<HomeworkEntry | null>(null);
@@ -119,10 +129,14 @@ const MainContent: React.FC<MainContentProps> = ({
     _course: string,
     ignoreOverdue?: boolean,
     startTime?: string,
-    endTime?: string
+    endTime?: string,
+    notes?: string,
+    color?: string
   ) => {
     if (!activeTab) return;
-    const { year, semester, course } = activeTab;
+    const { year, semester } = activeTab;
+    // Use the course chosen in the dropdown (passed from modal) — fall back to active course.
+    const course = _course || activeTab.course;
     try {
       setIsLoadingAction(true);
       await addHomework(
@@ -136,7 +150,9 @@ const MainContent: React.FC<MainContentProps> = ({
         ignoreOverdue,
         undefined,
         startTime,
-        endTime
+        endTime,
+        notes,
+        color
       );
       setCalDate(dueDate);
       setHomeworkModalOpen(false);
@@ -271,7 +287,7 @@ const MainContent: React.FC<MainContentProps> = ({
               </div>
               <div className="course-calendar">
                 <CourseCalendar
-                  hint="Tip: tap a day to select it, tap again to add a task."
+                  hint="Tip: double-click a day to add a task."
                   tasks={filteredHomework}
                   colorOf={(t) => {
                     const c = currentSemester?.courses.find((co) => co.name === t.course);
@@ -341,6 +357,7 @@ const MainContent: React.FC<MainContentProps> = ({
         editHomework={editTask}
         prefilledDueDate={prefillDate}
         isLoading={isLoadingAction}
+        availableCourses={currentSemester?.courses.map((c) => c.name)}
       />
 
       {dayModalDate && activeTab && (

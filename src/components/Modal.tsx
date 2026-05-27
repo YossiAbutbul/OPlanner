@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import "../css/Modal.css";
 
@@ -28,18 +28,31 @@ const Modal: React.FC<ModalProps> = ({
     return () => document.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
+  // Close only when both mousedown AND click happen on the overlay (not when
+  // a text selection drag started inside the modal and released on overlay).
+  const downOnOverlayRef = useRef(false);
+
   if (!isOpen) return null;
 
   return createPortal(
     <div
       className="app-modal-overlay"
-      onClick={() => closeOnOverlay && onClose()}
+      onMouseDown={(e) => {
+        downOnOverlayRef.current = e.target === e.currentTarget;
+      }}
+      onClick={(e) => {
+        if (closeOnOverlay && downOnOverlayRef.current && e.target === e.currentTarget) {
+          onClose();
+        }
+        downOnOverlayRef.current = false;
+      }}
     >
       <div
         className="app-modal"
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         <button
           className="app-modal-close"

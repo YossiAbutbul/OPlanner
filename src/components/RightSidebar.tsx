@@ -111,7 +111,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   selectedCourse,
 }) => {
   void selectedCourse;
-  const { getCourseTasks, addHomework, homework } = useHomework();
+  const { getCourseTasks, addHomework, removeHomework, homework } = useHomework();
   const { blocks, saveBlock, removeBlock } = useTimeBlocks();
 
   const [tab, setTab] = useState<"upcoming" | "day">("upcoming");
@@ -126,6 +126,10 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   const [dayDate, setDayDate] = useState<string>(() => toIso(new Date()));
   const [tbModalOpen, setTbModalOpen] = useState(false);
   const [tbInitial, setTbInitial] = useState<Partial<TimeBlock> | null>(null);
+  // Prefilled times for HomeworkModal when creating from a Day-view slot.
+  const [hwPrefillStart, setHwPrefillStart] = useState<string | null>(null);
+  const [hwPrefillEnd, setHwPrefillEnd] = useState<string | null>(null);
+  const [hwPrefillDate, setHwPrefillDate] = useState<string | null>(null);
 
   const sources = useMemo(() => {
     const out: { year: number; semester: string; course: string }[] = [];
@@ -180,13 +184,25 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     setModalOpen(true);
   };
 
-  // Resolve a task's accent color from its course (explicit color → deterministic fallback).
+  // Task accent: per-task color → course color → deterministic fallback.
   const colorForTask = (t: HomeworkEntry): string => {
-    if (t.course === "reminders") return "#7c4dff"; // distinct purple for reminders
+    if (t.color) return t.color;
+    if (t.course === "reminders") return "#7c4dff";
     const y = years.find((yr) => yr.year === t.year);
     const s = y?.semesters.find((ss) => ss.name === t.semester || ss.key === t.semester);
     const c = s?.courses.find((cc) => cc.name === t.course);
     return courseColor(t.course, c?.color);
+  };
+
+  // Color resolution for blocks: when bound to a course, use the course color;
+  // otherwise use the user-picked color.
+  const colorForBlock = (b: TimeBlock): string => {
+    if (!b.courseId) return b.color ?? "#7c4dff";
+    if (selectedYear === null || !selectedSemester) return b.color ?? "#7c4dff";
+    const y = years.find((yr) => yr.year === selectedYear);
+    const s = y?.semesters.find((ss) => ss.name === selectedSemester || ss.key === selectedSemester);
+    const c = s?.courses.find((cc) => cc.name === b.courseId);
+    return courseColor(b.courseId, c?.color);
   };
 
   // Day view derived data
@@ -211,7 +227,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       .map((t) => ({ kind: "task" as const, id: t.id, title: t.name, color: colorForTask(t), ref: t }));
     const blks = dayBlocks
       .filter((b) => isAllDay(b.startTime, b.endTime))
-      .map((b) => ({ kind: "block" as const, id: b.id, title: b.title, color: b.color, ref: b }));
+      .map((b) => ({ kind: "block" as const, id: b.id, title: b.title, color: colorForBlock(b), ref: b }));
     return [...tasks, ...blks];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayTasks, dayBlocks, years]);
@@ -481,18 +497,16 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top + e.currentTarget.scrollTop;
     const totalMin = Math.floor(y / PX_PER_HOUR * 60);
-    // snap to 30
     const snapped = Math.floor(totalMin / SLOT_MIN) * SLOT_MIN;
     const startMin = DAY_START_HOUR * 60 + snapped;
     const endMin = startMin + 60;
     const hh = (n: number) => String(Math.floor(n / 60)).padStart(2, "0");
     const mm = (n: number) => String(n % 60).padStart(2, "0");
-    setTbInitial({
-      date: dayDate,
-      startTime: `${hh(startMin)}:${mm(startMin)}`,
-      endTime: `${hh(Math.min(endMin, DAY_END_HOUR * 60))}:${mm(Math.min(endMin, DAY_END_HOUR * 60))}`,
-    });
-    setTbModalOpen(true);
+    setHwPrefillDate(dayDate);
+    setHwPrefillStart(`${hh(startMin)}:${mm(startMin)}`);
+    setHwPrefillEnd(`${hh(Math.min(endMin, DAY_END_HOUR * 60))}:${mm(Math.min(endMin, DAY_END_HOUR * 60))}`);
+    setEditTask(null);
+    setModalOpen(true);
   };
 
   const hourLabels: string[] = [];
@@ -594,7 +608,14 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                 )}
               </DatePicker>
               <button className="rs-day-nav-btn" onClick={() => shiftDay(1)} aria-label="Next day">›</button>
-              <button className="rs-day-today" onClick={() => setDayDate(toIso(new Date()))}>Today</button>
+              <button
+                className="rs-day-today"
+                onClick={() => {
+                  const t = toIso(new Date());
+                  setDayDate(t);
+                  window.dispatchEvent(new CustomEvent("oplanner:select-day", { detail: { date: t } }));
+                }}
+              >Today</button>
             </div>
             <div className="rs-day-hint">Tip: double-click a slot to add a block</div>
           </header>
@@ -724,7 +745,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                   const eMin = minutesFromStart(b.endTime);
                   const { top, height, startHHmm, endHHmm } = dragPreview("block", b.id, sMin, eMin);
                   const isDragging = drag?.kind === "block" && drag.id === b.id;
-                  const accent = b.color ?? "#7c4dff";
+                  const accent = colorForBlock(b);
                   const compact = height < 36;
                   return (
                     <div
@@ -794,23 +815,45 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         onClose={() => {
           setModalOpen(false);
           setEditTask(null);
+          setHwPrefillDate(null);
+          setHwPrefillStart(null);
+          setHwPrefillEnd(null);
         }}
-        onSave={async (id, name, dueDate, status, year, semester, course, ignoreOverdue, startTime, endTime) => {
+        onSave={async (id, name, dueDate, status, year, semester, course, ignoreOverdue, startTime, endTime, notes, color) => {
           const prevLocation = id && editTask
             ? { year: editTask.year, semester: editTask.semester, course: editTask.course }
             : undefined;
-          await addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, prevLocation, startTime, endTime);
+          await addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, prevLocation, startTime, endTime, notes, color);
           setModalOpen(false);
           setEditTask(null);
+          setHwPrefillDate(null);
+          setHwPrefillStart(null);
+          setHwPrefillEnd(null);
         }}
         editHomework={editTask}
-        selectedCourseData={editTask ? { year: editTask.year, semester: editTask.semester } : null}
+        onDelete={editTask ? async () => {
+          await removeHomework(editTask.id, editTask.year, editTask.semester, editTask.course);
+          setAllSemesterTasks((prev) => prev.filter((x) => x.id !== editTask.id));
+        } : undefined}
+        selectedCourseData={
+          editTask
+            ? { year: editTask.year, semester: editTask.semester, course: selectedCourse ?? undefined }
+            : selectedYear !== null && selectedSemester
+              ? { year: selectedYear, semester: selectedSemester, course: selectedCourse ?? undefined }
+              : null
+        }
+        prefilledDueDate={hwPrefillDate}
+        prefilledStartTime={hwPrefillStart}
+        prefilledEndTime={hwPrefillEnd}
         isLoading={false}
-        availableCourses={editTask ? (years
-          .find((y) => y.year === editTask.year)?.semesters
-          .find((s) => s.name === editTask.semester || s.key === editTask.semester)?.courses
-          .map((c) => c.name)
-          .filter((n) => n !== "reminders") ?? []) : undefined}
+        availableCourses={
+          selectedYear !== null && selectedSemester
+            ? (years
+                .find((y) => y.year === (editTask?.year ?? selectedYear))
+                ?.semesters.find((s) => s.name === (editTask?.semester ?? selectedSemester) || s.key === (editTask?.semester ?? selectedSemester))
+                ?.courses.map((c) => c.name) ?? [])
+            : undefined
+        }
       />
 
       <TimeBlockModal
@@ -826,6 +869,15 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           await removeBlock(id);
         }}
         initial={tbInitial}
+        availableCourses={
+          selectedCourse === null && selectedYear !== null && selectedSemester
+            ? (years
+                .find((y) => y.year === selectedYear)
+                ?.semesters.find((s) => s.name === selectedSemester || s.key === selectedSemester)
+                ?.courses.map((c) => c.name) ?? [])
+            : undefined
+        }
+        defaultCourse={selectedCourse ?? undefined}
       />
     </aside>
   );

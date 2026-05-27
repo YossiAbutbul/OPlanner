@@ -20,6 +20,8 @@ export interface HomeworkEntry {
   ignoreOverdue?: boolean;
   startTime?: string; // HH:mm
   endTime?: string;   // HH:mm
+  notes?: string;     // HTML
+  color?: string;     // override accent color
 }
 
 interface Notification {
@@ -44,7 +46,9 @@ interface HomeworkContextProps {
     ignoreOverdue?: boolean,
     prevLocation?: { year: number; semester: string; course: string },
     startTime?: string,
-    endTime?: string
+    endTime?: string,
+    notes?: string,
+    color?: string
   ) => Promise<void>;
   removeHomework: (
     id: string,
@@ -237,7 +241,9 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     ignoreOverdue: boolean = false,
     prevLocation?: { year: number; semester: string; course: string },
     startTime?: string,
-    endTime?: string
+    endTime?: string,
+    notes?: string,
+    color?: string
   ) => {
     try {
       const tasksCollection = collection(
@@ -272,6 +278,8 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
           id, name, dueDate, status, year, semester, course, ignoreOverdue,
           ...(startTime ? { startTime } : {}),
           ...(endTime ? { endTime } : {}),
+          ...(notes !== undefined ? { notes } : {}),
+          ...(color !== undefined ? { color } : {}),
         };
         await setDoc(taskDoc, task, { merge: true });
 
@@ -280,7 +288,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
           const next = exists
             ? prev.map((entry) =>
                 entry.id === id
-                  ? { ...entry, name, dueDate, status, year, semester, course, ignoreOverdue, startTime, endTime }
+                  ? { ...entry, name, dueDate, status, year, semester, course, ignoreOverdue, startTime, endTime, notes, color }
                   : entry
               )
             : [...prev, task];
@@ -320,6 +328,8 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
           ignoreOverdue,
           ...(startTime ? { startTime } : {}),
           ...(endTime ? { endTime } : {}),
+          ...(notes !== undefined ? { notes } : {}),
+          ...(color !== undefined ? { color } : {}),
         };
         await setDoc(newTaskRef, newTask);
 
