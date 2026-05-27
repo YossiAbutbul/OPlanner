@@ -74,6 +74,8 @@
 .app-modal-body input[type="text"],
 .app-modal-body input[type="password"],
 .app-modal-body input[type="date"],
+.app-modal-body input[type="time"],
+.app-modal-body textarea,
 .app-modal-body select {
   width: 100%;
   padding: 0.6rem 0.7rem;
@@ -320,6 +322,51 @@
 
 .hw-date-trigger-empty {
   color: #888;
+}
+
+/* Time inputs — match date trigger look */
+.app-modal-body input[type="time"] {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  cursor: pointer;
+  padding-left: 2.4rem;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><polyline points='12 7 12 12 15 14'/></svg>");
+  background-repeat: no-repeat;
+  background-position: 0.75rem center;
+  background-size: 16px 16px;
+  color-scheme: light;
+}
+
+.app-modal-body input[type="time"]:hover {
+  border-color: #b8bbc0;
+}
+
+.app-modal-body input[type="time"]:focus,
+.app-modal-body input[type="time"]:focus-visible {
+  outline: none;
+  border-color: #b8bbc0;
+}
+
+.app-modal-body input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.app-modal-body textarea {
+  resize: none;
+  min-height: 60px;
+  line-height: 1.4;
+}
+
+/* Hide the date trigger icon since the field already has padding */
+.hw-date-trigger > svg {
+  flex-shrink: 0;
+  color: #555;
 }
 
 .app-modal-body label.hw-ignore-overdue {

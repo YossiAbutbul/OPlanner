@@ -65,6 +65,15 @@ const SemesterOverview: React.FC<Props> = ({
   const [newCourseName, setNewCourseName] = useState("");
   const [adding, setAdding] = useState(false);
   const [calSelected, setCalSelected] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onPick = (e: Event) => {
+      const detail = (e as CustomEvent<{ date: string }>).detail;
+      if (detail?.date) setCalSelected(detail.date);
+    };
+    window.addEventListener("oplanner:select-day", onPick);
+    return () => window.removeEventListener("oplanner:select-day", onPick);
+  }, []);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [taskPrefillDate, setTaskPrefillDate] = useState<string | null>(null);
   const [taskEditTask, setTaskEditTask] = useState<HomeworkEntry | null>(null);
@@ -98,14 +107,19 @@ const SemesterOverview: React.FC<Props> = ({
     _year: number,
     _semester: string,
     course: string,
-    ignoreOverdue?: boolean
+    ignoreOverdue?: boolean,
+    startTime?: string,
+    endTime?: string,
+    notes?: string,
+    color?: string
   ) => {
     try {
       setIsLoadingAction(true);
       const prevLocation = id && taskEditTask
         ? { year: taskEditTask.year, semester: taskEditTask.semester, course: taskEditTask.course }
         : undefined;
-      await addHomework(id, name, dueDate, status, year, semesterKey, course, ignoreOverdue, prevLocation);
+      await addHomework(id, name, dueDate, status, year, semesterKey, course, ignoreOverdue, prevLocation, startTime, endTime, notes, color);
+      setCalSelected(dueDate);
       setTaskModalOpen(false);
       setTaskEditTask(null);
       setTaskPrefillDate(null);
@@ -303,10 +317,13 @@ const SemesterOverview: React.FC<Props> = ({
           <div className="overview-grid">
             <section className="overview-section overview-calendar-section">
               <CourseCalendar
-                hint="Tip: tap a day to select it, tap again to add a task."
+                hint="Tip: double-click a day to add a task."
                 tasks={allTasks}
                 selectedDate={calSelected}
-                onSelectDate={setCalSelected}
+                onSelectDate={(d) => {
+                  setCalSelected(d);
+                  if (d) window.dispatchEvent(new CustomEvent("oplanner:select-day", { detail: { date: d } }));
+                }}
                 onCreateOnDate={(date) => {
                   const has = allTasks.some((t) => t.dueDate === date);
                   if (has) {

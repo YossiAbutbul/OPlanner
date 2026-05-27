@@ -1,0 +1,241 @@
+.ne-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.ne-collapsed {
+  width: 100%;
+  min-height: 64px;
+  padding: 0.6rem 2.2rem 0.6rem 0.7rem;
+  border: 1px solid #d6d6da;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1a1a1a;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  outline: none;
+  box-sizing: border-box;
+  overflow-y: auto;
+  max-height: 160px;
+}
+
+.ne-collapsed:empty::before,
+.ne-editor:empty::before {
+  content: attr(data-placeholder);
+  color: #999;
+  pointer-events: none;
+}
+
+.ne-expand-btn {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: #777;
+  cursor: pointer;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.12s, background 0.12s;
+}
+
+.ne-expand-btn:hover {
+  color: #1a1a1a;
+  background: #f0f0f2;
+}
+
+/* Toolbar (only used in expanded view) */
+.ne-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ne-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #1a1a1a;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.ne-btn:hover {
+  background: #f0f0f2;
+  border-color: #d6d6da;
+}
+
+/* Overlay */
+.ne-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.ne-panel {
+  background: #fff;
+  border-radius: 12px;
+  width: min(800px, 100%);
+  height: min(600px, 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.ne-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #eaeaee;
+}
+
+.ne-title {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.ne-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #555;
+  cursor: pointer;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.ne-close:hover {
+  background: #f0f0f2;
+  color: #1a1a1a;
+}
+
+.ne-editor {
+  flex: 1;
+  width: 100%;
+  padding: 1rem 1.2rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #1a1a1a;
+  outline: none;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Ensure formatting renders inside the editor */
+.ne-collapsed b,
+.ne-collapsed strong,
+.ne-editor b,
+.ne-editor strong {
+  font-weight: 700;
+}
+
+.ne-collapsed u,
+.ne-editor u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1.5px;
+}
+
+
+.ne-color-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.ne-hl-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.ne-hl-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: #fff;
+  border: 1px solid #e3e3e6;
+  border-radius: 8px;
+  padding: 0.4rem;
+  display: flex;
+  gap: 0.3rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  z-index: 10001;
+}
+
+.ne-hl-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+  transition: transform 0.12s ease;
+}
+
+.ne-hl-swatch:hover {
+  transform: scale(1.12);
+}
+
+.ne-hl-swatch-none {
+  background:
+    linear-gradient(135deg, transparent 45%, #d33 45%, #d33 55%, transparent 55%),
+    #fff;
+}
+
+.ne-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.ne-save-btn {
+  background: #1db954;
+  color: #fff;
+  border: 1px solid #19a449;
+  border-radius: 6px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.ne-save-btn:hover {
+  background: #1ed760;
+}
+
+.ne-color-btn input[type="color"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  margin: 0;
+}

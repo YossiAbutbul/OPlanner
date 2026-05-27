@@ -18,6 +18,10 @@ export interface HomeworkEntry {
   semester: string;
   course: string;
   ignoreOverdue?: boolean;
+  startTime?: string; // HH:mm
+  endTime?: string;   // HH:mm
+  notes?: string;     // HTML
+  color?: string;     // override accent color
 }
 
 interface Notification {
@@ -40,7 +44,11 @@ interface HomeworkContextProps {
     semester: string,
     course: string,
     ignoreOverdue?: boolean,
-    prevLocation?: { year: number; semester: string; course: string }
+    prevLocation?: { year: number; semester: string; course: string },
+    startTime?: string,
+    endTime?: string,
+    notes?: string,
+    color?: string
   ) => Promise<void>;
   removeHomework: (
     id: string,
@@ -231,7 +239,11 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
     semester: string,
     course: string,
     ignoreOverdue: boolean = false,
-    prevLocation?: { year: number; semester: string; course: string }
+    prevLocation?: { year: number; semester: string; course: string },
+    startTime?: string,
+    endTime?: string,
+    notes?: string,
+    color?: string
   ) => {
     try {
       const tasksCollection = collection(
@@ -262,7 +274,13 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         const taskDoc = doc(tasksCollection, id);
-        const task = { id, name, dueDate, status, year, semester, course, ignoreOverdue };
+        const task: HomeworkEntry = {
+          id, name, dueDate, status, year, semester, course, ignoreOverdue,
+          ...(startTime ? { startTime } : {}),
+          ...(endTime ? { endTime } : {}),
+          ...(notes !== undefined ? { notes } : {}),
+          ...(color !== undefined ? { color } : {}),
+        };
         await setDoc(taskDoc, task, { merge: true });
 
         setHomework((prev) => {
@@ -270,7 +288,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
           const next = exists
             ? prev.map((entry) =>
                 entry.id === id
-                  ? { ...entry, name, dueDate, status, year, semester, course, ignoreOverdue }
+                  ? { ...entry, name, dueDate, status, year, semester, course, ignoreOverdue, startTime, endTime, notes, color }
                   : entry
               )
             : [...prev, task];
@@ -299,7 +317,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       } else {
         const newTaskRef = doc(tasksCollection);
-        const newTask = {
+        const newTask: HomeworkEntry = {
           id: newTaskRef.id,
           name,
           dueDate,
@@ -308,6 +326,10 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({
           semester,
           course,
           ignoreOverdue,
+          ...(startTime ? { startTime } : {}),
+          ...(endTime ? { endTime } : {}),
+          ...(notes !== undefined ? { notes } : {}),
+          ...(color !== undefined ? { color } : {}),
         };
         await setDoc(newTaskRef, newTask);
 

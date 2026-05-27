@@ -61,6 +61,17 @@ const CourseCalendar: React.FC<Props> = ({
     year: initial.getFullYear(),
     month: initial.getMonth(),
   });
+
+  // Jump cursor when selectedDate moves to a different month (e.g. user just
+  // saved a task on another month).
+  useEffect(() => {
+    if (!selectedDate) return;
+    const d = new Date(selectedDate);
+    if (d.getFullYear() !== cursor.year || d.getMonth() !== cursor.month) {
+      setCursor({ year: d.getFullYear(), month: d.getMonth() });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate]);
   const [hoverIso, setHoverIso] = useState<string | null>(null);
   const [popoverPos, setPopoverPos] = useState<{ top?: number; bottom?: number; left: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
@@ -108,7 +119,7 @@ const CourseCalendar: React.FC<Props> = ({
   };
   const goToday = () => {
     setCursor({ year: today.getFullYear(), month: today.getMonth() });
-    onSelectDate(null);
+    onSelectDate(toIso(today));
   };
 
   useEffect(() => {
@@ -213,10 +224,8 @@ const CourseCalendar: React.FC<Props> = ({
               key={iso}
               type="button"
               className={`cal-cell ${inMonth ? "" : "out"} ${isToday ? "today" : ""} ${isSelected ? "selected" : ""}`}
-              onClick={() => {
-                if (isSelected) onCreateOnDate(iso);
-                else onSelectDate(iso);
-              }}
+              onClick={() => onSelectDate(iso)}
+              onDoubleClick={() => onCreateOnDate(iso)}
               onMouseEnter={(e) => handleCellEnter(e, iso, dayTasks.length > 0)}
               onMouseLeave={handleCellLeave}
             >
@@ -274,7 +283,7 @@ const CourseCalendar: React.FC<Props> = ({
               );
             })}
           </ul>
-          <div className="cal-popover-hint">Tap a day twice to add a task</div>
+          <div className="cal-popover-hint">Double-click a day to add a task</div>
         </div>,
         document.body
       )}
