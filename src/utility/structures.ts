@@ -89,6 +89,10 @@ export const getStageScale = (level: number): number =>
 const COMM = (file: string) =>
   `${import.meta.env.BASE_URL}models/structures/stages/commercial/${file}.glb`;
 
+/** Industrial kit asset (factories, warehouses, chimneys). */
+const IND = (file: string) =>
+  `${import.meta.env.BASE_URL}models/structures/stages/industrial/${file}.glb`;
+
 /** Rotation so building's +z (front) faces a target point. */
 const faceTowards = (
   pos: [number, number],
@@ -211,30 +215,30 @@ export const STRUCTURES: StructureDef[] = [
     position: [COL_X[0], FRONT_Z],
     rotation: faceTowards([COL_X[0], FRONT_Z], CENTER),
     color: "#7f1d1d",
-    modelUrl: COMM("low-detail-building-f"),
+    modelUrl: IND("building-a"),
     modelByLevel: {
-      1: COMM("low-detail-building-f"),
-      2: COMM("low-detail-building-wide-a"),
-      3: COMM("building-skyscraper-a"),
-      4: COMM("building-skyscraper-e"),
+      1: IND("building-a"),
+      2: IND("building-c"),
+      3: IND("building-g"),
+      4: IND("building-j"),
+      5: IND("building-l"),
     },
-    maxLevel: 4,
     modelFootprint: 4.5,
   },
   {
     id: "windmill",
-    name: "Garage",
+    name: "Warehouse",
     kind: "windmill",
     unlock: { kind: "focusCount", count: 25 },
     cost: 600,
     position: [COL_X[1], FRONT_Z],
     rotation: faceTowards([COL_X[1], FRONT_Z], CENTER),
     color: "#94a3b8",
-    modelUrl: COMM("low-detail-building-g"),
+    modelUrl: IND("building-e"),
     modelByLevel: {
-      1: COMM("low-detail-building-g"),
-      2: COMM("low-detail-building-wide-b"),
-      3: COMM("building-g"),
+      1: IND("building-e"),
+      2: IND("building-n"),
+      3: IND("building-p"),
     },
     maxLevel: 3,
     modelFootprint: 4.5,
@@ -277,19 +281,19 @@ export const STRUCTURES: StructureDef[] = [
   },
   {
     id: "shrine",
-    name: "Tower Block",
+    name: "Factory",
     kind: "shrine",
     unlock: { kind: "streak", days: 7 },
     cost: 300,
     position: [COL_X[4], FRONT_Z],
     rotation: faceTowards([COL_X[4], FRONT_Z], CENTER),
     color: "#fb923c",
-    modelUrl: COMM("low-detail-building-l"),
+    modelUrl: IND("building-q"),
     modelByLevel: {
-      1: COMM("low-detail-building-l"),
-      2: COMM("low-detail-building-m"),
-      3: COMM("low-detail-building-n"),
-      4: COMM("building-skyscraper-b"),
+      1: IND("building-q"),
+      2: IND("building-s"),
+      3: IND("building-t"),
+      4: IND("building-l"),
     },
     maxLevel: 4,
     modelFootprint: 4.5,

@@ -15,6 +15,7 @@ import {
   Smoke,
 } from "./VillageStructures";
 import { VillageEnvironment } from "./VillageEnvironment";
+import { CityRoads } from "./CityRoads";
 import { VillageTerrain, VillageLake } from "./VillageTerrain";
 import { StructureDef, maxLevelOf } from "../utility/structures";
 import { VILLAGERS } from "../utility/village";
@@ -1128,6 +1129,7 @@ const VillageView: React.FC = () => {
           <VillageTerrain />
           <VillageLake />
           <VillageEnvironment structures={structures} />
+          <CityRoads />
           <StreetLamps
             glow={Math.max(0, 1 - day * 1.8)}
             structures={structures.map((s) => ({ position: s.position }))}
