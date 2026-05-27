@@ -49,8 +49,8 @@ export const maxLevelOf = (s: StructureDef): number =>
 /** Cost multiplier vs base structure.cost per stage. Index = level. */
 const STAGE_COST_MULT: readonly number[] = [0, 1, 2.5, 6, 15, 35];
 
-/** Visual scale boost per level when a per-level model isn't supplied. Index = level. */
-const STAGE_SCALE_BUMP: readonly number[] = [1, 1, 1.12, 1.25, 1.4, 1.6];
+/** Visual scale per level — smaller at low stages, larger at high stages. Index = level. */
+const STAGE_SCALE_BUMP: readonly number[] = [0.7, 0.7, 0.85, 1.0, 1.2, 1.45];
 
 /** Milestone gating each stage. Index = level. Null = no gate (cost only). */
 const STAGE_MILESTONE: readonly (UnlockMetric | null)[] = [
@@ -123,15 +123,8 @@ export const STRUCTURES: StructureDef[] = [
       1: STAGE("td", "tower", 1),
       2: STAGE("td", "tower", 3),
       3: STAGE("td", "tower", 5),
-      4: COMM("building-skyscraper-c"),
+      4: COMM("building-skyscraper-a"),
       5: COMM("building-skyscraper-d"),
-    },
-    namesByLevel: {
-      1: "Watchtower",
-      2: "Bell Tower",
-      3: "Stone Spire",
-      4: "Clock Tower",
-      5: "Skyscraper",
     },
     modelFootprint: 4.0,
   },
@@ -172,13 +165,6 @@ export const STRUCTURES: StructureDef[] = [
       4: COMM("building-e"),
       5: COMM("building-m"),
     },
-    namesByLevel: {
-      1: "Inn",
-      2: "Tavern",
-      3: "Hotel",
-      4: "Grand Hotel",
-      5: "Resort Tower",
-    },
     modelFootprint: 6.0,
   },
   // Left flank.
@@ -199,13 +185,6 @@ export const STRUCTURES: StructureDef[] = [
       4: COMM("building-c"),
       5: COMM("building-skyscraper-e"),
     },
-    namesByLevel: {
-      1: "Forge",
-      2: "Smithy",
-      3: "Workshop",
-      4: "Factory",
-      5: "Industrial Tower",
-    },
     modelFootprint: 5.5,
   },
   {
@@ -224,13 +203,6 @@ export const STRUCTURES: StructureDef[] = [
       3: COMM("low-detail-building-a"),
       4: COMM("building-a"),
       5: COMM("building-skyscraper-a"),
-    },
-    namesByLevel: {
-      1: "Cottage",
-      2: "House",
-      3: "Apartment",
-      4: "Condo",
-      5: "Skyscraper",
     },
     modelFootprint: 4.0,
   },
@@ -252,13 +224,6 @@ export const STRUCTURES: StructureDef[] = [
       4: COMM("building-d"),
       5: COMM("building-l"),
     },
-    namesByLevel: {
-      1: "Old House",
-      2: "Reading Room",
-      3: "Library",
-      4: "Archive",
-      5: "Knowledge Tower",
-    },
     modelFootprint: 4.5,
   },
   {
@@ -277,13 +242,6 @@ export const STRUCTURES: StructureDef[] = [
       3: COMM("low-detail-building-b"),
       4: COMM("building-b"),
       5: COMM("building-skyscraper-b"),
-    },
-    namesByLevel: {
-      1: "Townhouse",
-      2: "Brick House",
-      3: "Café",
-      4: "Restaurant",
-      5: "Office Tower",
     },
     modelFootprint: 4.0,
   },

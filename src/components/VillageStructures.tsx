@@ -479,11 +479,10 @@ export const VillageStructure: React.FC<{
   onClick?: () => void;
 }> = ({ s, isNew, isBuilding, level, onClick }) => {
   const lvl = level && level > 0 ? level : 1;
-  const customModel = s.modelByLevel?.[lvl];
-  const url = customModel ?? s.modelUrl;
-  // Scale-only "evolution" is a placeholder. Once a per-stage GLB exists,
-  // render it at its native size — no scale bump.
-  const stageScale = customModel ? 1 : getStageScale(lvl);
+  const url = s.modelByLevel?.[lvl] ?? s.modelUrl;
+  // Buildings physically grow with stage. Applied on top of per-model auto-fit
+  // so a shack at L1 is visibly smaller than a skyscraper at L5.
+  const stageScale = getStageScale(lvl);
   return (
   <group
     position={[s.position[0], 0, s.position[1]]}
