@@ -16,7 +16,7 @@ import {
 } from "./VillageStructures";
 import { VillageEnvironment } from "./VillageEnvironment";
 import { VillageTerrain, VillageLake } from "./VillageTerrain";
-import { StructureDef } from "../utility/structures";
+import { StructureDef, maxLevelOf } from "../utility/structures";
 import { VILLAGERS } from "../utility/village";
 import { VILLAGER_PAIRS } from "../utility/villagerBonus";
 import "../css/VillageView.css";
@@ -956,10 +956,11 @@ const VillageView: React.FC = () => {
                   const id = selected.s.id;
                   const lvl = levelOf(id);
                   const ns = nextStage(id);
+                  const maxLvl = maxLevelOf(selected.s);
                   return (
                     <div className="village-upgrade">
                       <div className="village-upgrade-dots">
-                        {[1, 2, 3, 4, 5].map((n) => (
+                        {Array.from({ length: maxLvl }, (_, i) => i + 1).map((n) => (
                           <span
                             key={n}
                             className={
@@ -969,7 +970,7 @@ const VillageView: React.FC = () => {
                         ))}
                       </div>
                       <div className="village-upgrade-level">
-                        Stage {lvl}/5
+                        Stage {lvl}/{maxLvl}
                       </div>
                       {ns ? (
                         <>
@@ -1011,7 +1012,7 @@ const VillageView: React.FC = () => {
                       {isDev && (
                         <div className="village-upgrade-dev">
                           <span className="village-upgrade-dev-label">Dev</span>
-                          {[0, 1, 2, 3, 4, 5].map((n) => (
+                          {Array.from({ length: maxLvl + 1 }, (_, i) => i).map((n) => (
                             <button
                               key={n}
                               className={
@@ -1084,7 +1085,10 @@ const VillageView: React.FC = () => {
                 {isDev && (
                   <div className="village-upgrade-dev">
                     <span className="village-upgrade-dev-label">Dev</span>
-                    {[1, 2, 3, 4, 5].map((n) => (
+                    {Array.from(
+                      { length: maxLevelOf(selected.s) },
+                      (_, i) => i + 1
+                    ).map((n) => (
                       <button
                         key={n}
                         className="village-upgrade-dev-btn"

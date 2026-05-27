@@ -29,10 +29,16 @@ export interface StructureDef {
   modelYOffset?: number;
   /** Per-level model overrides. Falls back to modelUrl with auto-scale when missing. */
   modelByLevel?: Record<number, string>;
+  /** Max evolution stage for this building. Defaults to MAX_LEVEL (5). */
+  maxLevel?: number;
 }
 
-/** Max evolution stage. Level 0 = not built, 1 = base, up to MAX_LEVEL fully evolved. */
+/** Default cap on evolution stages. Buildings may override via StructureDef.maxLevel. */
 export const MAX_LEVEL = 5;
+
+/** Effective max level for a specific building (clamped to MAX_LEVEL). */
+export const maxLevelOf = (s: StructureDef): number =>
+  Math.min(MAX_LEVEL, Math.max(1, s.maxLevel ?? MAX_LEVEL));
 
 /** Cost multiplier vs base structure.cost per stage. Index = level. */
 const STAGE_COST_MULT: readonly number[] = [0, 1, 2.5, 6, 15, 35];
@@ -62,7 +68,7 @@ export const getUpgrade = (
   s: StructureDef,
   toLevel: number
 ): UpgradeStage | null => {
-  if (toLevel < 1 || toLevel > MAX_LEVEL) return null;
+  if (toLevel < 1 || toLevel > maxLevelOf(s)) return null;
   return {
     cost: Math.round(s.cost * STAGE_COST_MULT[toLevel]),
     milestone: STAGE_MILESTONE[toLevel],
@@ -188,6 +194,7 @@ export const STRUCTURES: StructureDef[] = [
     color: "#475569",
     modelUrl: MODEL("well"),
     modelFootprint: 2.5,
+    maxLevel: 3,
   },
   {
     id: "garden",
@@ -200,6 +207,7 @@ export const STRUCTURES: StructureDef[] = [
     color: "#10b981",
     modelUrl: MODEL("garden"),
     modelFootprint: 3.0,
+    maxLevel: 3,
   },
   {
     id: "shrine",
@@ -212,5 +220,6 @@ export const STRUCTURES: StructureDef[] = [
     color: "#fb923c",
     modelUrl: MODEL("shrine"),
     modelFootprint: 2.2,
+    maxLevel: 3,
   },
 ];

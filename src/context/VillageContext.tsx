@@ -28,8 +28,8 @@ import {
 import {
   STRUCTURES,
   StructureDef,
-  MAX_LEVEL,
   getUpgrade,
+  maxLevelOf,
 } from "../utility/structures";
 import { checkUnlock } from "../utility/village";
 import {
@@ -327,7 +327,7 @@ export const VillageProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const s = STRUCTURES.find((x) => x.id === id);
       if (!s) return null;
       const cur = structureLevels[id] || 0;
-      if (cur >= MAX_LEVEL) return null;
+      if (cur >= maxLevelOf(s)) return null;
       const stage = getUpgrade(s, cur + 1);
       if (!stage) return null;
       const milestoneMet = !stage.milestone || checkUnlock(stage.milestone, stats);
