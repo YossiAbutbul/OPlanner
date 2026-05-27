@@ -65,13 +65,8 @@ export const StructureModel: React.FC<{
   scale?: number;
   yOffset?: number;
   targetFootprint?: number;
-  /** Evolution stage 1-5. Visual bump only — caller supplies per-level GLB via url if available. */
-  level?: number;
-  /** Multiplier on top of auto/explicit scale. Used to grow buildings per stage. */
-  stageScale?: number;
-}> = ({ url, scale, yOffset, targetFootprint, level, stageScale }) => {
+}> = ({ url, scale, yOffset, targetFootprint }) => {
   const { scene } = useGLTF(url);
-  void level;
 
   const { object, autoScale } = React.useMemo(() => {
     const cloned = scene.clone(true);
@@ -153,7 +148,7 @@ export const StructureModel: React.FC<{
     return { object: cloned, autoScale: auto };
   }, [scene, targetFootprint]);
 
-  const finalScale = (scale ?? autoScale) * (stageScale ?? 1);
+  const finalScale = scale ?? autoScale;
   const finalY = yOffset ?? 0;
 
   // Outer group applies scale + extra Y so cloned.position offset is preserved.

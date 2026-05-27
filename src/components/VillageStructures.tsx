@@ -2,7 +2,7 @@ import React, { Suspense, useEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
-import { StructureDef, getStageScale } from "../utility/structures";
+import { StructureDef } from "../utility/structures";
 import { StructureModel } from "./StructureModel";
 import { ModelErrorBoundary } from "./ModelErrorBoundary";
 
@@ -474,15 +474,9 @@ export const VillageStructure: React.FC<{
   s: StructureDef;
   isNew?: boolean;
   isBuilding?: boolean;
-  /** 1-5. Defaults to 1 if owned, 0 otherwise. */
-  level?: number;
   onClick?: () => void;
-}> = ({ s, isNew, isBuilding, level, onClick }) => {
-  const lvl = level && level > 0 ? level : 1;
-  const url = s.modelByLevel?.[lvl] ?? s.modelUrl;
-  // Buildings physically grow with stage. Applied on top of per-model auto-fit
-  // so a shack at L1 is visibly smaller than a skyscraper at L5.
-  const stageScale = getStageScale(lvl);
+}> = ({ s, isNew, isBuilding, onClick }) => {
+  const url = s.modelUrl;
   return (
   <group
     position={[s.position[0], 0, s.position[1]]}
@@ -503,8 +497,6 @@ export const VillageStructure: React.FC<{
               scale={s.modelScale}
               yOffset={s.modelYOffset}
               targetFootprint={s.modelFootprint}
-              level={lvl}
-              stageScale={stageScale}
             />
           </Suspense>
         </ModelErrorBoundary>

@@ -17,7 +17,7 @@ import {
 import { VillageEnvironment } from "./VillageEnvironment";
 import { CityRoads } from "./CityRoads";
 import { VillageTerrain, VillageLake } from "./VillageTerrain";
-import { StructureDef, maxLevelOf } from "../utility/structures";
+import { StructureDef } from "../utility/structures";
 import { VILLAGERS } from "../utility/village";
 import { VILLAGER_PAIRS } from "../utility/villagerBonus";
 import "../css/VillageView.css";
@@ -475,12 +475,6 @@ const VillageView: React.FC = () => {
     canAfford,
     purchase,
     refund,
-    levelOf,
-    canUpgrade,
-    nextStage,
-    upgrade,
-    isDev,
-    devSetLevel,
     focusMultiplier,
     activePairs,
     pairsForBuilding,
@@ -954,84 +948,6 @@ const VillageView: React.FC = () => {
                   {structureKindLabel(selected.s.kind)}
                 </div>
                 {(() => {
-                  const id = selected.s.id;
-                  const lvl = levelOf(id);
-                  const ns = nextStage(id);
-                  const maxLvl = maxLevelOf(selected.s);
-                  return (
-                    <div className="village-upgrade">
-                      <div className="village-upgrade-dots">
-                        {Array.from({ length: maxLvl }, (_, i) => i + 1).map((n) => (
-                          <span
-                            key={n}
-                            className={
-                              "village-upgrade-dot" + (n <= lvl ? " filled" : "")
-                            }
-                          />
-                        ))}
-                      </div>
-                      <div className="village-upgrade-level">
-                        Stage {lvl}/{maxLvl}
-                      </div>
-                      {ns ? (
-                        <>
-                          <div className="village-upgrade-cost">
-                            Next: 🪙 {ns.cost}
-                            {ns.milestoneLabel && (
-                              <span
-                                className={
-                                  "village-upgrade-milestone" +
-                                  (ns.milestoneMet ? " met" : "")
-                                }
-                              >
-                                {ns.milestoneMet ? "✓" : "🔒"} {ns.milestoneLabel}
-                              </span>
-                            )}
-                          </div>
-                          <button
-                            className="village-shop-buy"
-                            disabled={!canUpgrade(id)}
-                            onClick={() => {
-                              if (upgrade(id)) setSelected(null);
-                            }}
-                          >
-                            {!ns.milestoneMet
-                              ? "Milestone locked"
-                              : coinBalance < ns.cost
-                                ? "Not enough coins"
-                                : `Upgrade to stage ${ns.level}`}
-                          </button>
-                          <div className="village-shop-balance">
-                            Balance: 🪙 {coinBalance}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="village-upgrade-max">
-                          ✨ Fully evolved
-                        </div>
-                      )}
-                      {isDev && (
-                        <div className="village-upgrade-dev">
-                          <span className="village-upgrade-dev-label">Dev</span>
-                          {Array.from({ length: maxLvl + 1 }, (_, i) => i).map((n) => (
-                            <button
-                              key={n}
-                              className={
-                                "village-upgrade-dev-btn" +
-                                (n === lvl ? " active" : "")
-                              }
-                              onClick={() => devSetLevel(id, n)}
-                              title={n === 0 ? "Demolish" : `Set to stage ${n}`}
-                            >
-                              {n}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-                {(() => {
                   const pairs = pairsForBuilding.get(selected.s.id) || [];
                   if (pairs.length === 0) return null;
                   const totalPct = pairs.reduce((a, p) => a + p.bonusPct, 0);
@@ -1083,27 +999,6 @@ const VillageView: React.FC = () => {
                 <div className="village-shop-balance">
                   Balance: 🪙 {coinBalance}
                 </div>
-                {isDev && (
-                  <div className="village-upgrade-dev">
-                    <span className="village-upgrade-dev-label">Dev</span>
-                    {Array.from(
-                      { length: maxLevelOf(selected.s) },
-                      (_, i) => i + 1
-                    ).map((n) => (
-                      <button
-                        key={n}
-                        className="village-upgrade-dev-btn"
-                        onClick={() => {
-                          devSetLevel(selected.s.id, n);
-                          setSelected(null);
-                        }}
-                        title={`Build directly at stage ${n}`}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </>
             )}
           </div>
@@ -1152,7 +1047,6 @@ const VillageView: React.FC = () => {
               s={s}
               isNew={newStructureIds.has(s.id)}
               isBuilding={buildingIds.has(s.id)}
-              level={levelOf(s.id)}
               onClick={() => {
                 markStructureSeen(s.id);
                 setSelected({ kind: "structure", s });

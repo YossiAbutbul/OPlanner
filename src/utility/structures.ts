@@ -18,7 +18,7 @@ export interface StructureDef {
   kind: StructureKind;
   /** Legacy unlock condition — kept for reference but no longer gates placement. */
   unlock: UnlockMetric;
-  /** Coin cost to purchase and place (= cost to reach level 1). Higher stages multiply this. */
+  /** Coin cost to purchase and place. */
   cost: number;
   position: [number, number];
   rotation?: number;
@@ -27,63 +27,7 @@ export interface StructureDef {
   modelFootprint?: number;
   modelScale?: number;
   modelYOffset?: number;
-  /** Per-level model overrides. Falls back to modelUrl with auto-scale when missing. */
-  modelByLevel?: Record<number, string>;
-  /** Per-level display name override (e.g. Cottage → Skyscraper). Falls back to .name. */
-  namesByLevel?: Record<number, string>;
-  /** Max evolution stage for this building. Defaults to MAX_LEVEL (5). */
-  maxLevel?: number;
 }
-
-/** Display name for a building at a given level. Falls back to base name. */
-export const getName = (s: StructureDef, level: number): string =>
-  s.namesByLevel?.[level] ?? s.name;
-
-/** Default cap on evolution stages. Buildings may override via StructureDef.maxLevel. */
-export const MAX_LEVEL = 5;
-
-/** Effective max level for a specific building (clamped to MAX_LEVEL). */
-export const maxLevelOf = (s: StructureDef): number =>
-  Math.min(MAX_LEVEL, Math.max(1, s.maxLevel ?? MAX_LEVEL));
-
-/** Cost multiplier vs base structure.cost per stage. Index = level. */
-const STAGE_COST_MULT: readonly number[] = [0, 1, 2.5, 6, 15, 35];
-
-/** Visual scale per level — smaller at low stages, larger at high stages. Index = level. */
-const STAGE_SCALE_BUMP: readonly number[] = [0.7, 0.7, 0.85, 1.0, 1.2, 1.45];
-
-/** Milestone gating each stage. Index = level. Null = no gate (cost only). */
-const STAGE_MILESTONE: readonly (UnlockMetric | null)[] = [
-  null,
-  null,
-  { kind: "totalHours", hours: 5 },
-  { kind: "focusCount", count: 20 },
-  { kind: "streak", days: 7 },
-  { kind: "totalHours", hours: 50 },
-];
-
-export interface UpgradeStage {
-  /** Coin cost to reach this stage from the previous one. */
-  cost: number;
-  /** Extra requirement on top of coins. Null = coins-only. */
-  milestone: UnlockMetric | null;
-}
-
-/** Stage info for a building going to `toLevel`. Returns null for invalid levels. */
-export const getUpgrade = (
-  s: StructureDef,
-  toLevel: number
-): UpgradeStage | null => {
-  if (toLevel < 1 || toLevel > maxLevelOf(s)) return null;
-  return {
-    cost: Math.round(s.cost * STAGE_COST_MULT[toLevel]),
-    milestone: STAGE_MILESTONE[toLevel],
-  };
-};
-
-/** Visual scale multiplier to apply at a given level (used when no per-level GLB). */
-export const getStageScale = (level: number): number =>
-  STAGE_SCALE_BUMP[Math.max(0, Math.min(MAX_LEVEL, level))] ?? 1;
 
 /** Commercial kit asset (full city buildings). */
 const COMM = (file: string) =>
@@ -101,201 +45,202 @@ const faceTowards = (
 
 const CENTER: [number, number] = [0, 0];
 
-// City block layout: 2 rows of 5 buildings, all facing the camera at z=+26.
-// Back row z=-14 (skyline), front row z=-3 (storefront). Ids preserved for
-// save-data compat — names + models are city now, not village.
-const BACK_Z = -14;
-const FRONT_Z = -3;
+// City block layout: 3 rows × 5 columns = 15 buildings.
+// Row 1 (back, z=-22) = skyscrapers / tall.
+// Row 2 (mid, z=-10) = mid-rise commercial.
+// Row 3 (front, z=2) = small commercial + industrial props.
+// Camera at z=+26 looks north → rows are stacked back→front visibly.
+const ROW_BACK_Z = -22;
+const ROW_MID_Z = -10;
+const ROW_FRONT_Z = 2;
 const COL_X = [-16, -8, 0, 8, 16] as const;
 
+const faceCam = (p: [number, number]): number => faceTowards(p, CENTER);
+
 export const STRUCTURES: StructureDef[] = [
-  // ─── Back row — taller buildings, the skyline ─────────────────────────────
+  // ── Back row (tallest skyscrapers) ────────────────────────────────────
   {
-    id: "tower",
-    name: "High Rise",
+    id: "tower-a",
+    name: "Skyscraper A",
     kind: "tower",
     unlock: { kind: "streak", days: 3 },
-    cost: 350,
-    position: [COL_X[2], BACK_Z],
-    rotation: faceTowards([COL_X[2], BACK_Z], CENTER),
+    cost: 1500,
+    position: [COL_X[0], ROW_BACK_Z],
+    rotation: faceCam([COL_X[0], ROW_BACK_Z]),
     color: "#0ea5e9",
-    modelUrl: COMM("low-detail-building-c"),
-    modelByLevel: {
-      1: COMM("low-detail-building-c"),
-      2: COMM("building-c"),
-      3: COMM("building-i"),
-      4: COMM("building-skyscraper-c"),
-      5: COMM("building-skyscraper-d"),
-    },
-    modelFootprint: 4.5,
+    modelUrl: COMM("building-skyscraper-a"),
+    modelFootprint: 5.0,
   },
   {
-    id: "starter-house",
+    id: "tower-b",
+    name: "Skyscraper B",
+    kind: "tower",
+    unlock: { kind: "streak", days: 7 },
+    cost: 1800,
+    position: [COL_X[1], ROW_BACK_Z],
+    rotation: faceCam([COL_X[1], ROW_BACK_Z]),
+    color: "#3b82f6",
+    modelUrl: COMM("building-skyscraper-b"),
+    modelFootprint: 5.0,
+  },
+  {
+    id: "tower-c",
+    name: "Skyscraper C",
+    kind: "tower",
+    unlock: { kind: "totalHours", hours: 25 },
+    cost: 2200,
+    position: [COL_X[2], ROW_BACK_Z],
+    rotation: faceCam([COL_X[2], ROW_BACK_Z]),
+    color: "#1d4ed8",
+    modelUrl: COMM("building-skyscraper-c"),
+    modelFootprint: 5.5,
+  },
+  {
+    id: "tower-d",
+    name: "Skyscraper D",
+    kind: "tower",
+    unlock: { kind: "totalHours", hours: 40 },
+    cost: 2600,
+    position: [COL_X[3], ROW_BACK_Z],
+    rotation: faceCam([COL_X[3], ROW_BACK_Z]),
+    color: "#0369a1",
+    modelUrl: COMM("building-skyscraper-d"),
+    modelFootprint: 5.0,
+  },
+  {
+    id: "tower-e",
+    name: "Skyscraper E",
+    kind: "tower",
+    unlock: { kind: "totalHours", hours: 50 },
+    cost: 3000,
+    position: [COL_X[4], ROW_BACK_Z],
+    rotation: faceCam([COL_X[4], ROW_BACK_Z]),
+    color: "#075985",
+    modelUrl: COMM("building-skyscraper-e"),
+    modelFootprint: 5.0,
+  },
+
+  // ── Mid row (medium offices / apartments) ─────────────────────────────
+  {
+    id: "office-a",
     name: "Apartments",
     kind: "house",
     unlock: { kind: "focusCount", count: 1 },
-    cost: 50,
-    position: [COL_X[0], BACK_Z],
-    rotation: faceTowards([COL_X[0], BACK_Z], CENTER),
-    color: "#dc2626",
-    modelUrl: COMM("low-detail-building-a"),
-    modelByLevel: {
-      1: COMM("low-detail-building-a"),
-      2: COMM("building-a"),
-      3: COMM("building-h"),
-      4: COMM("building-skyscraper-a"),
-      5: COMM("building-j"),
-    },
-    modelFootprint: 4.5,
-  },
-  {
-    id: "bakery",
-    name: "Office",
-    kind: "bakery",
-    unlock: { kind: "focusCount", count: 5 },
-    cost: 150,
-    position: [COL_X[1], BACK_Z],
-    rotation: faceTowards([COL_X[1], BACK_Z], CENTER),
-    color: "#f59e0b",
-    modelUrl: COMM("low-detail-building-b"),
-    modelByLevel: {
-      1: COMM("low-detail-building-b"),
-      2: COMM("building-b"),
-      3: COMM("building-g"),
-      4: COMM("building-skyscraper-b"),
-      5: COMM("building-n"),
-    },
-    modelFootprint: 4.5,
-  },
-  {
-    id: "library",
-    name: "Bank",
-    kind: "library",
-    unlock: { kind: "totalHours", hours: 5 },
-    cost: 250,
-    position: [COL_X[3], BACK_Z],
-    rotation: faceTowards([COL_X[3], BACK_Z], CENTER),
-    color: "#7c3aed",
-    modelUrl: COMM("low-detail-building-d"),
-    modelByLevel: {
-      1: COMM("low-detail-building-d"),
-      2: COMM("building-d"),
-      3: COMM("building-l"),
-      4: COMM("building-m"),
-      5: COMM("building-skyscraper-c"),
-    },
-    modelFootprint: 4.5,
-  },
-  {
-    id: "tavern",
-    name: "Hotel",
-    kind: "tavern",
-    unlock: { kind: "totalHours", hours: 10 },
-    cost: 500,
-    position: [COL_X[4], BACK_Z],
-    rotation: faceTowards([COL_X[4], BACK_Z], CENTER),
-    color: "#b45309",
-    modelUrl: COMM("low-detail-building-e"),
-    modelByLevel: {
-      1: COMM("low-detail-building-e"),
-      2: COMM("building-e"),
-      3: COMM("building-f"),
-      4: COMM("building-skyscraper-e"),
-      5: COMM("building-k"),
-    },
-    modelFootprint: 4.5,
-  },
-  // ─── Front row — smaller commercial buildings ────────────────────────────
-  {
-    id: "forge",
-    name: "Workshop",
-    kind: "forge",
-    unlock: { kind: "dailyGoalHits", days: 5 },
-    cost: 400,
-    position: [COL_X[0], FRONT_Z],
-    rotation: faceTowards([COL_X[0], FRONT_Z], CENTER),
-    color: "#7f1d1d",
-    modelUrl: IND("building-a"),
-    modelByLevel: {
-      1: IND("building-a"),
-      2: IND("building-c"),
-      3: IND("building-g"),
-      4: IND("building-j"),
-      5: IND("building-l"),
-    },
-    modelFootprint: 4.5,
-  },
-  {
-    id: "windmill",
-    name: "Warehouse",
-    kind: "windmill",
-    unlock: { kind: "focusCount", count: 25 },
-    cost: 600,
-    position: [COL_X[1], FRONT_Z],
-    rotation: faceTowards([COL_X[1], FRONT_Z], CENTER),
-    color: "#94a3b8",
-    modelUrl: IND("building-e"),
-    modelByLevel: {
-      1: IND("building-e"),
-      2: IND("building-n"),
-      3: IND("building-p"),
-    },
-    maxLevel: 3,
-    modelFootprint: 4.5,
-  },
-  {
-    id: "well",
-    name: "Kiosk",
-    kind: "well",
-    unlock: { kind: "focusCount", count: 3 },
-    cost: 100,
-    position: [COL_X[2], FRONT_Z],
-    rotation: faceTowards([COL_X[2], FRONT_Z], CENTER),
-    color: "#475569",
-    modelUrl: COMM("low-detail-building-h"),
-    modelByLevel: {
-      1: COMM("low-detail-building-h"),
-      2: COMM("low-detail-building-i"),
-      3: COMM("building-h"),
-    },
-    maxLevel: 3,
-    modelFootprint: 3.5,
-  },
-  {
-    id: "garden",
-    name: "Café",
-    kind: "garden",
-    unlock: { kind: "focusCount", count: 10 },
     cost: 200,
-    position: [COL_X[3], FRONT_Z],
-    rotation: faceTowards([COL_X[3], FRONT_Z], CENTER),
-    color: "#10b981",
-    modelUrl: COMM("low-detail-building-j"),
-    modelByLevel: {
-      1: COMM("low-detail-building-j"),
-      2: COMM("low-detail-building-k"),
-      3: COMM("building-f"),
-    },
-    maxLevel: 3,
+    position: [COL_X[0], ROW_MID_Z],
+    rotation: faceCam([COL_X[0], ROW_MID_Z]),
+    color: "#dc2626",
+    modelUrl: COMM("building-a"),
     modelFootprint: 4.0,
   },
   {
-    id: "shrine",
+    id: "office-b",
+    name: "Office Block",
+    kind: "bakery",
+    unlock: { kind: "focusCount", count: 5 },
+    cost: 350,
+    position: [COL_X[1], ROW_MID_Z],
+    rotation: faceCam([COL_X[1], ROW_MID_Z]),
+    color: "#f59e0b",
+    modelUrl: COMM("building-b"),
+    modelFootprint: 4.0,
+  },
+  {
+    id: "office-c",
+    name: "Bank",
+    kind: "library",
+    unlock: { kind: "totalHours", hours: 5 },
+    cost: 500,
+    position: [COL_X[2], ROW_MID_Z],
+    rotation: faceCam([COL_X[2], ROW_MID_Z]),
+    color: "#7c3aed",
+    modelUrl: COMM("building-d"),
+    modelFootprint: 4.0,
+  },
+  {
+    id: "office-d",
+    name: "Hotel",
+    kind: "tavern",
+    unlock: { kind: "totalHours", hours: 10 },
+    cost: 650,
+    position: [COL_X[3], ROW_MID_Z],
+    rotation: faceCam([COL_X[3], ROW_MID_Z]),
+    color: "#b45309",
+    modelUrl: COMM("building-e"),
+    modelFootprint: 4.0,
+  },
+  {
+    id: "office-e",
+    name: "Mall",
+    kind: "bakery",
+    unlock: { kind: "focusCount", count: 15 },
+    cost: 800,
+    position: [COL_X[4], ROW_MID_Z],
+    rotation: faceCam([COL_X[4], ROW_MID_Z]),
+    color: "#be185d",
+    modelUrl: COMM("building-l"),
+    modelFootprint: 4.0,
+  },
+
+  // ── Front row (small commercial + industrial) ─────────────────────────
+  {
+    id: "shop-a",
+    name: "Shop",
+    kind: "bakery",
+    unlock: { kind: "focusCount", count: 3 },
+    cost: 80,
+    position: [COL_X[0], ROW_FRONT_Z],
+    rotation: faceCam([COL_X[0], ROW_FRONT_Z]),
+    color: "#10b981",
+    modelUrl: COMM("low-detail-building-a"),
+    modelFootprint: 3.0,
+  },
+  {
+    id: "shop-b",
+    name: "Café",
+    kind: "garden",
+    unlock: { kind: "focusCount", count: 10 },
+    cost: 120,
+    position: [COL_X[1], ROW_FRONT_Z],
+    rotation: faceCam([COL_X[1], ROW_FRONT_Z]),
+    color: "#059669",
+    modelUrl: COMM("low-detail-building-b"),
+    modelFootprint: 3.0,
+  },
+  {
+    id: "shop-c",
+    name: "Kiosk",
+    kind: "well",
+    unlock: { kind: "focusCount", count: 3 },
+    cost: 60,
+    position: [COL_X[2], ROW_FRONT_Z],
+    rotation: faceCam([COL_X[2], ROW_FRONT_Z]),
+    color: "#475569",
+    modelUrl: COMM("low-detail-building-c"),
+    modelFootprint: 3.0,
+  },
+  {
+    id: "industrial-a",
+    name: "Workshop",
+    kind: "forge",
+    unlock: { kind: "dailyGoalHits", days: 5 },
+    cost: 250,
+    position: [COL_X[3], ROW_FRONT_Z],
+    rotation: faceCam([COL_X[3], ROW_FRONT_Z]),
+    color: "#7f1d1d",
+    modelUrl: IND("building-a"),
+    modelFootprint: 3.5,
+  },
+  {
+    id: "industrial-b",
     name: "Factory",
-    kind: "shrine",
-    unlock: { kind: "streak", days: 7 },
-    cost: 300,
-    position: [COL_X[4], FRONT_Z],
-    rotation: faceTowards([COL_X[4], FRONT_Z], CENTER),
+    kind: "forge",
+    unlock: { kind: "focusCount", count: 25 },
+    cost: 700,
+    position: [COL_X[4], ROW_FRONT_Z],
+    rotation: faceCam([COL_X[4], ROW_FRONT_Z]),
     color: "#fb923c",
-    modelUrl: IND("building-q"),
-    modelByLevel: {
-      1: IND("building-q"),
-      2: IND("building-s"),
-      3: IND("building-t"),
-      4: IND("building-l"),
-    },
-    maxLevel: 4,
-    modelFootprint: 4.5,
+    modelUrl: IND("building-l"),
+    modelFootprint: 4.0,
   },
 ];
