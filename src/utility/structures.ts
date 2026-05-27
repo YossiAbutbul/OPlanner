@@ -69,7 +69,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[0], ROW_BACK_Z]),
     color: "#0ea5e9",
     modelUrl: COMM("building-skyscraper-a"),
-    modelFootprint: 5.0,
+    modelFootprint: 3.8,
   },
   {
     id: "tower-b",
@@ -81,7 +81,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[1], ROW_BACK_Z]),
     color: "#3b82f6",
     modelUrl: COMM("building-skyscraper-b"),
-    modelFootprint: 5.0,
+    modelFootprint: 3.8,
   },
   {
     id: "tower-c",
@@ -93,7 +93,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[2], ROW_BACK_Z]),
     color: "#1d4ed8",
     modelUrl: COMM("building-skyscraper-c"),
-    modelFootprint: 5.5,
+    modelFootprint: 4.0,
   },
   {
     id: "tower-d",
@@ -105,7 +105,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[3], ROW_BACK_Z]),
     color: "#0369a1",
     modelUrl: COMM("building-skyscraper-d"),
-    modelFootprint: 5.0,
+    modelFootprint: 3.8,
   },
   {
     id: "tower-e",
@@ -117,7 +117,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[4], ROW_BACK_Z]),
     color: "#075985",
     modelUrl: COMM("building-skyscraper-e"),
-    modelFootprint: 5.0,
+    modelFootprint: 3.8,
   },
 
   // ── Mid row (medium offices / apartments) ─────────────────────────────
@@ -131,7 +131,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[0], ROW_MID_Z]),
     color: "#dc2626",
     modelUrl: COMM("building-a"),
-    modelFootprint: 4.0,
+    modelFootprint: 3.2,
   },
   {
     id: "office-b",
@@ -143,7 +143,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[1], ROW_MID_Z]),
     color: "#f59e0b",
     modelUrl: COMM("building-b"),
-    modelFootprint: 4.0,
+    modelFootprint: 3.2,
   },
   {
     id: "office-c",
@@ -155,7 +155,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[2], ROW_MID_Z]),
     color: "#7c3aed",
     modelUrl: COMM("building-d"),
-    modelFootprint: 4.0,
+    modelFootprint: 3.2,
   },
   {
     id: "office-d",
@@ -167,7 +167,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[3], ROW_MID_Z]),
     color: "#b45309",
     modelUrl: COMM("building-e"),
-    modelFootprint: 4.0,
+    modelFootprint: 3.2,
   },
   {
     id: "office-e",
@@ -193,7 +193,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[0], ROW_FRONT_Z]),
     color: "#10b981",
     modelUrl: COMM("low-detail-building-a"),
-    modelFootprint: 3.0,
+    modelFootprint: 2.5,
   },
   {
     id: "shop-b",
@@ -205,7 +205,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[1], ROW_FRONT_Z]),
     color: "#059669",
     modelUrl: COMM("low-detail-building-b"),
-    modelFootprint: 3.0,
+    modelFootprint: 2.5,
   },
   {
     id: "shop-c",
@@ -217,7 +217,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[2], ROW_FRONT_Z]),
     color: "#475569",
     modelUrl: COMM("low-detail-building-c"),
-    modelFootprint: 3.0,
+    modelFootprint: 2.5,
   },
   {
     id: "industrial-a",
@@ -229,7 +229,7 @@ export const STRUCTURES: StructureDef[] = [
     rotation: faceCam([COL_X[3], ROW_FRONT_Z]),
     color: "#7f1d1d",
     modelUrl: IND("building-a"),
-    modelFootprint: 3.5,
+    modelFootprint: 2.8,
   },
   {
     id: "industrial-b",
@@ -240,7 +240,7 @@ export const STRUCTURES: StructureDef[] = [
     position: [COL_X[4], ROW_FRONT_Z],
     rotation: faceCam([COL_X[4], ROW_FRONT_Z]),
     color: "#fb923c",
-    modelUrl: IND("building-l"),
-    modelFootprint: 4.0,
+    modelUrl: IND("building-c"),
+    modelFootprint: 2.8,
   },
 ];
