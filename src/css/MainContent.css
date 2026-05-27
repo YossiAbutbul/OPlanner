@@ -10,7 +10,8 @@
 .main-content {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 1.25rem 2rem;
   border-radius: 8px;
   display: flex;
