@@ -167,17 +167,17 @@ const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, pla
         </span>
         <svg
           className={`tp-trigger-chevron ${open ? "tp-trigger-chevron-open" : ""}`}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
           fill="none"
           stroke="currentColor"
-          strokeWidth="2.5"
+          strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          <polyline points="6 9 12 15 18 9" />
+          <polyline points="3 5 7 9 11 5" />
         </svg>
       </button>
 

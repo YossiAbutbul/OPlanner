@@ -64,9 +64,11 @@ const NotificationList: React.FC = () => {
     course: string,
     ignoreOverdue?: boolean,
     startTime?: string,
-    endTime?: string
+    endTime?: string,
+    notes?: string,
+    color?: string
   ) => {
-    await addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, undefined, startTime, endTime);
+    await addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, undefined, startTime, endTime, notes, color);
     setModalOpen(false);
   };
 

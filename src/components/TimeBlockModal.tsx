@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
 import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
+import NotesEditor from "./NotesEditor";
 import { TimeBlock } from "../context/TimeBlockContext";
 
 interface Props {
@@ -10,23 +11,40 @@ interface Props {
   onSave: (block: TimeBlock) => Promise<void> | void;
   onDelete?: (id: string) => Promise<void> | void;
   initial?: Partial<TimeBlock> | null;
+  /** Show course dropdown with these options. */
+  availableCourses?: string[];
+  /** When dropdown isn't shown, bind block to this course. */
+  defaultCourse?: string;
 }
+
+const NO_COURSE = "__none__";
+
+const DEFAULT_BLOCK_COLOR = "#7c4dff";
 
 const DEFAULT_COLORS = [
   "#7c4dff", "#5e35b1", "#3949ab", "#1e88e5", "#42a5f5", "#039be5",
   "#00acc1", "#26a69a", "#43a047", "#66bb6a", "#9ccc65", "#c0ca33",
-  "#fdd835", "#ffb300", "#fb8c00", "#f4511e", "#ef5350", "#e53935",
-  "#d81b60", "#ec407a", "#ab47bc", "#8d6e63", "#78909c", "#546e7a",
+  "#ffb300", "#fb8c00", "#f4511e", "#ef5350", "#e53935", "#d81b60",
+  "#ec407a", "#ab47bc", "#8d6e63", "#78909c", "#546e7a", "#37474f",
 ];
 
-const TimeBlockModal: React.FC<Props> = ({ isOpen, onClose, onSave, onDelete, initial }) => {
+const TimeBlockModal: React.FC<Props> = ({
+  isOpen,
+  onClose,
+  onSave,
+  onDelete,
+  initial,
+  availableCourses,
+  defaultCourse,
+}) => {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
-  const [color, setColor] = useState(DEFAULT_COLORS[0]);
+  const [color, setColor] = useState(DEFAULT_BLOCK_COLOR);
   const [notes, setNotes] = useState("");
   const [allDay, setAllDay] = useState(false);
+  const [courseChoice, setCourseChoice] = useState<string>(NO_COURSE);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -47,14 +65,17 @@ const TimeBlockModal: React.FC<Props> = ({ isOpen, onClose, onSave, onDelete, in
     setAllDay(isAll);
     setStartTime(isAll ? curStart : initStart);
     setEndTime(isAll ? curEnd : initEnd);
-    setColor(initial?.color ?? DEFAULT_COLORS[0]);
+    setColor(initial?.color ?? DEFAULT_BLOCK_COLOR);
     setNotes(initial?.notes ?? "");
-  }, [isOpen, initial]);
+    setCourseChoice(initial?.courseId ?? defaultCourse ?? NO_COURSE);
+  }, [isOpen, initial, defaultCourse]);
 
   const canSave = !!title.trim() && !!date && (allDay || (!!startTime && !!endTime && startTime < endTime));
 
   const handleSave = async () => {
     if (!canSave) return;
+    const resolvedCourse =
+      availableCourses ? courseChoice : (defaultCourse ?? initial?.courseId);
     await onSave({
       id: initial?.id ?? "",
       title: title.trim(),
@@ -63,7 +84,7 @@ const TimeBlockModal: React.FC<Props> = ({ isOpen, onClose, onSave, onDelete, in
       endTime: allDay ? "23:00" : endTime,
       color,
       notes: notes.trim() || undefined,
-      courseId: initial?.courseId,
+      courseId: resolvedCourse && resolvedCourse !== NO_COURSE ? resolvedCourse : undefined,
     });
     onClose();
   };
@@ -126,6 +147,21 @@ const TimeBlockModal: React.FC<Props> = ({ isOpen, onClose, onSave, onDelete, in
           );
         }}
       </DatePicker>
+      {availableCourses !== undefined && (
+        <>
+          <label htmlFor="tb-course">Course</label>
+          <select
+            id="tb-course"
+            value={courseChoice}
+            onChange={(e) => setCourseChoice(e.target.value)}
+          >
+            <option value={NO_COURSE}>No course</option>
+            {availableCourses.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </>
+      )}
       <div className="hw-time-row">
         <div className="hw-time-col">
           <TimePicker
@@ -188,27 +224,9 @@ const TimeBlockModal: React.FC<Props> = ({ isOpen, onClose, onSave, onDelete, in
             onClick={() => setColor(c)}
           />
         ))}
-        <label
-          className={`tb-color-swatch tb-color-swatch-custom ${!DEFAULT_COLORS.includes(color) ? "tb-color-swatch-active" : ""}`}
-          style={{ background: !DEFAULT_COLORS.includes(color) ? color : undefined }}
-          aria-label="Custom color"
-          title="Custom color"
-        >
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-          />
-        </label>
       </div>
-      <label htmlFor="tb-notes">Notes</label>
-      <textarea
-        id="tb-notes"
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        rows={2}
-        placeholder="Optional"
-      />
+      <label>Notes</label>
+      <NotesEditor value={notes} onChange={setNotes} placeholder="Optional" />
     </Modal>
   );
 };

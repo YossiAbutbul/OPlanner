@@ -613,10 +613,6 @@
   color: var(--rs-accent);
 }
 
-.rs-day-event-block {
-  /* bg + border + color set inline from user color */
-}
-
 /* All-day vertical bar — keep its own left from inline style */
 .rs-day-event-allday {
   left: var(--allday-left, 4px);
@@ -714,10 +710,94 @@
 }
 
 .tb-color-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(12, 22px);
+  gap: 0.4rem;
   margin-bottom: 0.4rem;
+  justify-content: start;
+}
+
+/* Notes toolbar + expand overlay */
+.tb-notes-toolbar {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0.25rem 0 0.3rem;
+}
+
+.tb-notes-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #d6d6da;
+  background: #fff;
+  color: #1a1a1a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.tb-notes-btn:hover {
+  background: #f3f3f5;
+  border-color: #b8bbc0;
+}
+
+.tb-notes-expand {
+  margin-left: auto;
+}
+
+.tb-notes-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.tb-notes-overlay-panel {
+  background: #fff;
+  border-radius: 12px;
+  width: min(800px, 100%);
+  height: min(600px, 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.tb-notes-overlay-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #eaeaee;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.tb-notes-overlay-head .tb-notes-toolbar {
+  margin: 0;
+}
+
+.tb-notes-overlay-textarea {
+  flex: 1;
+  width: 100%;
+  border: none;
+  outline: none;
+  padding: 1rem 1.2rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  resize: none;
+  color: #1a1a1a;
+  box-sizing: border-box;
 }
 
 .tb-color-swatch {
@@ -748,8 +828,18 @@
   border: 2px solid transparent;
   box-sizing: border-box;
   background: conic-gradient(
-    #ef5350, #ffb300, #fdd835, #66bb6a, #26a69a,
-    #42a5f5, #7c4dff, #ec407a, #ef5350
+    from 0deg,
+    #ff3b30,
+    #ff9500,
+    #ffcc00,
+    #34c759,
+    #00c7be,
+    #30b0c7,
+    #007aff,
+    #5856d6,
+    #af52de,
+    #ff2d55,
+    #ff3b30
   );
   display: inline-block;
   position: relative;
