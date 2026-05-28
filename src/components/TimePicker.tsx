@@ -82,10 +82,10 @@ const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, pla
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    document.addEventListener("mousedown", onDown);
+    document.addEventListener("mousedown", onDown, true);
     document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("mousedown", onDown, true);
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
@@ -195,7 +195,21 @@ const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, pla
               inputMode="numeric"
               className={`tp-input ${draft && !isValid(draft) ? "tp-input-invalid" : ""}`}
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(e) => {
+                const raw = e.target.value;
+                const prev = draft;
+                // Auto-insert ":" after 2 digits when typing forward.
+                // Skip if user is deleting or already has a ":".
+                if (
+                  raw.length === 2 &&
+                  prev.length < raw.length &&
+                  /^\d{2}$/.test(raw)
+                ) {
+                  setDraft(raw + ":");
+                  return;
+                }
+                setDraft(raw);
+              }}
               onKeyDown={onDraftKey}
               placeholder="HH:mm"
               maxLength={5}

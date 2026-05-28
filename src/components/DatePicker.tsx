@@ -83,10 +83,10 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    document.addEventListener("mousedown", handler);
+    document.addEventListener("mousedown", handler, true);
     document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("mousedown", handler, true);
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);

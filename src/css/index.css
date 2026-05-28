@@ -61,33 +61,35 @@ button:focus-visible {
   }
 }
 
-/* App-wide light-theme scrollbars */
+/* App-wide scrollbars — slim, transparent track, subtle gray thumb */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #c4c6ca #f4f4f6;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f4f4f6;
-  border-radius: 8px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c4c6ca;
-  border: 2px solid #f4f4f6;
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
   transition: background-color 0.15s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9da0a5;
+  background: rgba(0, 0, 0, 0.24);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(0, 0, 0, 0.36);
 }
 
 ::-webkit-scrollbar-corner {
-  background: #f4f4f6;
+  background: transparent;
 }
