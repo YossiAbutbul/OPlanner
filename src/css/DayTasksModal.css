@@ -9,23 +9,20 @@
 .day-tasks {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 4px;
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  max-height: 360px;
+  height: min(60vh, 420px);
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: #c5c8cc transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .day-tasks::-webkit-scrollbar {
-  width: 6px;
-}
-.day-tasks::-webkit-scrollbar-thumb {
-  background: #c5c8cc;
-  border-radius: 999px;
+  width: 0;
+  display: none;
 }
 
 .day-task {
@@ -37,7 +34,7 @@
   border: 1px solid #e3e3e6;
   border-radius: 8px;
   min-width: 0;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .day-task-main {
