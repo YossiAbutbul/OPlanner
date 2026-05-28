@@ -10,27 +10,41 @@ interface Props {
   disabled?: boolean;
   placeholder?: string;
   minTime?: string; // HH:mm — values <= this are hidden / rejected
+  showDurationFrom?: string; // HH:mm — show "(N mins / N hr)" relative to this
+  step?: number; // slot step in minutes (default 30)
 }
 
-const POPOVER_WIDTH = 150;
+const POPOVER_WIDTH = 180;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-// Build 30-min slot list
-const buildSlots = (): string[] => {
+// Build slot list at given step minutes
+const buildSlots = (step: number): string[] => {
   const out: string[] = [];
-  for (let h = 0; h < 24; h++) {
-    out.push(`${pad(h)}:00`);
-    out.push(`${pad(h)}:30`);
+  for (let total = 0; total < 24 * 60; total += step) {
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    out.push(`${pad(h)}:${pad(m)}`);
   }
   return out;
 };
 
-const SLOTS = buildSlots();
+const toMin = (s: string) => {
+  const [h, m] = s.split(":").map(Number);
+  return h * 60 + m;
+};
+
+const formatDuration = (mins: number): string => {
+  if (mins < 60) return `${mins} mins`;
+  const h = mins / 60;
+  if (Number.isInteger(h)) return `${h} hr`;
+  return `${h.toFixed(2).replace(/\.?0+$/, "")} hrs`;
+};
 
 const isValid = (s: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
 
-const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, placeholder = "--:--", minTime }) => {
+const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, placeholder = "--:--", minTime, showDurationFrom, step = 30 }) => {
+  const SLOTS = useMemo(() => buildSlots(step), [step]);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -93,23 +107,35 @@ const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, pla
   // Scroll selected slot — or current-hour if no selection — to top of list.
   // Use explicit scrollTop (NOT scrollIntoView, which scrolls the document
   // because the popover renders in a portal).
+  const initialScrollDoneRef = useRef(false);
   useEffect(() => {
-    if (!open || !listRef.current) return;
-    const list = listRef.current;
-    const sel = list.querySelector<HTMLButtonElement>(".tp-slot-active");
-    if (sel) {
-      list.scrollTop = sel.offsetTop - list.offsetTop;
+    if (!open) {
+      initialScrollDoneRef.current = false;
       return;
     }
-    // No value picked yet — scroll to current hour floor.
-    const now = new Date();
-    const target = `${String(now.getHours()).padStart(2, "0")}:00`;
-    const node = Array.from(list.querySelectorAll<HTMLButtonElement>(".tp-slot"))
-      .find((b) => b.textContent === target);
-    if (node) {
-      list.scrollTop = node.offsetTop - list.offsetTop;
-    }
-  }, [open]);
+    if (!pos || !listRef.current || initialScrollDoneRef.current) return;
+    const list = listRef.current;
+    const scrollTo = (node: HTMLElement) => {
+      const listRect = list.getBoundingClientRect();
+      const nodeRect = node.getBoundingClientRect();
+      list.scrollTop += nodeRect.top - listRect.top;
+    };
+    const raf = requestAnimationFrame(() => {
+      const sel = list.querySelector<HTMLButtonElement>(".tp-slot-active");
+      if (sel) {
+        scrollTo(sel);
+        initialScrollDoneRef.current = true;
+        return;
+      }
+      const now = new Date();
+      const target = `${String(now.getHours()).padStart(2, "0")}:00`;
+      const node = Array.from(list.querySelectorAll<HTMLButtonElement>(".tp-slot"))
+        .find((b) => (b.textContent || "").startsWith(target));
+      if (node) scrollTo(node);
+      initialScrollDoneRef.current = true;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open, pos]);
 
   const display = useMemo(() => {
     if (!value) return placeholder;
@@ -128,7 +154,7 @@ const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, pla
   const visibleSlots = useMemo(
     () => SLOTS.filter((s) => passesMin(s)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [minTime]
+    [minTime, SLOTS]
   );
 
   const onDraftKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -228,16 +254,23 @@ const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, pla
             </button>
           </div>
           <div className="tp-list" ref={listRef}>
-            {visibleSlots.map((s) => (
+            {visibleSlots.map((s) => {
+              let durLabel = "";
+              if (showDurationFrom && /^\d{2}:\d{2}$/.test(showDurationFrom)) {
+                const diff = toMin(s) - toMin(showDurationFrom);
+                if (diff > 0) durLabel = ` (${formatDuration(diff)})`;
+              }
+              return (
               <button
                 key={s}
                 type="button"
                 className={`tp-slot ${s === value ? "tp-slot-active" : ""}`}
                 onClick={() => commit(s)}
               >
-                {s}
+                {s}{durLabel}
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>,
         document.body

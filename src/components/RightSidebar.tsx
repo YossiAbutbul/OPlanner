@@ -64,7 +64,7 @@ const DAY_START_HOUR = 6;
 const DAY_END_HOUR = 24;
 const SLOT_MIN = 30;
 const PX_PER_HOUR = 64; // 32px per 30-min slot
-const DRAG_SNAP_MIN = 30;
+const DRAG_SNAP_MIN = 15;
 
 const minutesFromStart = (hhmm: string) => {
   const [h, m] = hhmm.split(":").map(Number);
@@ -438,11 +438,11 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       const cur = dragRef.current;
       if (!cur) return;
       const dy = e.clientY - cur.startY;
-      // Smooth (per-minute) preview; snap only on commit.
-      const rawMin = Math.round(pxToMin(dy));
+      // Snap preview to 15-min steps so visual jumps match commit
+      const snappedMin = snapMin(Math.round(pxToMin(dy)));
       if (Math.abs(dy) > 3) movedRef.current = true;
-      if (rawMin !== cur.deltaMin) {
-        setDrag({ ...cur, deltaMin: rawMin });
+      if (snappedMin !== cur.deltaMin) {
+        setDrag({ ...cur, deltaMin: snappedMin });
       }
     };
     const onUp = () => {
@@ -631,10 +631,20 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                   <span className="rs-day-hour-label">{label}</span>
                   <span className="rs-day-hour-line" />
                   {i < hourLabels.length - 1 && (
-                    <span
-                      className="rs-day-half-line"
-                      style={{ top: PX_PER_HOUR / 2 }}
-                    />
+                    <>
+                      <span
+                        className="rs-day-quarter-line"
+                        style={{ top: PX_PER_HOUR / 4 }}
+                      />
+                      <span
+                        className="rs-day-half-line"
+                        style={{ top: PX_PER_HOUR / 2 }}
+                      />
+                      <span
+                        className="rs-day-quarter-line"
+                        style={{ top: (PX_PER_HOUR * 3) / 4 }}
+                      />
+                    </>
                   )}
                 </div>
               ))}
@@ -705,7 +715,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                       onMouseDown={(e) =>
                         beginDrag(e, "task", t.id, "move", t.startTime!, t.endTime!)
                       }
-                      onClick={(e) => {
+                      onDoubleClick={(e) => {
                         e.stopPropagation();
                         if (movedRef.current) return;
                         handleClick(t);
@@ -762,7 +772,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                       onMouseDown={(e) =>
                         beginDrag(e, "block", b.id, "move", b.startTime, b.endTime)
                       }
-                      onClick={(e) => {
+                      onDoubleClick={(e) => {
                         e.stopPropagation();
                         if (movedRef.current) return;
                         setTbInitial(b);
