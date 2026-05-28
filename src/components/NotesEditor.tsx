@@ -94,6 +94,57 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
 
   const editorEl = () => (expanded ? expandedRef : collapsedRef).current;
 
+  // Auto-link the word ending at the caret if it's a URL.
+  const URL_REGEX = /(https?:\/\/[^\s<]+|www\.[^\s<]+)$/i;
+  const autoLinkAtCaret = () => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (!range.collapsed) return;
+    const node = range.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE) return;
+    // Don't double-wrap if caret is already inside an <a>
+    let p: Node | null = node.parentNode;
+    while (p && (p as Element).tagName !== undefined) {
+      if ((p as Element).tagName === "A") return;
+      p = p.parentNode;
+    }
+    const textBefore = (node.textContent || "").slice(0, range.startOffset);
+    const m = textBefore.match(URL_REGEX);
+    if (!m) return;
+    const url = m[0];
+    const href = url.startsWith("http") ? url : `https://${url}`;
+    // Replace url chars with <a>
+    const start = range.startOffset - url.length;
+    const replaceRange = document.createRange();
+    replaceRange.setStart(node, start);
+    replaceRange.setEnd(node, range.startOffset);
+    replaceRange.deleteContents();
+    const a = document.createElement("a");
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = url;
+    replaceRange.insertNode(a);
+    // Move caret after <a>
+    const newRange = document.createRange();
+    newRange.setStartAfter(a);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+  };
+
+  // Open links on click (contenteditable normally suppresses link nav)
+  const handleEditorClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+    const a = target.closest("a") as HTMLAnchorElement | null;
+    if (!a) return;
+    // Ctrl/Cmd-click → open; plain click in expanded just opens too
+    e.preventDefault();
+    window.open(a.href, "_blank", "noopener,noreferrer");
+  };
+
   // Track active formatting state for toolbar highlight
   const refreshActive = () => {
     const el = editorEl();
@@ -139,6 +190,10 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
 
   // Detect "1." or "*"/"-" + space at start of line → convert to list
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Auto-link URL on space/Enter (before other handling)
+    if (e.key === " " || e.key === "Enter") {
+      autoLinkAtCaret();
+    }
     if (e.key !== " ") return;
     const root = e.currentTarget;
     const sel = window.getSelection();
@@ -477,6 +532,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
         data-placeholder={placeholder}
         onInput={emitCollapsed}
         onKeyDown={handleEditorKeyDown}
+        onClick={handleEditorClick}
       />
       <button
         type="button"
@@ -516,6 +572,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
               suppressContentEditableWarning
               data-placeholder={placeholder}
               onKeyDown={handleEditorKeyDown}
+              onClick={handleEditorClick}
             />
           </div>
         </div>,

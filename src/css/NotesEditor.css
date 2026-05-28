@@ -205,6 +205,18 @@
   margin: 0.1rem 0;
 }
 
+.ne-collapsed a,
+.ne-editor a {
+  color: #1d6fe0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ne-collapsed a:hover,
+.ne-editor a:hover {
+  color: #1755b3;
+}
+
 
 .ne-color-btn {
   position: relative;
