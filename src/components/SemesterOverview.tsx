@@ -333,7 +333,7 @@ const SemesterOverview: React.FC<Props> = ({
                     setTaskModalOpen(true);
                   }
                 }}
-                maxVisibleTasks={3}
+                maxVisibleTasks={2}
                 colorOf={(t) => {
                   if (t.color) return t.color;
                   const c = courses.find((co) => co.name === t.course);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Modal from "./Modal";
 import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
@@ -147,18 +147,32 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
     onClose();
   };
 
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
+        const t = e.target as HTMLElement | null;
+        if (t) {
+          const tag = t.tagName;
+          if (
+            tag === "TEXTAREA" ||
+            t.isContentEditable ||
+            (tag === "INPUT" && (t as HTMLInputElement).type === "search") ||
+            t.closest(".tp-popover")
+          ) {
+            return;
+          }
+        }
         e.preventDefault();
-        handleSave();
+        handleSaveRef.current();
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, name, dueDate, status, selectedCourseData, editHomework]);
+  }, [isOpen]);
 
   const canSave =
     !!name.trim() && !!dueDate && !!(selectedCourseData || editHomework) && !isLoading;

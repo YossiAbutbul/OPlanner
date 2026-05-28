@@ -169,8 +169,7 @@ button:focus { outline: none; }
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0.25rem 0.5rem 0.5rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  scrollbar-width: none;
 }
 
 .open-list-header {
@@ -423,20 +422,13 @@ button:focus { outline: none; }
   flex: 1 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  scrollbar-width: none;
   box-sizing: border-box;
 }
 
 .year-list::-webkit-scrollbar {
-  width: 8px;
-}
-.year-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-}
-.year-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  width: 0;
+  display: none;
 }
 
 .year-item {
@@ -932,23 +924,17 @@ button:focus { outline: none; }
   color: #fff;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+/* Sidebar: hide scrollbars but keep scroll behavior */
+.sidebar *,
+.sidebar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-
-::-webkit-scrollbar-track {
-  background: #1f1f1f;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
+.sidebar *::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 @keyframes scaleIn {
   from {
