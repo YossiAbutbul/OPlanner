@@ -15,6 +15,7 @@
   gap: 0.45rem;
   max-height: 360px;
   overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: #c5c8cc transparent;
 }
@@ -53,8 +54,9 @@
   font-weight: 500;
   overflow-wrap: anywhere;
   word-break: break-word;
+  white-space: normal;
   min-width: 0;
-  flex: 1;
+  width: 100%;
 }
 
 .day-task-course {
