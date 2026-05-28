@@ -35,6 +35,8 @@
   background: #ffffff;
   border: 1px solid #e3e3e6;
   border-radius: 8px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .day-task-main {
@@ -49,18 +51,17 @@
   color: #1a1a1a;
   font-size: 0.95rem;
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   min-width: 0;
+  flex: 1;
 }
 
 .day-task-course {
   font-size: 0.75rem;
   color: #888;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .day-task-main.has-course {
