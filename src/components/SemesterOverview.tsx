@@ -335,6 +335,7 @@ const SemesterOverview: React.FC<Props> = ({
                 }}
                 maxVisibleTasks={3}
                 colorOf={(t) => {
+                  if (t.color) return t.color;
                   const c = courses.find((co) => co.name === t.course);
                   return courseColor(t.course, c?.color);
                 }}
