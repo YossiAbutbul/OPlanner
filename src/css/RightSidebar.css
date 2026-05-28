@@ -47,10 +47,10 @@
 }
 
 .rs-eyebrow {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--rs-text-muted);
-  margin-bottom: 0.3rem;
+  line-height: 1.2;
 }
 
 .rs-title {
@@ -82,6 +82,7 @@
 .rs-count {
   font-size: 0.78rem;
   color: var(--rs-text-muted);
+  line-height: 1.2;
 }
 
 /* List */
