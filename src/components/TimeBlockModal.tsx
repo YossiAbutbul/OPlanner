@@ -177,6 +177,7 @@ const TimeBlockModal: React.FC<Props> = ({
                 setEndTime(`${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`);
               }
             }}
+            step={15}
             disabled={allDay}
           />
         </div>
@@ -186,7 +187,16 @@ const TimeBlockModal: React.FC<Props> = ({
             value={endTime}
             onChange={setEndTime}
             disabled={allDay}
-            minTime={startTime || undefined}
+            step={15}
+            showDurationFrom={startTime || undefined}
+            minTime={(() => {
+              if (!startTime) return undefined;
+              const [h, m] = startTime.split(":").map(Number);
+              const total = h * 60 + m + 14;
+              const eh = Math.min(23, Math.floor(total / 60));
+              const em = total % 60;
+              return `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
+            })()}
           />
         </div>
       </div>

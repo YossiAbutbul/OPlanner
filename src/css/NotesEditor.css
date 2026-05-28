@@ -84,6 +84,17 @@
   border-color: #d6d6da;
 }
 
+.ne-btn-active {
+  background: #e3f5ea;
+  border-color: #1db954;
+  color: #117a35;
+}
+
+.ne-btn-active:hover {
+  background: #d6efdf;
+  border-color: #1db954;
+}
+
 /* Overlay */
 .ne-overlay {
   position: fixed;
@@ -165,6 +176,33 @@
   text-decoration: underline;
   text-underline-offset: 2px;
   text-decoration-thickness: 1.5px;
+}
+
+.ne-collapsed ul,
+.ne-collapsed ol,
+.ne-editor ul,
+.ne-editor ol {
+  margin: 0.2rem 0;
+  padding-inline-start: 1.4rem;
+  padding-left: 0;
+  padding-right: 0;
+  list-style-position: outside;
+}
+
+.ne-collapsed [dir="rtl"] ul,
+.ne-collapsed [dir="rtl"] ol,
+.ne-editor [dir="rtl"] ul,
+.ne-editor [dir="rtl"] ol,
+.ne-collapsed ul[dir="rtl"],
+.ne-collapsed ol[dir="rtl"],
+.ne-editor ul[dir="rtl"],
+.ne-editor ol[dir="rtl"] {
+  padding-inline-start: 1.4rem;
+}
+
+.ne-collapsed li,
+.ne-editor li {
+  margin: 0.1rem 0;
 }
 
 
