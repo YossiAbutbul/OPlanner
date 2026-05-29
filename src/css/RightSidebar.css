@@ -13,8 +13,13 @@
   --rs-warn: #f3c768;
   --rs-ok: #4cd980;
 
-  width: 320px;
-  flex-shrink: 0;
+  /* Fluid token width — clamp(260, 22vw, 340). flex-shrink: 0 keeps it
+     stable next to a flex-growing main column. min-width: 0 so wide
+     internal content (Day-view hour grid) can't expand it past the var. */
+  flex: 0 0 var(--rsidebar-w);
+  width: var(--rsidebar-w);
+  min-width: 0;
+  max-width: var(--rsidebar-w);
   background: var(--rs-bg);
   color: var(--rs-text);
   display: flex;

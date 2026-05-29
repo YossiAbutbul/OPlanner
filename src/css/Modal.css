@@ -11,16 +11,31 @@
 }
 
 .app-modal {
-  width: 90%;
+  width: min(90%, 420px);
   max-width: 420px;
   background: #ffffff;
   border: 1px solid #e3e3e6;
-  border-radius: 12px;
-  padding: 1.25rem;
+  border-radius: var(--radius-md, 12px);
+  padding: var(--space-5, 1.25rem);
   color: #1a1a1a;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
   position: relative;
   animation: appModalScaleIn 0.2s ease-out;
+}
+
+/* On very narrow phones, fill more of the viewport and drop the rounded
+   corners so the modal feels like a native sheet rather than a small card. */
+@media (max-width: 480px) {
+  .app-modal {
+    width: 100%;
+    max-width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    padding: var(--space-4, 1rem);
+  }
 }
 
 .app-modal-title {

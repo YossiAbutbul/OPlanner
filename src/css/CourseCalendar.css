@@ -295,3 +295,18 @@
   color: #888;
   font-style: italic;
 }
+
+/* Wide screens: taller calendar rows so the course-row card section
+   uses its vertical space and pushes the homework table down. Gated on
+   min-height to avoid overflow on 1080p panels. */
+@media (min-width: 1440px) and (min-height: 1100px) {
+  .course-calendar .cal-grid {
+    grid-auto-rows: 72px;
+  }
+}
+
+@media (min-width: 1920px) and (min-height: 1300px) {
+  .course-calendar .cal-grid {
+    grid-auto-rows: 86px;
+  }
+}

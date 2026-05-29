@@ -1,9 +1,11 @@
 .app-container {
   display: flex;
   flex-direction: row;
-  height: 100vh; /* Full viewport height */
-  width: 100vw; /* Full viewport width */
-  overflow: hidden; /* Prevent overflow scrolling */
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
 }
 
 .app-loading {
@@ -35,37 +37,33 @@
   margin-top: 0.5rem;
 }
 
-/* Sidebar Styles */
+/* Sidebar — fluid width via token, animates on collapse. */
 .sidebar {
-  flex: 0 0 260px;
-  width: 260px;
+  flex: 0 0 var(--sidebar-w);
+  width: var(--sidebar-w);
+  min-width: 0;
   background-color: #0e0f12;
   color: #e7e7e7;
   padding: 0;
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   overflow: visible;
   box-shadow: 2px 0 16px rgba(0, 0, 0, 0.6);
-  transition:
-    flex-basis 0.22s ease,
-    width 0.22s ease;
+  transition: flex-basis 0.22s ease, width 0.22s ease;
 }
 
 .sidebar.collapsed {
-  flex: 0 0 76px;
-  width: 76px;
+  flex: 0 0 var(--sidebar-w-collapsed);
+  width: var(--sidebar-w-collapsed);
 }
 
-.right-sidebar {
-  flex: 0 0 18%; /* Fixed width of 20% */
-  min-width: 250px; /* Minimum width of 250px */
-  background-color: #282c34;
-  color: white;
-  padding: 1em;
-  overflow-y: auto; /* Scroll for long content */
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-}
+/* NOTE: there is no element with class .right-sidebar — RightSidebar.tsx
+   renders <aside className="rs">. The real width rules live in
+   RightSidebar.css against the .rs class. Any .right-sidebar selectors
+   in this file are dead (kept for the mobile @media block below that
+   was already toggling display:none on both .rs and .right-sidebar). */
 
 /* Sidebar List/Table Styling */
 .sidebar ul {
@@ -79,10 +77,13 @@
   list-style: none;
 }
 
-/* Main Content Styles */
+/* Main Content — flex item that fills remaining horizontal space.
+   min-width: 0 critical so wide internal content (tables, calendars)
+   doesn't blow the flex basis out and overflow the parent. */
 .main-content {
-  flex-grow: 1;
+  flex: 1 1 0;
   min-width: 0;
+  width: auto;
 }
 
 .mobile-topbar {
@@ -117,6 +118,14 @@
   display: none;
 }
 
+/* ===== Tablet / laptop intermediate (1024-1279) =====
+   All 3 columns still visible. Right sidebar uses its clamp() floor so it
+   doesn't squeeze main content too narrow. Nothing else to do — the grid
+   + clamp() in :root handle it. */
+
+/* ===== Tablet and below (<1024px) =====
+   Right sidebar slides out, left sidebar becomes a slide-in overlay.
+   Single-column grid so the position:fixed sidebar overlays content. */
 @media (max-width: 1024px) {
   html,
   body,
@@ -130,8 +139,13 @@
   }
 
   .app-container {
+    grid-template-columns: 1fr;
     width: 100%;
     max-width: 100%;
+  }
+
+  .app-container:has(.sidebar.collapsed) {
+    grid-template-columns: 1fr;
   }
 
   * {
@@ -147,7 +161,9 @@
     position: fixed;
     top: 0;
     left: 0;
+    width: clamp(240px, 80vw, 320px);
     height: 100vh;
+    height: 100dvh;
     z-index: 1100;
     transform: translateX(-100%);
     transition: transform 0.22s ease;
@@ -451,3 +467,7 @@
   align-items: center;
   gap: 0.3rem;
 }
+
+/* Wide-screen tweaks moved to the component CSS files so they win the
+   cascade (SemesterOverview.css, ProgressChart.css, CourseCalendar.css
+   load after App.css). See each file's @media (min-width: 1440px) block. */
