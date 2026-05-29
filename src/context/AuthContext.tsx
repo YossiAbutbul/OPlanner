@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   onAuthStateChanged,
   signInWithPopup,
@@ -14,32 +14,9 @@ import {
 import { waitForPendingWrites } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
 
-const USER_CACHE_KEY = "oplanner.user";
-
-const readCachedUser = (): User | null => {
-  try {
-    const raw = localStorage.getItem(USER_CACHE_KEY);
-    return raw ? (JSON.parse(raw) as User) : null;
-  } catch {
-    return null;
-  }
-};
-
-const writeCachedUser = (u: User | null) => {
-  if (!u) {
-    localStorage.removeItem(USER_CACHE_KEY);
-    return;
-  }
-  localStorage.setItem(
-    USER_CACHE_KEY,
-    JSON.stringify({
-      uid: u.uid,
-      email: u.email,
-      displayName: u.displayName,
-      photoURL: u.photoURL,
-    })
-  );
-};
+// Firebase Auth SDK persists the session in IndexedDB (browserLocalPersistence)
+// by default. Don't duplicate user PII into localStorage — it widens the XSS
+// blast radius without adding capability.
 
 interface AuthContextValue {
   user: User | null;
@@ -84,21 +61,24 @@ const mapAuthError = (e: unknown): string => {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const cachedUser = readCachedUser();
-  const [user, setUser] = useState<User | null>(cachedUser);
-  const [loading, setLoading] = useState(!cachedUser);
+  const [user, setUser] = useState<User | null>(auth.currentUser);
+  const [loading, setLoading] = useState(auth.currentUser === null);
+
+  // Clear any user PII left in localStorage by older builds.
+  useEffect(() => {
+    try { localStorage.removeItem("oplanner.user"); } catch {}
+  }, []);
 
   useEffect(() => {
     getRedirectResult(auth).catch((e) => console.error("Redirect sign-in error:", e));
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
-      writeCachedUser(u);
       setLoading(false);
     });
     return unsub;
   }, []);
 
-  const signIn = async () => {
+  const signIn = useCallback(async () => {
     // Localhost can't use redirect (the auth session would land on
     // firebaseapp.com origin which our local dev page can't read), so
     // fall back to popup. Deployed hosts use redirect via the vercel
@@ -124,38 +104,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       throw new Error(mapAuthError(e));
     }
-  };
+  }, []);
 
-  const signInEmail = async (email: string, password: string) => {
+  const signInEmail = useCallback(async (email: string, password: string) => {
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
     } catch (e) {
       throw new Error(mapAuthError(e));
     }
-  };
+  }, []);
 
-  const signUpEmail = async (email: string, password: string, displayName?: string) => {
+  const signUpEmail = useCallback(async (email: string, password: string, displayName?: string) => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       if (displayName && displayName.trim()) {
         await updateProfile(cred.user, { displayName: displayName.trim() });
         setUser({ ...cred.user });
-        writeCachedUser(cred.user);
       }
     } catch (e) {
       throw new Error(mapAuthError(e));
     }
-  };
+  }, []);
 
-  const resetPassword = async (email: string) => {
+  const resetPassword = useCallback(async (email: string) => {
     try {
       await sendPasswordResetEmail(auth, email.trim());
     } catch (e) {
       throw new Error(mapAuthError(e));
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     // Flush any in-flight Firestore writes before tearing down the session.
     try {
       await Promise.race([
@@ -176,15 +155,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           !k.startsWith("oplanner.bootstrapped.")
       )
       .forEach((k) => localStorage.removeItem(k));
-  };
+  }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{ user, loading, signIn, signInEmail, signUpEmail, resetPassword, logout }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo<AuthContextValue>(
+    () => ({ user, loading, signIn, signInEmail, signUpEmail, resetPassword, logout }),
+    [user, loading, signIn, signInEmail, signUpEmail, resetPassword, logout]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): AuthContextValue => {

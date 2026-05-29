@@ -33,6 +33,12 @@ dist-ssr
 *-firebase-adminsdk-*.json
 serviceAccountKey.json
 
+# Firebase CLI artifacts (deploy cache, debug logs)
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
 # TypeScript build artifacts
 *.tsbuildinfo
 src/**/*.js
