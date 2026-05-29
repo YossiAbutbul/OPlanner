@@ -1,23 +1,15 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { auth, requireUid } from "../firebase";
+import { lsCache } from "../hooks/useLocalStorageCache";
 import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  setDoc,
-} from "firebase/firestore";
-import { auth, db, requireUid } from "../firebase";
+  deleteTimeBlock,
+  fetchTimeBlocks,
+  generateTimeBlockId,
+  saveTimeBlock,
+} from "../services/timeBlocks";
+import type { TimeBlock } from "../types/models";
 
-export interface TimeBlock {
-  id: string;
-  date: string;       // YYYY-MM-DD
-  startTime: string;  // HH:mm
-  endTime: string;    // HH:mm
-  title: string;
-  color?: string;
-  courseId?: string;  // free-form ref e.g. "year|semester|course"
-  notes?: string;
-}
+export type { TimeBlock } from "../types/models";
 
 interface TimeBlockContextProps {
   blocks: TimeBlock[];
@@ -30,10 +22,7 @@ interface TimeBlockContextProps {
 
 const TimeBlockContext = createContext<TimeBlockContextProps | undefined>(undefined);
 
-const cacheKey = () => {
-  const uid = requireUid();
-  return `oplanner.timeblocks.${uid}`;
-};
+const cacheKey = () => `oplanner.timeblocks.${requireUid()}`;
 
 export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [blocks, setBlocks] = useState<TimeBlock[]>([]);
@@ -43,21 +32,15 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     await auth.authStateReady();
     let key: string;
     try { key = cacheKey(); } catch { return; }
-    // Optimistic cache paint
-    try {
-      const cached = localStorage.getItem(key);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) setBlocks(parsed as TimeBlock[]);
-      }
-    } catch { /* ignore */ }
+
+    const cached = lsCache.read<TimeBlock[]>(key);
+    if (Array.isArray(cached)) setBlocks(cached);
+
     setLoading(true);
     try {
-      const col = collection(db, `users/${requireUid()}/timeBlocks`);
-      const snap = await getDocs(col);
-      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as TimeBlock[];
+      const list = await fetchTimeBlocks(requireUid());
       setBlocks(list);
-      try { localStorage.setItem(key, JSON.stringify(list)); } catch { /* quota */ }
+      lsCache.write(key, list);
     } catch (e) {
       console.error("TimeBlocks fetch error:", e);
     } finally {
@@ -73,31 +56,26 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => unsub();
   }, [refresh]);
 
-  const writeCache = (list: TimeBlock[]) => {
-    try { localStorage.setItem(cacheKey(), JSON.stringify(list)); } catch { /* ignore */ }
-  };
+  const writeCache = useCallback((list: TimeBlock[]) => {
+    try { lsCache.write(cacheKey(), list); } catch { /* ignore */ }
+  }, []);
 
   const saveBlock = useCallback(async (b: TimeBlock) => {
-    const col = collection(db, `users/${requireUid()}/timeBlocks`);
-    const id = b.id || doc(col).id;
+    const uid = requireUid();
+    const id = b.id || generateTimeBlockId(uid);
     const payload: TimeBlock = { ...b, id };
-    // Firestore rejects undefined — strip them.
-    const clean = Object.fromEntries(
-      Object.entries(payload).filter(([, v]) => v !== undefined)
-    ) as TimeBlock;
-    // Optimistic local update BEFORE awaiting Firestore so UI updates instantly.
     setBlocks((prev) => {
       const exists = prev.some((x) => x.id === id);
-      const next = exists ? prev.map((x) => (x.id === id ? clean : x)) : [...prev, clean];
+      const next = exists ? prev.map((x) => (x.id === id ? payload : x)) : [...prev, payload];
       writeCache(next);
       return next;
     });
     try {
-      await setDoc(doc(col, id), clean, { merge: true });
+      await saveTimeBlock(uid, payload);
     } catch (e) {
       console.error("TimeBlock save error:", e);
     }
-  }, []);
+  }, [writeCache]);
 
   const removeBlock = useCallback(async (id: string) => {
     setBlocks((prev) => {
@@ -106,22 +84,23 @@ export const TimeBlockProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return next;
     });
     try {
-      await deleteDoc(doc(db, `users/${requireUid()}/timeBlocks`, id));
+      await deleteTimeBlock(requireUid(), id);
     } catch (e) {
       console.error("TimeBlock delete error:", e);
     }
-  }, []);
+  }, [writeCache]);
 
   const getByDate = useCallback(
     (date: string) => blocks.filter((b) => b.date === date),
     [blocks]
   );
 
-  return (
-    <TimeBlockContext.Provider value={{ blocks, loading, refresh, saveBlock, removeBlock, getByDate }}>
-      {children}
-    </TimeBlockContext.Provider>
+  const value = useMemo<TimeBlockContextProps>(
+    () => ({ blocks, loading, refresh, saveBlock, removeBlock, getByDate }),
+    [blocks, loading, refresh, saveBlock, removeBlock, getByDate]
   );
+
+  return <TimeBlockContext.Provider value={value}>{children}</TimeBlockContext.Provider>;
 };
 
 export const useTimeBlocks = () => {
