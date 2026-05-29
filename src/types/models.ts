@@ -56,3 +56,10 @@ export interface YearTreeData {
   color?: string;
   semesters: SemesterInfo[];
 }
+
+// Active selection across the top-level tree.
+export interface CourseTab {
+  year: number;
+  semester: string;
+  course: string;
+}
