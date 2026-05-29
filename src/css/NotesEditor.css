@@ -183,9 +183,8 @@
 .ne-editor ul,
 .ne-editor ol {
   margin: 0.2rem 0;
-  padding-inline-start: 1.4rem;
-  padding-left: 0;
-  padding-right: 0;
+  padding-inline-start: 2.4rem;
+  padding-inline-end: 0;
   list-style-position: outside;
 }
 
