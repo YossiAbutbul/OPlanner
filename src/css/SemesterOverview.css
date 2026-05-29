@@ -580,3 +580,35 @@
 .stat-card:nth-child(n + 6) {
   animation-delay: 0.22s;
 }
+
+/* ===== Wide-screen density bumps =====
+   On wide+tall monitors the default sizes feel sparse. Gated by
+   min-height so 24" 1080p monitors (1920×1080) keep the compact layout
+   and don't overflow the viewport. Only true 2K+ panels get the bump. */
+@media (min-width: 1440px) and (min-height: 1100px) {
+  .stat-card {
+    padding: 1.15rem 1.25rem;
+    gap: 0.4rem;
+  }
+  .stat-label {
+    font-size: 0.85rem;
+  }
+  .stat-value {
+    font-size: 2.1rem;
+  }
+  .overview-calendar-section .cal-grid {
+    grid-auto-rows: minmax(5rem, 6rem);
+  }
+}
+
+@media (min-width: 1920px) and (min-height: 1300px) {
+  .stat-value {
+    font-size: 2.4rem;
+  }
+  .stat-label {
+    font-size: 0.9rem;
+  }
+  .overview-calendar-section .cal-grid {
+    grid-auto-rows: minmax(6rem, 7.5rem);
+  }
+}
