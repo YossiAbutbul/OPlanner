@@ -21,16 +21,24 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   const [expanded, setExpanded] = useState(false);
   const collapsedRef = useRef<HTMLDivElement>(null);
   const expandedRef = useRef<HTMLDivElement>(null);
+  // Tracks the last sanitized HTML we emitted. When the parent re-renders
+  // with the same string, we skip the re-sync — otherwise DOMPurify's
+  // normalized output would diverge from the browser's live innerHTML and
+  // we'd reset the DOM mid-edit (wiping caret + freshly-set dir attribute).
+  const lastEmittedRef = useRef<string | null>(null);
   const [active, setActive] = useState<{ bold: boolean; underline: boolean; dir: "" | "ltr" | "rtl" }>({
     bold: false,
     underline: false,
     dir: "",
   });
 
-  // Sync external value into collapsed editor only when it diverges.
+  // Sync external value into collapsed editor only when it diverges AND it's
+  // not just our own emit echoing back.
   useEffect(() => {
     const el = collapsedRef.current;
-    if (el && el.innerHTML !== value) el.innerHTML = sanitize(value);
+    if (!el) return;
+    if (value === lastEmittedRef.current) return;
+    if (el.innerHTML !== value) el.innerHTML = sanitize(value);
   }, [value]);
 
   // When entering expanded, seed it with current value. Don't re-sync on
@@ -49,7 +57,10 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
 
   const emitCollapsed = () => {
     const el = collapsedRef.current;
-    if (el) onChange(sanitize(el.innerHTML));
+    if (!el) return;
+    const sanitized = sanitize(el.innerHTML);
+    lastEmittedRef.current = sanitized;
+    onChange(sanitized);
   };
 
   // Open links on click — contenteditable normally suppresses link nav.

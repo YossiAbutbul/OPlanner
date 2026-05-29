@@ -264,11 +264,40 @@ export const applyDirToSelection = (root: HTMLElement, dir: "ltr" | "rtl"): void
   };
 
   if (blocks.length === 0) {
-    if (root.querySelector("br")) wrapSelectedLines(root);
-    else if (!wrapRangeInDiv()) applyToEl(root);
+    // Empty or bare-text root — there's no block to flip and applying dir
+    // directly to root won't reposition the caret without a child block.
+    // Wrap whatever's there (or insert a fresh <div><br></div>) so the
+    // browser has a dir-ed block to anchor the caret in.
+    if (!root.firstChild) {
+      const wrap = document.createElement("div");
+      wrap.appendChild(document.createElement("br"));
+      applyToEl(wrap);
+      root.appendChild(wrap);
+      const r = document.createRange();
+      r.setStart(wrap, 0);
+      r.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(r);
+    } else if (root.querySelector("br")) {
+      wrapSelectedLines(root);
+    } else if (!wrapRangeInDiv()) {
+      const wrap = document.createElement("div");
+      while (root.firstChild) wrap.appendChild(root.firstChild);
+      applyToEl(wrap);
+      root.appendChild(wrap);
+      const r = document.createRange();
+      r.selectNodeContents(wrap);
+      r.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(r);
+    }
   } else if (blocks.length === 1) {
     const b = blocks[0];
-    if (b.querySelector("br")) {
+    // If the block has BR(s) but no real text, treat it as an empty single
+    // line — flip the whole block instead of trying to wrap the empty line
+    // (which would create degenerate empty nested divs and lose the caret).
+    const hasOnlyBr = b.querySelector("br") && !(b.textContent ?? "").trim();
+    if (b.querySelector("br") && !hasOnlyBr) {
       wrapSelectedLines(b);
     } else {
       applyToEl(b);
