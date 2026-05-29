@@ -1,7 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bold, Underline, Highlighter, Type, Maximize2, X, AlignLeft, AlignRight } from "lucide-react";
+import DOMPurify from "dompurify";
 import "../css/NotesEditor.css";
+
+// Allow only the tags/attrs this editor itself produces. Strips <script>,
+// event handlers, javascript: URLs, etc. before anything reaches the DOM.
+const SANITIZE_CFG = {
+  ALLOWED_TAGS: ["b", "strong", "i", "em", "u", "br", "div", "p", "span", "a", "ul", "ol", "li"],
+  ALLOWED_ATTR: ["href", "target", "rel", "dir", "style"],
+  ALLOWED_URI_REGEXP: /^(?:https?|mailto):/i,
+};
+const sanitize = (html: string) => DOMPurify.sanitize(html || "", SANITIZE_CFG);
 
 interface Props {
   value: string; // HTML
@@ -77,7 +87,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   // Sync external value into collapsed editor only when it diverges.
   useEffect(() => {
     const el = collapsedRef.current;
-    if (el && el.innerHTML !== value) el.innerHTML = value || "";
+    if (el && el.innerHTML !== value) el.innerHTML = sanitize(value);
   }, [value]);
 
   // When entering expanded, seed it with current value. Don't re-sync on every
@@ -86,7 +96,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
     if (!expanded) return;
     const el = expandedRef.current;
     if (el) {
-      el.innerHTML = value || "";
+      el.innerHTML = sanitize(value);
       el.focus();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -329,7 +339,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
 
   const emitCollapsed = () => {
     const el = collapsedRef.current;
-    if (el) onChange(el.innerHTML);
+    if (el) onChange(sanitize(el.innerHTML));
   };
 
   const exec = (cmd: "bold" | "underline") => {
@@ -474,7 +484,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
 
   const handleSaveExpanded = () => {
     const el = expandedRef.current;
-    if (el) onChange(el.innerHTML);
+    if (el) onChange(sanitize(el.innerHTML));
     setExpanded(false);
   };
 
