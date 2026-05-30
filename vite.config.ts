@@ -42,7 +42,10 @@ export default defineConfig(({ mode }) => {
           short_name: 'OPlanner',
           description:
             'Track assignments, count down to finals, and import your course calendar.',
-          theme_color: '#1db954',
+          // Title bar / status bar color in standalone mode. Matches the
+          // dark sidebar (--bg in index.css) so the installed app frame
+          // blends with the in-app chrome.
+          theme_color: '#0e0f12',
           background_color: '#0e0f12',
           display: 'standalone',
           orientation: 'any',
