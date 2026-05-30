@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
           navigateFallbackDenylist: [/^\/__\/auth\//, /firestore\.googleapis\.com/],
         },
 
-        includeAssets: ['Logo.svg', 'og-image.png'],
+        includeAssets: ['Logo.svg', 'pwa-icon.svg', 'og-image.png'],
 
         manifest: {
           // Keep the name short — the OS shows it as the app label in the
@@ -54,15 +54,19 @@ export default defineConfig(({ mode }) => {
           // SVG works on Chrome/Edge/Android. iOS Safari falls back to
           // the apple-touch-icon meta in index.html (or the default
           // bookmark icon) — a future pass can add 192/512 PNGs.
+          // pwa-icon.svg = green-filled square with white logo inside the
+          // maskable safe zone. Solves the "white-on-white" issue Android
+          // produced when the OS masked the transparent Logo.svg onto its
+          // default white app-icon background.
           icons: [
             {
-              src: 'Logo.svg',
+              src: 'pwa-icon.svg',
               sizes: 'any',
               type: 'image/svg+xml',
               purpose: 'any',
             },
             {
-              src: 'Logo.svg',
+              src: 'pwa-icon.svg',
               sizes: 'any',
               type: 'image/svg+xml',
               purpose: 'maskable',
