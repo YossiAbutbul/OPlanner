@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
-import { Eye, EyeOff } from "lucide-react";
 
 interface DeleteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (adminPassword?: string) => void;
+  onConfirm: () => void;
   title: string;
   message: string;
 }
@@ -17,21 +16,15 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
   title,
   message,
 }) => {
-  const [adminPassword, setAdminPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) {
-      setAdminPassword("");
-      setShowPassword(false);
-      setIsLoading(false);
-    }
+    if (!isOpen) setIsLoading(false);
   }, [isOpen]);
 
   const handleConfirm = async () => {
     setIsLoading(true);
-    await onConfirm(adminPassword);
+    await onConfirm();
     setIsLoading(false);
   };
 
@@ -43,7 +36,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, adminPassword]);
+  }, [isOpen]);
 
   return (
     <Modal
@@ -79,30 +72,6 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
       }
     >
       <p>{message}</p>
-      {title === "Confirm Delete Year" && (
-        <div style={{ position: "relative" }}>
-          <input
-            type={showPassword ? "text" : "password"}
-            placeholder="Admin Password"
-            value={adminPassword}
-            onChange={(e) => setAdminPassword(e.target.value)}
-            style={{ paddingRight: "2.4rem" }}
-          />
-          <span
-            onClick={() => setShowPassword(!showPassword)}
-            style={{
-              position: "absolute",
-              right: "0.7rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              cursor: "pointer",
-              color: "#888",
-            }}
-          >
-            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-          </span>
-        </div>
-      )}
     </Modal>
   );
 };
