@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import { useTimeBlocks } from "../context/TimeBlockContext";
+import { useToast } from "../context/ToastContext";
 
 // Heavy form modals — only mounted when the user actually opens them, so
 // their chunks fetch on first interaction instead of in the initial bundle.
@@ -28,6 +29,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
 }) => {
   const { getCourseTasks, addHomework, removeHomework, homework } = useHomework();
   const { blocks, saveBlock, removeBlock } = useTimeBlocks();
+  const toast = useToast();
 
   const [tab, setTab] = useState<"upcoming" | "day">("upcoming");
 
@@ -247,8 +249,10 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         }}
         editHomework={editTask}
         onDelete={editTask ? async () => {
+          const name = editTask.name;
           await removeHomework(editTask.id, editTask.year, editTask.semester, editTask.course);
           setAllSemesterTasks((prev) => prev.filter((x) => x.id !== editTask.id));
+          toast.success(`Deleted “${name}”`);
         } : undefined}
         selectedCourseData={
           editTask

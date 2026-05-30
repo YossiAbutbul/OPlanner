@@ -9,6 +9,11 @@ const ICONS = {
   info: Info,
 };
 
+// Mirrors the TTL logic in ToastContext so the progress-bar countdown
+// stays in sync with auto-dismiss timing.
+const ttlFor = (kind: keyof typeof ICONS) =>
+  kind === "error" ? 6000 : 4500;
+
 const ToastList: React.FC = () => {
   const { toasts, dismiss } = useToast();
   if (toasts.length === 0) return null;
@@ -22,8 +27,11 @@ const ToastList: React.FC = () => {
             key={t.id}
             className={`toast toast-${t.kind}`}
             role={t.kind === "error" ? "alert" : "status"}
+            style={{ ["--toast-ttl" as string]: `${ttlFor(t.kind)}ms` }}
           >
-            <Icon size={18} className="toast-icon" />
+            <span className="toast-icon">
+              <Icon size={18} strokeWidth={2.4} />
+            </span>
             <span className="toast-msg">{t.message}</span>
             <button
               type="button"
@@ -31,7 +39,7 @@ const ToastList: React.FC = () => {
               onClick={() => dismiss(t.id)}
               aria-label="Dismiss notification"
             >
-              <X size={14} />
+              <X size={14} strokeWidth={2.5} />
             </button>
           </div>
         );
