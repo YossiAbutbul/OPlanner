@@ -203,7 +203,12 @@ const DayPanel: React.FC<Props> = ({
   // ===== Drag / resize =====
   const [drag, setDrag] = useState<DragState | null>(null);
   const dragRef = useRef<DragState | null>(null);
-  dragRef.current = drag;
+  // Mirror state into a ref so the window-level mousemove handler can read
+  // the latest drag without re-binding on every render. Effect-bound so the
+  // assignment doesn't mutate state during render (react-hooks/refs).
+  useEffect(() => {
+    dragRef.current = drag;
+  }, [drag]);
   const movedRef = useRef(false);
 
   const beginDrag = (
