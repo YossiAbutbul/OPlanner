@@ -1,8 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import { useTimeBlocks } from "../context/TimeBlockContext";
-import HomeworkModal from "./HomeworkModal";
-import TimeBlockModal from "./TimeBlockModal";
+
+// Heavy form modals — only mounted when the user actually opens them, so
+// their chunks fetch on first interaction instead of in the initial bundle.
+const HomeworkModal = lazy(() => import("./HomeworkModal"));
+const TimeBlockModal = lazy(() => import("./TimeBlockModal"));
 import UpcomingPanel from "./RightSidebar/UpcomingPanel";
 import DayPanel from "./RightSidebar/DayPanel";
 import { courseColor } from "../utility/courseColor";
@@ -220,6 +223,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         />
       )}
 
+      {modalOpen && (
+        <Suspense fallback={null}>
       <HomeworkModal
         isOpen={modalOpen}
         onClose={() => {
@@ -265,7 +270,11 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             : undefined
         }
       />
+        </Suspense>
+      )}
 
+      {tbModalOpen && (
+        <Suspense fallback={null}>
       <TimeBlockModal
         isOpen={tbModalOpen}
         onClose={() => {
@@ -289,6 +298,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         }
         defaultCourse={selectedCourse ?? undefined}
       />
+        </Suspense>
+      )}
     </aside>
   );
 };
