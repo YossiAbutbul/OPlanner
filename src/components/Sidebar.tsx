@@ -3,7 +3,8 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, Plus, LogOut, HelpCircle } from "lucide-react";
+import { Settings, Plus, LogOut, HelpCircle, Download } from "lucide-react";
+import { useInstallPrompt } from "../hooks/useInstallPrompt";
 import { deleteCourse, renameCourse } from "../utility/initializeDatabase";
 import { CourseInfo } from "../App";
 import { courseColor } from "../utility/courseColor";
@@ -52,6 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const toast = useToast();
+  const { canInstall, promptInstall } = useInstallPrompt();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches
@@ -322,6 +324,18 @@ const Sidebar: React.FC<SidebarProps> = ({
               <HelpCircle size={16} />
               <span>Replay tour</span>
             </button>
+            {canInstall && (
+              <button
+                onClick={async () => {
+                  setSettingsOpen(false);
+                  const outcome = await promptInstall();
+                  if (outcome === "accepted") toast.success("OPlanner installed");
+                }}
+              >
+                <Download size={16} />
+                <span>Install OPlanner</span>
+              </button>
+            )}
             <div className="settings-menu-divider"></div>
             <button
               onClick={() => {
