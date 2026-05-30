@@ -23,18 +23,109 @@
   animation: appModalScaleIn 0.2s ease-out;
 }
 
-/* On very narrow phones, fill more of the viewport and drop the rounded
-   corners so the modal feels like a native sheet rather than a small card. */
+/* ===== Mobile: bottom-sheet pattern =====
+   On narrow phones, the modal slides up from the bottom edge with rounded
+   top corners and a small drag handle — the standard mobile sheet idiom.
+   Top of the viewport stays visible (so the user can tap the backdrop to
+   dismiss), and the sheet scrolls internally if content is taller than
+   ~92vh. Header (title + X) and action buttons stick to the top/bottom
+   of the sheet so they stay reachable while the body scrolls. */
 @media (max-width: 480px) {
+  .app-modal-overlay {
+    /* Slide sheet up from the bottom edge instead of centering. */
+    align-items: flex-end;
+    /* Slightly stronger backdrop so the sheet edge reads cleanly. */
+    background: rgba(0, 0, 0, 0.55);
+  }
+
   .app-modal {
     width: 100%;
     max-width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
-    border-radius: 0;
+    max-height: 92vh;
+    max-height: 92dvh;
+    border-radius: 18px 18px 0 0;
     border-left: none;
     border-right: none;
-    padding: var(--space-4, 1rem);
+    border-bottom: none;
+    /* Padding bleeds into the iOS home bar safely; matches the safe-area
+       inset so tappable content never sits under the indicator. */
+    padding: 0 var(--space-4, 1rem)
+      calc(var(--space-4, 1rem) + env(safe-area-inset-bottom, 0px));
+    /* Internal scroll: the body scrolls, sticky header/footer pin. */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: appModalSheetIn 0.24s cubic-bezier(0.2, 0.85, 0.3, 1.05);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
+  }
+
+  /* Drag handle indicator — purely visual, hints "this is a sheet you
+     can dismiss." Sits centered above the title in the sticky header. */
+  .app-modal::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: #d6d6da;
+    margin: 0.6rem auto 0.85rem;
+    flex-shrink: 0;
+  }
+
+  /* Sticky title bar — stays at the top of the sheet while body scrolls. */
+  .app-modal-title {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin: 0;
+    padding: 0 0 0.75rem;
+    font-size: 1.1rem;
+    background: #ffffff;
+    border-bottom: 1px solid #ececef;
+  }
+
+  /* Close button moves alongside the sticky title. */
+  .app-modal-close {
+    top: 1.6rem;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    font-size: 1.6rem;
+  }
+
+  /* Body gets vertical breathing room between sticky header and footer. */
+  .app-modal-body {
+    padding: 0.85rem 0;
+  }
+
+  /* Sticky action bar — buttons always reachable. Full-width 50/50 so
+     thumb targets are big enough on small screens. */
+  .app-modal-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin-top: 0;
+    padding: 0.75rem 0
+      calc(env(safe-area-inset-bottom, 0px) * 0); /* outer padding handles inset */
+    background: #ffffff;
+    border-top: 1px solid #ececef;
+    gap: 0.6rem;
+  }
+
+  .app-modal-actions button {
+    flex: 1 1 0;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+}
+
+@keyframes appModalSheetIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0.4;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
   }
 }
 
