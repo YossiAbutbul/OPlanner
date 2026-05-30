@@ -100,7 +100,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 10000;
+  z-index: var(--z-modal-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -238,7 +238,7 @@
   display: flex;
   gap: 0.3rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
-  z-index: 10001;
+  z-index: var(--z-modal);
 }
 
 .ne-hl-swatch {

@@ -57,7 +57,7 @@
 
 .cs-popover {
   position: fixed;
-  z-index: 9999;
+  z-index: var(--z-popover);
   background: #ffffff;
   border: 1px solid #e3e3e6;
   border-radius: 8px;

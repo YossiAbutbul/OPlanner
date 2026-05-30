@@ -4,7 +4,7 @@
 }
 
 .dp-wrap:has(.dp-popover) {
-  z-index: 11000;
+  z-index: var(--z-popover);
 }
 
 .dp-wrap-block {
@@ -14,7 +14,7 @@
 
 .dp-popover {
   position: fixed;
-  z-index: 11000;
+  z-index: var(--z-popover);
   width: 260px;
   background: #fff;
   border: 1px solid #e3e3e6;

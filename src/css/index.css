@@ -36,6 +36,21 @@
   --radius-lg: 16px;
   --radius-full: 999px;
 
+  /* Z-index scale — single source of truth. Layers stack predictably so
+     popovers always sit above modals, toasts always above popovers, etc.
+     Old code had 11000/10001/10000/9999/1100 fighting each other. */
+  --z-base: 1;
+  --z-dropdown: 100;        /* in-flow menus, badges */
+  --z-sticky: 200;          /* sticky calendar headers */
+  --z-mobile-topbar: 900;   /* mobile top app bar */
+  --z-mobile-backdrop: 950; /* dim under mobile nav */
+  --z-mobile-nav: 1000;     /* mobile sidebar slide-in */
+  --z-modal-overlay: 2000;  /* modal backdrops */
+  --z-modal: 2100;          /* modal content */
+  --z-popover: 3000;        /* date/time picker, custom select dropdowns */
+  --z-toast: 4000;          /* reserved for future toasts */
+  --z-tour: 5000;           /* joyride overlay */
+
   /* Breakpoints — documented; use in media queries:
      phone:        max-width 480px
      small tablet: 481-767
