@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
 
-  const [busy, setBusy] = useState(false);
+  // DeleteModal tracks its own isLoading; we just await the delete promise.
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
@@ -99,14 +99,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleDelete = async () => {
     if (!canManage || !confirmDelete) return;
-    setBusy(true);
     try {
       await deleteCourse(selectedYear!, selectedSemester!, confirmDelete);
       if (selectedCourse === confirmDelete) onSelectCourse(null);
       await Promise.resolve(onYearsChanged());
-      setConfirmDelete(null);
     } finally {
-      setBusy(false);
+      setConfirmDelete(null);
     }
   };
 
@@ -293,6 +291,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           data-tour="settings"
           onClick={() => setSettingsOpen((o) => !o)}
           title="Settings"
+          aria-label="Open settings menu"
+          aria-expanded={settingsOpen}
         >
           <Settings size={18} />
         </button>

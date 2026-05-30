@@ -1,11 +1,14 @@
-import React, { useCallback, useMemo, useEffect, useState } from "react";
+import React, { Suspense, lazy, useCallback, useMemo, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import "./css/App.css";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
 import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
-import Tour from "./components/Tour";
+
+// Tour pulls in react-joyride (~100KB). One-shot per user, mostly never seen
+// on repeat visits. Lazy-load so it doesn't bloat the initial JS bundle.
+const Tour = lazy(() => import("./components/Tour"));
 import { useAuth } from "./context/AuthContext";
 import { useHomework } from "./context/HomeworkContext";
 import { useYearTree } from "./hooks/useYearTree";
@@ -150,7 +153,10 @@ const App: React.FC = () => {
         selectedSemester={sel.selectedSemester}
         selectedCourse={sel.selectedCourse}
       />
-      <Tour run={tour.tourRun} onFinish={tour.finishTour} onSetMobileNav={setMobileNavOpen} />
+      {/* Tour chunk loads on demand; null fallback — invisible while loading. */}
+      <Suspense fallback={null}>
+        <Tour run={tour.tourRun} onFinish={tour.finishTour} onSetMobileNav={setMobileNavOpen} />
+      </Suspense>
     </div>
   );
 };

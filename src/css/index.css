@@ -89,16 +89,23 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  /* background-color: #1a1a1a; */
   cursor: pointer;
   transition: border-color 0.25s;
 }
 button:hover {
   border-color: #646cff65;
 }
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+
+/* Global keyboard-focus indicator — visible ring on Tab/Shift-Tab focus, NOT
+   on mouse click (where :focus-visible is suppressed by the UA). Applies to
+   every interactive element so keyboard users always know where they are. */
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid #1db954;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 @media (prefers-color-scheme: light) {

@@ -1,11 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import { parseIcs, IcsEvent } from "../utility/parseIcs";
 import { courseColor } from "../utility/courseColor";
 import CourseCalendar from "./CourseCalendar";
-import HomeworkModal from "./HomeworkModal";
 import DayTasksModal from "./DayTasksModal";
 import DeleteModal from "./DeleteModal";
+
+// HomeworkModal is the heaviest — only mounted on first open.
+const HomeworkModal = lazy(() => import("./HomeworkModal"));
 import OverviewStats from "./SemesterOverview/OverviewStats";
 import CoursesPanel from "./SemesterOverview/CoursesPanel";
 import FinalsCountdown from "./SemesterOverview/FinalsCountdown";
@@ -207,20 +209,24 @@ const SemesterOverview: React.FC<Props> = ({
         </>
       )}
 
-      <HomeworkModal
-        isOpen={taskModalOpen}
-        onClose={() => {
-          setTaskModalOpen(false);
-          setTaskPrefillDate(null);
-          setTaskEditTask(null);
-        }}
-        onSave={handleSaveTask}
-        selectedCourseData={{ year, semester: semesterKey }}
-        editHomework={taskEditTask}
-        prefilledDueDate={taskPrefillDate}
-        isLoading={isLoadingAction}
-        availableCourses={courses.map((c) => c.name)}
-      />
+      {taskModalOpen && (
+        <Suspense fallback={null}>
+          <HomeworkModal
+            isOpen={taskModalOpen}
+            onClose={() => {
+              setTaskModalOpen(false);
+              setTaskPrefillDate(null);
+              setTaskEditTask(null);
+            }}
+            onSave={handleSaveTask}
+            selectedCourseData={{ year, semester: semesterKey }}
+            editHomework={taskEditTask}
+            prefilledDueDate={taskPrefillDate}
+            isLoading={isLoadingAction}
+            availableCourses={courses.map((c) => c.name)}
+          />
+        </Suspense>
+      )}
 
       {dayModalDate && (
         <DayTasksModal
