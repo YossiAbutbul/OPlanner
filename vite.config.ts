@@ -34,7 +34,11 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['Logo.svg', 'og-image.png'],
 
         manifest: {
-          name: 'OPlanner — Semester Planner',
+          // Keep the name short — the OS shows it as the app label in the
+          // launcher and prepends it to the page <title> in the standalone
+          // window. A long name here produces "OPlanner — Semester Planner
+          // - OPlanner" in the title bar.
+          name: 'OPlanner',
           short_name: 'OPlanner',
           description:
             'Track assignments, count down to finals, and import your course calendar.',
