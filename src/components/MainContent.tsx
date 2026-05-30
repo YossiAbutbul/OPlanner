@@ -8,9 +8,9 @@ import CourseCalendar from "./CourseCalendar";
 import DayTasksModal from "./DayTasksModal";
 import DeleteModal from "./DeleteModal";
 import TabSettingsModal from "./TabSettingsModal";
-import Modal from "./Modal";
 import "../css/MainContent.css";
 import { useHomework, HomeworkEntry } from "../context/HomeworkContext";
+import { useToast } from "../context/ToastContext";
 import { CourseTab, YearTreeData } from "../App";
 import { IcsEvent } from "../utility/parseIcs";
 import { courseColor } from "../utility/courseColor";
@@ -79,6 +79,7 @@ const MainContent: React.FC<MainContentProps> = ({
     window.addEventListener("oplanner:select-day", onPick);
     return () => window.removeEventListener("oplanner:select-day", onPick);
   }, []);
+  const toast = useToast();
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [dayModalDate, setDayModalDate] = useState<string | null>(null);
   const [editTask, setEditTask] = useState<HomeworkEntry | null>(null);
@@ -90,7 +91,6 @@ const MainContent: React.FC<MainContentProps> = ({
     | { kind: "course"; year: number; semester: string; course: string; color?: string }
     | null
   >(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab) {
@@ -329,7 +329,7 @@ const MainContent: React.FC<MainContentProps> = ({
               onUpdateCourseFinalDate(selectedYear, currentSemester.key, course, date)
             }
             onYearsChanged={onYearsChanged}
-            onError={(msg) => setErrorMsg(msg)}
+            onError={(msg) => toast.error(msg)}
           />
         ) : (
           <div className="empty-state" />
@@ -439,33 +439,13 @@ const MainContent: React.FC<MainContentProps> = ({
                 );
               }
             } catch (err) {
-              setErrorMsg(
-                err instanceof Error ? err.message : "Something went wrong."
-              );
+              toast.error(err instanceof Error ? err.message : "Something went wrong.");
               throw err;
             }
           }}
         />
       )}
 
-      {errorMsg && (
-        <Modal
-          isOpen={!!errorMsg}
-          onClose={() => setErrorMsg(null)}
-          title="Error"
-          footer={
-            <button
-              type="button"
-              className="app-modal-btn-primary"
-              onClick={() => setErrorMsg(null)}
-            >
-              OK
-            </button>
-          }
-        >
-          <p>{errorMsg}</p>
-        </Modal>
-      )}
 
       {confirmDeleteYear !== null && (
         <DeleteModal

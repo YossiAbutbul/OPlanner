@@ -4,8 +4,8 @@ import "@testing-library/jest-dom/vitest";
 // mount to pick mobile vs desktop layout; without this, every test that
 // touches Sidebar throws.
 if (!window.matchMedia) {
-  // @ts-expect-error — minimal shim is enough for tests
-  window.matchMedia = (query: string) => ({
+  // Minimal shim is enough for tests — cast covers the shape gap.
+  window.matchMedia = ((query: string) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -14,5 +14,5 @@ if (!window.matchMedia) {
     addListener: () => {},
     removeListener: () => {},
     dispatchEvent: () => false,
-  });
+  })) as typeof window.matchMedia;
 }
