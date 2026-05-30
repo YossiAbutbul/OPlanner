@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
+import { describe, expect, it, afterEach, vi } from "vitest";
 import { pickSemesterForYear } from "./useSelection";
 import type { YearTreeData } from "../types/models";
 
