@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useHomework } from "../context/HomeworkContext";
+import { useToast } from "../context/ToastContext";
 import HomeworkModal from "./HomeworkModal";
 import DeleteModal from "./DeleteModal";
 import "../css/HomeworkTable.css";
@@ -22,6 +23,7 @@ interface HomeworkTableProps {
 
 const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
   const { removeHomework, addHomework } = useHomework();
+  const toast = useToast();
   const [isModalOpen, setModalOpen] = useState(false);
   const [editHomework, setEditHomework] = useState<HomeworkEntry | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<HomeworkEntry | null>(null);
@@ -194,7 +196,7 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
         } }
         onSave={(id, name, dueDate, status, year, semester, course, ignoreOverdue, startTime, endTime, notes, color) => {
           if (!name || !dueDate) {
-            alert("Please fill in all fields before saving.");
+            toast.error("Name and due date are required.");
             return;
           }
           addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, undefined, startTime, endTime, notes, color);

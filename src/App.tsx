@@ -14,6 +14,7 @@ import { useHomework } from "./context/HomeworkContext";
 import { useYearTree } from "./hooks/useYearTree";
 import { useSelection, pickSemesterForYear } from "./hooks/useSelection";
 import { useOnboardingTour } from "./hooks/useOnboardingTour";
+import { useOfflineToast } from "./hooks/useOfflineToast";
 import type { CourseInfo } from "./types/models";
 
 // Re-export so existing consumers (Sidebar, MainContent, SemesterOverview,
@@ -24,6 +25,8 @@ const App: React.FC = () => {
   const { user, loading } = useAuth();
   const { fetchHomework } = useHomework();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  // Surface online/offline transitions via toasts.
+  useOfflineToast();
 
   const bustHomeworkCache = useCallback(
     async (year: number, semester: string, course: string) => {
