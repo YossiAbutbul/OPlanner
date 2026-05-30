@@ -1,9 +1,10 @@
 .toast-stack {
   position: fixed;
-  top: 1.25rem;
+  bottom: 1.25rem;
   right: 1.25rem;
   display: flex;
-  flex-direction: column;
+  /* Newest toast stays closest to the corner — stack grows upward. */
+  flex-direction: column-reverse;
   gap: 0.65rem;
   z-index: var(--z-toast);
   max-width: min(380px, calc(100vw - 2rem));
@@ -123,11 +124,12 @@
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateX(18px) scale(0.98);
+    /* Slide up from below — matches the bottom-right anchor. */
+    transform: translateY(12px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -139,7 +141,7 @@
 /* Phone: full-width edge-to-edge, smaller padding. */
 @media (max-width: 480px) {
   .toast-stack {
-    top: calc(env(safe-area-inset-top, 0px) + 0.6rem);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.6rem);
     right: 0.6rem;
     left: 0.6rem;
     max-width: none;
