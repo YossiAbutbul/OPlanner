@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Clear any user PII left in localStorage by older builds.
   useEffect(() => {
-    try { localStorage.removeItem("oplanner.user"); } catch {}
+    try { localStorage.removeItem("oplanner.user"); } catch { /* ignore */ }
   }, []);
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ) {
         return;
       }
-      throw new Error(mapAuthError(e));
+      throw new Error(mapAuthError(e), { cause: e });
     }
   }, []);
 
@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
     } catch (e) {
-      throw new Error(mapAuthError(e));
+      throw new Error(mapAuthError(e), { cause: e });
     }
   }, []);
 
@@ -122,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser({ ...cred.user });
       }
     } catch (e) {
-      throw new Error(mapAuthError(e));
+      throw new Error(mapAuthError(e), { cause: e });
     }
   }, []);
 
@@ -130,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await sendPasswordResetEmail(auth, email.trim());
     } catch (e) {
-      throw new Error(mapAuthError(e));
+      throw new Error(mapAuthError(e), { cause: e });
     }
   }, []);
 

@@ -78,15 +78,13 @@ const hsvToRgb = (h: number, s: number, v: number) => {
   const c = v * s;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = v - c;
-  let rN = 0;
-  let gN = 0;
-  let bN = 0;
-  if (h < 60) [rN, gN, bN] = [c, x, 0];
-  else if (h < 120) [rN, gN, bN] = [x, c, 0];
-  else if (h < 180) [rN, gN, bN] = [0, c, x];
-  else if (h < 240) [rN, gN, bN] = [0, x, c];
-  else if (h < 300) [rN, gN, bN] = [x, 0, c];
-  else [rN, gN, bN] = [c, 0, x];
+  const [rN, gN, bN] =
+    h < 60 ? [c, x, 0] :
+    h < 120 ? [x, c, 0] :
+    h < 180 ? [0, c, x] :
+    h < 240 ? [0, x, c] :
+    h < 300 ? [x, 0, c] :
+    [c, 0, x];
   return {
     r: (rN + m) * 255,
     g: (gN + m) * 255,

@@ -147,8 +147,13 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
     onClose();
   };
 
+  // Mirror handleSave into a ref so the Enter-key effect below can call the
+  // latest version without re-registering its keydown listener on every
+  // render. Effect-bound to avoid mutating refs during render.
   const handleSaveRef = useRef(handleSave);
-  handleSaveRef.current = handleSave;
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  }, [handleSave]);
 
   useEffect(() => {
     if (!isOpen) return;

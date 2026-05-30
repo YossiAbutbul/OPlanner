@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 export type ToastKind = "success" | "error" | "info";
 
@@ -59,10 +59,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 
   // Dev-only debug hook: expose toast API on window so `__toast.error("x")`
-  // works from the browser console. No effect in production builds.
-  if (import.meta.env.DEV && typeof window !== "undefined") {
+  // works from the browser console. Effect-bound so the assignment doesn't
+  // mutate window during render. No effect in production builds.
+  useEffect(() => {
+    if (!import.meta.env.DEV || typeof window === "undefined") return;
     (window as unknown as { __toast?: ToastContextValue }).__toast = value;
-  }
+  }, [value]);
 
   return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
 };
