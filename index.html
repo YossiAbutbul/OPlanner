@@ -6,10 +6,16 @@
     <link rel="icon" type="image/svg+xml" href="/Logo.svg"/>
     <link rel="apple-touch-icon" href="/Logo.svg"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Standalone-mode hints. mobile-web-app-capable is the modern name
+         (replaces apple-mobile-web-app-capable per Chrome's deprecation);
+         the apple-* one is kept for older iOS Safari that still reads it. -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="OPlanner" />
-    <title>OPlanner - Plan every semester</title>
+    <!-- Short title — the standalone window prepends the manifest name,
+         and a long title here just produces "OPlanner - OPlanner - ...". -->
+    <title>OPlanner</title>
     <meta name="description" content="Track assignments, count down to finals, and import your course calendar. Built for students." />
 
     <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
