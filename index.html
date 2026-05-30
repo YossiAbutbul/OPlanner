@@ -4,8 +4,18 @@
     <meta charset="UTF-8" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://apis.google.com https://*.googleapis.com https://www.gstatic.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.googleusercontent.com; font-src 'self' data:; connect-src 'self' ws: wss: https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com; base-uri 'self'; form-action 'self'; object-src 'none'" />
     <link rel="icon" type="image/svg+xml" href="/Logo.svg"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OPlanner - Plan every semester</title>
+    <link rel="apple-touch-icon" href="/Logo.svg"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Standalone-mode hints. mobile-web-app-capable is the modern name
+         (replaces apple-mobile-web-app-capable per Chrome's deprecation);
+         the apple-* one is kept for older iOS Safari that still reads it. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="OPlanner" />
+    <!-- Short title — the standalone window prepends the manifest name,
+         and a long title here just produces "OPlanner - OPlanner - ...". -->
+    <title>OPlanner</title>
     <meta name="description" content="Track assignments, count down to finals, and import your course calendar. Built for students." />
 
     <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
@@ -24,7 +34,10 @@
     <meta name="twitter:description" content="Track assignments, count down to finals, and import your course calendar." />
     <meta name="twitter:image" content="https://oplanner-one.vercel.app/og-image.png" />
 
-    <meta name="theme-color" content="#1db954" />
+    <!-- Matches manifest.theme_color and the sidebar background, so the
+         browser address bar (mobile) and PWA title bar use the same
+         dark chrome as the in-app sidebars. -->
+    <meta name="theme-color" content="#0e0f12" />
     <meta name="color-scheme" content="light" />
   </head>
   <body>

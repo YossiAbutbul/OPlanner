@@ -3,7 +3,9 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, Plus, LogOut, HelpCircle } from "lucide-react";
+import { Settings, Plus, LogOut, HelpCircle, Download } from "lucide-react";
+import { useInstallPrompt } from "../hooks/useInstallPrompt";
+import InstallHelpModal from "./InstallHelpModal";
 import { deleteCourse, renameCourse } from "../utility/initializeDatabase";
 import { CourseInfo } from "../App";
 import { courseColor } from "../utility/courseColor";
@@ -52,6 +54,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const toast = useToast();
+  const { canInstall, installed, promptInstall } = useInstallPrompt();
+  const [installHelpOpen, setInstallHelpOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches
@@ -322,6 +326,26 @@ const Sidebar: React.FC<SidebarProps> = ({
               <HelpCircle size={16} />
               <span>Replay tour</span>
             </button>
+            {!installed && (
+              <button
+                onClick={async () => {
+                  setSettingsOpen(false);
+                  // If the browser fired beforeinstallprompt, use it
+                  // directly. Otherwise fall back to the help modal
+                  // (iOS Safari, macOS Safari, Firefox, or Chrome users
+                  // who dismissed the native banner earlier).
+                  if (canInstall) {
+                    const outcome = await promptInstall();
+                    if (outcome === "accepted") toast.success("OPlanner installed");
+                  } else {
+                    setInstallHelpOpen(true);
+                  }
+                }}
+              >
+                <Download size={16} />
+                <span>Install OPlanner</span>
+              </button>
+            )}
             <div className="settings-menu-divider"></div>
             <button
               onClick={() => {
@@ -442,6 +466,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       >
         <p>Are you sure you want to sign out? Your data will be saved before signing out.</p>
       </Modal>
+
+      <InstallHelpModal
+        isOpen={installHelpOpen}
+        onClose={() => setInstallHelpOpen(false)}
+      />
     </aside>
   );
 };
