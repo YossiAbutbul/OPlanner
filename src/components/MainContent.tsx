@@ -388,6 +388,7 @@ const MainContent: React.FC<MainContentProps> = ({
             const t = confirmDelete;
             await removeHomework(t.id, t.year, t.semester, t.course);
             setConfirmDelete(null);
+            toast.success(`Deleted “${t.name}”`);
             // if the day has no more tasks, close the day modal
             if (dayModalDate) {
               const remaining = filteredHomework.filter(

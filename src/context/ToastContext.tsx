@@ -58,6 +58,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     [toasts, push, dismiss]
   );
 
+  // Dev-only debug hook: expose toast API on window so `__toast.error("x")`
+  // works from the browser console. No effect in production builds.
+  if (import.meta.env.DEV && typeof window !== "undefined") {
+    (window as unknown as { __toast?: ToastContextValue }).__toast = value;
+  }
+
   return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
 };
 

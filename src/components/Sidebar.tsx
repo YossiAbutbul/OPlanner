@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { Settings, Plus, LogOut, HelpCircle } from "lucide-react";
 import { deleteCourse, renameCourse } from "../utility/initializeDatabase";
 import { CourseInfo } from "../App";
@@ -50,6 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
 }) => {
   const { user, logout } = useAuth();
+  const toast = useToast();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches
@@ -99,10 +101,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleDelete = async () => {
     if (!canManage || !confirmDelete) return;
+    const name = confirmDelete;
     try {
-      await deleteCourse(selectedYear!, selectedSemester!, confirmDelete);
-      if (selectedCourse === confirmDelete) onSelectCourse(null);
+      await deleteCourse(selectedYear!, selectedSemester!, name);
+      if (selectedCourse === name) onSelectCourse(null);
       await Promise.resolve(onYearsChanged());
+      toast.success(`Course “${name}” deleted`);
     } finally {
       setConfirmDelete(null);
     }

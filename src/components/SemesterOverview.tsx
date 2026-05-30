@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
+import { useToast } from "../context/ToastContext";
 import { parseIcs, IcsEvent } from "../utility/parseIcs";
 import { courseColor } from "../utility/courseColor";
 import CourseCalendar from "./CourseCalendar";
@@ -41,6 +42,7 @@ const SemesterOverview: React.FC<Props> = ({
   onError,
 }) => {
   const { getCourseTasks, homework, addHomework, removeHomework } = useHomework();
+  const toast = useToast();
   const { byCourse, allTasks, loaded, totals, completionPct } = useSemesterStats(
     year,
     semesterKey,
@@ -157,6 +159,7 @@ const SemesterOverview: React.FC<Props> = ({
           setAddOpen(false);
           onYearsChanged();
           onSelectCourse(name);
+          toast.success(`Course “${name}” added`);
         }}
         onError={onError}
       />
@@ -257,6 +260,7 @@ const SemesterOverview: React.FC<Props> = ({
             const t = confirmDelete;
             await removeHomework(t.id, t.year, t.semester, t.course);
             setConfirmDelete(null);
+            toast.success(`Deleted “${t.name}”`);
             if (dayModalDate) {
               const remaining = allTasks.filter(
                 (x) => x.dueDate === dayModalDate && x.id !== t.id
