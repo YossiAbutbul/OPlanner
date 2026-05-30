@@ -172,7 +172,7 @@
     width: clamp(240px, 80vw, 320px);
     height: 100vh;
     height: 100dvh;
-    z-index: 1100;
+    z-index: var(--z-mobile-nav);
     transform: translateX(-100%);
     transition: transform 0.22s ease;
   }
@@ -186,7 +186,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 1050;
+    z-index: var(--z-mobile-backdrop);
   }
 
   .mobile-topbar {
@@ -201,7 +201,7 @@
     padding: 0 0.85rem;
     background: #0e0f12;
     color: #fff;
-    z-index: 1000;
+    z-index: var(--z-mobile-topbar);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 

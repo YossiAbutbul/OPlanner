@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  z-index: 1000;
+  z-index: var(--z-modal-overlay);
   animation: authFade 0.15s ease-out;
 }
 
