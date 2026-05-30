@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { Suspense, lazy, useState, useEffect } from "react";
 import ProgressChart from "./ProgressChart";
 import HomeworkTable from "./HomeworkTable";
-import HomeworkModal from "./HomeworkModal";
 import SemesterOverview from "./SemesterOverview";
+
+// Lazy so the HomeworkModal + NotesEditor chunk only loads on first open.
+// Static imports here would cancel the lazy() in RightSidebar/SemesterOverview.
+const HomeworkModal = lazy(() => import("./HomeworkModal"));
 import ImportCalendarModal from "./ImportCalendarModal";
 import CourseCalendar from "./CourseCalendar";
 import DayTasksModal from "./DayTasksModal";
@@ -345,20 +348,24 @@ const MainContent: React.FC<MainContentProps> = ({
         />
       )}
 
-      <HomeworkModal
-        isOpen={isHomeworkModalOpen}
-        onClose={() => {
-          setHomeworkModalOpen(false);
-          setPrefillDate(null);
-          setEditTask(null);
-        }}
-        onSave={handleSaveHomework}
-        selectedCourseData={activeTab}
-        editHomework={editTask}
-        prefilledDueDate={prefillDate}
-        isLoading={isLoadingAction}
-        availableCourses={currentSemester?.courses.map((c) => c.name)}
-      />
+      {isHomeworkModalOpen && (
+        <Suspense fallback={null}>
+          <HomeworkModal
+            isOpen={isHomeworkModalOpen}
+            onClose={() => {
+              setHomeworkModalOpen(false);
+              setPrefillDate(null);
+              setEditTask(null);
+            }}
+            onSave={handleSaveHomework}
+            selectedCourseData={activeTab}
+            editHomework={editTask}
+            prefilledDueDate={prefillDate}
+            isLoading={isLoadingAction}
+            availableCourses={currentSemester?.courses.map((c) => c.name)}
+          />
+        </Suspense>
+      )}
 
       {dayModalDate && activeTab && (
         <DayTasksModal
