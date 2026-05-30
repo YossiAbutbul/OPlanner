@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { Suspense, lazy, useState, useEffect } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import { useToast } from "../context/ToastContext";
-import HomeworkModal from "./HomeworkModal";
 import DeleteModal from "./DeleteModal";
 import "../css/HomeworkTable.css";
 import { Pencil, Trash2, Check, Clock } from "lucide-react";
+
+// Lazy so HomeworkModal stays in its own chunk (would be cancelled by a
+// static import here — see vite "INEFFECTIVE_DYNAMIC_IMPORT" warning).
+const HomeworkModal = lazy(() => import("./HomeworkModal"));
 
 interface HomeworkEntry {
   id: string;
@@ -188,23 +191,29 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
           message={`Are you sure you want to delete this homework: "${confirmDelete.name}"?`}
         />
       )}
-      <HomeworkModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setEditHomework(null);
-        } }
-        onSave={(id, name, dueDate, status, year, semester, course, ignoreOverdue, startTime, endTime, notes, color) => {
-          if (!name || !dueDate) {
-            toast.error("Name and due date are required.");
-            return;
-          }
-          addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, undefined, startTime, endTime, notes, color);
-          setModalOpen(false);
-          setEditHomework(null);
-        } }
-        editHomework={editHomework}
-        selectedCourseData={editHomework ? null : null} isLoading={false}      />
+      {isModalOpen && (
+        <Suspense fallback={null}>
+          <HomeworkModal
+            isOpen={isModalOpen}
+            onClose={() => {
+              setModalOpen(false);
+              setEditHomework(null);
+            }}
+            onSave={(id, name, dueDate, status, year, semester, course, ignoreOverdue, startTime, endTime, notes, color) => {
+              if (!name || !dueDate) {
+                toast.error("Name and due date are required.");
+                return;
+              }
+              addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, undefined, startTime, endTime, notes, color);
+              setModalOpen(false);
+              setEditHomework(null);
+            }}
+            editHomework={editHomework}
+            selectedCourseData={null}
+            isLoading={false}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
