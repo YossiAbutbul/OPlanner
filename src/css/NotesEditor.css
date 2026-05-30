@@ -124,11 +124,31 @@
   gap: 0.6rem;
   padding: 0.7rem 1rem;
   border-bottom: 1px solid #eaeaee;
+  flex-shrink: 0;
 }
 
 .ne-title {
   font-weight: 700;
   color: #1a1a1a;
+}
+
+/* Close button hugs the right edge of the header so the toolbar floats
+   between title and close. */
+.ne-head .ne-close {
+  margin-left: auto;
+}
+
+/* Footer with the Save button anchored to the bottom-right. Separates
+   the destructive close (top-right X) from the constructive save action. */
+.ne-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  border-top: 1px solid #eaeaee;
+  background: #fafafb;
+  flex-shrink: 0;
 }
 
 .ne-close {
@@ -262,20 +282,13 @@
     #fff;
 }
 
-.ne-head-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-left: auto;
-}
-
 .ne-save-btn {
   background: #1db954;
   color: #fff;
   border: 1px solid #19a449;
-  border-radius: 6px;
-  padding: 0.4rem 0.85rem;
-  font-size: 0.85rem;
+  border-radius: 8px;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
@@ -284,6 +297,55 @@
 
 .ne-save-btn:hover {
   background: #1ed760;
+}
+
+/* ===== Mobile: full-screen sheet =====
+   Drop the overlay padding so the editor uses the whole viewport,
+   stack the toolbar to a second row that scrolls horizontally if it
+   doesn't fit, and pin the footer Save button above the iOS home bar. */
+@media (max-width: 600px) {
+  .ne-overlay {
+    padding: 0;
+  }
+
+  .ne-panel {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .ne-head {
+    /* First row: title + close. Toolbar wraps to its own row. */
+    flex-wrap: wrap;
+    padding: 0.7rem 0.85rem;
+    gap: 0.5rem 0.6rem;
+  }
+
+  .ne-head .ne-toolbar {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .ne-head .ne-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ne-footer {
+    padding: 0.7rem 0.85rem
+      calc(0.7rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .ne-save-btn {
+    padding: 0.65rem 1.4rem;
+    font-size: 0.95rem;
+  }
 }
 
 .ne-color-btn input[type="color"] {

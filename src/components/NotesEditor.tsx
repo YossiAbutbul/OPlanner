@@ -165,20 +165,15 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
                 onHighlight={(c) => applyColor("hiliteColor", c)}
                 onDir={applyDir}
               />
-              <div className="ne-head-actions">
-                <button type="button" className="ne-save-btn" onClick={handleSaveExpanded}>
-                  Save
-                </button>
-                <button
-                  type="button"
-                  className="ne-close"
-                  onClick={handleDiscardExpanded}
-                  title="Close (discard)"
-                  aria-label="Close"
-                >
-                  <X size={16} strokeWidth={2.5} />
-                </button>
-              </div>
+              <button
+                type="button"
+                className="ne-close"
+                onClick={handleDiscardExpanded}
+                title="Close (discard)"
+                aria-label="Close"
+              >
+                <X size={16} strokeWidth={2.5} />
+              </button>
             </div>
             <div
               ref={expandedRef}
@@ -189,6 +184,11 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
               onKeyDown={handleEditorKeyDown}
               onClick={handleEditorClick}
             />
+            <div className="ne-footer">
+              <button type="button" className="ne-save-btn" onClick={handleSaveExpanded}>
+                Save
+              </button>
+            </div>
           </div>
         </div>,
         document.body
