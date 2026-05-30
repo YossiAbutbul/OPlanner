@@ -47,10 +47,7 @@
     border-left: none;
     border-right: none;
     border-bottom: none;
-    /* Padding bleeds into the iOS home bar safely; matches the safe-area
-       inset so tappable content never sits under the indicator. */
-    padding: 0 var(--space-4, 1rem)
-      calc(var(--space-4, 1rem) + env(safe-area-inset-bottom, 0px));
+    padding: 0;
     /* Internal scroll: the body scrolls, sticky header/footer pin. */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -58,43 +55,25 @@
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
   }
 
-  /* Drag handle indicator — purely visual, hints "this is a sheet you
-     can dismiss." Sits centered above the title in the sticky header. */
-  .app-modal::before {
-    content: "";
-    display: block;
-    width: 40px;
-    height: 4px;
-    border-radius: 2px;
-    background: #d6d6da;
-    margin: 0.6rem auto 0.85rem;
-    flex-shrink: 0;
-  }
-
-  /* Sticky title bar — stays at the top of the sheet while body scrolls. */
-  .app-modal-title {
+  /* Sticky header bar — title + close stay locked at the top of the
+     sheet while the body scrolls. No more drag handle (it was purely
+     decorative and implied a swipe-to-dismiss that didn't exist). */
+  .app-modal-header {
     position: sticky;
     top: 0;
     z-index: 1;
     margin: 0;
-    padding: 0 0 0.75rem;
-    font-size: 1.1rem;
+    padding: 0.85rem var(--space-4, 1rem);
     background: #ffffff;
     border-bottom: 1px solid #ececef;
   }
 
-  /* Close button moves alongside the sticky title. */
-  .app-modal-close {
-    top: 1.6rem;
-    right: 0;
-    width: 32px;
-    height: 32px;
-    font-size: 1.6rem;
+  .app-modal-title {
+    font-size: 1.1rem;
   }
 
-  /* Body gets vertical breathing room between sticky header and footer. */
   .app-modal-body {
-    padding: 0.85rem 0;
+    padding: 0.85rem var(--space-4, 1rem);
   }
 
   /* Sticky action bar — buttons always reachable. Full-width 50/50 so
@@ -104,8 +83,8 @@
     bottom: 0;
     z-index: 1;
     margin-top: 0;
-    padding: 0.75rem 0
-      calc(env(safe-area-inset-bottom, 0px) * 0); /* outer padding handles inset */
+    padding: 0.75rem var(--space-4, 1rem)
+      calc(0.75rem + env(safe-area-inset-bottom, 0px));
     background: #ffffff;
     border-top: 1px solid #ececef;
     gap: 0.6rem;
@@ -129,31 +108,44 @@
   }
 }
 
+/* Header: title (or empty span) on the left, close button on the right.
+   Flex bar means close always sits at the right edge with no absolute
+   positioning fights. On mobile this bar becomes sticky. */
+.app-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
 .app-modal-title {
-  margin: 0 0 0.85rem;
+  margin: 0;
   font-size: 1.05rem;
   font-weight: 600;
   color: #1a1a1a;
-  padding-right: 1.5rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-modal-close {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 20px;
-  height: 20px;
-  font-size: 1.4rem;
+  width: 32px;
+  height: 32px;
+  font-size: 1.5rem;
   padding: 0;
   line-height: 1;
   background: none;
   border: none;
   cursor: pointer;
   color: #888;
-  border-radius: 4px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   transition:
     color 0.15s ease,
     background-color 0.15s ease;
@@ -161,7 +153,7 @@
 
 .app-modal-close:hover {
   color: #1a1a1a;
-  background: transparent;
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .app-modal-body {

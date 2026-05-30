@@ -113,15 +113,20 @@ const Modal: React.FC<ModalProps> = ({
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <button
-          className="app-modal-close"
-          onClick={onClose}
-          aria-label="Close"
-          type="button"
-        >
-          ×
-        </button>
-        {title && <h3 className="app-modal-title">{title}</h3>}
+        {/* Header wraps title + close so they stick together at the top of
+            the sheet on mobile (where the body scrolls). Empty title still
+            renders the bar so the close button is always present. */}
+        <div className="app-modal-header">
+          {title ? <h3 className="app-modal-title">{title}</h3> : <span />}
+          <button
+            className="app-modal-close"
+            onClick={onClose}
+            aria-label="Close"
+            type="button"
+          >
+            ×
+          </button>
+        </div>
         <div className="app-modal-body">{children}</div>
         {footer && <div className="app-modal-actions">{footer}</div>}
       </div>
