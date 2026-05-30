@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
-import "boxicons/css/boxicons.min.css";
 import { useAuth } from "../context/AuthContext";
 import { Settings, Plus, LogOut, HelpCircle } from "lucide-react";
 import { deleteCourse, renameCourse } from "../utility/initializeDatabase";

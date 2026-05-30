@@ -37,6 +37,14 @@
   margin-top: 0.5rem;
 }
 
+.app-loading-spin {
+  animation: app-loading-spin 0.9s linear infinite;
+}
+
+@keyframes app-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Sidebar — fluid width via token, animates on collapse. */
 .sidebar {
   flex: 0 0 var(--sidebar-w);

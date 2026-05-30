@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Modal from "./Modal";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Eye, EyeOff } from "lucide-react";
 
 interface DeleteModalProps {
   isOpen: boolean;
@@ -99,7 +99,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
               color: "#888",
             }}
           >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
           </span>
         </div>
       )}

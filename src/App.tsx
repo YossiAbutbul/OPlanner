@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import "./css/App.css";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
@@ -84,7 +85,7 @@ const App: React.FC = () => {
         <img src="./Logo.svg" alt="" className="app-loading-logo" />
         <div className="app-loading-text">OPlanner</div>
         <div className="app-loading-spinner">
-          <i className="bx bx-loader-alt bx-spin"></i>
+          <Loader2 className="app-loading-spin" size={28} />
         </div>
       </div>
     );

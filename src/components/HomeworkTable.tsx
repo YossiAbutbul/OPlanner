@@ -3,7 +3,6 @@ import { useHomework } from "../context/HomeworkContext";
 import HomeworkModal from "./HomeworkModal";
 import DeleteModal from "./DeleteModal";
 import "../css/HomeworkTable.css";
-import "boxicons/css/boxicons.min.css";
 import { Pencil, Trash2, Check, Clock } from "lucide-react";
 
 interface HomeworkEntry {
