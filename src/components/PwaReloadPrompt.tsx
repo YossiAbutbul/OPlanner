@@ -7,7 +7,7 @@ import { useToast } from "../context/ToastContext";
 // reloads the page so the user gets the new build. Registration lives
 // here (injectRegister is null in vite.config) so the hook owns the SW
 // lifecycle — must be mounted inside ToastProvider.
-const PwaReloadPrompt: React.FC = () => {
+const PwaReloadPrompt = (): null => {
   const toast = useToast();
   // Guard so we raise the toast only once per waiting worker.
   const shownRef = useRef(false);
