@@ -5,6 +5,7 @@ import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
 import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
+import PomodoroWidget from "./components/PomodoroWidget";
 
 // Tour pulls in react-joyride (~100KB). One-shot per user, mostly never seen
 // on repeat visits. Lazy-load so it doesn't bloat the initial JS bundle.
@@ -156,6 +157,9 @@ const App: React.FC = () => {
         selectedSemester={sel.selectedSemester}
         selectedCourse={sel.selectedCourse}
       />
+
+      <PomodoroWidget />
+
       {/* Tour chunk loads on demand; null fallback — invisible while loading. */}
       <Suspense fallback={null}>
         <Tour run={tour.tourRun} onFinish={tour.finishTour} onSetMobileNav={setMobileNavOpen} />
