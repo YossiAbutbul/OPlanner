@@ -247,6 +247,14 @@
   font-size: 0.95rem;
   font-weight: 700;
   text-align: center;
+  /* Hide the native number spinner arrows. */
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.pomo-editor-row input::-webkit-outer-spin-button,
+.pomo-editor-row input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 .pomo-editor-row input:focus {
   outline: none;
