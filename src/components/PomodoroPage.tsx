@@ -104,6 +104,7 @@ const PomodoroPage: React.FC = () => {
           </button>
           <button className="pomopage-ghost" onClick={reset} title="Reset" aria-label="Reset">
             <ResetIcon />
+            <span>Reset</span>
           </button>
         </div>
 

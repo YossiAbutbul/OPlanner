@@ -165,15 +165,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 54px;
+  gap: 0.45rem;
+  padding: 0.8rem 1.3rem;
   border: 1px solid #d6d6da;
   background: #fff;
-  color: #555;
+  color: #444;
   border-radius: 12px;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
 }
 .pomopage-ghost:hover { background: #f4f4f6; border-color: #b8bbc0; color: #1a1a1a; }
+.pomopage-ghost:active { transform: scale(0.98); }
 
 /* ===== Customize ===== */
 .pomopage-customize-toggle {

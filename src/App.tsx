@@ -139,7 +139,7 @@ const App: React.FC = () => {
         onOpenPomodoro={() => setPomodoroOpen((o) => !o)}
       />
       {pomodoroOpen ? (
-        <div className="main-content-wrapper">
+        <div className="main-layout">
           <div className="main-content">
             <PomodoroPage />
           </div>
