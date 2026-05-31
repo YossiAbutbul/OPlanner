@@ -2,20 +2,34 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 export type ToastKind = "success" | "error" | "info";
 
+export interface ToastAction {
+  label: string;
+  onClick: () => void;
+}
+
+export interface ToastOptions {
+  // Sticky toasts never auto-dismiss — used for actionable prompts like
+  // "New version available". The user must click the action or close it.
+  sticky?: boolean;
+  action?: ToastAction;
+}
+
 export interface Toast {
   id: string;
   kind: ToastKind;
   message: string;
+  sticky?: boolean;
+  action?: ToastAction;
 }
 
 interface ToastContextValue {
   toasts: Toast[];
-  push: (kind: ToastKind, message: string) => void;
+  push: (kind: ToastKind, message: string, opts?: ToastOptions) => void;
   dismiss: (id: string) => void;
   // Sugar for the common cases.
-  success: (message: string) => void;
-  error: (message: string) => void;
-  info: (message: string) => void;
+  success: (message: string, opts?: ToastOptions) => void;
+  error: (message: string, opts?: ToastOptions) => void;
+  info: (message: string, opts?: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
@@ -35,13 +49,18 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const push = useCallback(
-    (kind: ToastKind, message: string) => {
+    (kind: ToastKind, message: string, opts?: ToastOptions) => {
       const id = nextId();
-      setToasts((prev) => [...prev, { id, kind, message }]);
-      // Auto-dismiss after TTL. Errors stay slightly longer so the user
-      // can actually read them before they fade.
-      const ttl = kind === "error" ? TOAST_TTL_MS + 1500 : TOAST_TTL_MS;
-      window.setTimeout(() => dismiss(id), ttl);
+      setToasts((prev) => [
+        ...prev,
+        { id, kind, message, sticky: opts?.sticky, action: opts?.action },
+      ]);
+      // Auto-dismiss after TTL unless sticky. Errors stay slightly longer
+      // so the user can actually read them before they fade.
+      if (!opts?.sticky) {
+        const ttl = kind === "error" ? TOAST_TTL_MS + 1500 : TOAST_TTL_MS;
+        window.setTimeout(() => dismiss(id), ttl);
+      }
     },
     [dismiss]
   );
@@ -51,9 +70,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       toasts,
       push,
       dismiss,
-      success: (m: string) => push("success", m),
-      error: (m: string) => push("error", m),
-      info: (m: string) => push("info", m),
+      success: (m: string, o?: ToastOptions) => push("success", m, o),
+      error: (m: string, o?: ToastOptions) => push("error", m, o),
+      info: (m: string, o?: ToastOptions) => push("info", m, o),
     }),
     [toasts, push, dismiss]
   );

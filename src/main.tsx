@@ -6,6 +6,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ToastList from "./components/ToastList";
+import PwaReloadPrompt from "./components/PwaReloadPrompt";
 import { HomeworkProvider } from "./context/HomeworkContext";
 import { TimeBlockProvider } from "./context/TimeBlockContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
             <TimeBlockProvider>
               <App />
               <ToastList />
+              <PwaReloadPrompt />
             </TimeBlockProvider>
           </HomeworkProvider>
         </AuthProvider>
