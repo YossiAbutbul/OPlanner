@@ -5,7 +5,7 @@ import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
 import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
-import PomodoroWidget from "./components/PomodoroWidget";
+import PomodoroPage from "./components/PomodoroPage";
 
 // Tour pulls in react-joyride (~100KB). One-shot per user, mostly never seen
 // on repeat visits. Lazy-load so it doesn't bloat the initial JS bundle.
@@ -26,6 +26,8 @@ const App: React.FC = () => {
   const { user, loading } = useAuth();
   const { fetchHomework } = useHomework();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  // Pomodoro is a standalone page that overlays the planner main area.
+  const [pomodoroOpen, setPomodoroOpen] = useState(false);
   // Surface online/offline transitions via toasts.
   useOfflineToast();
 
@@ -124,7 +126,7 @@ const App: React.FC = () => {
         selectedSemester={sel.selectedSemester}
         selectedCourse={sel.selectedCourse}
         courses={semesterCourses}
-        onSelectCourse={sel.setSelectedCourse}
+        onSelectCourse={(c) => { setPomodoroOpen(false); sel.setSelectedCourse(c); }}
         onReorderCourses={tree.handleReorderCourses}
         onYearsChanged={tree.refreshYears}
         onAddYear={tree.handleAddYear}
@@ -133,7 +135,14 @@ const App: React.FC = () => {
         onUpdateCourseColor={tree.handleUpdateCourseColor}
         mobileOpen={mobileNavOpen}
         onCloseMobile={() => setMobileNavOpen(false)}
+        pomodoroActive={pomodoroOpen}
+        onOpenPomodoro={() => setPomodoroOpen((o) => !o)}
       />
+      {pomodoroOpen ? (
+        <main className="main">
+          <PomodoroPage />
+        </main>
+      ) : (
       <MainContent
         years={tree.years}
         addingYear={tree.addingYear}
@@ -151,14 +160,13 @@ const App: React.FC = () => {
         activeTab={activeTab}
         onCloseMobile={() => setMobileNavOpen(false)}
       />
+      )}
       <RightSidebar
         years={tree.years}
         selectedYear={sel.selectedYear}
         selectedSemester={sel.selectedSemester}
         selectedCourse={sel.selectedCourse}
       />
-
-      <PomodoroWidget />
 
       {/* Tour chunk loads on demand; null fallback — invisible while loading. */}
       <Suspense fallback={null}>
