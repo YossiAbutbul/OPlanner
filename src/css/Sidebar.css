@@ -193,8 +193,8 @@ button:focus { outline: none; }
 }
 .pomodoro-nav.active {
   color: #fff;
-  background: rgba(29, 185, 84, 0.22);
-  border-color: rgba(29, 185, 84, 0.5);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 .sidebar-nav-icon {
   display: inline-flex;
@@ -204,7 +204,7 @@ button:focus { outline: none; }
   color: var(--text-muted);
 }
 .pomodoro-nav:hover .sidebar-nav-icon { color: #e7e7e7; }
-.pomodoro-nav.active .sidebar-nav-icon { color: var(--accent); }
+.pomodoro-nav.active .sidebar-nav-icon { color: #fff; }
 .sidebar-nav-label { flex: 1; text-align: left; }
 .sidebar-nav-spark { display: none; }
 .sidebar.collapsed .sidebar-nav-label { display: none; }
