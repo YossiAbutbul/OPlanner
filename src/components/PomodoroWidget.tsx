@@ -22,6 +22,10 @@ const MODE_LABEL: Record<Mode, string> = {
 const POS_KEY = "oplanner.pomodoro.pos";
 const COLLAPSED_KEY = "oplanner.pomodoro.collapsed";
 
+// Progress-ring geometry (240x240 viewBox, r=104 leaves room for stroke).
+const RING_R = 104;
+const RING_C = 2 * Math.PI * RING_R;
+
 const fmt = (s: number) => {
   const m = Math.floor(s / 60);
   const sec = s % 60;
@@ -186,12 +190,27 @@ const PomodoroWidget: React.FC = () => {
         ))}
       </div>
 
-      <div className="pomo-time" role="timer" aria-live="off">
-        {fmt(secondsLeft)}
-      </div>
-
-      <div className="pomo-bar">
-        <div className="pomo-bar-fill" style={{ width: `${progress * 100}%` }} />
+      {/* Circular progress ring with the time in the center. */}
+      <div className="pomo-ring-wrap">
+        <svg className="pomo-ring" viewBox="0 0 240 240" aria-hidden>
+          <circle className="pomo-ring-track" cx="120" cy="120" r={RING_R} />
+          <circle
+            className="pomo-ring-fill"
+            cx="120"
+            cy="120"
+            r={RING_R}
+            strokeDasharray={RING_C}
+            strokeDashoffset={RING_C * (1 - progress)}
+          />
+        </svg>
+        <div className="pomo-ring-center">
+          <div className="pomo-time" role="timer" aria-live="off">
+            {fmt(secondsLeft)}
+          </div>
+          <div className="pomo-session">
+            {mode === "focus" ? `Round ${(focusDone % 4) + 1} / 4` : MODE_LABEL[mode]}
+          </div>
+        </div>
       </div>
 
       <div className="pomo-controls">
@@ -199,11 +218,11 @@ const PomodoroWidget: React.FC = () => {
           className="pomo-primary"
           onClick={() => setRunning((r) => !r)}
         >
-          {running ? <Pause size={16} /> : <Play size={16} />}
+          {running ? <Pause size={18} /> : <Play size={18} />}
           <span>{running ? "Pause" : "Start"}</span>
         </button>
         <button className="pomo-ghost" onClick={reset} title="Reset" aria-label="Reset">
-          <RotateCcw size={16} />
+          <RotateCcw size={17} />
         </button>
       </div>
     </div>
