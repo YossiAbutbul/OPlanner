@@ -175,6 +175,7 @@
 /* ===== Controls ===== */
 .pomo-controls {
   display: flex;
+  align-items: stretch;
   gap: 0.5rem;
   padding: 0.2rem 0.85rem 0.95rem;
 }
@@ -203,7 +204,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 46px;
+  width: 52px;
+  align-self: stretch;
   border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.08);
   color: #e5e7eb;
@@ -211,6 +213,7 @@
   cursor: pointer;
   transition: background-color 0.12s ease, color 0.12s ease;
 }
+.pomo-ghost svg { width: 20px; height: 20px; }
 .pomo-ghost:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
 .pomo-ghost svg { stroke: currentColor; display: block; }
 
