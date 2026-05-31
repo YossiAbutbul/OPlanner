@@ -15,7 +15,7 @@ import FinalsCountdown from "./SemesterOverview/FinalsCountdown";
 import AddCourseModal from "./SemesterOverview/AddCourseModal";
 import { useSemesterStats } from "../hooks/useSemesterStats";
 import type { CourseInfo, HomeworkEntry } from "../types/models";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import "../css/SemesterOverview.css";
 
 interface Props {
@@ -123,7 +123,8 @@ const SemesterOverview: React.FC<Props> = ({
             onClick={() => fileInputRef.current?.click()}
             title="Import calendar (.ics)"
           >
-            Import calendar
+            <Upload size={16} />
+            <span>Import calendar</span>
           </button>
           <button
             className="overview-add-course"
