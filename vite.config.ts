@@ -13,14 +13,14 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       VitePWA({
-        // Auto-update strategy: a fresh service worker activates as soon
-        // as the user navigates, no "click to update" prompt. Combined
-        // with skipWaiting + clientsClaim so visitors always get the
-        // latest deploy without a hard refresh.
-        registerType: 'autoUpdate',
-        // Emit the SW registration to a separate file (not inline) so it
-        // respects our strict `script-src 'self'` CSP.
-        injectRegister: 'script',
+        // Prompt strategy: a fresh service worker waits, and the app shows
+        // an in-app "New version available — reload" toast (see
+        // PwaReloadPrompt). The user clicks Reload to activate it, so we
+        // never swap code mid-session.
+        registerType: 'prompt',
+        // PwaReloadPrompt registers the SW via `useRegisterSW`, so disable
+        // the plugin's auto-injected registration to avoid double-register.
+        injectRegister: null,
 
         // Don't precache the giant boxicons font file leftovers (already
         // dropped, but the glob is defensive).
