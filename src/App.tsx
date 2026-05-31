@@ -139,9 +139,11 @@ const App: React.FC = () => {
         onOpenPomodoro={() => setPomodoroOpen((o) => !o)}
       />
       {pomodoroOpen ? (
-        <main className="main">
-          <PomodoroPage />
-        </main>
+        <div className="main-content-wrapper">
+          <div className="main-content">
+            <PomodoroPage />
+          </div>
+        </div>
       ) : (
       <MainContent
         years={tree.years}
