@@ -90,9 +90,10 @@ export function useYearTree(
             ...y,
             semesters: y.semesters.map((s) => {
               if (s.name !== semester) return s;
+              const byName = new Map(s.courses.map((c) => [c.name, c]));
               const ordered = names
-                .filter((n) => s.courses.some((c) => c.name === n))
-                .map((n) => ({ name: n }));
+                .filter((n) => byName.has(n))
+                .map((n) => byName.get(n)!);
               return { ...s, courses: ordered };
             }),
           };

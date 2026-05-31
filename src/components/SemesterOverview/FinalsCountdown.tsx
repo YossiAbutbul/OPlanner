@@ -15,11 +15,19 @@ interface Props {
   onChangeFinalDate: (course: string, value: string) => void;
 }
 
-const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => (
+const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => {
+  // Soonest finals first; courses without a date sink to the bottom.
+  // Copy so the sidebar order (the `courses` prop) is left untouched.
+  const sorted = [...courses].sort((a, b) => {
+    if (!a.finalDate) return b.finalDate ? 1 : 0;
+    if (!b.finalDate) return -1;
+    return a.finalDate.localeCompare(b.finalDate);
+  });
+  return (
   <section className="overview-section">
     <h2>Finals Countdown</h2>
     <ul className="finals-list">
-      {courses.map((c, idx) => {
+      {sorted.map((c, idx) => {
         const days = c.finalDate ? daysUntil(c.finalDate) : null;
         let badge = "";
         let badgeClass = "";
@@ -95,6 +103,7 @@ const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => (
       })}
     </ul>
   </section>
-);
+  );
+};
 
 export default FinalsCountdown;
