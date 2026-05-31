@@ -250,26 +250,4 @@
   padding: 0.65rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .pomopage { color: #f3f3f5; }
-  .pomopage-time { color: #fff; }
-  .pomopage-modes { background: rgba(255, 255, 255, 0.08); }
-  .pomopage-mode-btn { color: #cfcfd3; }
-  .pomopage-mode-btn.active { background: #2a2a30; }
-  .pomopage-ring-track { stroke: rgba(255, 255, 255, 0.1); }
-  .pomopage-ghost {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.14);
-    color: #cfcfd3;
-  }
-  .pomopage-editor {
-    background: #1f1f24;
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-  .pomopage-editor-row { color: #e5e7eb; }
-  .pomopage-editor-row input {
-    background: rgba(0, 0, 0, 0.3);
-    border-color: rgba(255, 255, 255, 0.14);
-    color: #fff;
-  }
-}
+/* Content area is always light (matches Overview); no dark-mode flip. */
