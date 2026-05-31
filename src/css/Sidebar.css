@@ -164,11 +164,11 @@ button:focus { outline: none; }
 }
 
 /* Open courses list */
-/* ===== Standalone nav (Focus / Pomodoro) ===== */
+/* ===== Standalone nav (Focus / Pomodoro) — sits above the footer ===== */
 .sidebar-nav {
-  padding: 0.25rem 0.75rem 0.85rem;
-  margin-bottom: 0.4rem;
-  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+  flex-shrink: 0;
+  padding: 0.6rem 0.75rem;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.06));
 }
 .pomodoro-nav {
   position: relative;
