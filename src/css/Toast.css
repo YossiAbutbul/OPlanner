@@ -15,7 +15,7 @@
   pointer-events: auto;
   position: relative;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 0.75rem;
   padding: 0.85rem 0.95rem 0.85rem 0.85rem;
@@ -64,6 +64,34 @@
   font-weight: 500;
   color: #1a1a1a;
   padding-right: 0.25rem;
+}
+
+/* Action button — primary accent, e.g. "Reload" on the update prompt. */
+.toast-action {
+  flex-shrink: 0;
+  padding: 0.4rem 0.8rem;
+  background: #1db954;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.12s ease, transform 0.08s ease;
+}
+
+.toast-action:hover {
+  background: #1ed760;
+}
+
+.toast-action:active {
+  transform: scale(0.96);
+}
+
+/* Sticky toasts have no auto-dismiss, so hide the TTL countdown bar. */
+.toast-sticky::after {
+  display: none;
 }
 
 /* Dismiss button — neutral chrome that brightens on hover. */

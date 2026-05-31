@@ -25,7 +25,7 @@ const ToastList: React.FC = () => {
         return (
           <div
             key={t.id}
-            className={`toast toast-${t.kind}`}
+            className={`toast toast-${t.kind}${t.sticky ? " toast-sticky" : ""}`}
             role={t.kind === "error" ? "alert" : "status"}
             style={{ ["--toast-ttl" as string]: `${ttlFor(t.kind)}ms` }}
           >
@@ -33,6 +33,18 @@ const ToastList: React.FC = () => {
               <Icon size={18} strokeWidth={2.4} />
             </span>
             <span className="toast-msg">{t.message}</span>
+            {t.action && (
+              <button
+                type="button"
+                className="toast-action"
+                onClick={() => {
+                  t.action!.onClick();
+                  dismiss(t.id);
+                }}
+              >
+                {t.action.label}
+              </button>
+            )}
             <button
               type="button"
               className="toast-close"

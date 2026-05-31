@@ -3,22 +3,22 @@ import { useRegisterSW } from "virtual:pwa-register/react";
 import { useToast } from "../context/ToastContext";
 
 // Shows an in-app "New version available" toast when a fresh service
-// worker is waiting. Clicking Reload activates it (skipWaiting +
-// clientsClaim) and reloads the page so the user gets the new build.
-// Registration lives here (injectRegister is null in vite.config) so the
-// hook owns the SW lifecycle.
+// worker is waiting. Clicking Reload activates it (skipWaiting) and
+// reloads the page so the user gets the new build. Registration lives
+// here (injectRegister is null in vite.config) so the hook owns the SW
+// lifecycle — must be mounted inside ToastProvider.
 const PwaReloadPrompt: React.FC = () => {
   const toast = useToast();
-  // Guard so we only raise one toast per waiting worker.
+  // Guard so we raise the toast only once per waiting worker.
   const shownRef = useRef(false);
 
   const {
-    needRefresh: [needRefresh, setNeedRefresh],
+    needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(_swUrl, registration) {
-      // Poll for a new SW every hour so long-lived tabs still pick up
-      // deploys without waiting for the browser's ~24h default check.
+      // Poll for a new SW hourly so long-lived tabs pick up deploys
+      // without waiting for the browser's ~24h default check.
       if (!registration) return;
       setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000);
     },
@@ -28,20 +28,15 @@ const PwaReloadPrompt: React.FC = () => {
     if (!needRefresh || shownRef.current) return;
     shownRef.current = true;
     toast.info("New version available", {
-      duration: Infinity,
-      dismissible: true,
-      closeOnAction: false,
-      notesActions: [
-        {
-          label: "Reload",
-          onClick: () => updateServiceWorker(true),
-        },
-      ],
+      sticky: true,
+      action: {
+        label: "Reload",
+        // true => skipWaiting + auto window.location.reload() after the
+        // new SW takes control.
+        onClick: () => updateServiceWorker(true),
+      },
     });
-    // Reset the flag if the user dismisses (needRefresh flips back false
-    // only on activation; dismiss just hides the toast).
-    setNeedRefresh(false);
-  }, [needRefresh, setNeedRefresh, toast, updateServiceWorker]);
+  }, [needRefresh, toast, updateServiceWorker]);
 
   return null;
 };
