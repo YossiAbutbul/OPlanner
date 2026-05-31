@@ -189,18 +189,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         <span className="brand-name">OPlanner</span>
       </div>
 
-      <nav className="sidebar-nav">
-        <button
-          className={`sidebar-nav-item pomodoro-nav ${pomodoroActive ? "active" : ""}`}
-          onClick={() => { onOpenPomodoro(); onCloseMobile(); }}
-          title="Focus timer"
-        >
-          <span className="sidebar-nav-icon"><Timer size={18} /></span>
-          <span className="sidebar-nav-label">Focus</span>
-          <span className="sidebar-nav-spark" aria-hidden />
-        </button>
-      </nav>
-
       <div className="open-list-section">
         <div className="open-list-header">
           <span>Courses</span>
@@ -291,6 +279,18 @@ const Sidebar: React.FC<SidebarProps> = ({
           })}
         </ul>
       </div>
+
+      <nav className="sidebar-nav">
+        <button
+          className={`sidebar-nav-item pomodoro-nav ${pomodoroActive ? "active" : ""}`}
+          onClick={() => { onOpenPomodoro(); onCloseMobile(); }}
+          title="Focus timer"
+        >
+          <span className="sidebar-nav-icon"><Timer size={18} /></span>
+          <span className="sidebar-nav-label">Focus</span>
+          <span className="sidebar-nav-spark" aria-hidden />
+        </button>
+      </nav>
 
       <div className="sidebar-footer" ref={settingsRef}>
         <button
