@@ -12,6 +12,7 @@ import { TimeBlockProvider } from "./context/TimeBlockContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
 import { CoinsProvider } from "./context/CoinsContext";
+import { PomodoroProvider } from "./context/PomodoroContext";
 
 // Mobile debug console: dev builds only, visit ?debug=1 to enable on phones.
 if (import.meta.env.DEV && new URLSearchParams(location.search).get("debug") === "1") {
@@ -24,13 +25,15 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       <ToastProvider>
         <AuthProvider>
           <CoinsProvider>
-            <HomeworkProvider>
-              <TimeBlockProvider>
-                <App />
-                <ToastList />
-                <PwaReloadPrompt />
-              </TimeBlockProvider>
-            </HomeworkProvider>
+            <PomodoroProvider>
+              <HomeworkProvider>
+                <TimeBlockProvider>
+                  <App />
+                  <ToastList />
+                  <PwaReloadPrompt />
+                </TimeBlockProvider>
+              </HomeworkProvider>
+            </PomodoroProvider>
           </CoinsProvider>
         </AuthProvider>
       </ToastProvider>

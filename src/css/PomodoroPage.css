@@ -1,0 +1,275 @@
+.pomopage {
+  --pp-accent: #1db954;
+  --pp-accent-soft: rgba(29, 185, 84, 0.14);
+  width: 100%;
+  box-sizing: border-box;
+  color: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.pomopage-mode-focus { --pp-accent: #1db954; --pp-accent-soft: rgba(29, 185, 84, 0.14); }
+.pomopage-mode-short { --pp-accent: #3498db; --pp-accent-soft: rgba(52, 152, 219, 0.14); }
+.pomopage-mode-long  { --pp-accent: #7c4dff; --pp-accent-soft: rgba(124, 77, 255, 0.15); }
+
+.pomopage-header {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+.pomopage-header-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  flex: 1;
+}
+.pomopage-header h1 {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+.pomopage-sub {
+  color: #888;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.pomopage-coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #b8860b;
+  background: rgba(255, 193, 7, 0.16);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+}
+
+/* Center the timer in the available space. */
+.pomopage-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 1rem 0 2rem;
+}
+
+/* ===== Segmented mode control ===== */
+.pomopage-modes {
+  display: inline-flex;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  background: #eef0f3;
+  border-radius: 12px;
+}
+.pomopage-mode-btn {
+  padding: 0.5rem 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  background: transparent;
+  color: #666;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.pomopage-mode-btn:hover { color: #1a1a1a; }
+.pomopage-mode-btn.active {
+  background: #fff;
+  color: var(--pp-accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== Circular timer ===== */
+.pomopage-ring-wrap {
+  position: relative;
+  width: min(340px, 72vw);
+  aspect-ratio: 1;
+}
+.pomopage-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.pomopage-ring-track {
+  fill: none;
+  stroke: #e8eaed;
+  stroke-width: 14;
+}
+.pomopage-ring-fill {
+  fill: none;
+  stroke: var(--pp-accent);
+  stroke-width: 14;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s linear, stroke 0.3s ease;
+}
+.pomopage-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+.pomopage-time {
+  font-size: clamp(3rem, 9vw, 4.5rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  color: #1a1a1a;
+}
+.pomopage-session {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #999;
+}
+
+/* ===== Controls ===== */
+.pomopage-controls {
+  display: flex;
+  align-items: stretch;
+  gap: 0.6rem;
+}
+.pomopage-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 160px;
+  padding: 0.8rem 1.6rem;
+  background: var(--pp-accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -6px var(--pp-accent);
+  transition: filter 0.12s ease, transform 0.08s ease;
+}
+.pomopage-primary:hover { filter: brightness(1.06); }
+.pomopage-primary:active { transform: scale(0.98); }
+.pomopage-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  border: 1px solid #d6d6da;
+  background: #fff;
+  color: #555;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+.pomopage-ghost:hover { background: #f4f4f6; border-color: #b8bbc0; color: #1a1a1a; }
+
+/* ===== Customize ===== */
+.pomopage-customize-toggle {
+  background: none;
+  border: none;
+  color: var(--pp-accent);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.4rem;
+}
+.pomopage-customize-toggle:hover { text-decoration: underline; }
+
+.pomopage-editor {
+  width: min(360px, 90vw);
+  background: #fff;
+  border: 1px solid #e3e3e6;
+  border-radius: 14px;
+  padding: 1rem 1.1rem 1.1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+.pomopage-editor-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 0.6rem;
+}
+.pomopage-editor-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.pomopage-editor-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+}
+.pomopage-editor-row input {
+  width: 80px;
+  padding: 0.45rem 0.6rem;
+  background: #f7f7f9;
+  border: 1px solid #d6d6da;
+  border-radius: 9px;
+  color: #1a1a1a;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.pomopage-editor-row input::-webkit-outer-spin-button,
+.pomopage-editor-row input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.pomopage-editor-row input:focus {
+  outline: none;
+  border-color: var(--pp-accent);
+  box-shadow: 0 0 0 2px var(--pp-accent-soft);
+}
+.pomopage-editor-save {
+  width: 100%;
+  margin-top: 0.9rem;
+  min-width: 0;
+  font-size: 0.95rem;
+  padding: 0.65rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pomopage { color: #f3f3f5; }
+  .pomopage-time { color: #fff; }
+  .pomopage-modes { background: rgba(255, 255, 255, 0.08); }
+  .pomopage-mode-btn { color: #cfcfd3; }
+  .pomopage-mode-btn.active { background: #2a2a30; }
+  .pomopage-ring-track { stroke: rgba(255, 255, 255, 0.1); }
+  .pomopage-ghost {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #cfcfd3;
+  }
+  .pomopage-editor {
+    background: #1f1f24;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .pomopage-editor-row { color: #e5e7eb; }
+  .pomopage-editor-row input {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: #fff;
+  }
+}
