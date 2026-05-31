@@ -106,7 +106,8 @@
   stroke: var(--pp-accent);
   stroke-width: 14;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.5s linear, stroke 0.3s ease;
+  /* Match the 1s tick so the ring glides continuously (no step/freeze). */
+  transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
 }
 .pomopage-ring-center {
   position: absolute;
