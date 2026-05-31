@@ -79,13 +79,14 @@
   width: 26px;
   height: 26px;
   border: none;
-  background: rgba(255, 255, 255, 0.06);
-  color: #9ca3af;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e5e7eb;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.12s ease, color 0.12s ease;
 }
-.pomo-min:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.pomo-min:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.pomo-min svg { stroke: currentColor; stroke-width: 2.5; }
 
 /* ===== Mode segmented control ===== */
 .pomo-modes {
@@ -199,14 +200,15 @@
   align-items: center;
   justify-content: center;
   width: 46px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e5e7eb;
   border-radius: 12px;
   cursor: pointer;
   transition: background-color 0.12s ease, color 0.12s ease;
 }
-.pomo-ghost:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.pomo-ghost:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.pomo-ghost svg { stroke: currentColor; }
 
 /* ===== Collapsed pill ===== */
 .pomo-collapsed {
