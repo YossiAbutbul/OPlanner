@@ -57,7 +57,7 @@
   flex: 1;
   color: #e5e7eb;
 }
-.pomo-title svg { color: var(--pomo-accent); }
+.pomo-title svg { color: var(--pomo-accent); width: 15px; height: 15px; }
 
 .pomo-coins {
   display: inline-flex;
@@ -71,6 +71,10 @@
   padding: 0.18rem 0.5rem;
   border-radius: 999px;
 }
+.pomo-coins svg { width: 14px; height: 14px; }
+.pomo-primary svg,
+.pomo-pill-toggle svg,
+.pomo-pill-coins svg { width: 1em; height: 1em; }
 
 .pomo-icon-btn {
   display: inline-flex;
@@ -90,7 +94,7 @@
   background: var(--pomo-accent-soft);
   color: var(--pomo-accent);
 }
-.pomo-icon-btn svg { display: block; }
+.pomo-icon-btn svg { display: block; width: 16px; height: 16px; }
 
 /* ===== Mode segmented control ===== */
 .pomo-modes {
