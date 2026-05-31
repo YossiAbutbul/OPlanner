@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useState, useEffect } from "react";
 import ProgressChart from "./ProgressChart";
 import HomeworkTable from "./HomeworkTable";
 import SemesterOverview from "./SemesterOverview";
+import { Plus } from "lucide-react";
 
 // Lazy so the HomeworkModal + NotesEditor chunk only loads on first open.
 // Static imports here would cancel the lazy() in RightSidebar/SemesterOverview.
@@ -278,7 +279,8 @@ const MainContent: React.FC<MainContentProps> = ({
                 className="course-add-task"
                 onClick={() => setHomeworkModalOpen(true)}
               >
-                New task
+                <Plus size={16} />
+                <span>New task</span>
               </button>
             </header>
             <div className="course-row">
