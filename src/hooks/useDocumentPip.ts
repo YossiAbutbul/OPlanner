@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 // Wraps the Document Picture-in-Picture API (Chromium 116+). Opens a real
 // always-on-top OS window, copies the page's styles into it, and exposes the
@@ -34,7 +34,8 @@ interface UsePipResult {
 
 export function useDocumentPip(): UsePipResult {
   const [pipWindow, setPipWindow] = useState<Window | null>(null);
-  const supportedRef = useRef(pipSupported());
+  // Support is static for the session; compute once.
+  const [supported] = useState(pipSupported);
 
   const close = useCallback(() => {
     // Closing the window fires "pagehide" which clears state below.
@@ -43,7 +44,7 @@ export function useDocumentPip(): UsePipResult {
 
   const open = useCallback(
     async (opts?: { width?: number; height?: number }) => {
-      if (!supportedRef.current || pipWindow) return;
+      if (!supported || pipWindow) return;
       const api = window.documentPictureInPicture!;
       const w = await api.requestWindow({
         width: opts?.width ?? 280,
@@ -57,7 +58,7 @@ export function useDocumentPip(): UsePipResult {
       setPipWindow(w);
       w.addEventListener("pagehide", () => setPipWindow(null), { once: true });
     },
-    [pipWindow]
+    [pipWindow, supported]
   );
 
   // Close the PiP window if the component unmounts.
@@ -67,5 +68,5 @@ export function useDocumentPip(): UsePipResult {
     };
   }, [pipWindow]);
 
-  return { supported: supportedRef.current, pipWindow, open, close };
+  return { supported, pipWindow, open, close };
 }
