@@ -17,6 +17,29 @@
   overflow: hidden;
 }
 
+/* ===== Picture-in-Picture: fill the PiP window edge-to-edge ===== */
+html.pip-root,
+html.pip-root body {
+  margin: 0;
+  height: 100%;
+  background: #171a20;
+  overflow: hidden;
+}
+.pomo-pip {
+  position: static;
+  width: 100%;
+  height: 100vh;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+}
+.pomo-pip .pomo-header { cursor: default; }
+/* Center the ring in whatever vertical space the PiP window has. */
+.pomo-pip .pomo-ring-wrap { margin-top: auto; }
+.pomo-pip .pomo-controls { margin-top: auto; }
+
 .pomo-mode-focus { --pomo-accent: #2bd96b; --pomo-accent-soft: rgba(43, 217, 107, 0.15); }
 .pomo-mode-short { --pomo-accent: #38bdf8; --pomo-accent-soft: rgba(56, 189, 248, 0.15); }
 .pomo-mode-long  { --pomo-accent: #a78bfa; --pomo-accent-soft: rgba(167, 139, 250, 0.16); }

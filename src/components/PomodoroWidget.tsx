@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Play, Pause, Coins, Timer, Check } from "lucide-react";
 import { useCoins } from "../context/CoinsContext";
+import { useDocumentPip } from "../hooks/useDocumentPip";
 import { lsCache } from "../hooks/useLocalStorageCache";
 import "../css/Pomodoro.css";
 
@@ -38,8 +40,7 @@ const fmt = (s: number) => {
 };
 
 // Some icons in our lucide build render empty inside the header buttons, so
-// the gear + minimize controls use hand-rolled inline SVGs instead. These
-// always render regardless of the lucide bundle.
+// these controls use hand-rolled inline SVGs that always render.
 const MinimizeIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
     <path d="M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
@@ -72,16 +73,22 @@ const GearIcon = () => (
   </svg>
 );
 
+// Pop-out (picture-in-picture) glyph.
+const PopOutIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <rect x="3" y="4" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2" />
+    <rect x="12" y="10" width="7" height="5" rx="1" fill="currentColor" />
+  </svg>
+);
+
 const PomodoroWidget: React.FC = () => {
   const { coins, addCoins } = useCoins();
+  const pip = useDocumentPip();
 
   const [durations, setDurations] = useState<Durations>(
     () => lsCache.read<Durations>(DURATIONS_KEY) ?? DEFAULT_DURATIONS
   );
-  const secondsFor = useCallback(
-    (m: Mode) => durations[m] * 60,
-    [durations]
-  );
+  const secondsFor = useCallback((m: Mode) => durations[m] * 60, [durations]);
 
   const [mode, setMode] = useState<Mode>("focus");
   const [secondsLeft, setSecondsLeft] = useState(() => durations.focus * 60);
@@ -95,7 +102,7 @@ const PomodoroWidget: React.FC = () => {
   // Whole running seconds since mount; award 1 coin per completed minute.
   const elapsedRef = useRef(0);
 
-  // ----- Drag -----
+  // ----- Drag (in-page only) -----
   const [pos, setPos] = useState<{ x: number; y: number }>(
     () =>
       lsCache.read<{ x: number; y: number }>(POS_KEY) ?? {
@@ -170,7 +177,6 @@ const PomodoroWidget: React.FC = () => {
     });
   };
 
-  // Apply edited durations: persist, reset the current (non-running) timer.
   const saveDurations = (next: Durations) => {
     const cleaned: Durations = {
       focus: clampMin(next.focus),
@@ -186,39 +192,16 @@ const PomodoroWidget: React.FC = () => {
   const total = secondsFor(mode);
   const progress = total > 0 ? 1 - secondsLeft / total : 0;
 
-  if (collapsed) {
-    return (
-      <div
-        className="pomo pomo-collapsed"
-        style={{ left: pos.x, top: pos.y }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-      >
-        <button
-          className="pomo-pill-toggle"
-          onClick={toggleCollapsed}
-          title="Open Pomodoro"
-          aria-label="Open Pomodoro timer"
-        >
-          <Timer size={16} />
-          <span className="pomo-pill-time">{fmt(secondsLeft)}</span>
-        </button>
-        <span className="pomo-pill-coins" title="Coins">
-          <Coins size={14} />
-          {coins}
-        </span>
-      </div>
-    );
-  }
+  const inPip = !!pip.pipWindow;
 
-  return (
-    <div className={`pomo pomo-mode-${mode}`} style={{ left: pos.x, top: pos.y }}>
+  // The card body, shared by the in-page widget and the PiP window.
+  const card = (
+    <div className={`pomo pomo-mode-${mode} ${inPip ? "pomo-pip" : ""}`} style={inPip ? undefined : { left: pos.x, top: pos.y }}>
       <div
         className="pomo-header"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
+        onPointerDown={inPip ? undefined : onPointerDown}
+        onPointerMove={inPip ? undefined : onPointerMove}
+        onPointerUp={inPip ? undefined : onPointerUp}
       >
         <span className="pomo-title">
           <Timer size={15} />
@@ -237,14 +220,27 @@ const PomodoroWidget: React.FC = () => {
         >
           <GearIcon />
         </button>
-        <button
-          className="pomo-icon-btn"
-          onClick={toggleCollapsed}
-          title="Minimize"
-          aria-label="Minimize Pomodoro"
-        >
-          <MinimizeIcon />
-        </button>
+        {pip.supported && (
+          <button
+            className="pomo-icon-btn"
+            onClick={() => (inPip ? pip.close() : pip.open())}
+            title={inPip ? "Return to page" : "Pop out (always on top)"}
+            aria-label={inPip ? "Return to page" : "Pop out timer"}
+            aria-pressed={inPip}
+          >
+            <PopOutIcon />
+          </button>
+        )}
+        {!inPip && (
+          <button
+            className="pomo-icon-btn"
+            onClick={toggleCollapsed}
+            title="Minimize"
+            aria-label="Minimize Pomodoro"
+          >
+            <MinimizeIcon />
+          </button>
+        )}
       </div>
 
       {editing ? (
@@ -298,6 +294,58 @@ const PomodoroWidget: React.FC = () => {
       )}
     </div>
   );
+
+  // Popped out: render the card into the PiP window; show a small recall
+  // placeholder in the page so the user can bring it back.
+  if (inPip) {
+    return (
+      <>
+        {createPortal(card, pip.pipWindow!.document.body)}
+        <div className="pomo pomo-collapsed" style={{ left: pos.x, top: pos.y }}>
+          <button
+            className="pomo-pill-toggle"
+            onClick={() => pip.close()}
+            title="Timer is popped out — click to return"
+          >
+            <Timer size={16} />
+            <span className="pomo-pill-time">{fmt(secondsLeft)}</span>
+          </button>
+          <span className="pomo-pill-coins" title="Coins">
+            <Coins size={14} />
+            {coins}
+          </span>
+        </div>
+      </>
+    );
+  }
+
+  if (collapsed) {
+    return (
+      <div
+        className="pomo pomo-collapsed"
+        style={{ left: pos.x, top: pos.y }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+      >
+        <button
+          className="pomo-pill-toggle"
+          onClick={toggleCollapsed}
+          title="Open Pomodoro"
+          aria-label="Open Pomodoro timer"
+        >
+          <Timer size={16} />
+          <span className="pomo-pill-time">{fmt(secondsLeft)}</span>
+        </button>
+        <span className="pomo-pill-coins" title="Coins">
+          <Coins size={14} />
+          {coins}
+        </span>
+      </div>
+    );
+  }
+
+  return card;
 };
 
 // ----- Inline duration editor -----
