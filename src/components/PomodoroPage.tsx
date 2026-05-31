@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { Play, Pause, Coins, Check } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Play, Pause, Coins, Settings } from "lucide-react";
 import { useCoins } from "../context/CoinsContext";
+import Modal from "./Modal";
 import {
   usePomodoro,
   POMODORO_MODE_LABEL,
@@ -54,9 +55,19 @@ const PomodoroPage: React.FC = () => {
           <h1>Focus</h1>
           <span className="pomopage-sub">Pomodoro timer</span>
         </div>
-        <div className="pomopage-coins" title="Coins earned">
-          <Coins size={18} />
-          {coins}
+        <div className="pomopage-header-actions">
+          <div className="pomopage-coins" title="Coins earned">
+            <Coins size={18} />
+            {coins}
+          </div>
+          <button
+            className="pomopage-settings-btn"
+            onClick={() => setEditing(true)}
+            title="Customize durations"
+            aria-label="Customize durations"
+          >
+            <Settings size={18} />
+          </button>
         </div>
       </header>
 
@@ -108,43 +119,59 @@ const PomodoroPage: React.FC = () => {
           </button>
         </div>
 
-        <button
-          className="pomopage-customize-toggle"
-          onClick={() => setEditing((e) => !e)}
-          aria-expanded={editing}
-        >
-          {editing ? "Hide settings" : "Customize durations"}
-        </button>
-
-        {editing && (
-          <DurationEditor
-            durations={durations}
-            onSave={(d) => {
-              setDurations(d);
-              setEditing(false);
-            }}
-          />
-        )}
       </div>
+
+      <DurationEditorModal
+        isOpen={editing}
+        durations={durations}
+        onClose={() => setEditing(false)}
+        onSave={(d) => {
+          setDurations(d);
+          setEditing(false);
+        }}
+      />
     </div>
   );
 };
 
-const DurationEditor: React.FC<{
+const DURATION_ROWS: { key: PomodoroMode; label: string }[] = [
+  { key: "focus", label: "Focus" },
+  { key: "short", label: "Short break" },
+  { key: "long", label: "Long break" },
+];
+
+const DurationEditorModal: React.FC<{
+  isOpen: boolean;
   durations: PomodoroDurations;
+  onClose: () => void;
   onSave: (d: PomodoroDurations) => void;
-}> = ({ durations, onSave }) => {
+}> = ({ isOpen, durations, onClose, onSave }) => {
   const [draft, setDraft] = useState<PomodoroDurations>(durations);
-  const rows: { key: PomodoroMode; label: string }[] = [
-    { key: "focus", label: "Focus" },
-    { key: "short", label: "Short break" },
-    { key: "long", label: "Long break" },
-  ];
+
+  // Reset the draft to the live values each time the modal opens so a
+  // cancelled edit never leaks into the next session.
+  useEffect(() => {
+    if (isOpen) setDraft(durations);
+  }, [isOpen, durations]);
+
   return (
-    <div className="pomopage-editor">
-      <div className="pomopage-editor-title">Durations (minutes)</div>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Customize durations"
+      footer={
+        <>
+          <button type="button" className="app-modal-btn-cancel" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="button" className="app-modal-btn-primary" onClick={() => onSave(draft)}>
+            Save
+          </button>
+        </>
+      }
+    >
       <div className="pomopage-editor-rows">
-        {rows.map((r) => (
+        {DURATION_ROWS.map((r) => (
           <label key={r.key} className="pomopage-editor-row">
             <span>{r.label}</span>
             <input
@@ -156,14 +183,11 @@ const DurationEditor: React.FC<{
                 setDraft((d) => ({ ...d, [r.key]: Number(e.target.value) }))
               }
             />
+            <span className="pomopage-editor-unit">min</span>
           </label>
         ))}
       </div>
-      <button className="pomopage-primary pomopage-editor-save" onClick={() => onSave(draft)}>
-        <Check size={16} />
-        <span>Save</span>
-      </button>
-    </div>
+    </Modal>
   );
 };
 

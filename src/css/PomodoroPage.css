@@ -40,6 +40,12 @@
   font-size: 1rem;
   font-weight: 500;
 }
+.pomopage-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 .pomopage-coins {
   display: inline-flex;
   align-items: center;
@@ -52,6 +58,21 @@
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
 }
+
+.pomopage-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #d6d6da;
+  background: #fff;
+  color: #555;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+.pomopage-settings-btn:hover { background: #f4f4f6; border-color: #b8bbc0; color: #1a1a1a; }
 
 /* Center the timer in the available space. */
 .pomopage-body {
@@ -189,47 +210,25 @@
 .pomopage-ghost:active { transform: scale(0.98); }
 
 /* ===== Customize ===== */
-.pomopage-customize-toggle {
-  background: none;
-  border: none;
-  color: var(--pp-accent);
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 0.4rem;
-}
-.pomopage-customize-toggle:hover { text-decoration: underline; }
-
-.pomopage-editor {
-  width: min(360px, 90vw);
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 14px;
-  padding: 1rem 1.1rem 1.1rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
-}
-.pomopage-editor-title {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #999;
-  margin-bottom: 0.6rem;
-}
 .pomopage-editor-rows {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.5rem;
 }
 .pomopage-editor-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.35rem 0;
+  gap: 0.6rem;
+  padding: 0.2rem 0;
   font-size: 0.95rem;
   font-weight: 600;
   color: #333;
+}
+.pomopage-editor-row > span:first-child { flex: 1; }
+.pomopage-editor-unit {
+  color: #999;
+  font-weight: 500;
+  font-size: 0.85rem;
 }
 .pomopage-editor-row input {
   width: 80px;
@@ -254,13 +253,6 @@
   outline: none;
   border-color: var(--pp-accent);
   box-shadow: 0 0 0 2px var(--pp-accent-soft);
-}
-.pomopage-editor-save {
-  width: 100%;
-  margin-top: 0.9rem;
-  min-width: 0;
-  font-size: 0.95rem;
-  padding: 0.65rem;
 }
 
 /* Content area is always light (matches Overview); no dark-mode flip. */
