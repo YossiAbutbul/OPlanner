@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Play, Pause, RotateCcw, Coins, Timer, Settings, Check } from "lucide-react";
+import { Play, Pause, Coins, Timer, Check } from "lucide-react";
 import { useCoins } from "../context/CoinsContext";
 import { lsCache } from "../hooks/useLocalStorageCache";
 import "../css/Pomodoro.css";
@@ -37,15 +37,37 @@ const fmt = (s: number) => {
   return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
 };
 
-// Minus icon is <line>-based and doesn't render on our lucide build, so the
-// minimize control uses an inline path-based glyph instead.
+// Some icons in our lucide build render empty inside the header buttons, so
+// the gear + minimize controls use hand-rolled inline SVGs instead. These
+// always render regardless of the lucide bundle.
 const MinimizeIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <path d="M5 12h14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+  </svg>
+);
+
+const ResetIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
     <path
-      d="M5 12h14"
+      d="M3 12a9 9 0 1 0 3-6.7L3 8"
       stroke="currentColor"
-      strokeWidth="2.5"
+      strokeWidth="2"
       strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="M3 3v5h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const GearIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+    <path
+      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </svg>
 );
@@ -213,7 +235,7 @@ const PomodoroWidget: React.FC = () => {
           aria-label="Customize durations"
           aria-pressed={editing}
         >
-          <Settings size={15} />
+          <GearIcon />
         </button>
         <button
           className="pomo-icon-btn"
@@ -269,7 +291,7 @@ const PomodoroWidget: React.FC = () => {
               <span>{running ? "Pause" : "Start"}</span>
             </button>
             <button className="pomo-ghost" onClick={reset} title="Reset" aria-label="Reset">
-              <RotateCcw size={18} />
+              <ResetIcon />
             </button>
           </div>
         </>
