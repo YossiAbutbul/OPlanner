@@ -9,9 +9,7 @@
   flex: 1;
   min-height: 0;
 }
-.pomopage-mode-focus { --pp-accent: #1db954; --pp-accent-soft: rgba(29, 185, 84, 0.14); }
-.pomopage-mode-short { --pp-accent: #3498db; --pp-accent-soft: rgba(52, 152, 219, 0.14); }
-.pomopage-mode-long  { --pp-accent: #7c4dff; --pp-accent-soft: rgba(124, 77, 255, 0.15); }
+/* Single app-green accent across all modes for consistency. */
 
 .pomopage-header {
   display: flex;
