@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useCallback, useMemo, useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, PanelRight } from "lucide-react";
 import "./css/App.css";
 import Sidebar from "./components/Sidebar";
 import MainContent from "./components/MainContent";
@@ -28,6 +28,7 @@ const App: React.FC = () => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   // Pomodoro is a standalone page that overlays the planner main area.
   const [pomodoroOpen, setPomodoroOpen] = useState(false);
+  const [mobileRightOpen, setMobileRightOpen] = useState(false);
   // Surface online/offline transitions via toasts.
   useOfflineToast();
 
@@ -51,7 +52,10 @@ const App: React.FC = () => {
 
   // Close mobile nav whenever the tour starts.
   useEffect(() => {
-    if (tour.tourRun) setMobileNavOpen(false);
+    if (tour.tourRun) {
+      setMobileNavOpen(false);
+      setMobileRightOpen(false);
+    }
   }, [tour.tourRun]);
 
   const handleDeleteYear = useCallback(
@@ -114,11 +118,21 @@ const App: React.FC = () => {
         </button>
         <img src="./Logo.svg" alt="" className="mobile-topbar-logo" />
         <span className="mobile-topbar-name">OPlanner</span>
+        <button
+          className="mobile-right-toggle"
+          onClick={() => setMobileRightOpen(true)}
+          aria-label="Open upcoming and day panel"
+        >
+          <PanelRight size={22} />
+        </button>
       </div>
-      {mobileNavOpen && (
+      {(mobileNavOpen || mobileRightOpen) && (
         <div
           className="mobile-nav-backdrop"
-          onClick={() => setMobileNavOpen(false)}
+          onClick={() => {
+            setMobileNavOpen(false);
+            setMobileRightOpen(false);
+          }}
         />
       )}
       <Sidebar
@@ -168,6 +182,8 @@ const App: React.FC = () => {
         selectedYear={sel.selectedYear}
         selectedSemester={sel.selectedSemester}
         selectedCourse={sel.selectedCourse}
+        mobileOpen={mobileRightOpen}
+        onCloseMobile={() => setMobileRightOpen(false)}
       />
 
       {/* Tour chunk loads on demand; null fallback — invisible while loading. */}
