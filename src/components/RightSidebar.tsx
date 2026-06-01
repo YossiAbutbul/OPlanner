@@ -20,7 +20,6 @@ interface RightSidebarProps {
   selectedSemester: string | null;
   selectedCourse: string | null;
   mobileOpen?: boolean;
-  onCloseMobile?: () => void;
 }
 
 const RightSidebar: React.FC<RightSidebarProps> = ({
@@ -29,7 +28,6 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   selectedSemester,
   selectedCourse,
   mobileOpen = false,
-  onCloseMobile,
 }) => {
   const { getCourseTasks, addHomework, removeHomework, homework } = useHomework();
   const { blocks, saveBlock, removeBlock } = useTimeBlocks();

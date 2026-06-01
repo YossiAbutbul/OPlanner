@@ -183,7 +183,6 @@ const App: React.FC = () => {
         selectedSemester={sel.selectedSemester}
         selectedCourse={sel.selectedCourse}
         mobileOpen={mobileRightOpen}
-        onCloseMobile={() => setMobileRightOpen(false)}
       />
 
       {/* Tour chunk loads on demand; null fallback — invisible while loading. */}
