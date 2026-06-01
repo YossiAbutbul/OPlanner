@@ -170,20 +170,30 @@ const DurationEditorModal: React.FC<{
         </>
       }
     >
-      <div className="pomopage-editor-rows">
+      <div
+        className="pomopage-editor-rows"
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            onSave(draft);
+          }
+        }}
+      >
         {DURATION_ROWS.map((r) => (
           <label key={r.key} className="pomopage-editor-row">
-            <span>{r.label}</span>
-            <input
-              type="number"
-              min={1}
-              max={180}
-              value={draft[r.key]}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, [r.key]: Number(e.target.value) }))
-              }
-            />
-            <span className="pomopage-editor-unit">min</span>
+            <span className="pomopage-editor-label">{r.label}</span>
+            <span className="pomopage-editor-field">
+              <input
+                type="number"
+                min={1}
+                max={180}
+                value={draft[r.key]}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, [r.key]: Number(e.target.value) }))
+                }
+              />
+              <span className="pomopage-editor-unit">min</span>
+            </span>
           </label>
         ))}
       </div>

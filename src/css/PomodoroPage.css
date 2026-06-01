@@ -65,14 +65,21 @@
   justify-content: center;
   width: 38px;
   height: 38px;
-  border: 1px solid #d6d6da;
-  background: #fff;
+  padding: 0;
+  border: none;
+  background: transparent;
   color: #555;
   border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
-.pomopage-settings-btn:hover { background: #f4f4f6; border-color: #b8bbc0; color: #1a1a1a; }
+.pomopage-settings-btn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  stroke: currentColor;
+}
+.pomopage-settings-btn:hover { background: #f4f4f6; color: #1a1a1a; }
 
 /* Center the timer in the available space. */
 .pomopage-body {
@@ -211,48 +218,63 @@
 
 /* ===== Customize ===== */
 .pomopage-editor-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  row-gap: 1rem;
+  padding: 0.25rem 0;
 }
-.pomopage-editor-row {
-  display: flex;
+.pomopage-editor-rows label.pomopage-editor-row {
+  display: grid;
+  grid-template-columns: 110px max-content;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.2rem 0;
+  column-gap: 2rem;
+  margin: 0;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #333;
+  color: #1a1a1a;
+  letter-spacing: normal;
 }
-.pomopage-editor-row > span:first-child { flex: 1; }
-.pomopage-editor-unit {
-  color: #999;
-  font-weight: 500;
-  font-size: 0.85rem;
-}
-.pomopage-editor-row input {
-  width: 80px;
-  padding: 0.45rem 0.6rem;
-  background: #f7f7f9;
+.pomopage-editor-label { color: #444; }
+.pomopage-editor-field {
+  display: inline-flex;
+  align-items: stretch;
+  height: 42px;
+  width: fit-content;
+  background: #fff;
   border: 1px solid #d6d6da;
-  border-radius: 9px;
+  border-radius: 10px;
+  overflow: hidden;
+  justify-self: start;
+}
+.pomopage-editor-field input {
+  width: 72px;
+  padding: 0 0.75rem;
+  background: transparent;
+  border: none;
   color: #1a1a1a;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 700;
   text-align: center;
   -moz-appearance: textfield;
   appearance: textfield;
 }
-.pomopage-editor-row input::-webkit-outer-spin-button,
-.pomopage-editor-row input::-webkit-inner-spin-button {
+.pomopage-editor-field input:focus { outline: none; }
+.pomopage-editor-field input::-webkit-outer-spin-button,
+.pomopage-editor-field input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-.pomopage-editor-row input:focus {
-  outline: none;
-  border-color: var(--pp-accent);
-  box-shadow: 0 0 0 2px var(--pp-accent-soft);
+.pomopage-editor-unit {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.9rem;
+  background: #f7f7f9;
+  border-left: 1px solid #e3e3e6;
+  color: #888;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
 }
 
 /* Content area is always light (matches Overview); no dark-mode flip. */
