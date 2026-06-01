@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, Plus, LogOut, HelpCircle, Download } from "lucide-react";
+import { Settings, Plus, LogOut, HelpCircle, Download, Timer } from "lucide-react";
 import { useInstallPrompt } from "../hooks/useInstallPrompt";
 import InstallHelpModal from "./InstallHelpModal";
 import { deleteCourse, renameCourse } from "../utility/initializeDatabase";
@@ -32,6 +32,8 @@ interface SidebarProps {
   ) => Promise<void>;
   mobileOpen: boolean;
   onCloseMobile: () => void;
+  pomodoroActive: boolean;
+  onOpenPomodoro: () => void;
 }
 
 const capitalizeWords = (str: string) =>
@@ -51,6 +53,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onUpdateCourseColor,
   mobileOpen,
   onCloseMobile,
+  pomodoroActive,
+  onOpenPomodoro,
 }) => {
   const { user, logout } = useAuth();
   const toast = useToast();
@@ -275,6 +279,18 @@ const Sidebar: React.FC<SidebarProps> = ({
           })}
         </ul>
       </div>
+
+      <nav className="sidebar-nav">
+        <button
+          className={`sidebar-nav-item pomodoro-nav ${pomodoroActive ? "active" : ""}`}
+          onClick={() => { onOpenPomodoro(); onCloseMobile(); }}
+          title="Focus timer"
+        >
+          <span className="sidebar-nav-icon"><Timer size={18} /></span>
+          <span className="sidebar-nav-label">Focus</span>
+          <span className="sidebar-nav-spark" aria-hidden />
+        </button>
+      </nav>
 
       <div className="sidebar-footer" ref={settingsRef}>
         <button
