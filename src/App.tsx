@@ -58,6 +58,17 @@ const App: React.FC = () => {
     }
   }, [tour.tourRun]);
 
+  // Calendar day clicks should also pop the right sidebar open on mobile.
+  useEffect(() => {
+    const onPick = () => {
+      if (window.matchMedia("(max-width: 1024px)").matches) {
+        setMobileRightOpen(true);
+      }
+    };
+    window.addEventListener("oplanner:select-day", onPick);
+    return () => window.removeEventListener("oplanner:select-day", onPick);
+  }, []);
+
   const handleDeleteYear = useCallback(
     async (year: number) => {
       const ok = await tree.handleDeleteYear(year);
