@@ -70,7 +70,10 @@ const ReminderAnnounceModal: React.FC = () => {
           </li>
         </ul>
 
-        <p className="rsx-note">Change anytime in Settings → Reminders.</p>
+        <p className="rsx-note">
+          Your browser will ask you to allow notifications once. Change anytime in
+          Settings → Reminders.
+        </p>
       </div>
     </Modal>
   );
