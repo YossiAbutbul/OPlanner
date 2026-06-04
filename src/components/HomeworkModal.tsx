@@ -196,6 +196,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
             <button
               type="button"
               className="app-modal-btn-danger"
+              style={{ marginRight: "auto" }}
               onClick={() => setConfirmDelete(true)}
               disabled={isLoading}
             >
