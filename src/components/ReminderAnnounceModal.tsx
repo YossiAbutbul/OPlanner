@@ -38,14 +38,9 @@ const ReminderAnnounceModal: React.FC = () => {
       onClose={dismiss}
       title="New: Desktop reminders"
       footer={
-        <>
-          <button type="button" className="app-modal-btn-cancel" onClick={dismiss}>
-            Maybe later
-          </button>
-          <button type="button" className="app-modal-btn-primary" onClick={() => void enable()}>
-            Enable reminders
-          </button>
-        </>
+        <button type="button" className="app-modal-btn-primary" onClick={() => void enable()}>
+          OK
+        </button>
       }
     >
       <div className="rsx rsx-announce">
