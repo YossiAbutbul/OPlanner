@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Modal from "./Modal";
+import DeleteModal from "./DeleteModal";
 import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
 import NotesEditor from "./NotesEditor";
@@ -80,6 +81,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   const [allDay, setAllDay] = useState(false);
   const [notes, setNotes] = useState("");
   const [color, setColor] = useState<string>("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (editHomework) {
@@ -183,6 +185,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
     !!name.trim() && !!dueDate && !!(selectedCourseData || editHomework) && !isLoading;
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
@@ -192,11 +195,8 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
           {editHomework && onDelete && (
             <button
               type="button"
-              className="app-modal-btn-cancel"
-              onClick={async () => {
-                await onDelete();
-                onClose();
-              }}
+              className="app-modal-btn-danger"
+              onClick={() => setConfirmDelete(true)}
               disabled={isLoading}
             >
               Delete
@@ -373,6 +373,20 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       <label>Notes</label>
       <NotesEditor value={notes} onChange={setNotes} placeholder="Optional" />
     </Modal>
+    {editHomework && onDelete && (
+      <DeleteModal
+        isOpen={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        onConfirm={async () => {
+          await onDelete();
+          setConfirmDelete(false);
+          onClose();
+        }}
+        title="Delete task"
+        message={`Delete “${name || "this task"}”? This can't be undone.`}
+      />
+    )}
+    </>
   );
 };
 
