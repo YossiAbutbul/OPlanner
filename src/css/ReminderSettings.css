@@ -1,0 +1,162 @@
+.rsx {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Status banner — reflects OS permission / device support. */
+.rsx-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-md, 10px);
+  font-size: 0.85rem;
+}
+
+.rsx-status-ok {
+  background: rgba(29, 185, 84, 0.12);
+  color: #167a3a;
+}
+
+.rsx-status-warn {
+  background: rgba(240, 173, 78, 0.15);
+  color: #8a5a00;
+}
+
+.rsx-status-off {
+  background: #f0f0f1;
+  color: #777;
+}
+
+.rsx-allow {
+  flex-shrink: 0;
+  padding: 0.4rem 0.7rem;
+  border: none;
+  border-radius: 6px;
+  background: #1db954;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.rsx-allow:hover {
+  background: #1ed760;
+}
+
+.rsx-note {
+  margin: 1rem 0 0;
+  font-size: 0.8rem;
+  color: #888;
+  line-height: 1.45;
+}
+
+/* ===== Announcement modal ===== */
+.rsx-announce {
+  align-items: stretch;
+  text-align: left;
+}
+
+/* Header: bell badge inline with the title + subtitle. */
+.rsx-announce-head {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.rsx-announce-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1db954, #11883c);
+  color: #fff;
+}
+
+/* Ringing bell: swings from the top, then rests before repeating. */
+.rsx-announce-icon svg {
+  transform-origin: top center;
+  animation: rsxBellRing 2.4s ease-in-out infinite;
+}
+
+@keyframes rsxBellRing {
+  0% { transform: rotate(0); }
+  5% { transform: rotate(15deg); }
+  10% { transform: rotate(-13deg); }
+  15% { transform: rotate(10deg); }
+  20% { transform: rotate(-7deg); }
+  25% { transform: rotate(4deg); }
+  30% { transform: rotate(0); }
+  100% { transform: rotate(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsx-announce-icon svg {
+    animation: none;
+  }
+}
+
+.rsx-announce-headtext {
+  min-width: 0;
+}
+
+.rsx-announce-lead {
+  margin: 0 0 0.2rem;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.rsx-announce-sub {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #666;
+}
+
+/* Feature rows with icon chips — left-aligned. */
+.rsx-feat {
+  list-style: none;
+  margin: 1.2rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  width: 100%;
+}
+
+.rsx-feat li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.rsx-feat-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(29, 185, 84, 0.12);
+  color: #1db954;
+}
+
+/* Footnote: separated from the feature rows by a full-width divider so it
+   doesn't read as a third item. */
+.rsx-announce .rsx-note {
+  width: 100%;
+  margin-top: 1.2rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #ececef;
+  text-align: left;
+}

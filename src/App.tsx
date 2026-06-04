@@ -6,6 +6,7 @@ import MainContent from "./components/MainContent";
 import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
 import PomodoroPage from "./components/PomodoroPage";
+import ReminderAnnounceModal from "./components/ReminderAnnounceModal";
 
 // Tour pulls in react-joyride (~100KB). One-shot per user, mostly never seen
 // on repeat visits. Lazy-load so it doesn't bloat the initial JS bundle.
@@ -16,6 +17,7 @@ import { useYearTree } from "./hooks/useYearTree";
 import { useSelection, pickSemesterForYear } from "./hooks/useSelection";
 import { useOnboardingTour } from "./hooks/useOnboardingTour";
 import { useOfflineToast } from "./hooks/useOfflineToast";
+import { useReminders } from "./hooks/useReminders";
 import type { CourseInfo } from "./types/models";
 
 // Re-export so existing consumers (Sidebar, MainContent, SemesterOverview,
@@ -41,6 +43,14 @@ const App: React.FC = () => {
 
   const tree = useYearTree(user, bustHomeworkCache);
   const sel = useSelection(user, tree.years);
+
+  // Desktop reminder engine: scans the selected semester for upcoming exams
+  // and tasks, firing OS notifications while the app is open.
+  useReminders({
+    years: tree.years,
+    selectedYear: sel.selectedYear,
+    selectedSemester: sel.selectedSemester,
+  });
   const tour = useOnboardingTour({
     user,
     years: tree.years,
@@ -189,6 +199,8 @@ const App: React.FC = () => {
       <Suspense fallback={null}>
         <Tour run={tour.tourRun} onFinish={tour.finishTour} onSetMobileNav={setMobileNavOpen} />
       </Suspense>
+
+      <ReminderAnnounceModal />
     </div>
   );
 };

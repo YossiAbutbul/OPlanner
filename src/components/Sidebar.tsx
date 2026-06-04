@@ -3,9 +3,10 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, Plus, LogOut, HelpCircle, Download, Timer } from "lucide-react";
+import { Settings, Plus, LogOut, HelpCircle, Download, Timer, Bell } from "lucide-react";
 import { useInstallPrompt } from "../hooks/useInstallPrompt";
 import InstallHelpModal from "./InstallHelpModal";
+import ReminderSettingsModal from "./ReminderSettingsModal";
 import { deleteCourse, renameCourse } from "../utility/initializeDatabase";
 import { CourseInfo } from "../App";
 import { courseColor } from "../utility/courseColor";
@@ -60,6 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const toast = useToast();
   const { canInstall, installed, promptInstall } = useInstallPrompt();
   const [installHelpOpen, setInstallHelpOpen] = useState(false);
+  const [reminderOpen, setReminderOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches
@@ -336,6 +338,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={() => {
                 setSettingsOpen(false);
+                setReminderOpen(true);
+              }}
+            >
+              <Bell size={16} />
+              <span>Reminders</span>
+            </button>
+            <button
+              onClick={() => {
+                setSettingsOpen(false);
                 onReplayTour();
               }}
             >
@@ -486,6 +497,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       <InstallHelpModal
         isOpen={installHelpOpen}
         onClose={() => setInstallHelpOpen(false)}
+      />
+      <ReminderSettingsModal
+        isOpen={reminderOpen}
+        onClose={() => setReminderOpen(false)}
       />
     </aside>
   );
