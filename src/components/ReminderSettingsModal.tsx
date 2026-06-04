@@ -30,7 +30,7 @@ const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ isOpen, o
         ? { label: "Notifications allowed", tone: "ok" }
         : permission === "denied"
           ? { label: "Blocked — enable notifications in your browser settings", tone: "warn" }
-          : { label: "Permission not granted yet", tone: "warn" };
+          : { label: "Your browser will ask you to allow this once", tone: "warn" };
 
   return (
     <Modal
@@ -67,7 +67,7 @@ const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ isOpen, o
           <span>{status.label}</span>
           {supported && isDesktop && permission === "default" && (
             <button type="button" className="rsx-allow" onClick={() => void requestPermission()}>
-              Allow notifications
+              Allow in browser…
             </button>
           )}
         </div>
