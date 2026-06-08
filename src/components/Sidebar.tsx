@@ -3,7 +3,8 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, Plus, LogOut, HelpCircle, Download, Timer, Bell } from "lucide-react";
+import { Settings, Plus, LogOut, HelpCircle, Download, Timer, Bell, PartyPopper, Check } from "lucide-react";
+import { useConfettiPref } from "../hooks/useConfettiPref";
 
 // Feature flag — the Focus / Pomodoro tab is temporarily hidden from the
 // sidebar. The page, context, hook, and styles are all still wired up so
@@ -66,6 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const toast = useToast();
   const { canInstall, installed, promptInstall } = useInstallPrompt();
   const [installHelpOpen, setInstallHelpOpen] = useState(false);
+  const [confettiOn, setConfettiOn] = useConfettiPref();
   const [reminderOpen, setReminderOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(
@@ -359,6 +361,18 @@ const Sidebar: React.FC<SidebarProps> = ({
             >
               <HelpCircle size={16} />
               <span>Replay tour</span>
+            </button>
+            <button
+              role="menuitemcheckbox"
+              aria-checked={confettiOn}
+              onClick={() => setConfettiOn(!confettiOn)}
+              title={confettiOn ? "Disable confetti on task complete" : "Enable confetti on task complete"}
+            >
+              <PartyPopper size={16} />
+              <span>Confetti</span>
+              <span className="settings-menu-check" aria-hidden>
+                {confettiOn ? <Check size={14} strokeWidth={2.5} /> : null}
+              </span>
             </button>
             {!installed && (
               <button

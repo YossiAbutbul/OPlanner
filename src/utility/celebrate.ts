@@ -1,11 +1,33 @@
 import confetti from "canvas-confetti";
 
+// User preference — confetti can be toggled off from the settings menu.
+// Stored in localStorage; absence (default) means "on" so first-time
+// users still get the burst.
+const PREF_KEY = "oplanner.prefs.confetti";
+
+export const isConfettiEnabled = (): boolean => {
+  try {
+    return localStorage.getItem(PREF_KEY) !== "off";
+  } catch {
+    return true;
+  }
+};
+
+export const setConfettiEnabled = (enabled: boolean): void => {
+  try {
+    localStorage.setItem(PREF_KEY, enabled ? "on" : "off");
+  } catch {
+    /* ignore quota / disabled storage */
+  }
+};
+
 // Small celebration burst — used when a task transitions to COMPLETED.
 // Two side cannons from the bottom corners so the particles flow up and
 // across the viewport, plus a single center burst for a focal point.
-// Skipped entirely when the user prefers reduced motion.
+// Skipped when the user disabled it OR prefers reduced motion.
 export const celebrateTaskDone = (): void => {
   if (typeof window === "undefined") return;
+  if (!isConfettiEnabled()) return;
   if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
 
   // Brand-aligned palette: green accent + complementary purples / blues
