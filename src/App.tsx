@@ -17,6 +17,8 @@ import { useYearTree } from "./hooks/useYearTree";
 import { useSelection, pickSemesterForYear } from "./hooks/useSelection";
 import { useOnboardingTour } from "./hooks/useOnboardingTour";
 import { useOfflineToast } from "./hooks/useOfflineToast";
+import { useEdgeSwipe } from "./hooks/useEdgeSwipe";
+import { usePwaMobile } from "./hooks/usePwaMobile";
 import { useReminders } from "./hooks/useReminders";
 import type { CourseInfo } from "./types/models";
 
@@ -33,6 +35,22 @@ const App: React.FC = () => {
   const [mobileRightOpen, setMobileRightOpen] = useState(false);
   // Surface online/offline transitions via toasts.
   useOfflineToast();
+
+  // Edge-swipe gestures — installed PWA on mobile only. In a regular tab the
+  // edge gesture often collides with the browser's back/forward swipe.
+  const pwaMobile = usePwaMobile();
+  useEdgeSwipe({
+    enabled: pwaMobile,
+    onSwipeFromLeft: () => {
+      // Don't double-open if either drawer is already showing.
+      setMobileRightOpen(false);
+      setMobileNavOpen(true);
+    },
+    onSwipeFromRight: () => {
+      setMobileNavOpen(false);
+      setMobileRightOpen(true);
+    },
+  });
 
   const bustHomeworkCache = useCallback(
     async (year: number, semester: string, course: string) => {
