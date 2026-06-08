@@ -5,6 +5,7 @@ import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
 import NotesEditor from "./NotesEditor";
 import CustomSelect from "./CustomSelect";
+import { celebrateTaskDone } from "../utility/celebrate";
 
 interface HomeworkModalProps {
   isOpen: boolean;
@@ -126,6 +127,15 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
     const { year, semester } = courseData;
     const course = availableCourses !== undefined ? courseChoice : (courseData.course ?? "");
     if (!name.trim() || !dueDate) return;
+
+    // Fire confetti when this save transitions the task into COMPLETED —
+    // either a brand-new task created already-done or an existing task
+    // flipped from PENDING. Repeated saves while already COMPLETED don't
+    // re-fire. Skipped under prefers-reduced-motion inside celebrate().
+    const wasCompleted = editHomework?.status === "COMPLETED";
+    if (status === "COMPLETED" && !wasCompleted) {
+      celebrateTaskDone();
+    }
 
     onSave(
       editHomework?.id || null,
