@@ -765,6 +765,20 @@ button:focus { outline: none; }
   background: var(--bg-hover);
 }
 
+/* Trailing checkmark for toggle items (role="menuitemcheckbox").
+   margin-left: auto pushes it to the right edge, matching native
+   "Settings" rows. The icon slot stays a fixed width so the layout
+   doesn't jiggle when the check appears / disappears. */
+.settings-menu-check {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent, #1db954);
+}
+
 .settings-menu button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
