@@ -4,6 +4,11 @@ import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { Settings, Plus, LogOut, HelpCircle, Download, Timer, Bell } from "lucide-react";
+
+// Feature flag — the Focus / Pomodoro tab is temporarily hidden from the
+// sidebar. The page, context, hook, and styles are all still wired up so
+// flipping this back to `true` restores it instantly without re-plumbing.
+const FOCUS_TAB_ENABLED = false;
 import { useInstallPrompt } from "../hooks/useInstallPrompt";
 import InstallHelpModal from "./InstallHelpModal";
 import ReminderSettingsModal from "./ReminderSettingsModal";
@@ -282,17 +287,19 @@ const Sidebar: React.FC<SidebarProps> = ({
         </ul>
       </div>
 
-      <nav className="sidebar-nav">
-        <button
-          className={`sidebar-nav-item pomodoro-nav ${pomodoroActive ? "active" : ""}`}
-          onClick={() => { onOpenPomodoro(); onCloseMobile(); }}
-          title="Focus timer"
-        >
-          <span className="sidebar-nav-icon"><Timer size={18} /></span>
-          <span className="sidebar-nav-label">Focus</span>
-          <span className="sidebar-nav-spark" aria-hidden />
-        </button>
-      </nav>
+      {FOCUS_TAB_ENABLED && (
+        <nav className="sidebar-nav">
+          <button
+            className={`sidebar-nav-item pomodoro-nav ${pomodoroActive ? "active" : ""}`}
+            onClick={() => { onOpenPomodoro(); onCloseMobile(); }}
+            title="Focus timer"
+          >
+            <span className="sidebar-nav-icon"><Timer size={18} /></span>
+            <span className="sidebar-nav-label">Focus</span>
+            <span className="sidebar-nav-spark" aria-hidden />
+          </button>
+        </nav>
+      )}
 
       <div className="sidebar-footer" ref={settingsRef}>
         <button
