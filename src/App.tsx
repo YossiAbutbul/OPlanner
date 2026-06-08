@@ -38,18 +38,23 @@ const App: React.FC = () => {
 
   // Edge-swipe gestures — installed PWA on mobile only. In a regular tab the
   // edge gesture often collides with the browser's back/forward swipe.
+  // Open: swipe inward from the matching edge.
+  // Close: swipe outward (any start position) when the drawer is open.
   const pwaMobile = usePwaMobile();
   useEdgeSwipe({
     enabled: pwaMobile,
-    onSwipeFromLeft: () => {
-      // Don't double-open if either drawer is already showing.
+    leftOpen: mobileNavOpen,
+    rightOpen: mobileRightOpen,
+    onOpenLeft: () => {
       setMobileRightOpen(false);
       setMobileNavOpen(true);
     },
-    onSwipeFromRight: () => {
+    onOpenRight: () => {
       setMobileNavOpen(false);
       setMobileRightOpen(true);
     },
+    onCloseLeft: () => setMobileNavOpen(false),
+    onCloseRight: () => setMobileRightOpen(false),
   });
 
   const bustHomeworkCache = useCallback(
