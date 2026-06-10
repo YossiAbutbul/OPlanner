@@ -67,6 +67,17 @@
   -ms-overflow-style: none;
 }
 
+/* No focus ring on the editors — outline:none alone can leave a
+   :focus-visible ring in some browsers. */
+.ne-collapsed:focus,
+.ne-collapsed:focus-visible,
+.ne-editor:focus,
+.ne-editor:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: #d6d6da;
+}
+
 .ne-collapsed::-webkit-scrollbar {
   width: 0;
   height: 0;
