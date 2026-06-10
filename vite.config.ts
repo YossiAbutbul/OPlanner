@@ -1,6 +1,21 @@
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+
+// The CSP meta in index.html allows bare ws:/wss: so Vite's HMR websocket
+// works in dev. Production has no HMR, and an open ws:/wss: would let an
+// XSS payload exfiltrate to any host — strip it from the built HTML so
+// connect-src only reaches the explicitly listed Firebase endpoints.
+const tightenCspForProd = (): Plugin => ({
+  name: 'tighten-csp-for-prod',
+  apply: 'build',
+  transformIndexHtml(html) {
+    return html.replace(
+      /(<meta http-equiv="Content-Security-Policy"[^>]*connect-src[^"]*?) ws: wss:/,
+      '$1'
+    );
+  },
+});
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -12,6 +27,7 @@ export default defineConfig(({ mode }) => {
     base,
     plugins: [
       react(),
+      tightenCspForProd(),
       VitePWA({
         // Prompt strategy: a fresh service worker waits, and the app shows
         // an in-app "New version available — reload" toast (see

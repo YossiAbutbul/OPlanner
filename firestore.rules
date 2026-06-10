@@ -6,7 +6,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      // Writes additionally bound document size so a compromised client
+      // can't grief storage costs: at most 50 top-level fields, and the
+      // notes field (rich-text HTML, the only unbounded user input) is
+      // capped at 50k characters.
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.size() <= 50
+        && (
+          !("notes" in request.resource.data)
+          || (request.resource.data.notes is string
+              && request.resource.data.notes.size() <= 50000)
+        );
     }
   }
 }
