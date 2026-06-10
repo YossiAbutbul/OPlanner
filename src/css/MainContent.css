@@ -500,6 +500,12 @@
     min-height: 0;
     overflow-y: visible;
   }
+  /* Panel padding already gives the bottom inset here; the extra cip
+     padding-bottom (for the desktop scroll-end gap) just leaves a stray
+     white band below the table. */
+  .course-tab-panel .cip {
+    padding-bottom: 0;
+  }
 }
 
 /* Keyed on the active tab — remounts and replays on switch, fading the new
