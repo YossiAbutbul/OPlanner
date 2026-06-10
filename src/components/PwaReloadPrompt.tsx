@@ -17,10 +17,18 @@ const PwaReloadPrompt = (): null => {
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+      const check = () => registration.update().catch(() => {});
       // Poll for a new SW hourly so long-lived tabs pick up deploys
       // without waiting for the browser's ~24h default check.
-      if (!registration) return;
-      setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000);
+      setInterval(check, 60 * 60 * 1000);
+      // Installed PWAs resume from memory without a navigation, and the
+      // OS freezes timers in the background — so also check whenever the
+      // app returns to the foreground. This is the main path by which a
+      // phone actually discovers a new deploy.
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") check();
+      });
     },
   });
 
