@@ -4,6 +4,10 @@
   flex: 1;
   min-width: 0;
   height: 100vh;
+  /* Dynamic viewport height — 100vh on mobile includes the area under the
+     URL bar, making the bottom of the scroll area unreachable. */
+  height: 100dvh;
+  min-height: 0;
   background: #f9f9f9;
 }
 
