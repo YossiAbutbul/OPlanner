@@ -1,15 +1,113 @@
 import DOMPurify from "dompurify";
 
 // Allow only the tags/attrs this editor itself produces. Strips <script>,
-// event handlers, javascript: URLs, etc. before anything reaches the DOM.
+// event handlers, javascript:/data: URLs, etc. before anything reaches the
+// DOM. We deliberately do NOT set ALLOWED_URI_REGEXP: in this DOMPurify
+// version that option also drops the `dir` attribute (breaking saved
+// RTL/LTR direction). DOMPurify's default URI policy already blocks the
+// dangerous schemes (javascript:, data:), and the editor only ever emits
+// http(s)/mailto links anyway.
 const SANITIZE_CFG = {
   ALLOWED_TAGS: ["b", "strong", "i", "em", "u", "br", "div", "p", "span", "a", "ul", "ol", "li"],
   ALLOWED_ATTR: ["href", "target", "rel", "dir", "style"],
-  ALLOWED_URI_REGEXP: /^(?:https?|mailto):/i,
 };
 
 export const sanitize = (html: string): string =>
   DOMPurify.sanitize(html || "", SANITIZE_CFG);
+
+// Word-style font sizes (px). FONT_SIZES drives the toolbar dropdown.
+export const FONT_SIZES = [10, 12, 14, 16, 18, 20, 24, 28, 32] as const;
+export const DEFAULT_FONT_SIZE = 16;
+
+// Apply a px font-size to the current selection by wrapping it in
+// <span style="font-size:Npx">. execCommand has no px-based command (and
+// emits stripped <font> tags), so we wrap ranges ourselves.
+//
+// - Collapsed caret (e.g. a blank line): insert an empty styled span and
+//   park the caret inside it, so the NEXT typed text uses the new size.
+// - Selection: wrap each fully-selected text run in its own span instead of
+//   surrounding whole block elements (wrapping a <div> in a <span> left the
+//   block's margins inside an inline box, showing as a stray top gap).
+export const applyFontSize = (root: HTMLElement, px: number): void => {
+  root.focus();
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  const range = sel.getRangeAt(0);
+  const size = `${px}px`;
+
+  if (range.collapsed) {
+    const span = document.createElement("span");
+    span.style.fontSize = size;
+    // Zero-width space gives the caret somewhere to live inside the empty
+    // span so typing inherits the size; it renders as nothing.
+    const zwsp = document.createTextNode("​");
+    span.appendChild(zwsp);
+    range.insertNode(span);
+    const r = document.createRange();
+    r.setStart(zwsp, 1);
+    r.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    return;
+  }
+
+  // Collect the text nodes intersecting the selection, then wrap each
+  // selected slice. Keeps block structure (and its margins) untouched.
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const textNodes: Text[] = [];
+  let node = walker.nextNode();
+  while (node) {
+    if (range.intersectsNode(node) && (node.textContent ?? "").length > 0) {
+      textNodes.push(node as Text);
+    }
+    node = walker.nextNode();
+  }
+  if (textNodes.length === 0) return;
+
+  const wrapped: HTMLElement[] = [];
+  textNodes.forEach((tn) => {
+    const start = tn === range.startContainer ? range.startOffset : 0;
+    const end = tn === range.endContainer ? range.endOffset : (tn.textContent ?? "").length;
+    if (end <= start) return;
+    const slice = document.createRange();
+    slice.setStart(tn, start);
+    slice.setEnd(tn, end);
+    const span = document.createElement("span");
+    span.style.fontSize = size;
+    try {
+      slice.surroundContents(span);
+      wrapped.push(span);
+    } catch {
+      /* skip odd node */
+    }
+  });
+
+  if (wrapped.length === 0) return;
+  const r = document.createRange();
+  r.setStartBefore(wrapped[0]);
+  r.setEndAfter(wrapped[wrapped.length - 1]);
+  sel.removeAllRanges();
+  sel.addRange(r);
+};
+
+// Read the font-size (px) active at the caret, walking up to `root`. Returns
+// DEFAULT_FONT_SIZE when no explicit size is set.
+export const readActiveFontSize = (root: HTMLElement): number => {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return DEFAULT_FONT_SIZE;
+  let n: Node | null = sel.anchorNode;
+  while (n && n !== root) {
+    if (n.nodeType === 1) {
+      const fs = (n as HTMLElement).style?.fontSize;
+      if (fs && fs.endsWith("px")) {
+        const v = parseInt(fs, 10);
+        if (!Number.isNaN(v)) return v;
+      }
+    }
+    n = n.parentNode;
+  }
+  return DEFAULT_FONT_SIZE;
+};
 
 // Auto-link the word ending at the caret if it's a URL. Mutates the DOM in
 // place; nothing returned. Safe to call on every space/Enter.
@@ -310,12 +408,13 @@ export const applyDirToSelection = (root: HTMLElement, dir: "ltr" | "rtl"): void
 };
 
 // Active-formatting probe for toolbar highlight. Returns the bold/underline
-// state from queryCommandState plus the explicit dir attribute on the
-// nearest block ancestor (empty if not set).
+// state from queryCommandState plus the dir of the nearest block ancestor.
+// Direction defaults to "ltr" (the app's base direction) when nothing
+// explicit is set, so the LTR button reads as selected by default.
 export const readActiveFormatting = (
   root: HTMLElement
 ): { bold: boolean; underline: boolean; dir: "" | "ltr" | "rtl" } => {
-  const empty = { bold: false, underline: false, dir: "" as const };
+  const empty = { bold: false, underline: false, dir: "ltr" as const };
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0) return empty;
   const anchor = sel.anchorNode;
@@ -338,7 +437,7 @@ export const readActiveFormatting = (
     }
     n = n.parentNode;
   }
-  let d: "" | "ltr" | "rtl" = "";
+  let d: "" | "ltr" | "rtl" = "ltr";
   const target = blockEl ?? root;
   const ownDir = target.getAttribute("dir");
   if (ownDir === "rtl" || ownDir === "ltr") d = ownDir;

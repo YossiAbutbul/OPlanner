@@ -100,33 +100,51 @@
   background: rgba(224, 150, 0, 0.15);
 }
 
-.homework-table .row-actions {
-  display: inline-flex;
-  gap: 0.35rem;
+/* Actions header left-aligned; the action icons themselves stay flush right. */
+.homework-table thead th:last-child {
+  text-align: left;
 }
 
+.homework-table tbody td:last-child {
+  text-align: left;
+}
+
+.homework-table .row-actions {
+  display: inline-flex;
+  gap: 0.25rem;
+  justify-content: flex-start;
+}
+
+/* Icon-only borderless buttons, matching the links table actions. */
 .homework-table .row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   background: transparent;
   color: #555;
-  border: 1px solid #d4d6da;
-  padding: 0.3rem 0.7rem;
+  border: none;
   border-radius: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: color 0.15s ease;
+}
+
+.homework-table .row-btn svg {
+  flex-shrink: 0;
+  display: block;
 }
 
 .homework-table .row-btn:hover {
-  background: #f4f4f6;
-  border-color: #b8bbc0;
   color: #111;
 }
 
+.homework-table .row-btn.danger {
+  color: #c0392b;
+}
+
 .homework-table .row-btn.danger:hover {
-  background: rgba(210, 48, 48, 0.08);
-  border-color: #d23030;
-  color: #b81e1e;
+  color: #962b1f;
 }
 
 .homework-table i {

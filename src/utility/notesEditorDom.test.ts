@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  DEFAULT_FONT_SIZE,
   applyDirToSelection,
+  applyFontSize,
   autoLinkAtCaret,
   handleListTriggerSpace,
+  readActiveFontSize,
   readActiveFormatting,
   sanitize,
 } from "./notesEditorDom";
@@ -66,6 +69,22 @@ describe("sanitize", () => {
     expect(sanitize("")).toBe("");
     // @ts-expect-error testing null tolerance
     expect(sanitize(null)).toBe("");
+  });
+
+  it("keeps the dir attribute so RTL/LTR persists", () => {
+    const clean = sanitize('<div dir="rtl" style="text-align:right">שלום</div>');
+    expect(clean).toContain('dir="rtl"');
+    expect(clean).toContain("text-align:right");
+  });
+
+  it("keeps inline font-size", () => {
+    const clean = sanitize('<span style="font-size:24px">big</span>');
+    expect(clean).toContain("font-size:24px");
+  });
+
+  it("still strips data: URLs", () => {
+    const clean = sanitize('<a href="data:text/html,<b>">x</a>');
+    expect(clean).not.toContain("data:");
   });
 });
 
@@ -174,11 +193,11 @@ describe("applyDirToSelection", () => {
 });
 
 describe("readActiveFormatting", () => {
-  it("returns empty state when selection not in root", () => {
+  it("returns default state (LTR) when selection not in root", () => {
     const root = setupEditor("hi");
     const result = readActiveFormatting(root);
-    // Without a selection set up, returns the default empty shape.
-    expect(result).toMatchObject({ bold: false, underline: false, dir: "" });
+    // Direction defaults to ltr so the LTR button reads as selected.
+    expect(result).toMatchObject({ bold: false, underline: false, dir: "ltr" });
   });
 
   it("reads dir attribute from block ancestor", () => {
@@ -186,5 +205,38 @@ describe("readActiveFormatting", () => {
     const div = root.querySelector("div")!;
     placeCaretInTextNode(div.firstChild!, 1);
     expect(readActiveFormatting(root).dir).toBe("rtl");
+  });
+});
+
+describe("applyFontSize / readActiveFontSize", () => {
+  const selectAll = (root: HTMLElement) => {
+    const sel = window.getSelection()!;
+    const range = document.createRange();
+    range.selectNodeContents(root);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  };
+
+  it("wraps the selection in a span with the given px size", () => {
+    const root = setupEditor("hello");
+    selectAll(root);
+    applyFontSize(root, 24);
+    const span = root.querySelector("span");
+    expect(span).not.toBeNull();
+    expect(span!.style.fontSize).toBe("24px");
+    expect(span!.textContent).toBe("hello");
+  });
+
+  it("reads the active font size from an ancestor span", () => {
+    const root = setupEditor('<span style="font-size:20px">hi</span>');
+    const span = root.querySelector("span")!;
+    placeCaretInTextNode(span.firstChild!, 1);
+    expect(readActiveFontSize(root)).toBe(20);
+  });
+
+  it("defaults when no explicit size is set", () => {
+    const root = setupEditor("plain");
+    placeCaretInTextNode(root.firstChild!, 2);
+    expect(readActiveFontSize(root)).toBe(DEFAULT_FONT_SIZE);
   });
 });

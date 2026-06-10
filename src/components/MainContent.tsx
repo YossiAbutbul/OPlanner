@@ -9,6 +9,7 @@ import { Plus } from "lucide-react";
 const HomeworkModal = lazy(() => import("./HomeworkModal"));
 import ImportCalendarModal from "./ImportCalendarModal";
 import CourseCalendar from "./CourseCalendar";
+import CourseInfoPanel from "./CourseInfoPanel";
 import DayTasksModal from "./DayTasksModal";
 import DeleteModal from "./DeleteModal";
 import TabSettingsModal from "./TabSettingsModal";
@@ -117,6 +118,13 @@ const MainContent: React.FC<MainContentProps> = ({
   }, [activeTab]);
 
   const tableTasks = filteredHomework;
+
+  // Inner tab inside the course view: Tasks (chart + calendar + table)
+  // vs. Course info (links table + notes). Reset to "tasks" whenever the
+  // user switches courses so they don't land on the info tab unexpectedly.
+  type CourseInnerTab = "overview" | "info";
+  const [courseInnerTab, setCourseInnerTab] = useState<CourseInnerTab>("overview");
+  useEffect(() => { setCourseInnerTab("overview"); }, [activeTab?.course, activeTab?.semester, activeTab?.year]);
 
   const sortedYears = [...years].sort((a, b) => a.year - b.year);
   const currentYear = years.find((y) => y.year === selectedYear) || null;
@@ -283,43 +291,75 @@ const MainContent: React.FC<MainContentProps> = ({
                 <span>New task</span>
               </button>
             </header>
-            <div className="course-row">
-              <div className="course-progress">
-                <ProgressChart
-                  completed={filteredHomework.filter((hw) => hw.status === "COMPLETED").length}
-                  pending={filteredHomework.filter((hw) => hw.status === "PENDING").length}
-                />
-              </div>
-              <div className="course-calendar">
-                <CourseCalendar
-                  hint="Tip: double-click a day to add a task."
-                  tasks={filteredHomework}
-                  colorOf={(t) => {
-                    const c = currentSemester?.courses.find((co) => co.name === t.course);
-                    return courseColor(t.course, c?.color);
-                  }}
-                  selectedDate={calDate}
-                  onSelectDate={(d) => {
-                    setCalDate(d);
-                    if (d) window.dispatchEvent(new CustomEvent("oplanner:select-day", { detail: { date: d } }));
-                  }}
-                  onCreateOnDate={(date) => {
-                    const has = filteredHomework.some((t) => t.dueDate === date);
-                    if (has) {
-                      setDayModalDate(date);
-                    } else {
-                      setPrefillDate(date);
-                      setHomeworkModalOpen(true);
-                    }
-                  }}
-                />
-              </div>
+            <div className="course-inner-tabs" role="tablist" data-active={courseInnerTab}>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={courseInnerTab === "overview"}
+                className={`course-inner-tab ${courseInnerTab === "overview" ? "course-inner-tab-active" : ""}`}
+                onClick={() => setCourseInnerTab("overview")}
+              >
+                Overview
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={courseInnerTab === "info"}
+                className={`course-inner-tab ${courseInnerTab === "info" ? "course-inner-tab-active" : ""}`}
+                onClick={() => setCourseInnerTab("info")}
+              >
+                Course info
+              </button>
             </div>
-            <div className="homework-table-container">
-              <HomeworkTable
-                tasks={tableTasks}
-                onAddTask={() => setHomeworkModalOpen(true)}
+            <div className="course-tab-panel">
+            <div className="course-tab-anim" key={courseInnerTab}>
+            {courseInnerTab === "overview" ? (
+              <div className="course-row">
+                <div className="course-progress">
+                  <ProgressChart
+                    completed={filteredHomework.filter((hw) => hw.status === "COMPLETED").length}
+                    pending={filteredHomework.filter((hw) => hw.status === "PENDING").length}
+                  />
+                </div>
+                <div className="course-calendar">
+                  <CourseCalendar
+                    hint="Tip: double-click a day to add a task."
+                    tasks={filteredHomework}
+                    colorOf={(t) => {
+                      const c = currentSemester?.courses.find((co) => co.name === t.course);
+                      return courseColor(t.course, c?.color);
+                    }}
+                    selectedDate={calDate}
+                    onSelectDate={(d) => {
+                      setCalDate(d);
+                      if (d) window.dispatchEvent(new CustomEvent("oplanner:select-day", { detail: { date: d } }));
+                    }}
+                    onCreateOnDate={(date) => {
+                      const has = filteredHomework.some((t) => t.dueDate === date);
+                      if (has) {
+                        setDayModalDate(date);
+                      } else {
+                        setPrefillDate(date);
+                        setHomeworkModalOpen(true);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <CourseInfoPanel
+                activeTab={activeTab}
+                assignments={
+                  <div className="homework-table-container">
+                    <HomeworkTable
+                      tasks={tableTasks}
+                      onAddTask={() => setHomeworkModalOpen(true)}
+                    />
+                  </div>
+                }
               />
+            )}
+            </div>
             </div>
           </>
         ) : selectedYear !== null && selectedSemester && currentSemester ? (
