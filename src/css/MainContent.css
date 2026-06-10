@@ -492,6 +492,16 @@
   display: none;
 }
 
+/* Mobile: don't pin the panel to the viewport — let it grow with its
+   content and scroll the page instead of scrolling inside the panel. */
+@media (max-width: 1024px) {
+  .course-tab-panel {
+    flex: 0 0 auto;
+    min-height: 0;
+    overflow-y: visible;
+  }
+}
+
 /* Keyed on the active tab — remounts and replays on switch, fading the new
    content in so the lazy editor / data load doesn't pop in piecewise. */
 .course-tab-anim {
