@@ -3,9 +3,12 @@ import { createPortal } from "react-dom";
 import { Maximize2, X } from "lucide-react";
 import NotesToolbar from "./NotesEditor/NotesToolbar";
 import {
+  DEFAULT_FONT_SIZE,
   applyDirToSelection,
+  applyFontSize,
   autoLinkAtCaret,
   handleListTriggerSpace,
+  readActiveFontSize,
   readActiveFormatting,
   sanitize,
 } from "../utility/notesEditorDom";
@@ -15,9 +18,12 @@ interface Props {
   value: string; // sanitized HTML
   onChange: (html: string) => void;
   placeholder?: string;
+  // Show the formatting toolbar above the inline (collapsed) editor too,
+  // not only inside the expanded overlay.
+  inlineToolbar?: boolean;
 }
 
-const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional" }) => {
+const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional", inlineToolbar = false }) => {
   const [expanded, setExpanded] = useState(false);
   const collapsedRef = useRef<HTMLDivElement>(null);
   const expandedRef = useRef<HTMLDivElement>(null);
@@ -26,10 +32,11 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   // normalized output would diverge from the browser's live innerHTML and
   // we'd reset the DOM mid-edit (wiping caret + freshly-set dir attribute).
   const lastEmittedRef = useRef<string | null>(null);
-  const [active, setActive] = useState<{ bold: boolean; underline: boolean; dir: "" | "ltr" | "rtl" }>({
+  const [active, setActive] = useState<{ bold: boolean; underline: boolean; dir: "" | "ltr" | "rtl"; fontSize: number }>({
     bold: false,
     underline: false,
-    dir: "",
+    dir: "ltr",
+    fontSize: DEFAULT_FONT_SIZE,
   });
 
   // Sync external value into collapsed editor only when it diverges AND it's
@@ -76,7 +83,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   const refreshActive = () => {
     const el = editorEl();
     if (!el) return;
-    setActive(readActiveFormatting(el));
+    setActive({ ...readActiveFormatting(el), fontSize: readActiveFontSize(el) });
   };
 
   useEffect(() => {
@@ -110,6 +117,14 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
     refreshActive();
   };
 
+  const applyFont = (px: number) => {
+    const root = editorEl();
+    if (!root) return;
+    applyFontSize(root, px);
+    if (!expanded) emitCollapsed();
+    refreshActive();
+  };
+
   const applyColor = (cmd: "foreColor" | "hiliteColor", color: string) => {
     const el = editorEl();
     if (!el) return;
@@ -132,7 +147,19 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   const handleDiscardExpanded = () => setExpanded(false);
 
   return (
-    <div className="ne-wrap">
+    <div className={`ne-wrap ${inlineToolbar ? "ne-wrap-toolbar" : ""}`}>
+      {inlineToolbar && !expanded && (
+        <div className="ne-inline-toolbar">
+          <NotesToolbar
+            active={active}
+            onExec={exec}
+            onColor={(c) => applyColor("foreColor", c)}
+            onHighlight={(c) => applyColor("hiliteColor", c)}
+            onDir={applyDir}
+            onFontSize={applyFont}
+          />
+        </div>
+      )}
       <div
         ref={collapsedRef}
         className="ne-collapsed"
@@ -164,6 +191,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
                 onColor={(c) => applyColor("foreColor", c)}
                 onHighlight={(c) => applyColor("hiliteColor", c)}
                 onDir={applyDir}
+                onFontSize={applyFont}
               />
               <button
                 type="button"

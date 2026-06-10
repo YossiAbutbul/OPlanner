@@ -104,10 +104,10 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
         {!isMobile && (
         <table className="homework-table homework-table-head">
           <colgroup>
-            <col style={{ width: "40%" }} />
+            <col />
             <col style={{ width: "140px" }} />
             <col style={{ width: "130px" }} />
-            <col style={{ width: "170px" }} />
+            <col style={{ width: "122px" }} />
           </colgroup>
           <thead>
             <tr>
@@ -123,10 +123,10 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
         <table className="homework-table homework-table-body">
           {!isMobile && (
           <colgroup>
-            <col style={{ width: "40%" }} />
+            <col />
             <col style={{ width: "140px" }} />
             <col style={{ width: "130px" }} />
-            <col style={{ width: "170px" }} />
+            <col style={{ width: "122px" }} />
           </colgroup>
           )}
           {isMobile && (
@@ -162,7 +162,6 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
                       title="Edit"
                     >
                       <Pencil size={14} />
-                      <span className="btn-text">Edit</span>
                     </button>
                     <button
                       className="row-btn danger"
@@ -171,7 +170,6 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
                       title="Delete"
                     >
                       <Trash2 size={14} />
-                      <span className="btn-text">Delete</span>
                     </button>
                   </div>
                 </td>

@@ -12,7 +12,7 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0.85rem 1.25rem;
+  padding: 0.85rem 1.25rem 2.5rem;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
@@ -422,6 +422,92 @@
   font-size: 1rem;
   font-weight: 500;
   color: #777;
+}
+
+/* Inner tab strip inside a course view: Overview vs Course info.
+   Content-width tabs, left-aligned, with a per-tab underline on the
+   active one. */
+.course-inner-tabs {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 0.3rem;
+  /* Sit directly on top of the panel, overlapping its top border so the
+     active tab merges into it (folder look). First tab aligns with the
+     panel's left border. */
+  margin: 0 0 -1px 0;
+  background: transparent;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.course-inner-tab {
+  position: relative;
+  background: #f1f1f3;
+  border: 1px solid #e3e3e6;
+  border-bottom: none;
+  color: #888;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.5rem 1.2rem 0.55rem;
+  cursor: pointer;
+  border-radius: 8px 8px 0 0;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.course-inner-tab:hover {
+  background: #e9e9ec;
+  color: #333;
+}
+
+/* Active tab shares the panel's white bg and paints over the panel's top
+   border to look like one continuous folder surface. */
+.course-inner-tab-active,
+.course-inner-tab-active:hover {
+  background: #fff;
+  color: #157a3c;
+  padding-bottom: 0.65rem;
+}
+
+.course-tab-panel {
+  background: #fff;
+  border: 1px solid #e3e3e6;
+  border-radius: 0 10px 10px 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  /* Fixed to the remaining viewport height; content scrolls INSIDE the
+     panel so the tabs above stay put and the folder border never moves. */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Scroll works; bar hidden. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.course-tab-panel::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* Keyed on the active tab — remounts and replays on switch, fading the new
+   content in so the lazy editor / data load doesn't pop in piecewise. */
+.course-tab-anim {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  animation: courseTabFade 0.22s ease-out;
+}
+
+@keyframes courseTabFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-tab-anim { animation: none; }
 }
 
 .course-row {

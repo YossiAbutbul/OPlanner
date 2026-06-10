@@ -3,6 +3,7 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
+  height: 100%;
 }
 
 .progress-card-header {
@@ -19,7 +20,9 @@
   width: 96%;
   max-width: 320px;
   aspect-ratio: 1 / 1;
-  margin: 0 auto;
+  /* Header stays pinned to the top; the donut + subtitle block centers in
+     the remaining vertical space (auto margins split the free space). */
+  margin: auto auto 0;
 }
 
 .progress-center {
@@ -47,7 +50,7 @@
 }
 
 .progress-subtitle {
-  margin: 0.95rem 0 0;
+  margin: 0.95rem 0 auto;
   font-size: 0.95rem;
   color: #888;
   font-weight: 500;

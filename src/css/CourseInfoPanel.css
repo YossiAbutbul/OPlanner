@@ -1,0 +1,319 @@
+/* Course Info tab body. Each section is a card matching the existing
+   .course-progress / .homework-table-container chrome. */
+.cip {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  /* Breathing room below the last section so it doesn't butt against the
+     panel's bottom border (scroll-container padding can't be relied on). */
+  padding-bottom: 1rem;
+}
+
+/* Links + Notes sit flush on the page — no card chrome. Assignments keeps
+   its own table container (see .cip-assignments below). */
+.cip-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.cip-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cip-section-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.cip-hint {
+  font-size: 0.78rem;
+  color: #999;
+}
+
+.cip-section-head-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.cip-head-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  background: #1db954;
+  border: 1px solid #19a449;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    transform 0.08s ease;
+}
+
+.cip-head-add:hover:not(:disabled) {
+  background: #1ed760;
+}
+
+.cip-head-add:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.cip-head-add:disabled {
+  background: #cfd2d6;
+  border-color: #c2c5c9;
+  cursor: default;
+}
+
+/* HomeworkTable already brings .homework-table-container chrome (white
+   card + border), so this section is just a borderless heading wrapper. */
+.cip-assignments {
+  background: transparent;
+  border: none;
+  padding: 0;
+  gap: 0.5rem;
+}
+
+/* The whole tab panel scrolls now, so the table flows at full height
+   instead of having its own nested scrollbar. */
+.cip-assignments .homework-table-container {
+  flex: 0 0 auto;
+}
+
+.cip-assignments .homework-table-scroll {
+  overflow: visible;
+}
+
+/* Bigger notes — default editor is 88px; quadruple it for the dedicated
+   Notes section so the user has real room to type. */
+.cip-notes .ne-collapsed {
+  height: 260px;
+  max-height: 50vh;
+}
+
+/* Links table — matches the homework/assignments table chrome (white card,
+   #e3e3e6 border, gray header row). Flex rows so the actions column never
+   gets clipped when the inputs widen. */
+.cip-table {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e3e3e6;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.cip-table-head,
+.cip-table-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+}
+
+.cip-table-head {
+  background: #f6f6f7;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+  border-bottom: 1px solid #e3e3e6;
+}
+
+.cip-table-head .cip-col-name {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.cip-table-head .cip-col-url {
+  flex: 1.5 1 0;
+  min-width: 0;
+}
+.cip-table-head .cip-col-actions {
+  flex: 0 0 90px;
+  justify-content: flex-start;
+}
+
+.cip-table-row {
+  border-bottom: 1px solid #eef0f2;
+  position: relative;
+  flex-wrap: wrap;
+  transition: background-color 0.15s ease;
+}
+
+.cip-table-row:last-child {
+  border-bottom: none;
+}
+
+.cip-table-row:hover {
+  background: #fafafb;
+}
+
+.cip-table-row .cip-col-name {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.cip-table-row .cip-col-url {
+  flex: 1.5 1 0;
+  min-width: 0;
+}
+.cip-table-row .cip-input:nth-of-type(1) {
+  flex: 1 1 110px;
+  min-width: 0;
+}
+.cip-table-row .cip-input:nth-of-type(2) {
+  flex: 1.5 1 140px;
+  min-width: 0;
+}
+.cip-table-row .cip-col-actions {
+  flex: 0 0 90px;
+  justify-content: flex-start;
+}
+
+/* View-mode cells (saved link, not being edited). */
+.cip-cell-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cip-cell-url {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: #1a8a44;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cip-cell-url:hover {
+  text-decoration: underline;
+}
+
+.cip-cell-url-icon {
+  flex-shrink: 0;
+  color: #6aa;
+  opacity: 0.7;
+}
+
+/* Highlight the row currently being edited. */
+.cip-row-editing {
+  background: #fbfffd;
+}
+
+.cip-row-save {
+  color: #157a3c;
+}
+
+.cip-row-save:hover:not(:disabled) {
+  color: #0e5e2c;
+}
+
+.cip-table-empty {
+  padding: 0.85rem;
+  font-size: 0.85rem;
+  color: #aaa;
+  font-style: italic;
+  text-align: center;
+}
+
+.cip-col-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  justify-self: end;
+}
+
+.cip-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.88rem;
+  background: #fff;
+  border: 1px solid #dcdce0;
+  border-radius: 6px;
+  color: #222;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.cip-input:focus {
+  outline: none;
+}
+
+.cip-row-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #555;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+/* Keep the glyph at full size — never let flexbox shrink the SVG to 0. */
+.cip-row-btn svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+.cip-row-btn:hover:not(:disabled) {
+  color: #111;
+}
+
+.cip-row-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cip-row-delete {
+  color: #c0392b;
+}
+
+.cip-row-delete:hover:not(:disabled) {
+  color: #962b1f;
+}
+
+.cip-row-error {
+  flex: 1 1 100%;
+  order: 99;
+  font-size: 0.75rem;
+  color: #e74c3c;
+  margin-top: 0.2rem;
+}
+
+@media (max-width: 900px) {
+  /* URL input wraps to its own row below name + actions. */
+  .cip-table-head .cip-col-url {
+    display: none;
+  }
+  .cip-table-row .cip-input:nth-of-type(2) {
+    flex: 1 1 100%;
+    order: 5;
+  }
+  .cip-row-error {
+    flex: 1 1 100%;
+    order: 6;
+  }
+}

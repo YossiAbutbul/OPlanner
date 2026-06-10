@@ -18,6 +18,18 @@ service cloud.firestore {
           !("notes" in request.resource.data)
           || (request.resource.data.notes is string
               && request.resource.data.notes.size() <= 50000)
+        )
+        // Course-page metadata: rich-text notes capped like task notes,
+        // links bounded by count (per-link sizes enforced client-side).
+        && (
+          !("courseNotes" in request.resource.data)
+          || (request.resource.data.courseNotes is string
+              && request.resource.data.courseNotes.size() <= 50000)
+        )
+        && (
+          !("links" in request.resource.data)
+          || (request.resource.data.links is list
+              && request.resource.data.links.size() <= 20)
         );
     }
   }

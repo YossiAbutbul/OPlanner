@@ -37,6 +37,21 @@ export interface Notification {
   style: React.CSSProperties;
 }
 
+// One named link on a course (Moodle, Zoom, Drive folder, ...).
+export interface CourseLink {
+  id: string;     // crypto.randomUUID()
+  label: string;
+  url: string;    // http(s) only — validated before save
+}
+
+// Course-page metadata stored directly on the course doc at
+// users/{uid}/years/{year}/semesters/{semester}/courses/{course}.
+// All fields optional — legacy course docs have none of them.
+export interface CourseMeta {
+  links?: CourseLink[];     // ordered; max 20 (also enforced in firestore.rules)
+  courseNotes?: string;     // sanitized HTML, <=50000 chars
+}
+
 // Course-level metadata returned by getAllYearsAndSemesters().
 export interface CourseInfo {
   name: string;
