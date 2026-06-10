@@ -1,4 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// courseMeta imports ../firebase (db), which runs getAuth() at module load.
+// CI has no VITE_FIREBASE_* env, so that throws auth/invalid-api-key. Mock it
+// out — these tests only exercise the pure helpers, no Firestore calls.
+vi.mock("../firebase", () => ({ db: {}, auth: {}, requireUid: () => "test-uid" }));
+
 import {
   MAX_LINKS,
   isValidLinkUrl,
