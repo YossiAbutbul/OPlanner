@@ -29,11 +29,12 @@ export default defineConfig(({ mode }) => {
       react(),
       tightenCspForProd(),
       VitePWA({
-        // Prompt strategy: a fresh service worker waits, and the app shows
-        // an in-app "New version available — reload" toast (see
-        // PwaReloadPrompt). The user clicks Reload to activate it, so we
-        // never swap code mid-session.
-        registerType: 'prompt',
+        // autoUpdate: a fresh service worker activates immediately
+        // (skipWaiting + clientsClaim) and the page reloads, instead of
+        // waiting behind a toast. The 'prompt' strategy could leave an old
+        // SW serving a cached shell whose chunks the browser later evicted
+        // — a white screen on mobile. autoUpdate self-heals on next visit.
+        registerType: 'autoUpdate',
         // PwaReloadPrompt registers the SW via `useRegisterSW`, so disable
         // the plugin's auto-injected registration to avoid double-register.
         injectRegister: null,
@@ -42,6 +43,11 @@ export default defineConfig(({ mode }) => {
         // dropped, but the glob is defensive).
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+          // Drop caches from superseded SW versions so an old shell can't
+          // linger and reference evicted/renamed chunks.
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
           // Firestore + Auth must hit the network — don't try to cache
           // their POST channels.
           navigateFallbackDenylist: [/^\/__\/auth\//, /firestore\.googleapis\.com/],
