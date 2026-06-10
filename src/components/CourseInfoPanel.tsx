@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Check, ExternalLink, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Check, ExternalLink, Link2, Pencil, Trash2, X } from "lucide-react";
 import NotesEditor from "./NotesEditor";
 import { useCourseMeta } from "../hooks/useCourseMeta";
 import { useToast } from "../context/ToastContext";
@@ -189,7 +189,7 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
             disabled={atLinkLimit || editing}
             title={atLinkLimit ? `Limit of ${MAX_LINKS} links` : "Add link"}
           >
-            <Plus size={14} />
+            <Link2 size={14} />
             Add
           </button>
         </div>
