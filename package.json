@@ -20,7 +20,7 @@
     "canvas-confetti": "^1.9.4",
     "chart.js": "^4.4.7",
     "dompurify": "^3.4.7",
-    "firebase": "^12.13.0",
+    "firebase": "^12.14.0",
     "framer-motion": "^12.0.1",
     "lucide-react": "^1.14.0",
     "react": "^19.2.6",
