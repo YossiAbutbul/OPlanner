@@ -8,11 +8,20 @@ import {
   applyFontSize,
   autoLinkAtCaret,
   handleListTriggerSpace,
+  insertMentionLink,
   readActiveFontSize,
   readActiveFormatting,
+  readMentionQuery,
   sanitize,
 } from "../utility/notesEditorDom";
 import "../css/NotesEditor.css";
+
+// A course link the user can @-mention into the notes.
+export interface MentionLink {
+  id: string;
+  label: string;
+  url: string;
+}
 
 interface Props {
   value: string; // sanitized HTML
@@ -21,10 +30,16 @@ interface Props {
   // Show the formatting toolbar above the inline (collapsed) editor too,
   // not only inside the expanded overlay.
   inlineToolbar?: boolean;
+  // Course links offered by the "@" mention picker. Empty/undefined disables it.
+  links?: MentionLink[];
 }
 
-const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional", inlineToolbar = false }) => {
+const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional", inlineToolbar = false, links }) => {
   const [expanded, setExpanded] = useState(false);
+  // Open @-mention picker state: the query typed after @, caret rect for
+  // positioning, and the highlighted item. Null when closed.
+  const [mention, setMention] = useState<{ query: string; top: number; left: number } | null>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
   const collapsedRef = useRef<HTMLDivElement>(null);
   const expandedRef = useRef<HTMLDivElement>(null);
   // Tracks the last sanitized HTML we emitted. When the parent re-renders
@@ -70,6 +85,39 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
     onChange(sanitized);
   };
 
+  const mentionLinks = links ?? [];
+  const filteredLinks = mention
+    ? mentionLinks.filter((l) => l.label.toLowerCase().includes(mention.query.toLowerCase()))
+    : [];
+
+  // Re-evaluate whether the caret is in an "@token" and (re)open the picker.
+  const detectMention = () => {
+    if (mentionLinks.length === 0) return;
+    const el = editorEl();
+    if (!el) return;
+    const res = readMentionQuery(el);
+    if (res) {
+      setMention({ query: res.query, top: res.rect.bottom + 4, left: res.rect.left });
+      setMentionIndex(0);
+    } else {
+      setMention(null);
+    }
+  };
+
+  const selectMention = (link: MentionLink) => {
+    const el = editorEl();
+    if (!el || !mention) return;
+    insertMentionLink(el, mention.query, link.label, link.url);
+    setMention(null);
+    if (!expanded) emitCollapsed();
+  };
+
+  // Collapsed editor emits on every input; both editors run mention detection.
+  const handleCollapsedInput = () => {
+    emitCollapsed();
+    detectMention();
+  };
+
   // Open links on click — contenteditable normally suppresses link nav.
   const handleEditorClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement | null;
@@ -93,6 +141,30 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   }, [expanded]);
 
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // While the @-mention picker is open, hijack nav/confirm/dismiss keys.
+    if (mention && filteredLinks.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex((i) => (i + 1) % filteredLinks.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex((i) => (i - 1 + filteredLinks.length) % filteredLinks.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        selectMention(filteredLinks[mentionIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMention(null);
+        return;
+      }
+    }
+    if (e.key === "Escape" && mention) setMention(null);
     if (e.key === " " || e.key === "Enter") autoLinkAtCaret();
     if (e.key !== " ") return;
     const root = e.currentTarget;
@@ -166,9 +238,10 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
         contentEditable
         suppressContentEditableWarning
         data-placeholder={placeholder}
-        onInput={emitCollapsed}
+        onInput={handleCollapsedInput}
         onKeyDown={handleEditorKeyDown}
         onClick={handleEditorClick}
+        onBlur={() => setTimeout(() => setMention(null), 150)}
       />
       <button
         type="button"
@@ -209,8 +282,10 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
               contentEditable
               suppressContentEditableWarning
               data-placeholder={placeholder}
+              onInput={detectMention}
               onKeyDown={handleEditorKeyDown}
               onClick={handleEditorClick}
+              onBlur={() => setTimeout(() => setMention(null), 150)}
             />
             <div className="ne-footer">
               <button type="button" className="ne-save-btn" onClick={handleSaveExpanded}>
@@ -219,6 +294,33 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
             </div>
           </div>
         </div>,
+        document.body
+      )}
+
+      {mention && filteredLinks.length > 0 && createPortal(
+        <ul
+          className="ne-mention-pop"
+          style={{ top: mention.top, left: mention.left }}
+          role="listbox"
+        >
+          {filteredLinks.map((l, i) => (
+            <li
+              key={l.id}
+              className={`ne-mention-item ${i === mentionIndex ? "ne-mention-item-active" : ""}`}
+              role="option"
+              aria-selected={i === mentionIndex}
+              // mousedown (not click) + preventDefault keeps the editor's
+              // selection alive so we can insert at the caret.
+              onMouseDown={(e) => {
+                e.preventDefault();
+                selectMention(l);
+              }}
+              onMouseEnter={() => setMentionIndex(i)}
+            >
+              {l.label}
+            </li>
+          ))}
+        </ul>,
         document.body
       )}
     </div>

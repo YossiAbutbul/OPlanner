@@ -6,6 +6,7 @@ import TimePicker from "./TimePicker";
 import NotesEditor from "./NotesEditor";
 import CustomSelect from "./CustomSelect";
 import { celebrateTaskDone } from "../utility/celebrate";
+import { useCourseMeta } from "../hooks/useCourseMeta";
 
 interface HomeworkModalProps {
   isOpen: boolean;
@@ -193,6 +194,16 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
 
   const canSave =
     !!name.trim() && !!dueDate && !!(selectedCourseData || editHomework) && !isLoading;
+
+  // Resolve the task's course so the notes editor can offer its links via "@".
+  const courseCtx = editHomework ?? selectedCourseData;
+  const activeCourse =
+    availableCourses !== undefined ? courseChoice : (courseCtx?.course ?? "");
+  const courseTab =
+    courseCtx && activeCourse && activeCourse !== REMINDERS_COURSE
+      ? { year: courseCtx.year, semester: courseCtx.semester, course: activeCourse }
+      : null;
+  const { meta: courseMeta } = useCourseMeta(courseTab);
 
   return (
     <>
@@ -382,7 +393,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
         ))}
       </div>
       <label>Notes</label>
-      <NotesEditor value={notes} onChange={setNotes} placeholder="Optional" />
+      <NotesEditor value={notes} onChange={setNotes} placeholder="Optional" links={courseMeta.links} />
     </Modal>
     {editHomework && onDelete && (
       <DeleteModal
