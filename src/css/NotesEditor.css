@@ -293,6 +293,46 @@
   color: #1755b3;
 }
 
+/* Mentioned course links render as a green chip with a link glyph, so they
+   read as a tappable pill instead of plain blue underline text. */
+.ne-collapsed a.ne-link,
+.ne-editor a.ne-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28em;
+  padding: 0.06em 0.5em 0.06em 0.42em;
+  border-radius: 999px;
+  background: rgba(29, 185, 84, 0.12);
+  color: #178a45;
+  font-weight: 600;
+  text-decoration: none;
+  line-height: 1.35;
+  white-space: nowrap;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.ne-collapsed a.ne-link:hover,
+.ne-editor a.ne-link:hover {
+  background: #1db954;
+  color: #fff;
+}
+
+/* Link glyph (inline SVG, currentColor) before the label. */
+.ne-collapsed a.ne-link::before,
+.ne-editor a.ne-link::before {
+  content: "";
+  width: 0.85em;
+  height: 0.85em;
+  flex: 0 0 auto;
+  background-color: currentColor;
+  -webkit-mask: var(--ne-link-icon) center / contain no-repeat;
+  mask: var(--ne-link-icon) center / contain no-repeat;
+}
+
+:root {
+  --ne-link-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E");
+}
+
 
 .ne-color-btn {
   position: relative;
@@ -447,4 +487,38 @@
   border: none;
   padding: 0;
   margin: 0;
+}
+
+/* @-mention link picker — portal'd to body, positioned at the caret. Sits at
+   popover layer so it clears the expanded-notes overlay. */
+.ne-mention-pop {
+  position: fixed;
+  z-index: var(--z-popover);
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  min-width: 160px;
+  max-width: 280px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #d6d6da;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.ne-mention-item {
+  padding: 0.4rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #222;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ne-mention-item-active {
+  background: #1db954;
+  color: #fff;
 }
