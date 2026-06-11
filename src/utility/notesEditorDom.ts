@@ -9,7 +9,7 @@ import DOMPurify from "dompurify";
 // http(s)/mailto links anyway.
 const SANITIZE_CFG = {
   ALLOWED_TAGS: ["b", "strong", "i", "em", "u", "br", "div", "p", "span", "a", "ul", "ol", "li"],
-  ALLOWED_ATTR: ["href", "target", "rel", "dir", "style"],
+  ALLOWED_ATTR: ["href", "target", "rel", "dir", "style", "class"],
 };
 
 export const sanitize = (html: string): string =>
@@ -146,6 +146,71 @@ export const autoLinkAtCaret = (): void => {
   newRange.collapse(true);
   sel.removeAllRanges();
   sel.addRange(newRange);
+};
+
+// @-mention detection. If the collapsed caret sits at the end of an "@token"
+// run (token = the chars typed after @, no whitespace/@), return that query
+// plus the caret rect for positioning the link picker. Returns null when the
+// caret isn't in a mention, sits inside an existing <a>, or has a selection.
+const MENTION_REGEX = /@([^\s@]*)$/;
+export const readMentionQuery = (
+  root: HTMLElement
+): { query: string; rect: DOMRect } | null => {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return null;
+  const range = sel.getRangeAt(0);
+  if (!range.collapsed) return null;
+  const node = range.startContainer;
+  if (node.nodeType !== Node.TEXT_NODE) return null;
+  if (!root.contains(node)) return null;
+  // Don't trigger inside an existing link.
+  let p: Node | null = node.parentNode;
+  while (p && p !== root) {
+    if ((p as Element).tagName === "A") return null;
+    p = p.parentNode;
+  }
+  const textBefore = (node.textContent || "").slice(0, range.startOffset);
+  const m = textBefore.match(MENTION_REGEX);
+  if (!m) return null;
+  const rect = range.getBoundingClientRect();
+  return { query: m[1], rect };
+};
+
+// Replace the "@query" run before the caret with a link (label → href) and
+// drop a trailing space, parking the caret after it. Pairs with
+// readMentionQuery; `query` is what that returned (the text after @).
+export const insertMentionLink = (
+  root: HTMLElement,
+  query: string,
+  label: string,
+  href: string
+): void => {
+  root.focus();
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  const range = sel.getRangeAt(0);
+  const node = range.startContainer;
+  if (node.nodeType !== Node.TEXT_NODE) return;
+  const removeLen = query.length + 1; // include the leading "@"
+  const start = Math.max(0, range.startOffset - removeLen);
+  const del = document.createRange();
+  del.setStart(node, start);
+  del.setEnd(node, range.startOffset);
+  del.deleteContents();
+  const a = document.createElement("a");
+  a.href = href;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  a.className = "ne-link"; // chip styling for mentioned course links
+  a.textContent = label;
+  del.insertNode(a);
+  const space = document.createTextNode(" ");
+  a.parentNode?.insertBefore(space, a.nextSibling);
+  const after = document.createRange();
+  after.setStart(space, 1);
+  after.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(after);
 };
 
 // Detect "1." / "*" / "-" + space at start of a line and convert the line
