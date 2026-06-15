@@ -266,6 +266,7 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
           onChange={handleNotesChange}
           placeholder="Syllabus highlights, grading breakdown, anything course-wide…"
           inlineToolbar
+          onSave={flushNotes}
         />
       </section>
 

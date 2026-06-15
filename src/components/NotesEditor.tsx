@@ -32,9 +32,12 @@ interface Props {
   inlineToolbar?: boolean;
   // Course links offered by the "@" mention picker. Empty/undefined disables it.
   links?: MentionLink[];
+  // Invoked when the user presses Ctrl/Cmd+S in the collapsed editor — lets the
+  // host persist (task save / notes flush) instead of the browser saving the page.
+  onSave?: () => void;
 }
 
-const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional", inlineToolbar = false, links }) => {
+const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional", inlineToolbar = false, links, onSave }) => {
   const [expanded, setExpanded] = useState(false);
   // Open @-mention picker state: the query typed after @, caret rect for
   // positioning, and the highlighted item. Null when closed.
@@ -141,6 +144,19 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   }, [expanded]);
 
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    // Ctrl/Cmd+S: persist instead of letting the browser save the page.
+    if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
+      e.preventDefault();
+      setMention(null);
+      if (expanded) {
+        // Commit overlay edits back into the form, then close the overlay.
+        handleSaveExpanded();
+        return;
+      }
+      emitCollapsed();
+      onSave?.();
+      return;
+    }
     // While the @-mention picker is open, hijack nav/confirm/dismiss keys.
     if (mention && filteredLinks.length > 0) {
       if (e.key === "ArrowDown") {
