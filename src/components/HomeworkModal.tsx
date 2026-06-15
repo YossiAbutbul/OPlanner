@@ -393,7 +393,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
         ))}
       </div>
       <label>Notes</label>
-      <NotesEditor value={notes} onChange={setNotes} placeholder="Optional" links={courseMeta.links} />
+      <NotesEditor value={notes} onChange={setNotes} placeholder="Optional" links={courseMeta.links} onSave={() => handleSaveRef.current()} />
     </Modal>
     {editHomework && onDelete && (
       <DeleteModal
