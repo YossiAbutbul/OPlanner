@@ -31,10 +31,19 @@
   line-height: 1;
 }
 
-/* Word-style font-size dropdown in the toolbar. */
-.ne-fontsize {
+/* Word-style font-size dropdown in the toolbar (custom, see FontSizePicker). */
+.ne-fs-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.ne-fs-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
   height: 26px;
-  padding: 0 0.3rem;
+  min-width: 46px;
+  padding: 0 0.35rem;
   border: 1px solid #d6d6da;
   border-radius: 5px;
   background: #fff;
@@ -42,11 +51,65 @@
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
 }
 
-.ne-fontsize:focus {
-  outline: none;
+.ne-fs-trigger:hover {
+  background: #f6f6f7;
+}
+
+.ne-fs-wrap:has(.ne-fs-pop) .ne-fs-trigger {
   border-color: #1db954;
+}
+
+.ne-fs-value {
+  flex: 1;
+  text-align: left;
+}
+
+.ne-fs-caret {
+  color: #8a8a90;
+  flex: 0 0 auto;
+}
+
+.ne-fs-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: var(--z-modal);
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  min-width: 56px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e3e3e6;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+.ne-fs-item {
+  padding: 0.32rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  cursor: pointer;
+}
+
+.ne-fs-item:hover {
+  background: #f1f1f3;
+}
+
+.ne-fs-item-active {
+  background: #1db954;
+  color: #fff;
+}
+
+.ne-fs-item-active:hover {
+  background: #1db954;
 }
 
 .ne-collapsed {
