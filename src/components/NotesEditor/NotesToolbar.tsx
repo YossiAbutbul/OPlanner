@@ -1,7 +1,7 @@
 import React from "react";
 import { AlignLeft, AlignRight, Bold, Type, Underline } from "lucide-react";
 import HighlightPicker from "./HighlightPicker";
-import { FONT_SIZES } from "../../utility/notesEditorDom";
+import FontSizePicker from "./FontSizePicker";
 
 interface Props {
   active: { bold: boolean; underline: boolean; dir: "" | "ltr" | "rtl"; fontSize: number };
@@ -68,18 +68,7 @@ const NotesToolbar: React.FC<Props> = ({ active, onExec, onColor, onHighlight, o
     >
       <AlignRight size={14} strokeWidth={2.5} />
     </button>
-    <select
-      className="ne-fontsize"
-      value={active.fontSize}
-      title="Font size"
-      aria-label="Font size"
-      onMouseDown={(e) => e.stopPropagation()}
-      onChange={(e) => onFontSize(Number(e.target.value))}
-    >
-      {FONT_SIZES.map((s) => (
-        <option key={s} value={s}>{s}</option>
-      ))}
-    </select>
+    <FontSizePicker value={active.fontSize} onChange={onFontSize} />
   </div>
 );
 
