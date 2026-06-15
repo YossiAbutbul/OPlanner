@@ -125,6 +125,12 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
     notesTimerRef.current = setTimeout(flushNotes, NOTES_DEBOUNCE_MS);
   };
 
+  // Ctrl/Cmd+S in the notes editor: flush immediately + confirm.
+  const saveNotesNow = useCallback(() => {
+    flushNotes();
+    toast.success("Notes saved");
+  }, [flushNotes, toast]);
+
   useEffect(() => {
     return () => flushNotes();
   }, [activeTab.year, activeTab.semester, activeTab.course, flushNotes]);
@@ -267,7 +273,7 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
           placeholder="Syllabus highlights, grading breakdown, anything course-wide…"
           inlineToolbar
           links={links}
-          onSave={flushNotes}
+          onSave={saveNotesNow}
         />
       </section>
 
