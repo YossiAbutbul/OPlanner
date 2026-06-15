@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Check, ExternalLink, Link2, Pencil, Trash2, X } from "lucide-react";
 import NotesEditor from "./NotesEditor";
+import DeleteModal from "./DeleteModal";
 import { useCourseMeta } from "../hooks/useCourseMeta";
 import { useToast } from "../context/ToastContext";
 import { MAX_LINKS, isValidLinkUrl } from "../services/courseMeta";
@@ -40,6 +41,8 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
   const [links, setLinks] = useState<CourseLink[]>([]);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [draftError, setDraftError] = useState<string | null>(null);
+  // Link pending delete confirmation (null = no modal).
+  const [pendingDelete, setPendingDelete] = useState<CourseLink | null>(null);
 
   const lastRemoteRef = useRef<string>("");
   useEffect(() => {
@@ -237,7 +240,7 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
                   <button
                     type="button"
                     className="cip-row-btn cip-row-delete"
-                    onClick={() => removeLink(l.id)}
+                    onClick={() => setPendingDelete(l)}
                     disabled={editing}
                     aria-label="Delete link"
                     title="Delete"
@@ -274,6 +277,17 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
           {assignments}
         </section>
       )}
+
+      <DeleteModal
+        isOpen={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete) removeLink(pendingDelete.id);
+          setPendingDelete(null);
+        }}
+        title="Delete link"
+        message={`Delete “${pendingDelete?.label ?? "this link"}”? This can't be undone.`}
+      />
     </div>
   );
 };
