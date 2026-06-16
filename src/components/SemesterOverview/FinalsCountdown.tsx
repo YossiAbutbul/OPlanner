@@ -31,22 +31,29 @@ const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => {
         const days = c.finalDate ? daysUntil(c.finalDate) : null;
         let badge = "";
         let badgeClass = "";
+        let urgency = "none";
         if (days !== null) {
           if (days < 0) {
-            badge = `${Math.abs(days)}d ago`;
+            const n = Math.abs(days);
+            badge = `${n} ${n === 1 ? "day" : "days"} ago`;
             badgeClass = "finals-badge-past";
+            urgency = "past";
           } else if (days === 0) {
             badge = "Today";
             badgeClass = "finals-badge-soon";
+            urgency = "soon";
           } else if (days <= 7) {
-            badge = `${days}d`;
+            badge = `${days} ${days === 1 ? "day" : "days"}`;
             badgeClass = "finals-badge-soon";
+            urgency = "soon";
           } else if (days <= 30) {
-            badge = `${days}d`;
+            badge = `${days} days`;
             badgeClass = "finals-badge-near";
+            urgency = "near";
           } else {
-            badge = `${days}d`;
+            badge = `${days} days`;
             badgeClass = "finals-badge-far";
+            urgency = "far";
           }
         }
         let formatted: string | null = null;
@@ -58,7 +65,7 @@ const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => {
           formatted = `${dd}/${mm}/${yyyy}`;
         }
         return (
-          <li key={c.name} className="finals-row">
+          <li key={c.name} className="finals-row" data-urgency={urgency}>
             <span className="finals-row-name">{capitalizeWords(c.name)}</span>
             <span className={`finals-badge${badge ? ` ${badgeClass}` : " finals-badge-empty"}`}>
               {badge}

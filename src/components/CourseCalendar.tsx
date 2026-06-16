@@ -29,6 +29,17 @@ const toIso = (d: Date) => {
   return `${y}-${m}-${day}`;
 };
 
+const FULL_WEEKDAYS = [
+  "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
+];
+
+/** "2026-06-16" -> "Tuesday, June 16" for the hover popover header. */
+const formatPopoverDate = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return `${FULL_WEEKDAYS[date.getDay()]}, ${MONTHS[m - 1]} ${d}`;
+};
+
 const startOfDay = (d: Date) => {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -265,10 +276,16 @@ const CourseCalendar: React.FC<Props> = ({
           onMouseEnter={() => setHoverIso(hoverIso)}
           onMouseLeave={handleCellLeave}
         >
-          <div className="cal-popover-date">{hoverIso}</div>
+          <div className="cal-popover-head">
+            <span className="cal-popover-date">{formatPopoverDate(hoverIso)}</span>
+            <span className="cal-popover-count">
+              {hoverTasks.length} {hoverTasks.length === 1 ? "task" : "tasks"}
+            </span>
+          </div>
           <ul>
             {hoverTasks.map((t) => {
               const c = colorOf?.(t);
+              const done = t.status === "COMPLETED";
               return (
                 <li key={t.id}>
                   <span
@@ -276,8 +293,8 @@ const CourseCalendar: React.FC<Props> = ({
                     style={c ? { background: c } : undefined}
                   />
                   <span className="cal-popover-name">{t.name}</span>
-                  <span className="cal-popover-status">
-                    {t.status.charAt(0) + t.status.slice(1).toLowerCase()}
+                  <span className={`cal-popover-status ${done ? "is-done" : "is-pending"}`}>
+                    {done ? "Done" : "Pending"}
                   </span>
                 </li>
               );

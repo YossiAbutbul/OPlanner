@@ -40,7 +40,7 @@
   color: #1a1a1a;
   letter-spacing: -0.02em;
   line-height: 1;
-  animation: progressFade 0.5s ease-out;
+  font-variant-numeric: tabular-nums;
 }
 
 .progress-empty {
@@ -56,11 +56,6 @@
   font-weight: 500;
   font-style: italic;
   text-align: center;
-}
-
-@keyframes progressFade {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Wide screens: scale donut up but cap so it doesn't dominate the card.
