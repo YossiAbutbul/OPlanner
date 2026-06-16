@@ -29,8 +29,18 @@ const OverviewStats: React.FC<Props> = ({ totals, completionPct }) => (
     <div className="stat-card stat-card-wide">
       <div className="stat-label">Completion</div>
       <div className="stat-value">{completionPct}%</div>
-      <div className="stat-bar">
-        <div className="stat-bar-fill" style={{ width: `${completionPct}%` }} />
+      <div
+        className="stat-bar"
+        role="progressbar"
+        aria-valuenow={completionPct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div
+          className="stat-bar-fill"
+          data-level={completionPct >= 67 ? "high" : completionPct >= 34 ? "mid" : "low"}
+          style={{ width: `${completionPct}%` }}
+        />
       </div>
     </div>
   </section>
