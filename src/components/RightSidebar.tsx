@@ -10,7 +10,7 @@ const TimeBlockModal = lazy(() => import("./TimeBlockModal"));
 import UpcomingPanel from "./RightSidebar/UpcomingPanel";
 import DayPanel from "./RightSidebar/DayPanel";
 import { courseColor } from "../utility/courseColor";
-import { startOfDay, toIso } from "../utility/dayCalendar";
+import { isOverdue, startOfDay, toIso } from "../utility/dayCalendar";
 import type { HomeworkEntry, TimeBlock, YearTreeData } from "../types/models";
 import "../css/RightSidebar.css";
 
@@ -95,6 +95,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     const horizon = new Date(now.getTime() + 14 * 86400000);
     return allSemesterTasks
       .filter((t) => t.status === "PENDING")
+      // Drop tasks whose due moment has already passed — they belong in overdue,
+      // not upcoming.
+      .filter((t) => !isOverdue(t.dueDate, t.endTime ?? t.startTime))
       .filter((t) => {
         const d = startOfDay(new Date(t.dueDate));
         return d >= now && d <= horizon;

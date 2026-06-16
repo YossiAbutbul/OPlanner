@@ -7,6 +7,7 @@ import {
   fetchCourseTasks,
   saveTask,
 } from "../services/homework";
+import { isOverdue, timeLeft } from "../utility/dayCalendar";
 import type { HomeworkEntry, Notification } from "../types/models";
 
 // Re-export so existing imports keep working.
@@ -117,14 +118,16 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const overdue = homework.filter((entry) => {
-      if (entry.ignoreOverdue) return false;
-      return entry.dueDate < todayStr && entry.status === "PENDING";
+      if (entry.status !== "PENDING") return false;
+      return isOverdue(entry.dueDate, entry.endTime ?? entry.startTime, now);
     });
 
     const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14);
     const cutoffStr = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}-${String(cutoff.getDate()).padStart(2, "0")}`;
     const upcoming = homework
       .filter((entry) => entry.dueDate >= todayStr && entry.dueDate <= cutoffStr)
+      // Past-due tasks are reported as overdue above, not upcoming.
+      .filter((entry) => !isOverdue(entry.dueDate, entry.endTime ?? entry.startTime, now))
       .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 
     setNotifications([
@@ -134,14 +137,12 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         style: { color: "red", fontWeight: "bold" } as React.CSSProperties,
       })),
       ...upcoming.map((entry) => {
-        const [yy, mm, dd] = entry.dueDate.split("-").map(Number);
-        const dueLocal = new Date(yy, (mm || 1) - 1, dd || 1);
-        const todayLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const daysLeft = Math.round((dueLocal.getTime() - todayLocal.getTime()) / 86400000);
+        // Same-day tasks with a time read in hours; otherwise days.
+        const tl = timeLeft(entry.dueDate, entry.endTime ?? entry.startTime);
         return {
           id: entry.id,
-          message: `${entry.name} is due in ${daysLeft} day${daysLeft > 1 ? "s" : ""}`,
-          style: getDayStyle(daysLeft),
+          message: `${entry.name} is due ${tl.text}`,
+          style: getDayStyle(tl.days),
         };
       }),
     ]);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { CourseInfo, HomeworkEntry } from "../types/models";
+import { isOverdue } from "../utility/dayCalendar";
 
 const REMINDERS_COURSE = "reminders";
 
@@ -53,18 +54,15 @@ export function useSemesterStats(
         getCourseTasks(year, semesterKey, REMINDERS_COURSE),
       ]);
       if (cancelled) return;
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
       const stats: CourseStats[] = courses.map((course, i) => {
         const list = lists[i];
         const completed = list.filter((t) => t.status === "COMPLETED").length;
-        const pending = list.filter((t) => t.status === "PENDING").length;
-        const overdue = list.filter(
-          (t) =>
-            t.status === "PENDING" &&
-            !t.ignoreOverdue &&
-            t.dueDate < todayStr
-        ).length;
+        const isOver = (t: HomeworkEntry) =>
+          t.status === "PENDING" &&
+          isOverdue(t.dueDate, t.endTime ?? t.startTime);
+        const overdue = list.filter(isOver).length;
+        // Overdue tasks move out of pending — they're counted as overdue, not both.
+        const pending = list.filter((t) => t.status === "PENDING" && !isOver(t)).length;
         return { course: course.name, total: list.length, completed, pending, overdue };
       });
       setByCourse(stats);

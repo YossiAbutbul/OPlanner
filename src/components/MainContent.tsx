@@ -327,6 +327,8 @@ const MainContent: React.FC<MainContentProps> = ({
                     hint="Tip: double-click a day to add a task."
                     tasks={filteredHomework}
                     colorOf={(t) => {
+                      if (t.color) return t.color; // reminder/task picked color
+                      if (t.course === "reminders") return "#7c4dff";
                       const c = currentSemester?.courses.find((co) => co.name === t.course);
                       return courseColor(t.course, c?.color);
                     }}

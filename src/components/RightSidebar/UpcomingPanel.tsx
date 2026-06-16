@@ -3,8 +3,8 @@ import type { HomeworkEntry } from "../../types/models";
 import {
   capitalizeWords,
   dayName,
-  daysLeft,
   fmtDate,
+  timeLeft,
   urgencyClass,
 } from "../../utility/dayCalendar";
 
@@ -40,10 +40,10 @@ const UpcomingPanel: React.FC<Props> = ({ items, onItemClick }) => (
     ) : (
       <ol className="rs-rail">
         {items.map((t, i) => {
-          const d = daysLeft(t.dueDate);
-          const cls = urgencyClass(d);
-          const labelTop = d === 0 ? "today" : `${d}`;
-          const labelBot = d === 0 ? "" : d === 1 ? "day" : "days";
+          const tl = timeLeft(t.dueDate, t.endTime ?? t.startTime);
+          const cls = urgencyClass(tl.days);
+          const labelTop = tl.unit ? `${tl.num}` : tl.short; // "today"/"now" carry their own word
+          const labelBot = tl.unit;
           return (
             <li
               key={`${t.course}-${t.id}`}
