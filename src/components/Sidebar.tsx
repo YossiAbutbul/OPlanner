@@ -287,6 +287,14 @@ const Sidebar: React.FC<SidebarProps> = ({
               </li>
             );
           })}
+          {canManage && (
+            <li
+              className={`open-item reminders-item ${selectedCourse === "reminders" ? "selected" : ""}`}
+              onClick={() => { onSelectCourse("reminders"); onCloseMobile(); }}
+            >
+              <span className="open-item-label">Reminders</span>
+            </li>
+          )}
         </ul>
       </div>
 

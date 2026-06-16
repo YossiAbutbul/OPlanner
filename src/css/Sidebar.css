@@ -291,6 +291,20 @@ button:focus { outline: none; }
   color: var(--text);
 }
 
+.open-item.reminders-item {
+  margin-top: 6px;
+}
+
+.open-item.reminders-item .open-item-label {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.open-item.reminders-item.selected .open-item-label {
+  color: var(--text);
+}
+
 .open-item.dragging {
   opacity: 0.4;
 }
