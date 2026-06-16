@@ -203,6 +203,7 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
                 return;
               }
               addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, undefined, startTime, endTime, notes, color);
+              toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`);
               setModalOpen(false);
               setEditHomework(null);
             }}

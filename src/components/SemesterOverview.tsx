@@ -15,7 +15,7 @@ import FinalsCountdown from "./SemesterOverview/FinalsCountdown";
 import AddCourseModal from "./SemesterOverview/AddCourseModal";
 import { useSemesterStats } from "../hooks/useSemesterStats";
 import type { CourseInfo, HomeworkEntry } from "../types/models";
-import { Plus, Upload } from "lucide-react";
+import { BookPlus, Upload } from "lucide-react";
 import "../css/SemesterOverview.css";
 
 interface Props {
@@ -95,6 +95,7 @@ const SemesterOverview: React.FC<Props> = ({
       setTaskModalOpen(false);
       setTaskEditTask(null);
       setTaskPrefillDate(null);
+      toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`);
     } finally {
       setIsLoadingAction(false);
     }
@@ -102,9 +103,13 @@ const SemesterOverview: React.FC<Props> = ({
 
   const handleFinalDateChange = (course: string, value: string) => {
     const next = value ? value : null;
-    onUpdateCourseFinalDate(course, next).catch((err: Error) => {
-      onError(err.message || "Failed to save final date.");
-    });
+    onUpdateCourseFinalDate(course, next)
+      .then(() => {
+        toast.success(next ? "Final exam date saved" : "Final exam date cleared");
+      })
+      .catch((err: Error) => {
+        onError(err.message || "Failed to save final date.");
+      });
   };
 
   const isEmpty = courses.length === 0;
@@ -132,7 +137,7 @@ const SemesterOverview: React.FC<Props> = ({
             onClick={() => setAddOpen(true)}
             title="Add course"
           >
-            <Plus size={16} />
+            <BookPlus size={16} />
             <span>Add course</span>
           </button>
         </div>

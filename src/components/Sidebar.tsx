@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, Plus, LogOut, HelpCircle, Download, Timer, Bell, PartyPopper, Check } from "lucide-react";
+import { Settings, CalendarPlus, LogOut, HelpCircle, Download, Timer, Bell, PartyPopper, Check } from "lucide-react";
 import { useConfettiPref } from "../hooks/useConfettiPref";
 
 // Feature flag — the Focus / Pomodoro tab is temporarily hidden from the
@@ -179,6 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       );
     }
     onYearsChanged();
+    toast.success("Course updated");
   };
 
   return (
@@ -341,7 +342,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               }}
               disabled={addingYear}
             >
-              <Plus size={16} />
+              <CalendarPlus size={16} />
               <span>Add year</span>
             </button>
             <button

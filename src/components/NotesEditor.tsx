@@ -154,6 +154,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
       return;
     }
     emitCollapsed();
+    // onSave owns the "saved" confirmation toast (see CourseInfoPanel).
     onSave?.();
   };
 
@@ -167,7 +168,13 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   // browser save the page. Capture phase so we win before the default.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (!((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S"))) return;
+      // Match the physical S key (e.code) — with a non-Latin layout (e.g.
+      // Hebrew) e.key is the mapped letter ("ד"), so e.key === "s" misses.
+      const isSaveKey = e.code === "KeyS" || e.key === "s" || e.key === "S";
+      if (!((e.ctrlKey || e.metaKey) && isSaveKey)) return;
+      // Another listener already handled this press (e.g. a second editor
+      // instance, or StrictMode's double-mount) — don't save/toast twice.
+      if (e.defaultPrevented) return;
       const a = document.activeElement;
       const relevant =
         !!expandedRef.current || // expanded overlay is open
@@ -175,9 +182,9 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
         expandedRef.current?.contains(a);
       if (!relevant) return;
       e.preventDefault();
-      // Stop other document listeners (e.g. HomeworkModal's own Ctrl+S) from
-      // also firing and double-saving.
-      e.stopPropagation();
+      // stopImmediatePropagation: also blocks sibling document listeners
+      // (other NotesEditor instances, HomeworkModal's own Ctrl+S).
+      e.stopImmediatePropagation();
       saveNotesRef.current();
     };
     document.addEventListener("keydown", onKeyDown, true);
@@ -187,7 +194,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     // Ctrl/Cmd+S handled by the document listener above; swallow here too so
     // it never falls through to the browser when focus is in the editor.
-    if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
+    if ((e.ctrlKey || e.metaKey) && (e.code === "KeyS" || e.key === "s" || e.key === "S")) {
       e.preventDefault();
       return;
     }

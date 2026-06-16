@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import Modal from "./Modal";
 import { IcsEvent, IcsCategory, buildTaskName } from "../utility/parseIcs";
 import { useHomework } from "../context/HomeworkContext";
+import { useToast } from "../context/ToastContext";
 import {
   initializeYear,
   addCourse,
@@ -27,6 +28,7 @@ const capitalizeWords = (s: string) =>
 
 const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone }) => {
   const { addHomework, getCourseTasks } = useHomework();
+  const toast = useToast();
   const [selected, setSelected] = useState<Record<IcsCategory, boolean>>({
     meeting: false,
     maman: true,
@@ -116,6 +118,13 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
     setProgress("");
     setResult({ added, skipped, unparseable, failed, reasons });
     setBusy(false);
+    if (added > 0) {
+      toast.success(`Imported ${added} ${added === 1 ? "task" : "tasks"}`);
+    } else if (failed > 0) {
+      toast.error("Import failed — no tasks added");
+    } else {
+      toast.info("Nothing new to import");
+    }
     onDone();
   };
 
