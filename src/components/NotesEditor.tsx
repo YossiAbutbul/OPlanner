@@ -185,9 +185,8 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
       if (e.defaultPrevented) return;
       const a = document.activeElement;
       const relevant =
-        !!expandedRef.current || // expanded overlay is open
-        wrapRef.current?.contains(a) ||
-        expandedRef.current?.contains(a);
+        !!expandedRef.current || // expanded overlay open (covers overlay focus)
+        wrapRef.current?.contains(a); // focus within the inline editor
       if (!relevant) return;
       e.preventDefault();
       // stopImmediatePropagation: also blocks sibling document listeners
