@@ -20,9 +20,8 @@
   width: 96%;
   max-width: 320px;
   aspect-ratio: 1 / 1;
-  /* Header stays pinned to the top; the donut + subtitle block centers in
-     the remaining vertical space (auto margins split the free space). */
-  margin: auto auto 0;
+  /* Sit directly under the header at the top of the card. */
+  margin: 0 auto;
 }
 
 .progress-center {
@@ -50,7 +49,7 @@
 }
 
 .progress-subtitle {
-  margin: 0.95rem 0 auto;
+  margin: 0.95rem 0 0;
   font-size: 0.95rem;
   color: #888;
   font-weight: 500;
@@ -58,11 +57,9 @@
   text-align: center;
 }
 
-/* Wide screens: scale donut up but cap so it doesn't dominate the card.
-   .progress-card centers it horizontally and the aspect-ratio 1/1 plus
-   the wrap's flex item keeps it vertically centered in the card. */
+/* Header + donut + subtitle stack from the top of the card. */
 .progress-card {
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 @media (min-width: 1440px) {
