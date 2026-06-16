@@ -245,15 +245,23 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 0.6rem;
+  min-width: 0;
 }
 
 .course-stat-name {
   font-size: 0.95rem;
   font-weight: 600;
   color: #1a1a1a;
+  /* Truncate long course names instead of pushing the meta off the row. */
+  min-width: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .course-stat-meta {
+  flex-shrink: 0;
   font-size: 0.8rem;
   color: #666;
 }
