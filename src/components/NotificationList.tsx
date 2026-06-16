@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import { useToast } from "../context/ToastContext";
+import { timeLeft } from "../utility/dayCalendar";
 import HomeworkModal from "./HomeworkModal";
 import "../css/NotificationList.css";
 
@@ -89,33 +90,23 @@ const NotificationList: React.FC = () => {
         <p>No upcoming deadlines yet!</p>
       ) : (
         <ul>
-          {notifications.map(({ id, message }) => {
-            const match = message.match(/(\d+) day/);
-            const daysLeft = match ? parseInt(match[1], 10) : 0; // Default to 0 if no match
+          {notifications.map(({ id }) => {
+            const entry = homework.find((hw) => hw.id === id);
+            if (!entry) return null;
+            // Skip tasks already past due (shown elsewhere as overdue).
+            if (new Date(entry.dueDate) < today) return null;
 
-            const selectedHomework = homework.find((hw) => hw.id === id);
-            if (selectedHomework) {
-              const dueDate = new Date(selectedHomework.dueDate);
-              if (dueDate < today) {
-                return null; // Skip tasks with due dates before today
-              }
-            }
-
-            if (daysLeft !== null) {
-              const taskName = message.split(" is due")[0].replace(" is overdue!", "").trim(); // Ensure correct task name
-              return (
-                <li
-                  key={id}
-                  onClick={() => handleNotificationClick(id)}
-                  className={`notification-item ${getNotificationClass(daysLeft)}`}>
-                  <strong>{capitalizeFirstLetter(taskName)}</strong> is due{" "}
-                  <span style={getDayStyle(daysLeft)}>
-                    {daysLeft === 0 ? "today" : `${daysLeft} day${daysLeft !== 1 ? "s" : ""}`}
-                  </span>
-                </li>
-              );
-            }
-            return null; // Skip invalid notifications
+            // Same-day tasks with a time read in hours; otherwise days.
+            const tl = timeLeft(entry.dueDate, entry.endTime ?? entry.startTime);
+            return (
+              <li
+                key={id}
+                onClick={() => handleNotificationClick(id)}
+                className={`notification-item ${getNotificationClass(tl.days)}`}>
+                <strong>{capitalizeFirstLetter(entry.name)}</strong> is due{" "}
+                <span style={getDayStyle(tl.days)}>{tl.short}</span>
+              </li>
+            );
           })}
         </ul>
       )}

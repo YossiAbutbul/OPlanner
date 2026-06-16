@@ -146,7 +146,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       year,
       semester,
       course,
-      true, // ignoreOverdue: always true
+      editHomework?.ignoreOverdue ?? false, // preserve existing; new tasks can go overdue
       allDay ? "07:00" : (startTime || undefined),
       allDay ? "23:00" : (endTime || undefined),
       notes || undefined,
