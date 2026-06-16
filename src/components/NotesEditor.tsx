@@ -43,6 +43,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   // positioning, and the highlighted item. Null when closed.
   const [mention, setMention] = useState<{ query: string; top: number; left: number } | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const collapsedRef = useRef<HTMLDivElement>(null);
   const expandedRef = useRef<HTMLDivElement>(null);
   // Tracks the last sanitized HTML we emitted. When the parent re-renders
@@ -143,18 +144,51 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
     return () => document.removeEventListener("selectionchange", onSel);
   }, [expanded]);
 
+  // Persist the notes (overlay commit when expanded, otherwise flush the
+  // collapsed editor). Shared by the in-editor keydown and the document-level
+  // Ctrl/Cmd+S listener below.
+  const saveNotes = () => {
+    setMention(null);
+    if (expanded) {
+      handleSaveExpanded(); // commits overlay edits + closes the overlay
+      return;
+    }
+    emitCollapsed();
+    onSave?.();
+  };
+
+  // Keep a fresh ref so the document listener (registered once) always runs
+  // the latest closure without re-binding on every render.
+  const saveNotesRef = useRef(saveNotes);
+  saveNotesRef.current = saveNotes;
+
+  // Ctrl/Cmd+S anywhere within this editor (incl. toolbar buttons / popovers,
+  // where focus isn't in the contentEditable) saves instead of letting the
+  // browser save the page. Capture phase so we win before the default.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S"))) return;
+      const a = document.activeElement;
+      const relevant =
+        !!expandedRef.current || // expanded overlay is open
+        wrapRef.current?.contains(a) ||
+        expandedRef.current?.contains(a);
+      if (!relevant) return;
+      e.preventDefault();
+      // Stop other document listeners (e.g. HomeworkModal's own Ctrl+S) from
+      // also firing and double-saving.
+      e.stopPropagation();
+      saveNotesRef.current();
+    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
+  }, []);
+
   const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    // Ctrl/Cmd+S: persist instead of letting the browser save the page.
+    // Ctrl/Cmd+S handled by the document listener above; swallow here too so
+    // it never falls through to the browser when focus is in the editor.
     if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
       e.preventDefault();
-      setMention(null);
-      if (expanded) {
-        // Commit overlay edits back into the form, then close the overlay.
-        handleSaveExpanded();
-        return;
-      }
-      emitCollapsed();
-      onSave?.();
       return;
     }
     // While the @-mention picker is open, hijack nav/confirm/dismiss keys.
@@ -235,7 +269,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   const handleDiscardExpanded = () => setExpanded(false);
 
   return (
-    <div className={`ne-wrap ${inlineToolbar ? "ne-wrap-toolbar" : ""}`}>
+    <div ref={wrapRef} className={`ne-wrap ${inlineToolbar ? "ne-wrap-toolbar" : ""}`}>
       {inlineToolbar && !expanded && (
         <div className="ne-inline-toolbar">
           <NotesToolbar
