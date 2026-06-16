@@ -358,6 +358,12 @@
   font-style: italic;
 }
 
+/* Course calendar: taller rows than the 60px base so a day-number + task
+   pill + the "+N more" pill all fit; at 60px the more pill was clipped. */
+.course-calendar .cal-grid {
+  grid-auto-rows: minmax(4.5rem, 5.5rem);
+}
+
 /* Wide screens: taller calendar rows so the course-row card section
    uses its vertical space and pushes the homework table down. Gated on
    min-height to avoid overflow on 1080p panels. */
