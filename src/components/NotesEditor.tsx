@@ -144,6 +144,12 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
     return () => document.removeEventListener("selectionchange", onSel);
   }, [expanded]);
 
+  const handleSaveExpanded = () => {
+    const el = expandedRef.current;
+    if (el) onChange(sanitize(el.innerHTML));
+    setExpanded(false);
+  };
+
   // Persist the notes (overlay commit when expanded, otherwise flush the
   // collapsed editor). Shared by the in-editor keydown and the document-level
   // Ctrl/Cmd+S listener below.
@@ -161,7 +167,9 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   // Keep a fresh ref so the document listener (registered once) always runs
   // the latest closure without re-binding on every render.
   const saveNotesRef = useRef(saveNotes);
-  saveNotesRef.current = saveNotes;
+  useEffect(() => {
+    saveNotesRef.current = saveNotes;
+  });
 
   // Ctrl/Cmd+S anywhere within this editor (incl. toolbar buttons / popovers,
   // where focus isn't in the contentEditable) saves instead of letting the
@@ -265,12 +273,6 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
       document.execCommand(cmd, false, color);
     }
     if (!expanded) emitCollapsed();
-  };
-
-  const handleSaveExpanded = () => {
-    const el = expandedRef.current;
-    if (el) onChange(sanitize(el.innerHTML));
-    setExpanded(false);
   };
 
   const handleDiscardExpanded = () => setExpanded(false);
