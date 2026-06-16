@@ -1,4 +1,5 @@
 import React from "react";
+import { ListPlus } from "lucide-react";
 import Modal from "./Modal";
 import { HomeworkEntry } from "../context/HomeworkContext";
 import "../css/DayTasksModal.css";
@@ -44,6 +45,7 @@ const DayTasksModal: React.FC<Props> = ({
             Close
           </button>
           <button className="app-modal-btn-primary" onClick={onAdd}>
+            <ListPlus size={16} />
             New task
           </button>
         </>

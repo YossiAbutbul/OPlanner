@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
+import { useToast } from "../context/ToastContext";
 import HomeworkModal from "./HomeworkModal";
 import "../css/NotificationList.css";
 
 const NotificationList: React.FC = () => {
   const { notifications, homework, addHomework } = useHomework();
+  const toast = useToast();
   const [isModalOpen, setModalOpen] = useState(false);
   const [editHomework, setEditHomework] = useState<{
     id: string;
@@ -69,6 +71,7 @@ const NotificationList: React.FC = () => {
     color?: string
   ) => {
     await addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, undefined, startTime, endTime, notes, color);
+    toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`);
     setModalOpen(false);
   };
 

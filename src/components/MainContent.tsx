@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useState, useEffect } from "react";
 import ProgressChart from "./ProgressChart";
 import HomeworkTable from "./HomeworkTable";
 import SemesterOverview from "./SemesterOverview";
-import { Plus } from "lucide-react";
+import { ListPlus } from "lucide-react";
 
 // Lazy so the HomeworkModal + NotesEditor chunk only loads on first open.
 // Static imports here would cancel the lazy() in RightSidebar/SemesterOverview.
@@ -168,6 +168,7 @@ const MainContent: React.FC<MainContentProps> = ({
       );
       setCalDate(dueDate);
       setHomeworkModalOpen(false);
+      toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`);
     } finally {
       setIsLoadingAction(false);
     }
@@ -287,7 +288,7 @@ const MainContent: React.FC<MainContentProps> = ({
                 className="course-add-task"
                 onClick={() => setHomeworkModalOpen(true)}
               >
-                <Plus size={16} />
+                <ListPlus size={16} />
                 <span>New task</span>
               </button>
             </header>
@@ -488,6 +489,7 @@ const MainContent: React.FC<MainContentProps> = ({
                   color
                 );
               }
+              toast.success(color ? "Color updated" : "Color reset");
             } catch (err) {
               toast.error(err instanceof Error ? err.message : "Something went wrong.");
               throw err;

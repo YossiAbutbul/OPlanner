@@ -248,6 +248,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           setHwPrefillDate(null);
           setHwPrefillStart(null);
           setHwPrefillEnd(null);
+          toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`);
         }}
         editHomework={editTask}
         onDelete={editTask ? async () => {
@@ -289,6 +290,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         }}
         onSave={async (b) => {
           await saveBlock(b);
+          toast.success(b.id ? "Time block updated" : "Time block added");
         }}
         onDelete={async (id) => {
           await removeBlock(id);
