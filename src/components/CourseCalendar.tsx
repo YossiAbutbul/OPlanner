@@ -143,6 +143,9 @@ const CourseCalendar: React.FC<Props> = ({
   }, []);
 
   const handleCellEnter = (e: React.MouseEvent<HTMLButtonElement>, iso: string, has: boolean) => {
+    // Touch devices emulate hover on tap, and the popover gets clipped by the
+    // screen edges — only show it where real hover exists (desktop pointers).
+    if (!window.matchMedia?.("(hover: hover)").matches) return;
     if (!has) {
       setHoverIso(null);
       setPopoverPos(null);
