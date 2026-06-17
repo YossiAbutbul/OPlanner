@@ -1,6 +1,6 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import type { CourseLink, CourseMeta } from "../types/models";
+import type { CourseLink, CourseMeta, ExamColumn, ExamRow, ExamTable } from "../types/models";
 
 // Firestore path of the course doc itself (links/notes/info live on it,
 // alongside the existing color/finalDate fields).
@@ -11,6 +11,9 @@ export const MAX_LINKS = 20;
 export const MAX_LABEL_LEN = 100;
 export const MAX_URL_LEN = 2000;
 export const MAX_COURSE_NOTES_LEN = 50000;
+export const MAX_EXAM_COLUMNS = 60;
+export const MAX_EXAM_ROWS = 100;
+export const MAX_EXAM_LABEL_LEN = 120;
 
 // http(s) only — same philosophy as the notes editor's ALLOWED_URI_REGEXP.
 // new URL() rejects things the prefix check alone would let through ("http://").
@@ -79,7 +82,47 @@ export const normalizeCourseMeta = (data: unknown): CourseMeta => {
   if (typeof d.courseNotes === "string" && d.courseNotes.length <= MAX_COURSE_NOTES_LEN)
     meta.courseNotes = d.courseNotes;
 
+  const examTable = normalizeExamTable(d.examTable);
+  if (examTable) meta.examTable = examTable;
+
   return meta;
+};
+
+// Drop malformed exam-table data: non-string ids/labels, oversized labels,
+// over-limit column/row counts, and check entries that don't map to a known
+// column id (so deleted columns can't leave orphaned booleans behind).
+const normalizeExamTable = (data: unknown): ExamTable | undefined => {
+  if (!data || typeof data !== "object") return undefined;
+  const d = data as Record<string, unknown>;
+
+  const columns: ExamColumn[] = Array.isArray(d.columns)
+    ? d.columns
+        .filter((c): c is Record<string, unknown> => !!c && typeof c === "object")
+        .filter((c) => typeof c.id === "string" && typeof c.label === "string")
+        .slice(0, MAX_EXAM_COLUMNS)
+        .map((c) => ({ id: c.id as string, label: (c.label as string).slice(0, MAX_EXAM_LABEL_LEN) }))
+    : [];
+
+  const colIds = new Set(columns.map((c) => c.id));
+
+  const rows: ExamRow[] = Array.isArray(d.rows)
+    ? d.rows
+        .filter((r): r is Record<string, unknown> => !!r && typeof r === "object")
+        .filter((r) => typeof r.id === "string" && typeof r.label === "string")
+        .slice(0, MAX_EXAM_ROWS)
+        .map((r) => {
+          const checks: Record<string, boolean> = {};
+          if (r.checks && typeof r.checks === "object") {
+            for (const [k, v] of Object.entries(r.checks as Record<string, unknown>)) {
+              if (colIds.has(k) && v === true) checks[k] = true;
+            }
+          }
+          return { id: r.id as string, label: (r.label as string).slice(0, MAX_EXAM_LABEL_LEN), checks };
+        })
+    : [];
+
+  if (!columns.length && !rows.length) return undefined;
+  return { columns, rows };
 };
 
 export const fetchCourseMeta = async (

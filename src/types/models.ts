@@ -44,12 +44,33 @@ export interface CourseLink {
   url: string;    // http(s) only — validated before save
 }
 
+// One column in the exams table — represents a single exam question.
+export interface ExamColumn {
+  id: string;     // crypto.randomUUID()
+  label: string;  // e.g. "Q1"
+}
+
+// One row in the exams table — represents a single exam paper.
+export interface ExamRow {
+  id: string;                       // crypto.randomUUID()
+  label: string;                    // e.g. "2022b moed 87"
+  checks: Record<string, boolean>;  // keyed by ExamColumn id — questions done
+}
+
+// Per-course exam tracker: a checkbox grid of exams (rows) × questions
+// (columns). Both axes' labels are user-editable.
+export interface ExamTable {
+  columns: ExamColumn[];
+  rows: ExamRow[];
+}
+
 // Course-page metadata stored directly on the course doc at
 // users/{uid}/years/{year}/semesters/{semester}/courses/{course}.
 // All fields optional — legacy course docs have none of them.
 export interface CourseMeta {
   links?: CourseLink[];     // ordered; max 20 (also enforced in firestore.rules)
   courseNotes?: string;     // sanitized HTML, <=50000 chars
+  examTable?: ExamTable;    // exams × questions checkbox grid
 }
 
 // Course-level metadata returned by getAllYearsAndSemesters().

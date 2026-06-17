@@ -10,6 +10,7 @@ const HomeworkModal = lazy(() => import("./HomeworkModal"));
 import ImportCalendarModal from "./ImportCalendarModal";
 import CourseCalendar from "./CourseCalendar";
 import CourseInfoPanel from "./CourseInfoPanel";
+import ExamsPanel from "./ExamsPanel";
 import DayTasksModal from "./DayTasksModal";
 import DeleteModal from "./DeleteModal";
 import TabSettingsModal from "./TabSettingsModal";
@@ -122,7 +123,7 @@ const MainContent: React.FC<MainContentProps> = ({
   // Inner tab inside the course view: Tasks (chart + calendar + table)
   // vs. Course info (links table + notes). Reset to "tasks" whenever the
   // user switches courses so they don't land on the info tab unexpectedly.
-  type CourseInnerTab = "overview" | "info";
+  type CourseInnerTab = "overview" | "exams" | "info";
   const [courseInnerTab, setCourseInnerTab] = useState<CourseInnerTab>("overview");
   useEffect(() => { setCourseInnerTab("overview"); }, [activeTab?.course, activeTab?.semester, activeTab?.year]);
 
@@ -311,6 +312,15 @@ const MainContent: React.FC<MainContentProps> = ({
               >
                 Course info
               </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={courseInnerTab === "exams"}
+                className={`course-inner-tab ${courseInnerTab === "exams" ? "course-inner-tab-active" : ""}`}
+                onClick={() => setCourseInnerTab("exams")}
+              >
+                Exams
+              </button>
             </div>
             <div className="course-tab-panel">
             <div className="course-tab-anim" key={courseInnerTab}>
@@ -349,6 +359,8 @@ const MainContent: React.FC<MainContentProps> = ({
                   />
                 </div>
               </div>
+            ) : courseInnerTab === "exams" ? (
+              <ExamsPanel activeTab={activeTab} />
             ) : (
               <CourseInfoPanel
                 activeTab={activeTab}
