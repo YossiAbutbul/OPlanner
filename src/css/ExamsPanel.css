@@ -1,0 +1,469 @@
+/* Exams tab body — matches the Course info tab chrome (.cip*). A single
+   card holds the exams × questions checkbox grid. */
+.ep {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-bottom: 1rem;
+}
+
+.ep-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ep-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ep-section-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ep-section-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.ep-subhead {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #777;
+  max-width: 46ch;
+}
+
+.ep-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #777;
+}
+
+.ep-section-head-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ep-head-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.65rem;
+  background: #1db954;
+  border: 1px solid #19a449;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    transform 0.08s ease;
+}
+
+.ep-head-add:hover:not(:disabled) {
+  background: #1ed760;
+}
+
+.ep-head-add:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ep-head-add:disabled {
+  background: #cfd2d6;
+  border-color: #c2c5c9;
+  cursor: default;
+}
+
+/* Secondary action (add column) — outlined rather than filled so the
+   primary "Exam" button stays the obvious default. */
+.ep-head-add-secondary {
+  background: #fff;
+  color: #1a8a44;
+  border-color: #bfe3cb;
+}
+
+.ep-head-add-secondary:hover:not(:disabled) {
+  background: #f1fbf4;
+}
+
+.ep-empty {
+  padding: 1.1rem;
+  font-size: 0.85rem;
+  color: #aaa;
+  font-style: italic;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e3e3e6;
+  border-radius: 10px;
+}
+
+/* Positioned wrapper for the Notion-style edge handles. Padding leaves room
+   for the top (+column) and left (+row) handles. */
+.ep-grid {
+  position: relative;
+}
+
+/* Horizontal scroll wrapper — many question columns shouldn't blow out the
+   page width. */
+.ep-table-scroll {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e3e3e6;
+  border-radius: 10px;
+}
+
+/* Word-style circular "+" insert handles — a round button centered on the
+   table edge, revealed on hover, lit blue when hovered. */
+.ep-edge-add {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Lock to a true circle — global button styles must not stretch it. */
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1.5px solid #c7cace;
+  border-radius: 50%;
+  color: #5b6168;
+  cursor: pointer;
+  opacity: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  transition:
+    opacity 0.12s ease,
+    background-color 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease,
+    transform 0.1s ease;
+}
+
+.ep-edge-add-row:hover:not(:disabled) {
+  transform: translateX(-50%) scale(1.12);
+}
+
+.ep-edge-add-col:hover:not(:disabled) {
+  transform: translateY(-50%) scale(1.12);
+}
+
+.ep-grid:hover .ep-edge-add {
+  opacity: 1;
+}
+
+.ep-edge-add svg {
+  display: block;
+}
+
+.ep-edge-add:hover:not(:disabled) {
+  background: #2f80ed;
+  border-color: #2f80ed;
+  color: #fff;
+}
+
+.ep-edge-add:disabled {
+  opacity: 0;
+  cursor: default;
+}
+
+/* Straddling the bottom border → add exam row. Negative offset = half the
+   circle sits over the table edge, so the table itself reaches full width. */
+.ep-edge-add-row {
+  bottom: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Straddling the right border → add question column. */
+.ep-edge-add-col {
+  top: 50%;
+  right: -9px;
+  transform: translateY(-50%);
+}
+
+.ep-table {
+  border-collapse: collapse;
+  /* Fill the card width; fixed first column for exam names, the rest split
+     evenly among question columns (Word-style even grid). */
+  width: 100%;
+  table-layout: fixed;
+}
+
+.ep-table th,
+.ep-table td {
+  border-bottom: 1px solid #eef0f2;
+  border-right: 1px solid #eef0f2;
+}
+
+.ep-table tr:last-child th,
+.ep-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ep-table th:last-child,
+.ep-table td:last-child {
+  border-right: none;
+}
+
+/* Header row (questions) — sticks to the top while scrolling exams. */
+.ep-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #f6f6f7;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #555;
+  border-bottom: 1px solid #e3e3e6;
+  padding: 0.4rem 0.5rem;
+  vertical-align: middle;
+}
+
+.ep-corner {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  /* Above both the sticky header row and the sticky exam column. */
+  z-index: 4;
+  background: #f6f6f7;
+  /* Fixed first column for exam names; question columns split the rest
+     evenly (Word-style even grid). */
+  width: 220px;
+}
+
+.ep-col-head {
+  width: auto;
+}
+
+.ep-col-head-inner,
+.ep-row-head-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.ep-col-head-inner {
+  justify-content: center;
+}
+
+/* Exam-name column — sticky so it stays visible while scrolling questions. */
+.ep-row-head {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #fff;
+  padding: 0.3rem 0.5rem;
+  width: 220px;
+}
+
+
+.ep-row-head-inner {
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* Inline-editable labels (column + row). Render as a borderless text button
+   that swaps to an input on click. */
+.ep-label-text {
+  background: transparent;
+  /* Transparent border reserves the same box as the edit input, so swapping
+     to edit mode doesn't shift the layout. */
+  border: 1px solid transparent;
+  box-sizing: border-box;
+  padding: 0.2rem 0.3rem;
+  /* font-family only — let .ep-row-label/.ep-col-label own the size/weight so
+     text and edit-input render identically. */
+  font-family: inherit;
+  color: #222;
+  cursor: text;
+  border-radius: 5px;
+  text-align: left;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+
+.ep-col-label {
+  font-weight: 600;
+  text-align: center;
+}
+
+.ep-row-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  flex: 1 1 auto;
+}
+
+.ep-label-empty {
+  color: #aaa;
+  font-style: italic;
+}
+
+.ep-label-input {
+  width: 100%;
+  min-width: 60px;
+  box-sizing: border-box;
+  /* Match .ep-label-text exactly — same font, padding, transparent bg — so
+     only the border appears on edit; no font-size or layout jump. */
+  padding: 0.2rem 0.3rem;
+  font-family: inherit;
+  background: transparent;
+  border: 1px solid #1db954;
+  border-radius: 5px;
+  color: #222;
+  outline: none;
+}
+
+/* Checkbox cells. */
+.ep-cell {
+  text-align: center;
+  padding: 0.25rem;
+}
+
+.ep-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Anchor to the cell's middle so gaining the check glyph doesn't shift the
+     box down (empty vs. filled inline baselines differ otherwise). */
+  vertical-align: middle;
+  /* Lock to a square — global button styles must not stretch it into a pill. */
+  width: 17px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1.5px solid #b4b7bb;
+  border-radius: 4px;
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    transform 0.08s ease;
+}
+
+.ep-check svg {
+  display: block;
+}
+
+.ep-check:hover {
+  border-color: #1db954;
+}
+
+.ep-check:active {
+  transform: scale(0.9);
+}
+
+.ep-check-done {
+  background: #1db954;
+  border-color: #19a449;
+  box-shadow: 0 1px 3px rgba(25, 164, 73, 0.35);
+}
+
+/* The check glyph pops in when toggled on. */
+.ep-check-done svg {
+  animation: ep-check-pop 0.18s ease;
+}
+
+@keyframes ep-check-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Per-exam progress badge (done / total questions). */
+.ep-row-progress {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #8a9098;
+  background: #f1f1f3;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+
+.ep-row-progress-done {
+  color: #fff;
+  background: #1db954;
+}
+
+/* Whole row tints faint green once every question is checked. */
+.ep-row-complete .ep-row-head,
+.ep-row-complete .ep-cell {
+  background: #f3fbf5;
+}
+
+.ep-table tbody tr.ep-row-complete:hover .ep-row-head,
+.ep-table tbody tr.ep-row-complete:hover .ep-cell {
+  background: #eaf7ee;
+}
+
+.ep-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Hug the icon — no padding box. */
+  width: auto;
+  height: auto;
+  padding: 0;
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.ep-icon-btn svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+/* Reveal the delete affordance on hover/focus of its header cell. */
+.ep-col-head:hover .ep-icon-btn,
+.ep-row-head:hover .ep-icon-btn,
+.ep-icon-btn:focus-visible {
+  opacity: 1;
+}
+
+.ep-icon-delete:hover {
+  color: #c0392b;
+}
+
+/* Row hover highlight — light blue across the whole exam row, like the
+   reference figure. */
+.ep-table tbody tr:hover .ep-row-head,
+.ep-table tbody tr:hover .ep-cell {
+  background: #eaf2fd;
+}
+
+/* Touch devices have no hover — keep delete buttons visible. */
+@media (hover: none) {
+  .ep-icon-btn {
+    opacity: 0.7;
+  }
+}

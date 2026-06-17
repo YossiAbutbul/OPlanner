@@ -30,6 +30,18 @@ service cloud.firestore {
           !("links" in request.resource.data)
           || (request.resource.data.links is list
               && request.resource.data.links.size() <= 20)
+        )
+        // Exam tracker: a map of { columns: list, rows: list }; row/column
+        // counts bounded (per-cell sizes enforced client-side).
+        && (
+          !("examTable" in request.resource.data)
+          || (request.resource.data.examTable is map
+              && (!("columns" in request.resource.data.examTable)
+                  || (request.resource.data.examTable.columns is list
+                      && request.resource.data.examTable.columns.size() <= 60))
+              && (!("rows" in request.resource.data.examTable)
+                  || (request.resource.data.examTable.rows is list
+                      && request.resource.data.examTable.rows.size() <= 100)))
         );
     }
   }
