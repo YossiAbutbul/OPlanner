@@ -411,6 +411,16 @@
   gap: 0.85rem;
 }
 
+/* Mobile: stack course name over semester/year; the New task button stays on
+   the right, vertically centered across both lines. */
+@media (max-width: 600px) {
+  .course-header-text {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+}
+
 .course-add-task {
   padding: 0.5rem 1rem;
   background: #1db954;
