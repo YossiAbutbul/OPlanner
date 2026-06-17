@@ -196,10 +196,11 @@
 
 .ep-table {
   border-collapse: collapse;
-  /* Fill the card width; fixed first column for exam names, the rest split
-     evenly among question columns (Word-style even grid). */
+  /* Fill the card width; question columns size to their content (label +
+     delete icon) and never shrink below it — the table overflows into a
+     horizontal scroll when there are too many to fit. */
   width: 100%;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .ep-table th,
@@ -218,17 +219,18 @@
   border-right: none;
 }
 
-/* Header row (questions) — sticks to the top while scrolling exams. */
+/* Header row (questions) — sticks to the top while scrolling exams.
+   Chrome matches the Links table header (.cip-table-head). */
 .ep-table thead th {
   position: sticky;
   top: 0;
   z-index: 3;
   background: #f6f6f7;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #555;
   border-bottom: 1px solid #e3e3e6;
-  padding: 0.4rem 0.5rem;
+  padding: 0.7rem 1rem;
   vertical-align: middle;
 }
 
@@ -239,13 +241,32 @@
   /* Above both the sticky header row and the sticky exam column. */
   z-index: 4;
   background: #f6f6f7;
+  /* Inset the "Exam" label like the Links table header (1rem). */
+  padding-left: 1rem;
   /* Fixed first column for exam names; question columns split the rest
      evenly (Word-style even grid). */
-  width: 220px;
+  width: 132px;
 }
 
 .ep-col-head {
   width: auto;
+  /* Wide enough for label + delete icon; columns grow to fill, never shrink
+     below this (overflow → horizontal scroll). */
+  min-width: 76px;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}
+
+/* Narrow progress column right after the exam name. */
+.ep-progress-head {
+  width: 60px;
+  text-align: center;
+}
+
+.ep-progress-cell {
+  width: 60px;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .ep-col-head-inner,
@@ -257,6 +278,9 @@
 
 .ep-col-head-inner {
   justify-content: center;
+  /* Content-sized — both label and delete icon stay fully visible (no
+     shrink/ellipsis); the column grows to fit them. */
+  flex-wrap: nowrap;
 }
 
 /* Exam-name column — sticky so it stays visible while scrolling questions. */
@@ -266,8 +290,9 @@
   left: 0;
   z-index: 1;
   background: #fff;
-  padding: 0.3rem 0.5rem;
-  width: 220px;
+  /* left 0.7rem + the label button's own 0.3rem = 1rem, matching .ep-corner. */
+  padding: 0.3rem 0.5rem 0.3rem 0.7rem;
+  width: 132px;
 }
 
 
@@ -410,11 +435,13 @@
 
 /* Whole row tints faint green once every question is checked. */
 .ep-row-complete .ep-row-head,
+.ep-row-complete .ep-progress-cell,
 .ep-row-complete .ep-cell {
   background: #f3fbf5;
 }
 
 .ep-table tbody tr.ep-row-complete:hover .ep-row-head,
+.ep-table tbody tr.ep-row-complete:hover .ep-progress-cell,
 .ep-table tbody tr.ep-row-complete:hover .ep-cell {
   background: #eaf7ee;
 }
@@ -457,13 +484,27 @@
 /* Row hover highlight — light blue across the whole exam row, like the
    reference figure. */
 .ep-table tbody tr:hover .ep-row-head,
+.ep-table tbody tr:hover .ep-progress-cell,
 .ep-table tbody tr:hover .ep-cell {
   background: #eaf2fd;
 }
 
-/* Touch devices have no hover — keep delete buttons visible. */
+/* Touch devices have no hover — keep the delete buttons and the add "+"
+   handles permanently visible (the :disabled rule still hides them at limit). */
 @media (hover: none) {
   .ep-icon-btn {
     opacity: 0.7;
+  }
+  .ep-edge-add {
+    opacity: 1;
+  }
+}
+
+/* Mobile — don't pin the exam-name column; it eats too much of a narrow
+   viewport. Let it scroll with the rest of the table. */
+@media (max-width: 768px) {
+  .ep-corner,
+  .ep-row-head {
+    position: static;
   }
 }

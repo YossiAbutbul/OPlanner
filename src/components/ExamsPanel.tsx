@@ -13,6 +13,13 @@ interface Props {
 
 const emptyTable = (): ExamTable => ({ columns: [], rows: [] });
 
+// Touch devices: auto-opening the new row's name input pops the keyboard and
+// scrolls unexpectedly. Let the user tap the cell they want instead.
+const isCoarsePointer = (): boolean =>
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(pointer: coarse)").matches;
+
 // Append " (2)", " (3)"… until the label is free. Keeps exam rows uniquely named.
 const uniqueLabel = (base: string, taken: Set<string>): string => {
   if (!taken.has(base)) return base;
@@ -134,7 +141,7 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
       ? table.columns
       : [{ id: crypto.randomUUID(), label: "Q1" }];
     commit({ ...table, columns, rows: [...table.rows, row] });
-    setAutoEditRowId(row.id);
+    if (!isCoarsePointer()) setAutoEditRowId(row.id);
   };
 
   const renameColumn = (id: string, label: string) =>
@@ -221,6 +228,7 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
               <thead>
                 <tr>
                   <th className="ep-corner">Exam</th>
+                  <th className="ep-progress-head">Done</th>
                   {table.columns.map((c) => (
                     <th key={c.id} className="ep-col-head">
                       <div className="ep-col-head-inner">
@@ -262,14 +270,6 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                           autoEdit={r.id === autoEditRowId}
                           onCommit={(label) => renameRow(r.id, label)}
                         />
-                        {total > 0 && (
-                          <span
-                            className={`ep-row-progress ${complete ? "ep-row-progress-done" : ""}`}
-                            title={`${doneCount} of ${total} questions done`}
-                          >
-                            {doneCount}/{total}
-                          </span>
-                        )}
                         <button
                           type="button"
                           className="ep-icon-btn ep-icon-delete"
@@ -281,6 +281,16 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                         </button>
                       </div>
                     </th>
+                    <td className="ep-progress-cell">
+                      {total > 0 && (
+                        <span
+                          className={`ep-row-progress ${complete ? "ep-row-progress-done" : ""}`}
+                          title={`${doneCount} of ${total} questions done`}
+                        >
+                          {doneCount}/{total}
+                        </span>
+                      )}
+                    </td>
                     {table.columns.map((c) => {
                       const done = !!r.checks[c.id];
                       return (
