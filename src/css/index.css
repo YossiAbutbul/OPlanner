@@ -92,9 +92,6 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
-button:hover {
-  border-color: #646cff65;
-}
 
 /* Global keyboard-focus indicator — visible ring on Tab/Shift-Tab focus, NOT
    on mouse click (where :focus-visible is suppressed by the UA). Applies to

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import DatePicker from "../DatePicker";
 import type { HomeworkEntry, TimeBlock } from "../../types/models";
 import {
@@ -341,15 +342,17 @@ const DayPanel: React.FC<Props> = ({
     <>
       <header className="rs-day-head">
         <div className="rs-day-row">
-          <button className="rs-day-nav-btn" onClick={() => shiftDay(-1)} aria-label="Previous day">‹</button>
-          <DatePicker value={dayDate} onChange={(v) => v && onChangeDayDate(v)} block>
-            {(open) => (
-              <button type="button" className="rs-day-date" onClick={open}>
-                {longDay(dayDate)}
-              </button>
-            )}
-          </DatePicker>
-          <button className="rs-day-nav-btn" onClick={() => shiftDay(1)} aria-label="Next day">›</button>
+          <div className="rs-day-seg">
+            <button className="rs-day-nav-btn" onClick={() => shiftDay(-1)} aria-label="Previous day"><ChevronLeft size={18} strokeWidth={2.5} /></button>
+            <DatePicker value={dayDate} onChange={(v) => v && onChangeDayDate(v)} block>
+              {(open) => (
+                <button type="button" className="rs-day-date" onClick={open}>
+                  {longDay(dayDate)}
+                </button>
+              )}
+            </DatePicker>
+            <button className="rs-day-nav-btn" onClick={() => shiftDay(1)} aria-label="Next day"><ChevronRight size={18} strokeWidth={2.5} /></button>
+          </div>
           <button
             className="rs-day-today"
             onClick={() => {
