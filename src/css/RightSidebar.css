@@ -316,8 +316,27 @@
 .rs-day-row {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   width: 100%;
+}
+
+/* Segmented control: prev | date | next share one rounded container. */
+.rs-day-seg {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  background: var(--rs-elev);
+  border: 1px solid var(--rs-border);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.rs-day-seg .dp-wrap-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
 }
 
 .rs-day-hint {
@@ -333,15 +352,16 @@
 }
 
 .rs-day-nav-btn {
-  background: var(--rs-elev);
-  color: var(--rs-text);
-  border: 1px solid var(--rs-border);
-  border-radius: 6px;
-  width: 28px;
-  height: 28px;
+  background: transparent;
+  color: var(--rs-text-muted);
+  border: none;
+  border-radius: 0;
+  width: 34px;
+  flex-shrink: 0;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.1rem;
   line-height: 1;
+  transition: background-color 0.12s ease, color 0.12s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -351,17 +371,33 @@
 
 .rs-day-nav-btn:hover {
   background: var(--rs-hover);
+  color: var(--rs-text);
+}
+
+.rs-day-nav-btn:active {
+  background: var(--rs-row);
+}
+
+/* Hairline dividers between the arrows and the date. */
+.rs-day-seg .rs-day-nav-btn:first-child {
+  border-right: 1px solid var(--rs-border);
+}
+.rs-day-seg .rs-day-nav-btn:last-child {
+  border-left: 1px solid var(--rs-border);
 }
 
 .rs-day-today {
-  background: transparent;
+  flex-shrink: 0;
+  height: 36px;
+  background: var(--rs-elev);
   color: var(--rs-text-soft);
   border: 1px solid var(--rs-border);
-  border-radius: 6px;
-  padding: 0.3rem 0.7rem;
+  border-radius: 9px;
+  padding: 0 0.85rem;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
 .rs-day-today:hover {
@@ -369,27 +405,31 @@
   color: var(--rs-text);
 }
 
+.rs-day-today:active {
+  background: var(--rs-row);
+}
+
 .rs-day-date {
   flex: 1;
-  background: var(--rs-elev);
+  background: transparent;
   color: var(--rs-text);
-  border: 1px solid var(--rs-border);
+  border: none;
+  border-radius: 0;
   font-size: 0.88rem;
   font-weight: 700;
   text-align: center;
-  padding: 0.4rem 0.5rem;
-  border-radius: 6px;
+  padding: 0 0.5rem;
   cursor: pointer;
   letter-spacing: -0.01em;
   width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.12s ease;
 }
 
 .rs-day-date:hover {
-  background: var(--rs-hover);
-  color: var(--rs-accent);
+  color: var(--rs-text);
 }
 
 .rs-day-add {
@@ -702,22 +742,40 @@
 
 .rs-day-now-dot {
   position: absolute;
-  left: -5px;
+  /* Centered on the line (line center sits at y=0); dot is 10px so top=-5. */
+  left: -4px;
   top: -5px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: var(--rs-accent);
-  box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.25);
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.22);
+  animation: rs-now-pulse 2s ease-in-out infinite;
+}
+
+@keyframes rs-now-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.22); }
+  50%      { box-shadow: 0 0 0 5px rgba(29, 185, 84, 0.10); }
 }
 
 .rs-day-now-line {
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
+  /* Line center at y=0 so it aligns with the dot center. */
+  top: -1px;
   height: 2px;
-  background: var(--rs-accent);
+  border-radius: 1px;
+  background: linear-gradient(
+    to right,
+    var(--rs-accent),
+    rgba(29, 185, 84, 0.65)
+  );
+  box-shadow: 0 0 6px rgba(29, 185, 84, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rs-day-now-dot { animation: none; }
 }
 
 /* ===== Time/Color extras shared with modal ===== */
