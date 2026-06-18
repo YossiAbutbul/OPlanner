@@ -6,17 +6,24 @@ import "../css/ProgressChart.css";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const SWEEP_MS = 1100;
+const MIN_MS = 320;
 // Ease-in-out: slow at both the start and the end, faster through the middle.
 const easeInOutCubic = (t: number): number =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 /**
- * Eased 0 -> `target` progress over SWEEP_MS. Returns a float so the green
- * arc grows smoothly; callers round for the displayed %. The completed arc is
- * derived from this same value, so the bar fills as the number counts up.
+ * Eased tween toward `target`. Always animates from the *current* value to the
+ * new one, so the first paint sweeps 0 -> target while a later status change
+ * glides gradually up or down from the old % — never a step, never a re-fill
+ * from zero. Duration scales with the distance travelled (capped at SWEEP_MS).
+ * Returns a float; callers round for the displayed %.
  */
 const useProgress = (target: number): number => {
   const [value, setValue] = useState(0);
+  // Latest committed value, read as the animation's start point without
+  // re-triggering the tween effect. Synced in an effect (never during render).
+  const valueRef = useRef(0);
+  useEffect(() => { valueRef.current = value; }, [value]);
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number | null>(null);
 
@@ -25,11 +32,15 @@ const useProgress = (target: number): number => {
       setValue(target);
       return;
     }
+    const from = valueRef.current;
+    if (from === target) return;
+    const dist = Math.abs(target - from);
+    const duration = Math.max(MIN_MS, (dist / 100) * SWEEP_MS);
     startRef.current = null;
     const tick = (now: number) => {
       if (startRef.current === null) startRef.current = now;
-      const t = Math.min((now - startRef.current) / SWEEP_MS, 1);
-      setValue(easeInOutCubic(t) * target);
+      const t = Math.min((now - startRef.current) / duration, 1);
+      setValue(from + (target - from) * easeInOutCubic(t));
       if (t < 1) rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);

@@ -41,21 +41,30 @@
 .dp-nav {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
-  width: 28px;
-  height: 28px;
-  font-size: 1.1rem;
+  border-radius: 7px;
+  width: 30px;
+  height: 30px;
   cursor: pointer;
-  color: #555;
+  color: #666;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
+  padding: 0;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.dp-nav svg {
+  display: block;
 }
 
 .dp-nav:hover {
   background: #f0f0f1;
   color: #111;
+}
+
+.dp-nav:active {
+  background: #e7e7e9;
 }
 
 .dp-weekdays {

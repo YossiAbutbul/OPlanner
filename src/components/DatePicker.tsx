@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import "../css/DatePicker.css";
 
 interface Props {
@@ -167,13 +168,13 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
         >
           <div className="dp-head">
             <button type="button" className="dp-nav" onClick={() => { setSlideDir("right"); goPrev(); }} aria-label="Previous month">
-              ‹
+              <ChevronLeft size={18} strokeWidth={2.5} />
             </button>
             <div className="dp-title">
               {MONTHS[view.getMonth()]} {view.getFullYear()}
             </div>
             <button type="button" className="dp-nav" onClick={() => { setSlideDir("left"); goNext(); }} aria-label="Next month">
-              ›
+              <ChevronRight size={18} strokeWidth={2.5} />
             </button>
           </div>
           <div className="dp-weekdays">
