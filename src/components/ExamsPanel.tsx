@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Check, FilePlus2, Plus, Trash2 } from "lucide-react";
 import DeleteModal from "./DeleteModal";
 import { useCourseMeta } from "../hooks/useCourseMeta";
 import { useToast } from "../context/ToastContext";
@@ -11,7 +12,15 @@ interface Props {
   activeTab: CourseTab;
 }
 
-const emptyTable = (): ExamTable => ({ columns: [], rows: [] });
+// Starter table shown for a course with no exam data yet: one exam row and
+// two question columns (Q1, Q2). Not persisted until the user interacts.
+const buildDefaultTable = (): ExamTable => ({
+  columns: [
+    { id: crypto.randomUUID(), label: "Q1" },
+    { id: crypto.randomUUID(), label: "Q2" },
+  ],
+  rows: [{ id: crypto.randomUUID(), label: "New exam", checks: {} }],
+});
 
 // Touch devices: auto-opening the new row's name input pops the keyboard and
 // scrolls unexpectedly. Let the user tap the cell they want instead.
@@ -35,8 +44,10 @@ const EditableLabel: React.FC<{
   placeholder: string;
   className?: string;
   autoEdit?: boolean;
+  // Touch: instead of an inline input, hand off to a bottom-sheet editor.
+  onTouchEdit?: () => void;
   onCommit: (next: string) => void;
-}> = ({ value, placeholder, className, autoEdit = false, onCommit }) => {
+}> = ({ value, placeholder, className, autoEdit = false, onTouchEdit, onCommit }) => {
   // autoEdit starts the cell in edit mode on mount (e.g. a freshly added row).
   const [editing, setEditing] = useState(autoEdit);
   const [draft, setDraft] = useState(value);
@@ -50,12 +61,20 @@ const EditableLabel: React.FC<{
     else setDraft(value);
   };
 
+  const start = () => {
+    if (onTouchEdit && isCoarsePointer()) { onTouchEdit(); return; }
+    setEditing(true);
+  };
+
   if (editing) {
     return (
       <input
         className={`ep-label-input ${className ?? ""}`}
         type="text"
         autoFocus
+        // size=1 + width:100% keeps the input from inflating the column width
+        // on edit; it just fills the fixed cell.
+        size={1}
         maxLength={MAX_EXAM_LABEL_LEN}
         value={draft}
         placeholder={placeholder}
@@ -75,10 +94,51 @@ const EditableLabel: React.FC<{
       type="button"
       className={`ep-label-text ${className ?? ""} ${value ? "" : "ep-label-empty"}`}
       title="Click to rename"
-      onClick={() => setEditing(true)}
+      onClick={start}
     >
       {value || placeholder}
     </button>
+  );
+};
+
+// Bottom-sheet rename editor for touch devices. Slides up from the bottom;
+// tap the backdrop or Cancel to dismiss, Save commits the trimmed value.
+const RenameSheet: React.FC<{
+  title: string;
+  initialValue: string;
+  onSave: (next: string) => void;
+  onClose: () => void;
+}> = ({ title, initialValue, onSave, onClose }) => {
+  const [draft, setDraft] = useState(initialValue);
+
+  const save = () => {
+    const next = draft.trim();
+    if (next) onSave(next);
+    onClose();
+  };
+
+  return createPortal(
+    <div className="ep-sheet-backdrop" onClick={onClose}>
+      <div className="ep-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
+        <div className="ep-sheet-handle" />
+        <h4 className="ep-sheet-title">{title}</h4>
+        <input
+          className="ep-sheet-input"
+          type="text"
+          autoFocus
+          maxLength={MAX_EXAM_LABEL_LEN}
+          value={draft}
+          onFocus={(e) => e.currentTarget.select()}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") save(); }}
+        />
+        <div className="ep-sheet-actions">
+          <button type="button" className="ep-sheet-btn ep-sheet-cancel" onClick={onClose}>Cancel</button>
+          <button type="button" className="ep-sheet-btn ep-sheet-save" onClick={save}>Save</button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 };
 
@@ -89,24 +149,31 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
   const { meta, save } = useCourseMeta(activeTab);
   const toast = useToast();
 
-  const [table, setTable] = useState<ExamTable>(emptyTable);
+  const [table, setTable] = useState<ExamTable>(buildDefaultTable);
   // Row just added — its name cell mounts in edit mode with the text selected.
   const [autoEditRowId, setAutoEditRowId] = useState<string | null>(null);
+  // Touch rename target (bottom sheet). null = closed.
+  const [sheet, setSheet] = useState<{ title: string; value: string; onSave: (v: string) => void } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<
     | { kind: "row"; id: string; label: string }
     | { kind: "column"; id: string; label: string }
     | null
   >(null);
 
-  // Re-sync from the hook only when the remote table actually changes, so
-  // local edits aren't clobbered by our own optimistic writes.
+  // Re-sync from the hook. With remote data, mirror it (unless unchanged). With
+  // none, show the starter default so a fresh course isn't an empty grid.
   const lastRemoteRef = useRef<string>("");
   useEffect(() => {
-    const remote = meta.examTable ?? emptyTable();
-    const key = JSON.stringify(remote);
-    if (key !== lastRemoteRef.current) {
-      lastRemoteRef.current = key;
-      setTable(remote);
+    const remote = meta.examTable;
+    if (remote) {
+      const key = JSON.stringify(remote);
+      if (key !== lastRemoteRef.current) {
+        lastRemoteRef.current = key;
+        setTable(remote);
+      }
+    } else {
+      lastRemoteRef.current = "";
+      setTable(buildDefaultTable());
     }
   }, [meta.examTable]);
 
@@ -194,13 +261,24 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
         <div className="ep-section-head">
           <div className="ep-section-title">
             <h3>Exams</h3>
-            <p className="ep-subhead">Track which past exams you've solved.</p>
-            <p className="ep-hint">Hover the table edges to add a question column or an exam row.</p>
+            <div className="ep-subhead-row">
+              <p className="ep-subhead">Track which past exams you've solved.</p>
+              <button
+                type="button"
+                className="ep-add-exam-btn"
+                onClick={addRow}
+                disabled={atRowLimit}
+                title={atRowLimit ? `Limit of ${MAX_EXAM_ROWS} exams` : "Add exam"}
+              >
+                <FilePlus2 size={15} />
+                Add exam
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Notion-style edge handles: a tall "+" on the left adds an exam row,
-            a wide "+" on top adds a question column. Both reveal on hover. */}
+        {/* "+" on the right border adds a question column. Exam rows are added
+            from the "Add exam" button up in the header. */}
         <div className="ep-grid">
           <button
             type="button"
@@ -209,16 +287,6 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
             disabled={atColumnLimit}
             aria-label="Add question column"
             title={atColumnLimit ? `Limit of ${MAX_EXAM_COLUMNS} questions` : "Add question"}
-          >
-            <Plus size={12} />
-          </button>
-          <button
-            type="button"
-            className="ep-edge-add ep-edge-add-row"
-            onClick={addRow}
-            disabled={atRowLimit}
-            aria-label="Add exam row"
-            title={atRowLimit ? `Limit of ${MAX_EXAM_ROWS} exams` : "Add exam"}
           >
             <Plus size={12} />
           </button>
@@ -236,6 +304,7 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                           value={c.label}
                           placeholder="Q?"
                           className="ep-col-label"
+                          onTouchEdit={() => setSheet({ title: "Rename question", value: c.label, onSave: (v) => renameColumn(c.id, v) })}
                           onCommit={(label) => renameColumn(c.id, label)}
                         />
                         <button
@@ -268,6 +337,7 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                           placeholder="Exam name"
                           className="ep-row-label"
                           autoEdit={r.id === autoEditRowId}
+                          onTouchEdit={() => setSheet({ title: "Rename exam", value: r.label, onSave: (v) => renameRow(r.id, v) })}
                           onCommit={(label) => renameRow(r.id, label)}
                         />
                         <button
@@ -328,6 +398,15 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
             : `Delete exam “${pendingDelete?.label || "this row"}”? This can't be undone.`
         }
       />
+
+      {sheet && (
+        <RenameSheet
+          title={sheet.title}
+          initialValue={sheet.value}
+          onSave={sheet.onSave}
+          onClose={() => setSheet(null)}
+        />
+      )}
     </div>
   );
 };

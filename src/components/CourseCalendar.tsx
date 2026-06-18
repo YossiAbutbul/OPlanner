@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { HomeworkEntry } from "../context/HomeworkContext";
 import "../css/CourseCalendar.css";
 
@@ -208,9 +209,9 @@ const CourseCalendar: React.FC<Props> = ({
           {MONTHS[cursor.month]} {cursor.year}
         </div>
         <div className="cal-nav">
-          <button onClick={() => { setSlideDir("right"); goPrev(); }} aria-label="Previous month">‹</button>
+          <button className="cal-nav-btn" onClick={() => { setSlideDir("right"); goPrev(); }} aria-label="Previous month"><ChevronLeft size={18} strokeWidth={2.5} /></button>
           <button onClick={goToday} className="cal-today-btn">Today</button>
-          <button onClick={() => { setSlideDir("left"); goNext(); }} aria-label="Next month">›</button>
+          <button className="cal-nav-btn" onClick={() => { setSlideDir("left"); goNext(); }} aria-label="Next month"><ChevronRight size={18} strokeWidth={2.5} /></button>
         </div>
       </div>
       {hint && <div className="cal-hint">{hint}</div>}
