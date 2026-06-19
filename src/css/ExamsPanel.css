@@ -157,12 +157,19 @@
 }
 
 /* Horizontal scroll wrapper — many question columns shouldn't blow out the
-   page width. */
+   page width. Scroll works but the bar is hidden (web + PWA + app). */
 .ep-table-scroll {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   background: #fff;
   border: 1px solid #e3e3e6;
   border-radius: 10px;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge/IE */
+}
+
+.ep-table-scroll::-webkit-scrollbar {
+  display: none; /* Chromium, Safari, PWA/WebView */
 }
 
 /* Word-style circular "+" insert handles — a round button centered on the
@@ -558,6 +565,18 @@
   .ep-row-head {
     position: static;
   }
+
+  /* Auto layout + min-widths so columns keep a usable size and the table
+     overflows into a horizontal scroll instead of being squeezed/cut. */
+  .ep-table {
+    table-layout: auto;
+    width: max-content;
+    min-width: 100%;
+  }
+  .ep-col-head,
+  .ep-cell {
+    min-width: 72px;
+  }
 }
 
 /* Touch rename bottom sheet ------------------------------------------------ */
@@ -590,16 +609,8 @@
   to { transform: translateY(0); }
 }
 
-.ep-sheet-handle {
-  width: 36px;
-  height: 4px;
-  border-radius: 999px;
-  background: #d8dade;
-  margin: 0.2rem auto 0.8rem;
-}
-
 .ep-sheet-title {
-  margin: 0 0 0.6rem;
+  margin: 0.4rem 0 0.6rem;
   font-size: 0.95rem;
   font-weight: 700;
   color: #222;
