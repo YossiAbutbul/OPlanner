@@ -3,8 +3,9 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, CalendarPlus, LogOut, HelpCircle, Download, Timer, Bell, PartyPopper, Check } from "lucide-react";
+import { Settings, CalendarPlus, LogOut, HelpCircle, Download, Timer, Bell, PartyPopper, Check, Moon } from "lucide-react";
 import { useConfettiPref } from "../hooks/useConfettiPref";
+import { useTheme } from "../context/ThemeContext";
 
 // Feature flag — the Focus / Pomodoro tab is temporarily hidden from the
 // sidebar. The page, context, hook, and styles are all still wired up so
@@ -68,6 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { canInstall, installed, promptInstall } = useInstallPrompt();
   const [installHelpOpen, setInstallHelpOpen] = useState(false);
   const [confettiOn, setConfettiOn] = useConfettiPref();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [reminderOpen, setReminderOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(
@@ -373,6 +375,18 @@ const Sidebar: React.FC<SidebarProps> = ({
               <span>Confetti</span>
               <span className="settings-menu-check" aria-hidden>
                 {confettiOn ? <Check size={14} strokeWidth={2.5} /> : null}
+              </span>
+            </button>
+            <button
+              role="menuitemcheckbox"
+              aria-checked={theme === "dark"}
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              <Moon size={16} />
+              <span>Dark mode</span>
+              <span className="settings-menu-check" aria-hidden>
+                {theme === "dark" ? <Check size={14} strokeWidth={2.5} /> : null}
               </span>
             </button>
             {!installed && (

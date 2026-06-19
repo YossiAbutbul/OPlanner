@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { isCoarsePointer } from "../utility/pointer";
 import "../css/AuthModal.css";
 
 interface Props {
@@ -51,7 +52,8 @@ const AuthModal: React.FC<Props> = ({ isOpen, initialMode = "signin", onClose })
       setInfo(null);
       setPassword("");
       setShowPassword(false);
-      setTimeout(() => emailRef.current?.focus(), 80);
+      // Skip auto-focus on touch so the keyboard doesn't pop on open.
+      if (!isCoarsePointer()) setTimeout(() => emailRef.current?.focus(), 80);
     }
   }, [isOpen, initialMode]);
 

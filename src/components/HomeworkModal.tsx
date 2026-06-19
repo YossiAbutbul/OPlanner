@@ -6,6 +6,7 @@ import TimePicker from "./TimePicker";
 import NotesEditor from "./NotesEditor";
 import CustomSelect from "./CustomSelect";
 import { celebrateTaskDone } from "../utility/celebrate";
+import { isCoarsePointer } from "../utility/pointer";
 import { useCourseMeta } from "../hooks/useCourseMeta";
 
 interface HomeworkModalProps {
@@ -251,7 +252,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
         onChange={(e) => setName(e.target.value)}
         placeholder="Enter homework name"
         autoComplete="off"
-        autoFocus
+        autoFocus={!isCoarsePointer()}
       />
       <label>Date</label>
       <DatePicker

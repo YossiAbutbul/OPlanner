@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Modal from "../Modal";
 import { capitalizeWords } from "../../utility/dayCalendar";
+import { isCoarsePointer } from "../../utility/pointer";
 import { addCourse } from "../../utility/initializeDatabase";
 
 interface Props {
@@ -66,7 +67,7 @@ const AddCourseModal: React.FC<Props> = ({
       }
     >
       <input
-        autoFocus
+        autoFocus={!isCoarsePointer()}
         type="text"
         value={name}
         placeholder="Course name"

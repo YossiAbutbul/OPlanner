@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { isCoarsePointer } from "../utility/pointer";
 import "../css/TimePicker.css";
 
 interface Props {
@@ -239,7 +240,7 @@ const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, pla
               onKeyDown={onDraftKey}
               placeholder="HH:mm"
               maxLength={5}
-              autoFocus
+              autoFocus={!isCoarsePointer()}
             />
             <button
               type="button"

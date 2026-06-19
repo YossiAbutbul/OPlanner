@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
 import ColorPicker from "./ColorPicker";
+import { isCoarsePointer } from "../utility/pointer";
 import "../css/TabSettingsModal.css";
 
 interface Props {
@@ -87,7 +88,7 @@ const CourseEditModal: React.FC<Props> = ({
         onKeyDown={(e) => {
           if (e.key === "Enter") handleSave();
         }}
-        autoFocus
+        autoFocus={!isCoarsePointer()}
         disabled={busy}
       />
 

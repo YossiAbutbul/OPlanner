@@ -1,4 +1,5 @@
 import './css/index.css';
+import './css/dark.css';
 import './css/Toast.css';
 import './css/InstallHelpModal.css';
 import React from "react";
@@ -14,6 +15,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { CoinsProvider } from "./context/CoinsContext";
 import { PomodoroProvider } from "./context/PomodoroContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 // Mobile debug console: dev builds only, visit ?debug=1 to enable on phones.
 if (import.meta.env.DEV && new URLSearchParams(location.search).get("debug") === "1") {
@@ -23,6 +25,7 @@ if (import.meta.env.DEV && new URLSearchParams(location.search).get("debug") ===
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>
+      <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
           <CoinsProvider>
@@ -40,6 +43,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
           </CoinsProvider>
         </AuthProvider>
       </ToastProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );

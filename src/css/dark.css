@@ -1,0 +1,312 @@
+/* ===========================================================================
+   Dark theme. Activated by [data-theme="dark"] on <html> (ThemeContext).
+   Palette (OPlanner dark, Stitch):
+     page     #0F1113     surface   #1A1C1E     elevated  #222426
+     hover    #26282B     border    #2D2F31
+     text     #FFFFFF     muted     #9CA3AF     soft      #C9CED4
+     mint     #00D084     mint-hi   #1FE39B
+     red      #EF4444     blue      #3B82F6     lavender  #A78BFA
+   The left/right sidebars are already dark; this overrides everything else.
+   =========================================================================== */
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  background-color: #0f1113;
+  color: #ffffff;
+}
+
+/* ---- Page + tab bars (MainContent) ---- */
+[data-theme="dark"] .main-layout { background: #0f1113; }
+
+[data-theme="dark"] .tab { color: #9ca3af; }
+[data-theme="dark"] .tab:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+[data-theme="dark"] .tab.active { color: #fff; }
+
+[data-theme="dark"] .tab-bar-year {
+  background: #141618;
+  border-bottom-color: #2d2f31;
+}
+[data-theme="dark"] .tab-bar-year .tab { color: #9ca3af; }
+[data-theme="dark"] .year-tab-delete { color: #9ca3af; }
+[data-theme="dark"] .tab-bar-year .tab:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+
+/* Active tabs take the page bg (folder-merge look) instead of light grey. */
+[data-theme="dark"] .tab-bar-year .tab.active {
+  background: #0f1113;
+  color: #fff;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.45);
+}
+[data-theme="dark"] .tab-bar-semester {
+  background: #141618;
+  border-bottom-color: #2d2f31;
+}
+[data-theme="dark"] .tab-bar-semester .tab.active {
+  background: #0f1113;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.45);
+}
+[data-theme="dark"] .tab-bar-course {
+  background: #141618;
+  border-bottom-color: #2d2f31;
+}
+[data-theme="dark"] .tab-bar-course .tab.active {
+  background: #0f1113;
+  box-shadow: 0 -1px 0 0 #2d2f31 inset;
+}
+[data-theme="dark"] .tab-close { color: #9ca3af; }
+[data-theme="dark"] .tab-add { color: #9ca3af; }
+[data-theme="dark"] .tab-add:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+[data-theme="dark"] .add-course-inline input {
+  background: #1a1c1e;
+  border-color: #2d2f31;
+  color: #fff;
+}
+
+[data-theme="dark"] .course-header h1,
+[data-theme="dark"] .main-content h1 { color: #fff; }
+[data-theme="dark"] .course-header h2 { color: #9ca3af; }
+
+/* Inner course tabs (Overview / Course info / Exams). */
+[data-theme="dark"] .course-inner-tab {
+  background: #1a1c1e;
+  border-color: #2d2f31;
+  color: #9ca3af;
+}
+[data-theme="dark"] .course-inner-tab:hover { background: #26282b; color: #fff; }
+[data-theme="dark"] .course-inner-tab-active,
+[data-theme="dark"] .course-inner-tab-active:hover { background: #1a1c1e; color: #00d084; }
+[data-theme="dark"] .course-tab-panel,
+[data-theme="dark"] .course-progress,
+[data-theme="dark"] .homework-table-container {
+  background: #1a1c1e;
+  border-color: #2d2f31;
+}
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .empty-state h1 { color: #c9ced4; }
+[data-theme="dark"] .course-filter-bar { color: #fff; }
+[data-theme="dark"] .course-filter-bar button { color: #c9ced4; border-color: #2d2f31; }
+
+/* ---- Semester overview ---- */
+[data-theme="dark"] .overview { color: #fff; }
+[data-theme="dark"] .overview-header h1,
+[data-theme="dark"] .overview-cta h2,
+[data-theme="dark"] .stat-value,
+[data-theme="dark"] .course-stat-name,
+[data-theme="dark"] .finals-row-name,
+[data-theme="dark"] .upcoming-name { color: #fff; }
+[data-theme="dark"] .overview-year,
+[data-theme="dark"] .stat-label,
+[data-theme="dark"] .overview-empty,
+[data-theme="dark"] .course-stat-meta,
+[data-theme="dark"] .upcoming-course { color: #9ca3af; }
+[data-theme="dark"] .overview-section h2 { color: #c9ced4; }
+
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .upcoming-item,
+[data-theme="dark"] .overview-cta {
+  background: #1a1c1e;
+  border-color: #2d2f31;
+}
+[data-theme="dark"] .stat-bar { background: #2d2f31; box-shadow: none; }
+[data-theme="dark"] .upcoming-course { background: #26282b; }
+
+[data-theme="dark"] .course-stat,
+[data-theme="dark"] .finals-row { border-bottom-color: #2d2f31; }
+[data-theme="dark"] .course-stat:hover { background: #26282b; }
+[data-theme="dark"] .course-stat:active { background: #222426; }
+[data-theme="dark"] .finals-date { color: #c9ced4; }
+[data-theme="dark"] .finals-date:hover { background: #26282b; color: #1fe39b; }
+
+[data-theme="dark"] .overview-import {
+  background: #1a1c1e;
+  color: #fff;
+  border-color: #2d2f31;
+}
+[data-theme="dark"] .overview-import:hover { background: #26282b; }
+[data-theme="dark"] .overview-cta p { color: #9ca3af; }
+
+/* ---- Calendar (shared by main + overview) ---- */
+[data-theme="dark"] .cal,
+[data-theme="dark"] .cal.cal-past {
+  background: #1a1c1e;
+  border-color: #2d2f31;
+}
+[data-theme="dark"] .cal-title { color: #fff; }
+[data-theme="dark"] .cal-hint,
+[data-theme="dark"] .cal-weekday { color: #9ca3af; }
+[data-theme="dark"] .cal-nav {
+  background: #222426;
+  border-color: #2d2f31;
+}
+[data-theme="dark"] .cal-nav button { color: #c9ced4; }
+[data-theme="dark"] .cal-nav button:hover { background: #26282b; color: #fff; }
+[data-theme="dark"] .cal-nav .cal-nav-btn:first-child { border-right-color: #2d2f31; }
+[data-theme="dark"] .cal-nav .cal-nav-btn:last-child { border-left-color: #2d2f31; }
+
+[data-theme="dark"] .cal-cell { background: #222426; color: #d6d8db; }
+[data-theme="dark"] .cal-cell:hover { background: #26282b; }
+[data-theme="dark"] .cal-cell.out { background: transparent; }
+[data-theme="dark"] .cal-cell.out .cal-day-num { color: #5b6168; }
+[data-theme="dark"] .cal-cell.today,
+[data-theme="dark"] .cal-cell.selected {
+  border-color: #00d084;
+  background: rgba(0, 208, 132, 0.16);
+}
+[data-theme="dark"] .cal-cell.today .cal-day-num { color: #1fe39b; }
+[data-theme="dark"] .cal-popover {
+  background: #1a1c1e;
+  border-color: #2d2f31;
+  color: #fff;
+}
+
+/* ---- Progress chart ---- */
+[data-theme="dark"] .progress-card-header,
+[data-theme="dark"] .progress-pct { color: #fff; }
+[data-theme="dark"] .progress-subtitle,
+[data-theme="dark"] .progress-empty { color: #9ca3af; }
+
+/* ---- Exams tab ---- */
+[data-theme="dark"] .ep-section-head h3,
+[data-theme="dark"] .ep-row-label,
+[data-theme="dark"] .ep-col-label,
+[data-theme="dark"] .ep-label-text { color: #fff; }
+[data-theme="dark"] .ep-subhead,
+[data-theme="dark"] .ep-hint { color: #9ca3af; }
+[data-theme="dark"] .ep-table-scroll {
+  background: #1a1c1e;
+  border-color: #2d2f31;
+}
+[data-theme="dark"] .ep-table thead th,
+[data-theme="dark"] .ep-corner { background: #222426; color: #c9ced4; border-bottom-color: #2d2f31; }
+[data-theme="dark"] .ep-row-head { background: #1a1c1e; }
+[data-theme="dark"] .ep-table th,
+[data-theme="dark"] .ep-table td { border-color: #2d2f31; }
+[data-theme="dark"] .ep-row-progress { background: #26282b; color: #c9ced4; }
+[data-theme="dark"] .ep-check { background: #1a1c1e; border-color: #3a3d40; }
+[data-theme="dark"] .ep-table tbody tr:hover .ep-row-head,
+[data-theme="dark"] .ep-table tbody tr:hover .ep-progress-cell,
+[data-theme="dark"] .ep-table tbody tr:hover .ep-cell { background: #26282b; }
+[data-theme="dark"] .ep-row-complete .ep-row-head,
+[data-theme="dark"] .ep-row-complete .ep-progress-cell,
+[data-theme="dark"] .ep-row-complete .ep-cell { background: rgba(0, 208, 132, 0.1); }
+[data-theme="dark"] .ep-edge-add { background: #222426; border-color: #3a3d40; color: #c9ced4; }
+[data-theme="dark"] .ep-label-input { color: #fff; }
+[data-theme="dark"] .ep-sheet { background: #1a1c1e; }
+[data-theme="dark"] .ep-sheet-title { color: #fff; }
+[data-theme="dark"] .ep-sheet-input { background: #222426; border-color: #2d2f31; color: #fff; }
+[data-theme="dark"] .ep-sheet-cancel { background: #26282b; border-color: #2d2f31; color: #c9ced4; }
+
+/* ---- Course info tab (links + notes) ---- */
+[data-theme="dark"] .cip-section-head h3,
+[data-theme="dark"] .cip-cell-label { color: #fff; }
+[data-theme="dark"] .cip-hint { color: #9ca3af; }
+[data-theme="dark"] .cip-table {
+  background: #1a1c1e;
+  border-color: #2d2f31;
+}
+[data-theme="dark"] .cip-table-head { background: #222426; color: #c9ced4; border-bottom-color: #2d2f31; }
+[data-theme="dark"] .cip-table-row { border-bottom-color: #2d2f31; }
+[data-theme="dark"] .cip-table-row:hover { background: #26282b; }
+[data-theme="dark"] .cip-input { color: #fff; border-color: #2d2f31; }
+[data-theme="dark"] .cip-row-btn { color: #c9ced4; }
+[data-theme="dark"] .cip-row-btn:hover:not(:disabled) { color: #fff; }
+[data-theme="dark"] .cip-row-editing { background: #222426; }
+
+/* ---- Homework / assignments table ---- */
+[data-theme="dark"] .homework-table th {
+  background: #222426;
+  color: #c9ced4;
+  border-bottom-color: #2d2f31;
+}
+[data-theme="dark"] .homework-table td {
+  color: #fff;
+  border-bottom-color: #2d2f31;
+}
+[data-theme="dark"] .homework-table tbody tr:hover { background: #26282b; }
+[data-theme="dark"] .homework-table .row-btn { color: #c9ced4; }
+[data-theme="dark"] .homework-table .row-btn:hover { color: #fff; }
+[data-theme="dark"] .homework-table-empty { color: #9ca3af; }
+
+/* ---- Modals ---- */
+[data-theme="dark"] .app-modal {
+  background: #1a1c1e;
+  border-color: #2d2f31;
+  color: #fff;
+}
+[data-theme="dark"] .app-modal-title,
+[data-theme="dark"] .app-modal-body { color: #fff; }
+[data-theme="dark"] .app-modal-body p,
+[data-theme="dark"] .app-modal-body label { color: #9ca3af; }
+[data-theme="dark"] .app-modal-header,
+[data-theme="dark"] .app-modal-actions { background: #1a1c1e; border-color: #2d2f31; }
+[data-theme="dark"] .app-modal-body input[type="text"],
+[data-theme="dark"] .app-modal-body input[type="password"],
+[data-theme="dark"] .app-modal-body input[type="date"],
+[data-theme="dark"] .app-modal-body input[type="time"],
+[data-theme="dark"] .app-modal-body textarea,
+[data-theme="dark"] .app-modal-body select,
+[data-theme="dark"] .hw-date-trigger {
+  background: #222426;
+  border-color: #2d2f31;
+  color: #fff;
+}
+[data-theme="dark"] .app-modal-btn-cancel {
+  background: #26282b;
+  border-color: #2d2f31;
+  color: #d6d8db;
+}
+[data-theme="dark"] .app-modal-close { color: #9ca3af; }
+[data-theme="dark"] .app-modal-close:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+
+/* ---- Pickers (date / time popovers) ---- */
+[data-theme="dark"] .dp-popover,
+[data-theme="dark"] .tp-popover {
+  background: #1a1c1e;
+  border-color: #2d2f31;
+  color: #fff;
+}
+[data-theme="dark"] .dp-title { color: #fff; }
+[data-theme="dark"] .dp-nav { color: #c9ced4; }
+[data-theme="dark"] .dp-nav:hover { background: #26282b; color: #fff; }
+[data-theme="dark"] .dp-weekday { color: #9ca3af; }
+[data-theme="dark"] .dp-cell { color: #d6d8db; }
+[data-theme="dark"] .dp-cell:hover { background: #26282b; }
+[data-theme="dark"] .dp-cell-out { color: #5b6168; }
+
+/* ===== Mint accent (#00D084) for primary actions in dark mode ===== */
+[data-theme="dark"] .course-add-task,
+[data-theme="dark"] .overview-add-course,
+[data-theme="dark"] .cip-head-add,
+[data-theme="dark"] .ep-add-exam-btn,
+[data-theme="dark"] .app-modal-btn-primary {
+  background: #00d084;
+  border-color: #00d084;
+  color: #0f1113;
+}
+[data-theme="dark"] .course-add-task:hover,
+[data-theme="dark"] .overview-add-course:hover,
+[data-theme="dark"] .cip-head-add:hover:not(:disabled),
+[data-theme="dark"] .ep-add-exam-btn:hover:not(:disabled),
+[data-theme="dark"] .app-modal-btn-primary:hover:not(:disabled) {
+  background: #1fe39b;
+  border-color: #1fe39b;
+}
+[data-theme="dark"] .ep-check-done {
+  background: #00d084;
+  border-color: #00d084;
+  box-shadow: 0 1px 3px rgba(0, 208, 132, 0.4);
+}
+[data-theme="dark"] .ep-row-progress-done { background: #00d084; color: #0f1113; }
+[data-theme="dark"] .stat-bar-fill { background: #00d084; }
+[data-theme="dark"] .stat-good { color: #00d084; }
+[data-theme="dark"] .cip-cell-url { color: #1fe39b; }
+
+/* Status colors from the palette. */
+[data-theme="dark"] .stat-bad,
+[data-theme="dark"] .course-stat-overdue,
+[data-theme="dark"] .upcoming-due-danger,
+[data-theme="dark"] .finals-badge-soon { color: #ef4444; }
+
+/* Slim scrollbars read better light-on-dark. */
+[data-theme="dark"] * { scrollbar-color: rgba(255, 255, 255, 0.18) transparent; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }

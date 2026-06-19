@@ -4,6 +4,7 @@ import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
 import NotesEditor from "./NotesEditor";
 import { TimeBlock } from "../context/TimeBlockContext";
+import { isCoarsePointer } from "../utility/pointer";
 
 interface Props {
   isOpen: boolean;
@@ -129,7 +130,7 @@ const TimeBlockModal: React.FC<Props> = ({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="e.g. Study session"
-        autoFocus
+        autoFocus={!isCoarsePointer()}
         autoComplete="off"
       />
       <label>Date</label>

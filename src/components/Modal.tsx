@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { isCoarsePointer } from "../utility/pointer";
 import "../css/Modal.css";
 
 interface ModalProps {
@@ -39,14 +40,17 @@ const Modal: React.FC<ModalProps> = ({
 
     // Focus the first focusable element inside the modal (skip the close
     // button if there's anything else interactive — close button focus on
-    // open is jarring).
-    requestAnimationFrame(() => {
-      const root = modalRef.current;
-      if (!root) return;
-      const focusables = root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-      const first = focusables.length > 1 ? focusables[1] : focusables[0];
-      first?.focus();
-    });
+    // open is jarring). Skipped on touch devices so the on-screen keyboard
+    // doesn't pop up the moment the modal opens.
+    if (!isCoarsePointer()) {
+      requestAnimationFrame(() => {
+        const root = modalRef.current;
+        if (!root) return;
+        const focusables = root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+        const first = focusables.length > 1 ? focusables[1] : focusables[0];
+        first?.focus();
+      });
+    }
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { useTheme } from "../context/ThemeContext";
 import "../css/ProgressChart.css";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -61,6 +62,13 @@ const ProgressChart: React.FC<ProgressChartProps> = ({
   completed = 0,
   pending = 0,
 }) => {
+  const { theme } = useTheme();
+  const dark = theme === "dark";
+  // Mint accent + darker track in dark mode; brand green + light track in light.
+  const arcColor = dark ? "#00d084" : "#1db954";
+  const arcHover = dark ? "#1fe39b" : "#1ed760";
+  const trackColor = dark ? "#2d2f31" : "#e3e3e6";
+  const trackHover = dark ? "#3a3d40" : "#d6d6d9";
   const hasData = completed > 0 || pending > 0;
   const total = completed + pending;
   const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -75,8 +83,8 @@ const ProgressChart: React.FC<ProgressChartProps> = ({
     datasets: [
       {
         data: hasData ? [fillFrac, 1 - fillFrac] : [1],
-        backgroundColor: hasData ? ["#1db954", "#e3e3e6"] : ["#e3e3e6"],
-        hoverBackgroundColor: hasData ? ["#1ed760", "#d6d6d9"] : ["#d6d6d9"],
+        backgroundColor: hasData ? [arcColor, trackColor] : [trackColor],
+        hoverBackgroundColor: hasData ? [arcHover, trackHover] : [trackHover],
         borderWidth: 0,
       },
     ],
