@@ -120,7 +120,6 @@ const RenameSheet: React.FC<{
   return createPortal(
     <div className="ep-sheet-backdrop" onClick={onClose}>
       <div className="ep-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
-        <div className="ep-sheet-handle" />
         <h4 className="ep-sheet-title">{title}</h4>
         <input
           className="ep-sheet-input"
