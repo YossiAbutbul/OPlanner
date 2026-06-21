@@ -54,9 +54,12 @@ const DayTasksModal: React.FC<Props> = ({
       {tasks.length === 0 ? (
         <p className="day-empty">No tasks on this day.</p>
       ) : (
-        <ul className="day-tasks">
-          {tasks.map((t) => (
-            <li key={t.id} className="day-task">
+        (() => {
+          const todo = tasks.filter((t) => t.status !== "COMPLETED");
+          const done = tasks.filter((t) => t.status === "COMPLETED");
+
+          const renderItem = (t: HomeworkEntry) => (
+            <li key={t.id} className={`day-task${t.status === "COMPLETED" ? " is-done" : ""}`}>
               <div className={`day-task-main${showCourse && t.course ? " has-course" : ""}`}>
                 <div className="day-task-name">{t.name}</div>
                 {showCourse && t.course && (
@@ -68,8 +71,25 @@ const DayTasksModal: React.FC<Props> = ({
                 <button className="day-btn danger" onClick={() => onDelete(t)}>Delete</button>
               </div>
             </li>
-          ))}
-        </ul>
+          );
+
+          return (
+            <div className="day-scroll">
+              {todo.length > 0 && (
+                <section className="day-section">
+                  <h4 className="day-section-head">To do <span>{todo.length}</span></h4>
+                  <ul className="day-tasks">{todo.map(renderItem)}</ul>
+                </section>
+              )}
+              {done.length > 0 && (
+                <section className="day-section">
+                  <h4 className="day-section-head day-section-done">Done <span>{done.length}</span></h4>
+                  <ul className="day-tasks">{done.map(renderItem)}</ul>
+                </section>
+              )}
+            </div>
+          );
+        })()
       )}
     </Modal>
   );
