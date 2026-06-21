@@ -155,16 +155,20 @@ const CourseCalendar: React.FC<Props> = ({
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     setHoverIso(iso);
     const popWidth = 240;
-    const popHeight = 220;
     const margin = 8;
+    const gap = 2;
     let left = rect.left;
     if (left + popWidth + margin > window.innerWidth) {
       left = Math.max(margin, window.innerWidth - popWidth - margin);
     }
-    if (rect.bottom + popHeight + margin > window.innerHeight) {
-      setPopoverPos({ bottom: window.innerHeight - rect.top + 2, left });
+    // Open toward whichever side has more room so the full (unscrolled) list
+    // stays on screen.
+    const spaceBelow = window.innerHeight - rect.bottom - gap - margin;
+    const spaceAbove = rect.top - gap - margin;
+    if (spaceBelow >= spaceAbove) {
+      setPopoverPos({ top: rect.bottom + gap, left });
     } else {
-      setPopoverPos({ top: rect.bottom + 2, left });
+      setPopoverPos({ bottom: window.innerHeight - rect.top + gap, left });
     }
   };
 

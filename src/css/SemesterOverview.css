@@ -396,7 +396,7 @@
 }
 
 .overview-calendar-section .cal-grid {
-  grid-auto-rows: minmax(4.2rem, 5.3rem);
+  grid-auto-rows: minmax(3.7rem, 4.7rem);
   flex: 0 0 auto;
   gap: 1px;
 }

@@ -252,8 +252,10 @@
   display: flex;
   align-items: stretch;
   gap: 0;
+  /* Flush to the top of the sidebar (no gap) so the tab strip lines up with
+     the page's top tab bars. */
   margin: -1.1rem -0.85rem 0.9rem;
-  padding: 0.45rem 0 0;
+  padding: 0;
   background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid var(--rs-border);
 }
@@ -267,7 +269,13 @@
   font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.01em;
-  padding: 0.6rem 0.4rem 0.65rem;
+  /* Fixed height so the strip's bottom border aligns with the page's year
+     tab bar bottom line. */
+  height: 41px;
+  padding: 0 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   border-radius: 7px 7px 0 0;
   transition:
