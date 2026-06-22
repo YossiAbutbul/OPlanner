@@ -1,5 +1,5 @@
-/* Auth dialog — dark, matching the landing stage (#0e0f12) it opens over.
-   Panel #15171c, light text, green #1db954 actions, same recipe as the
+/* Auth dialog ג€” dark, matching the landing stage (#0e0f12) it opens over.
+   Panel #15171c, light text, green var(--color-accent) actions, same recipe as the
    landing chips/cards. */
 
 .auth-overlay {
@@ -279,7 +279,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: #1db954;
+  background: var(--color-accent);
   color: #ffffff;
   border: 1px solid #19a449;
   padding: 0.62rem 1rem;
@@ -296,7 +296,7 @@
 }
 
 .auth-submit:hover:not(:disabled) {
-  background: #1ed760;
+  background: var(--color-accent-hover);
   box-shadow: 0 8px 26px rgba(29, 185, 84, 0.4);
 }
 

@@ -22,9 +22,10 @@ interface HomeworkEntry {
 interface HomeworkTableProps {
   tasks: HomeworkEntry[]; // Accept tasks from parent
   onAddTask: () => void; // Trigger modal for adding homework
+  loading?: boolean; // Fetching from network with no cached rows to show
 }
 
-const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
+const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask, loading }) => {
   const { removeHomework, addHomework } = useHomework();
   const toast = useToast();
   const [isModalOpen, setModalOpen] = useState(false);
@@ -97,7 +98,18 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask }) => {
   void onAddTask;
   return (
     <div className="homework-table-wrap">
-      {sortedHomework.length === 0 ? (
+      {loading && sortedHomework.length === 0 ? (
+        <div className="homework-skeleton" aria-busy="true" aria-label="Loading tasks">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div className="hw-skel-row" key={i}>
+              <span className="hw-skel-bar hw-skel-name" />
+              <span className="hw-skel-bar hw-skel-date" />
+              <span className="hw-skel-bar hw-skel-status" />
+              <span className="hw-skel-bar hw-skel-actions" />
+            </div>
+          ))}
+        </div>
+      ) : sortedHomework.length === 0 ? (
         <p className="homework-empty">No tasks yet. Click "Add task" above to get started.</p>
       ) : (
         <>

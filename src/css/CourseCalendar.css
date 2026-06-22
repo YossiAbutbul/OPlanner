@@ -86,7 +86,7 @@
 }
 
 /* Selector matches .cal-nav button's specificity (two classes) so the padding
-   isn't overridden back to 0 — that was clipping the label. */
+   isn't overridden back to 0 ג€” that was clipping the label. */
 .cal-nav .cal-today-btn {
   height: 100%;
   padding: 0 0.9rem;
@@ -178,12 +178,12 @@
 }
 
 .cal-cell.today {
-  border-color: #1db954;
+  border-color: var(--color-accent);
   background: rgba(29, 185, 84, 0.08);
 }
 
 .cal-cell.today .cal-day-num {
-  color: #1db954;
+  color: var(--color-accent);
   font-weight: 700;
 }
 
@@ -192,7 +192,7 @@
 }
 
 .cal-cell.selected {
-  border-color: #1db954;
+  border-color: var(--color-accent);
   background: rgba(29, 185, 84, 0.08);
 }
 
@@ -225,7 +225,7 @@
 
 .cal-task-danger    { background: rgba(210, 48, 48, 0.12); color: #b81e1e; border-left-color: #d23030; }
 .cal-task-warn      { background: rgba(224, 150, 0, 0.15); color: #946100; border-left-color: #e09600; }
-.cal-task-ok        { background: rgba(29, 185, 84, 0.12); color: #117a35; border-left-color: #1db954; }
+.cal-task-ok        { background: rgba(29, 185, 84, 0.12); color: #117a35; border-left-color: var(--color-accent); }
 .cal-task-completed { background: #e9e9eb;                 color: #888;    border-left-color: #b0b0b3; text-decoration: line-through; }
 
 .cal-task-more {

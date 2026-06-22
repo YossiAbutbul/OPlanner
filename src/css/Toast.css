@@ -3,7 +3,7 @@
   bottom: 1.25rem;
   right: 1.25rem;
   display: flex;
-  /* Newest toast stays closest to the corner — stack grows upward. */
+  /* Newest toast stays closest to the corner ג€” stack grows upward. */
   flex-direction: column-reverse;
   gap: 0.65rem;
   z-index: var(--z-toast);
@@ -71,11 +71,11 @@
   padding-right: 0.25rem;
 }
 
-/* Action button — primary accent, e.g. "Reload" on the update prompt. */
+/* Action button ג€” primary accent, e.g. "Reload" on the update prompt. */
 .toast-action {
   flex-shrink: 0;
   padding: 0.4rem 0.8rem;
-  background: #1db954;
+  background: var(--color-accent);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -87,11 +87,18 @@
 }
 
 .toast-action:hover {
-  background: #1ed760;
+  background: var(--color-accent-hover);
 }
 
 .toast-action:active {
   transform: scale(0.96);
+}
+
+/* White ring on the dark toast — the global green ring is low-contrast
+   against the accent-green button. */
+.toast-action:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 /* Sticky toasts have no auto-dismiss, so hide the TTL countdown bar. */
@@ -99,7 +106,7 @@
   display: none;
 }
 
-/* Dismiss button — neutral chrome that brightens on hover. */
+/* Dismiss button ג€” neutral chrome that brightens on hover. */
 .toast-close {
   background: transparent;
   border: none;
@@ -122,11 +129,11 @@
 }
 
 .toast-close:focus-visible {
-  outline: 2px solid #1db954;
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-/* TTL progress bar — shrinks to 0 over the auto-dismiss window so the
+/* TTL progress bar ג€” shrinks to 0 over the auto-dismiss window so the
    user can see how long they have. Always runs so it stays in sync with
    the (non-pausing) dismiss timer. */
 .toast::after {
@@ -141,7 +148,7 @@
 }
 
 .toast-success::after {
-  background: linear-gradient(to right, #1db954, #4ade80);
+  background: linear-gradient(to right, var(--color-accent), #4ade80);
 }
 .toast-error::after {
   background: linear-gradient(to right, #d23030, #f87171);
@@ -187,7 +194,7 @@
   }
 }
 
-/* ===== ErrorBoundary fallback — matches the toast aesthetic ===== */
+/* ===== ErrorBoundary fallback ג€” matches the toast aesthetic ===== */
 .error-boundary {
   max-width: 480px;
   margin: 10vh auto;
@@ -220,7 +227,7 @@
 
 .error-boundary-btn {
   padding: 0.55rem 1.1rem;
-  background: #1db954;
+  background: var(--color-accent);
   color: #fff;
   border: none;
   border-radius: var(--radius-sm, 6px);
@@ -230,7 +237,7 @@
 }
 
 .error-boundary-btn:hover {
-  background: #1ed760;
+  background: var(--color-accent-hover);
 }
 
 .error-boundary-btn + .error-boundary-btn {

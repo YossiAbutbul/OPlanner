@@ -3,6 +3,7 @@ import { useHomework } from "../context/HomeworkContext";
 import { useToast } from "../context/ToastContext";
 import { timeLeft } from "../utility/dayCalendar";
 import HomeworkModal from "./HomeworkModal";
+import { BellOff } from "lucide-react";
 import "../css/NotificationList.css";
 
 const NotificationList: React.FC = () => {
@@ -87,7 +88,13 @@ const NotificationList: React.FC = () => {
   return (
     <div className="notification-list">
       {notifications.length === 0 ? (
-        <p>No upcoming deadlines yet!</p>
+        <div className="nl-empty">
+          <span className="nl-empty-badge">
+            <BellOff size={20} strokeWidth={1.6} />
+          </span>
+          <p className="nl-empty-title">You're all clear</p>
+          <p className="nl-empty-text">No upcoming deadlines.</p>
+        </div>
       ) : (
         <ul>
           {notifications.map(({ id }) => {

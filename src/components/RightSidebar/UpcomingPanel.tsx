@@ -26,15 +26,14 @@ const UpcomingPanel: React.FC<Props> = ({ items, onItemClick }) => (
 
     {items.length === 0 ? (
       <div className="rs-empty">
-        <svg viewBox="0 0 64 64" width="56" height="56" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 8h24" />
-          <path d="M20 56h24" />
-          <path d="M22 8c0 14 20 14 20 24s-20 10-20 24" />
-          <path d="M42 8c0 14-20 14-20 24s20 10 20 24" />
-          <path d="M26 18c2 4 6 6 6 10" opacity=".5" />
-        </svg>
+        <div className="rs-empty-badge">
+          <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </div>
+        <p className="rs-empty-title">All caught up</p>
         <p className="rs-empty-text">
-          <em>Nothing</em> on the horizon.
+          Enjoy the calm.
         </p>
       </div>
     ) : (

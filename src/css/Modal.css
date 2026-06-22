@@ -25,7 +25,7 @@
 
 /* ===== Mobile: bottom-sheet pattern =====
    On narrow phones, the modal slides up from the bottom edge with rounded
-   top corners and a small drag handle — the standard mobile sheet idiom.
+   top corners and a small drag handle ג€” the standard mobile sheet idiom.
    Top of the viewport stays visible (so the user can tap the backdrop to
    dismiss), and the sheet scrolls internally if content is taller than
    ~92vh. Header (title + X) and action buttons stick to the top/bottom
@@ -55,7 +55,7 @@
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
   }
 
-  /* Sticky header bar — title + close stay locked at the top of the
+  /* Sticky header bar ג€” title + close stay locked at the top of the
      sheet while the body scrolls. No more drag handle (it was purely
      decorative and implied a swipe-to-dismiss that didn't exist). */
   .app-modal-header {
@@ -76,7 +76,7 @@
     padding: 0.85rem var(--space-4, 1rem);
   }
 
-  /* Sticky action bar — buttons always reachable. Full-width 50/50 so
+  /* Sticky action bar ג€” buttons always reachable. Full-width 50/50 so
      thumb targets are big enough on small screens. */
   .app-modal-actions {
     position: sticky;
@@ -331,12 +331,12 @@
 }
 
 .app-modal-btn-primary {
-  background: #1db954;
+  background: var(--color-accent);
   color: #ffffff;
 }
 
 .app-modal-btn-primary:hover:not(:disabled) {
-  background: #1ed760;
+  background: var(--color-accent-hover);
 }
 
 .app-modal-btn-danger {
@@ -427,7 +427,7 @@
   color: #888;
 }
 
-/* Time inputs — match date trigger look */
+/* Time inputs ג€” match date trigger look */
 .app-modal-body input[type="time"] {
   appearance: none;
   -webkit-appearance: none;
@@ -507,8 +507,8 @@
 }
 
 .hw-ignore-overdue input[type="checkbox"]:checked {
-  background-color: #1db954;
-  border-color: #1db954;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M4 8.5l3 3 5-6'/></svg>");
   background-repeat: no-repeat;
   background-position: center;

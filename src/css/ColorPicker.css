@@ -122,8 +122,8 @@
 }
 
 .cp-hex:focus {
-  border-color: #1db954;
-  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.18);
+  border-color: #d6d6da;
+  box-shadow: none;
 }
 
 .cp-hex.invalid {
@@ -193,7 +193,7 @@
 }
 
 .cp-preset.selected {
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1db954;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--color-accent);
 }
 
 .cp-preset:disabled {

@@ -9,7 +9,7 @@
   padding-bottom: 1rem;
 }
 
-/* Links + Notes sit flush on the page — no card chrome. Assignments keeps
+/* Links + Notes sit flush on the page ג€” no card chrome. Assignments keeps
    its own table container (see .cip-assignments below). */
 .cip-section {
   display: flex;
@@ -47,7 +47,7 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.3rem 0.65rem;
-  background: #1db954;
+  background: var(--color-accent);
   border: 1px solid #19a449;
   border-radius: 7px;
   font-size: 0.82rem;
@@ -60,7 +60,7 @@
 }
 
 .cip-head-add:hover:not(:disabled) {
-  background: #1ed760;
+  background: var(--color-accent-hover);
 }
 
 .cip-head-add:active:not(:disabled) {
@@ -92,14 +92,14 @@
   overflow: visible;
 }
 
-/* Bigger notes — default editor is 88px; quadruple it for the dedicated
+/* Bigger notes ג€” default editor is 88px; quadruple it for the dedicated
    Notes section so the user has real room to type. */
 .cip-notes .ne-collapsed {
   height: 260px;
   max-height: 50vh;
 }
 
-/* Links table — matches the homework/assignments table chrome (white card,
+/* Links table ג€” matches the homework/assignments table chrome (white card,
    #e3e3e6 border, gray header row). Flex rows so the actions column never
    gets clipped when the inputs widen. */
 .cip-table {
@@ -279,7 +279,7 @@
     color 0.15s ease;
 }
 
-/* Keep the glyph at full size — never let flexbox shrink the SVG to 0. */
+/* Keep the glyph at full size ג€” never let flexbox shrink the SVG to 0. */
 .cip-row-btn svg {
   flex-shrink: 0;
   display: block;

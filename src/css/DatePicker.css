@@ -131,14 +131,14 @@
 
 .dp-cell-today {
   font-weight: 700;
-  color: #1db954;
+  color: var(--color-accent);
 }
 
 .dp-cell-selected,
 .dp-cell-selected:hover {
-  background: #1db954;
+  background: var(--color-accent);
   color: #fff;
-  border-color: #1db954;
+  border-color: var(--color-accent);
   font-weight: 700;
 }
 
@@ -172,7 +172,7 @@
 }
 
 .dp-foot-today {
-  color: #1db954;
+  color: var(--color-accent);
 }
 
 .dp-foot-today:hover {

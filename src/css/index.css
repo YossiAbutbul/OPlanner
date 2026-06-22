@@ -14,7 +14,7 @@
 
   /* ===== Design tokens ===== */
 
-  /* Layout widths — fluid by default, clamp to readable extremes. */
+  /* Layout widths ג€” fluid by default, clamp to readable extremes. */
   --sidebar-w: clamp(220px, 17vw, 260px);
   --sidebar-w-collapsed: 76px;
   --rsidebar-w: clamp(260px, 22vw, 340px);
@@ -30,13 +30,19 @@
   --space-8: 2rem;
   --space-10: 2.5rem;
 
+  /* Brand / semantic colors — single source of truth for the app green.
+     Components reference these instead of hardcoding the hex. */
+  --color-accent: #1db954;
+  --color-accent-hover: #1ed760;
+  --color-accent-active: #19a449;
+
   /* Corner radii */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
   --radius-full: 999px;
 
-  /* Z-index scale — single source of truth. Layers stack predictably so
+  /* Z-index scale ג€” single source of truth. Layers stack predictably so
      popovers always sit above modals, toasts always above popovers, etc.
      Old code had 11000/10001/10000/9999/1100 fighting each other. */
   --z-base: 1;
@@ -51,7 +57,7 @@
   --z-toast: 4000;          /* reserved for future toasts */
   --z-tour: 5000;           /* joyride overlay */
 
-  /* Breakpoints — documented; use in media queries:
+  /* Breakpoints ג€” documented; use in media queries:
      phone:        max-width 480px
      small tablet: 481-767
      tablet:       768-1023  (sidebar OK, right sidebar hidden)
@@ -93,16 +99,28 @@ button {
   transition: border-color 0.25s;
 }
 
-/* Global keyboard-focus indicator — visible ring on Tab/Shift-Tab focus, NOT
+/* Global keyboard-focus indicator ג€” visible ring on Tab/Shift-Tab focus, NOT
    on mouse click (where :focus-visible is suppressed by the UA). Applies to
    every interactive element so keyboard users always know where they are. */
 :focus {
   outline: none;
 }
 :focus-visible {
-  outline: 2px solid #1db954;
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* Form fields: no focus indicator anywhere in the app (user preference).
+   Overrides the global keyboard ring above and any per-component focus glow. */
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 @media (prefers-color-scheme: light) {
@@ -118,7 +136,7 @@ button {
   }
 }
 
-/* App-wide scrollbars — slim, transparent track, subtle gray thumb */
+/* App-wide scrollbars ג€” slim, transparent track, subtle gray thumb */
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
