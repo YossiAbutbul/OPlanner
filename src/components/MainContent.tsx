@@ -98,9 +98,14 @@ const MainContent: React.FC<MainContentProps> = ({
     | null
   >(null);
 
+  const [tableLoading, setTableLoading] = useState(false);
+
   useEffect(() => {
     if (activeTab) {
-      fetchHomework(activeTab.year, activeTab.semester, activeTab.course);
+      setTableLoading(true);
+      fetchHomework(activeTab.year, activeTab.semester, activeTab.course).finally(
+        () => setTableLoading(false)
+      );
     }
   }, [activeTab, fetchHomework]);
 
@@ -369,6 +374,7 @@ const MainContent: React.FC<MainContentProps> = ({
                     <HomeworkTable
                       tasks={tableTasks}
                       onAddTask={() => setHomeworkModalOpen(true)}
+                      loading={tableLoading}
                     />
                   </div>
                 }

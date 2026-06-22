@@ -89,8 +89,7 @@ form select {
 
 form input:focus,
 form select:focus {
-  border-color: #48bb78; /* Green border on focus */
-  box-shadow: 0 0 5px rgba(72, 187, 120, 0.8); /* Subtle glow */
+  outline: none;
 }
 
 /* Buttons */

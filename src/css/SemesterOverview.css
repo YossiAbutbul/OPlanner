@@ -60,13 +60,13 @@
 }
 
 .overview-add-course {
-  background: #1db954;
+  background: var(--color-accent);
   color: #ffffff;
   border: 1px solid #19a449;
 }
 
 .overview-add-course:hover {
-  background: #1ed760;
+  background: var(--color-accent-hover);
   border-color: #1bbf52;
 }
 
@@ -125,7 +125,7 @@
 }
 
 .stat-good {
-  color: #1db954;
+  color: var(--color-accent);
 }
 .stat-bad {
   color: #d23030;
@@ -144,7 +144,7 @@
   height: 100%;
   min-width: 9px;
   border-radius: 999px;
-  background: #1db954;
+  background: var(--color-accent);
   transition: width 0.25s ease;
 }
 
@@ -156,7 +156,7 @@
   background: linear-gradient(90deg, #fbbf24, #f59e0b);
 }
 .stat-bar-fill[data-level="high"] {
-  background: linear-gradient(90deg, #34d399, #1db954);
+  background: linear-gradient(90deg, #34d399, var(--color-accent));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -241,7 +241,7 @@
 }
 
 .course-stat:hover::after {
-  border-color: #1db954;
+  border-color: var(--color-accent);
   right: 0.45rem;
 }
 
@@ -295,7 +295,7 @@
 }
 
 .upcoming-item:hover {
-  border-color: #1db954;
+  border-color: var(--color-accent);
 }
 
 .upcoming-name {
@@ -321,7 +321,7 @@
 }
 
 .upcoming-due-ok {
-  color: #1db954;
+  color: var(--color-accent);
 }
 .upcoming-due-warn {
   color: #e09600;
@@ -521,7 +521,7 @@
 
 .finals-date:hover {
   background: #f0f4f1;
-  color: #1db954;
+  color: var(--color-accent);
 }
 
 .finals-date-icon {
@@ -649,7 +649,7 @@
 
 /* ===== Wide-screen density bumps =====
    On wide+tall monitors the default sizes feel sparse. Gated by
-   min-height so 24" 1080p monitors (1920×1080) keep the compact layout
+   min-height so 24" 1080p monitors (1920ֳ—1080) keep the compact layout
    and don't overflow the viewport. Only true 2K+ panels get the bump. */
 @media (min-width: 1440px) and (min-height: 1100px) {
   .stat-card {

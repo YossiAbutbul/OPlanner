@@ -59,7 +59,7 @@
 }
 
 .ne-fs-wrap:has(.ne-fs-pop) .ne-fs-trigger {
-  border-color: #1db954;
+  border-color: var(--color-accent);
 }
 
 .ne-fs-value {
@@ -75,7 +75,7 @@
 .ne-fs-pop {
   position: absolute;
   top: calc(100% + 4px);
-  /* Trigger sits near the toolbar's right edge — anchor the popup's right
+  /* Trigger sits near the toolbar's right edge ג€” anchor the popup's right
      edge to it so it never spills off-screen. */
   right: 0;
   left: auto;
@@ -120,12 +120,12 @@
 }
 
 .ne-fs-item-active {
-  background: #1db954;
+  background: var(--color-accent);
   color: #fff;
 }
 
 .ne-fs-item-active:hover {
-  background: #1db954;
+  background: var(--color-accent);
 }
 
 .ne-collapsed {
@@ -146,7 +146,7 @@
   -ms-overflow-style: none;
 }
 
-/* No focus ring on the editors — outline:none alone can leave a
+/* No focus ring on the editors ג€” outline:none alone can leave a
    :focus-visible ring in some browsers. */
 .ne-collapsed:focus,
 .ne-collapsed:focus-visible,
@@ -222,13 +222,13 @@
 
 .ne-btn-active {
   background: #e3f5ea;
-  border-color: #1db954;
+  border-color: var(--color-accent);
   color: #117a35;
 }
 
 .ne-btn-active:hover {
   background: #d6efdf;
-  border-color: #1db954;
+  border-color: var(--color-accent);
 }
 
 /* Overlay */
@@ -392,7 +392,7 @@
 
 .ne-collapsed a.ne-link:hover,
 .ne-editor a.ne-link:hover {
-  background: #1db954;
+  background: var(--color-accent);
   color: #fff;
 }
 
@@ -459,7 +459,7 @@
 }
 
 .ne-save-btn {
-  background: #1db954;
+  background: var(--color-accent);
   color: #fff;
   border: 1px solid #19a449;
   border-radius: 8px;
@@ -472,7 +472,7 @@
 }
 
 .ne-save-btn:hover {
-  background: #1ed760;
+  background: var(--color-accent-hover);
 }
 
 /* ===== Mobile: bottom-sheet =====
@@ -568,7 +568,7 @@
   margin: 0;
 }
 
-/* @-mention link picker — portal'd to body, positioned at the caret. Sits at
+/* @-mention link picker ג€” portal'd to body, positioned at the caret. Sits at
    popover layer so it clears the expanded-notes overlay. */
 .ne-mention-pop {
   position: fixed;
@@ -598,6 +598,6 @@
 }
 
 .ne-mention-item-active {
-  background: #1db954;
+  background: var(--color-accent);
   color: #fff;
 }

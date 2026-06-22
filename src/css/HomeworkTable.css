@@ -40,6 +40,71 @@
   text-align: center;
 }
 
+/* Loading skeleton — placeholder rows shown while fetching with no cached
+   data. Mirrors the table's 4-column layout so the swap-in is seamless. */
+.homework-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.85rem 0.25rem;
+}
+
+.hw-skel-row {
+  display: grid;
+  grid-template-columns: 1fr 140px 130px 122px;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hw-skel-bar {
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 0%,
+    rgba(0, 0, 0, 0.12) 50%,
+    rgba(0, 0, 0, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: hw-skel-shimmer 1.4s ease-in-out infinite;
+}
+
+.hw-skel-name {
+  width: 70%;
+}
+.hw-skel-date {
+  width: 60px;
+}
+.hw-skel-status {
+  width: 72px;
+  height: 22px;
+}
+.hw-skel-actions {
+  width: 60px;
+}
+
+@keyframes hw-skel-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hw-skel-bar {
+    animation: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .hw-skel-row {
+    grid-template-columns: 1fr 56px 56px 64px;
+    gap: 0.5rem;
+  }
+}
+
 .homework-table {
   width: 100%;
   table-layout: fixed;

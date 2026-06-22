@@ -1,5 +1,5 @@
 .pomopage {
-  --pp-accent: #1db954;
+  --pp-accent: var(--color-accent);
   --pp-accent-soft: rgba(29, 185, 84, 0.14);
   width: 100%;
   box-sizing: border-box;

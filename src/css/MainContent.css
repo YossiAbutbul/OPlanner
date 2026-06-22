@@ -4,7 +4,7 @@
   flex: 1;
   min-width: 0;
   height: 100vh;
-  /* Dynamic viewport height — 100vh on mobile includes the area under the
+  /* Dynamic viewport height ג€” 100vh on mobile includes the area under the
      URL bar, making the bottom of the scroll area unreachable. */
   height: 100dvh;
   min-height: 0;
@@ -263,7 +263,7 @@
 }
 
 .add-course-inline input:focus {
-  border-color: #1db954;
+  outline: none;
 }
 
 .add-course-inline button {
@@ -283,7 +283,7 @@
 }
 
 .add-course-inline button.confirm {
-  color: #1db954;
+  color: var(--color-accent);
 }
 
 .add-course-inline button.confirm:hover:not(:disabled) {
@@ -423,7 +423,7 @@
 
 .course-add-task {
   padding: 0.5rem 1rem;
-  background: #1db954;
+  background: var(--color-accent);
   color: #ffffff;
   border: 1px solid #19a449;
   border-radius: 8px;
@@ -439,7 +439,7 @@
 }
 
 .course-add-task:hover {
-  background: #1ed760;
+  background: var(--color-accent-hover);
   border-color: #1bbf52;
 }
 
@@ -522,7 +522,7 @@
   display: none;
 }
 
-/* Mobile: don't pin the panel to the viewport — let it grow with its
+/* Mobile: don't pin the panel to the viewport ג€” let it grow with its
    content and scroll the page instead of scrolling inside the panel. */
 @media (max-width: 1024px) {
   .course-tab-panel {
@@ -538,7 +538,7 @@
   }
 }
 
-/* Keyed on the active tab — remounts and replays on switch, fading the new
+/* Keyed on the active tab ג€” remounts and replays on switch, fading the new
    content in so the lazy editor / data load doesn't pop in piecewise. */
 .course-tab-anim {
   display: flex;
@@ -611,8 +611,8 @@
 }
 
 .course-filter-bar button:hover {
-  background: #1db954;
-  border-color: #1db954;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
   color: #fff;
 }
 

@@ -39,7 +39,7 @@
 }
 
 .app-modal-body label.import-cat:has(input:checked) {
-  border-color: #1db954;
+  border-color: var(--color-accent);
   background: #f3fbf5;
 }
 
@@ -70,8 +70,8 @@
 
 .import-cat input[type="checkbox"]:checked,
 .import-toggle input[type="checkbox"]:checked {
-  background-color: #1db954;
-  border-color: #1db954;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M4 8.5l3 3 5-6'/></svg>");
   background-repeat: no-repeat;
   background-position: center;

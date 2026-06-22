@@ -32,7 +32,7 @@
 .pwa-update-btn {
   flex-shrink: 0;
   padding: 0.4rem 0.9rem;
-  background: #1db954;
+  background: var(--color-accent);
   color: #000;
   border: none;
   border-radius: 999px;
@@ -43,7 +43,7 @@
 }
 
 .pwa-update-btn:hover {
-  background: #1ed760;
+  background: var(--color-accent-hover);
 }
 
 .pwa-update-btn:active {

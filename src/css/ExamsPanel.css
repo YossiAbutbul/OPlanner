@@ -1,5 +1,5 @@
-/* Exams tab body — matches the Course info tab chrome (.cip*). A single
-   card holds the exams × questions checkbox grid. */
+/* Exams tab body ג€” matches the Course info tab chrome (.cip*). A single
+   card holds the exams ֳ— questions checkbox grid. */
 .ep {
   display: flex;
   flex-direction: column;
@@ -41,7 +41,7 @@
   gap: 0.35rem;
   flex-shrink: 0;
   padding: 0.4rem 0.8rem;
-  background: #1db954;
+  background: var(--color-accent);
   border: 1px solid #19a449;
   border-radius: 8px;
   font-size: 0.85rem;
@@ -56,7 +56,7 @@
 }
 
 .ep-add-exam-btn:hover:not(:disabled) {
-  background: #1ed760;
+  background: var(--color-accent-hover);
 }
 
 .ep-add-exam-btn:active:not(:disabled) {
@@ -101,7 +101,7 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.3rem 0.65rem;
-  background: #1db954;
+  background: var(--color-accent);
   border: 1px solid #19a449;
   border-radius: 7px;
   font-size: 0.82rem;
@@ -114,7 +114,7 @@
 }
 
 .ep-head-add:hover:not(:disabled) {
-  background: #1ed760;
+  background: var(--color-accent-hover);
 }
 
 .ep-head-add:active:not(:disabled) {
@@ -127,7 +127,7 @@
   cursor: default;
 }
 
-/* Secondary action (add column) — outlined rather than filled so the
+/* Secondary action (add column) ג€” outlined rather than filled so the
    primary "Exam" button stays the obvious default. */
 .ep-head-add-secondary {
   background: #fff;
@@ -156,7 +156,7 @@
   position: relative;
 }
 
-/* Horizontal scroll wrapper — many question columns shouldn't blow out the
+/* Horizontal scroll wrapper ג€” many question columns shouldn't blow out the
    page width. Scroll works but the bar is hidden (web + PWA + app). */
 .ep-table-scroll {
   overflow-x: auto;
@@ -172,7 +172,7 @@
   display: none; /* Chromium, Safari, PWA/WebView */
 }
 
-/* Word-style circular "+" insert handles — a round button centered on the
+/* Word-style circular "+" insert handles ג€” a round button centered on the
    table edge, revealed on hover, lit blue when hovered. */
 .ep-edge-add {
   position: absolute;
@@ -180,7 +180,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Lock to a true circle — global button styles must not stretch it. */
+  /* Lock to a true circle ג€” global button styles must not stretch it. */
   width: 18px;
   min-width: 18px;
   height: 18px;
@@ -192,7 +192,7 @@
   border-radius: 50%;
   color: #5b6168;
   cursor: pointer;
-  /* Always visible (not hover-gated) — discoverable on desktop and touch. */
+  /* Always visible (not hover-gated) ג€” discoverable on desktop and touch. */
   opacity: 1;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   transition:
@@ -226,7 +226,7 @@
   cursor: default;
 }
 
-/* Straddling the bottom border → add exam row. Negative offset = half the
+/* Straddling the bottom border ג†’ add exam row. Negative offset = half the
    circle sits over the table edge, so the table itself reaches full width. */
 .ep-edge-add-row {
   bottom: -9px;
@@ -234,7 +234,7 @@
   transform: translateX(-50%);
 }
 
-/* Straddling the right border → add question column. */
+/* Straddling the right border ג†’ add question column. */
 .ep-edge-add-col {
   top: 50%;
   right: -9px;
@@ -266,7 +266,7 @@
   border-right: none;
 }
 
-/* Header row (questions) — sticks to the top while scrolling exams.
+/* Header row (questions) ג€” sticks to the top while scrolling exams.
    Chrome matches the Links table header (.cip-table-head). */
 .ep-table thead th {
   position: sticky;
@@ -339,7 +339,7 @@
   min-width: 0;
 }
 
-/* Exam-name column — sticky so it stays visible while scrolling questions. */
+/* Exam-name column ג€” sticky so it stays visible while scrolling questions. */
 .ep-row-head {
   text-align: left;
   position: sticky;
@@ -366,7 +366,7 @@
   border: 1px solid transparent;
   box-sizing: border-box;
   padding: 0.2rem 0.3rem;
-  /* font-family only — let .ep-row-label/.ep-col-label own the size/weight so
+  /* font-family only ג€” let .ep-row-label/.ep-col-label own the size/weight so
      text and edit-input render identically. */
   font-family: inherit;
   color: #222;
@@ -403,12 +403,12 @@
      wider when editing. */
   min-width: 0;
   box-sizing: border-box;
-  /* Match .ep-label-text exactly — same font, padding, transparent bg — so
+  /* Match .ep-label-text exactly ג€” same font, padding, transparent bg ג€” so
      only the border appears on edit; no font-size or layout jump. */
   padding: 0.2rem 0.3rem;
   font-family: inherit;
   background: transparent;
-  border: 1px solid #1db954;
+  border: 1px solid var(--color-accent);
   border-radius: 5px;
   color: #222;
   outline: none;
@@ -427,7 +427,7 @@
   /* Anchor to the cell's middle so gaining the check glyph doesn't shift the
      box down (empty vs. filled inline baselines differ otherwise). */
   vertical-align: middle;
-  /* Lock to a square — global button styles must not stretch it into a pill. */
+  /* Lock to a square ג€” global button styles must not stretch it into a pill. */
   width: 17px;
   min-width: 17px;
   height: 17px;
@@ -449,7 +449,7 @@
 }
 
 .ep-check:hover {
-  border-color: #1db954;
+  border-color: var(--color-accent);
 }
 
 .ep-check:active {
@@ -457,7 +457,7 @@
 }
 
 .ep-check-done {
-  background: #1db954;
+  background: var(--color-accent);
   border-color: #19a449;
   box-shadow: 0 1px 3px rgba(25, 164, 73, 0.35);
 }
@@ -488,7 +488,7 @@
 
 .ep-row-progress-done {
   color: #fff;
-  background: #1db954;
+  background: var(--color-accent);
 }
 
 /* Whole row tints faint green once every question is checked. */
@@ -508,7 +508,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* Hug the icon — no padding box. */
+  /* Hug the icon ג€” no padding box. */
   width: auto;
   height: auto;
   padding: 0;
@@ -539,7 +539,7 @@
   color: #c0392b;
 }
 
-/* Row hover highlight — light blue across the whole exam row, like the
+/* Row hover highlight ג€” light blue across the whole exam row, like the
    reference figure. */
 .ep-table tbody tr:hover .ep-row-head,
 .ep-table tbody tr:hover .ep-progress-cell,
@@ -547,7 +547,7 @@
   background: #eaf2fd;
 }
 
-/* Touch devices have no hover — keep the delete buttons and the add "+"
+/* Touch devices have no hover ג€” keep the delete buttons and the add "+"
    handles permanently visible (the :disabled rule still hides them at limit). */
 @media (hover: none) {
   .ep-icon-btn {
@@ -558,7 +558,7 @@
   }
 }
 
-/* Mobile — don't pin the exam-name column; it eats too much of a narrow
+/* Mobile ג€” don't pin the exam-name column; it eats too much of a narrow
    viewport. Let it scroll with the rest of the table. */
 @media (max-width: 768px) {
   .ep-corner,
@@ -628,7 +628,7 @@
 }
 
 .ep-sheet-input:focus {
-  border-color: #1db954;
+  outline: none;
 }
 
 .ep-sheet-actions {
@@ -653,7 +653,7 @@
 }
 
 .ep-sheet-save {
-  background: #1db954;
+  background: var(--color-accent);
   border: 1px solid #19a449;
   color: #fff;
 }

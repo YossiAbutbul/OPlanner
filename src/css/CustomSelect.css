@@ -94,7 +94,7 @@
 }
 
 .cs-option-active {
-  background: #1db954;
+  background: var(--color-accent);
   color: #fff;
   font-weight: 700;
 }

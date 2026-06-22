@@ -1,7 +1,7 @@
 /* Spotify dark moody theme */
 :root {
-  --accent: #1db954;
-  --accent-hover: #1ed760;
+  --accent: var(--color-accent);
+  --accent-hover: var(--color-accent-hover);
   --bg: #0e0f12;
   --bg-elevated: #16181c;
   --bg-hover: #1d2026;
@@ -164,7 +164,7 @@ button:focus { outline: none; }
 }
 
 /* Open courses list */
-/* ===== Standalone nav (Focus) — sits above the footer, matches list items ===== */
+/* ===== Standalone nav (Focus) ג€” sits above the footer, matches list items ===== */
 .sidebar-nav {
   flex-shrink: 0;
   padding: 0.4rem 0.5rem;
@@ -794,7 +794,7 @@ button:focus { outline: none; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent, #1db954);
+  color: var(--accent, var(--color-accent));
 }
 
 .settings-menu button:disabled {
@@ -904,8 +904,7 @@ button:focus { outline: none; }
 }
 
 .modal-content input:focus {
-  border-color: #48bb78; /* Green border on focus */
-  box-shadow: 0 0 5px rgba(72, 187, 120, 0.8); /* Subtle glow */
+  outline: none;
 }
 
 /* .modal-content input::placeholder {

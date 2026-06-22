@@ -25,7 +25,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: #1db954;
+  background: var(--color-accent);
   color: #fff;
   font-size: 0.8rem;
   font-weight: 700;
@@ -36,7 +36,7 @@
 }
 
 .install-step-icon {
-  color: #1db954;
+  color: var(--color-accent);
   display: inline-flex;
   align-items: center;
   justify-content: center;

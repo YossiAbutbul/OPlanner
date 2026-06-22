@@ -1,8 +1,8 @@
 /* ============================================================
-   Landing — one focused screen.
+   Landing ג€” one focused screen.
    Dark stage (#0e0f12, same as the app's sidebar chrome) holding
    headline, three feature points and the live demo card. Minimal
-   scroll, app-native components: white cards, #1db954 actions.
+   scroll, app-native components: white cards, var(--color-accent) actions.
    ============================================================ */
 
 .landing {
@@ -189,7 +189,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #1db954;
+  background: var(--color-accent);
   animation: eyebrowPulse 2s ease-in-out infinite;
 }
 
@@ -218,11 +218,11 @@
 .landing-hero-accent {
   background: linear-gradient(
     100deg,
-    #1db954 0%,
+    var(--color-accent) 0%,
     #4ade80 35%,
     #a7f3c4 50%,
     #4ade80 65%,
-    #1db954 100%
+    var(--color-accent) 100%
   );
   background-size: 220% 100%;
   -webkit-background-clip: text;
@@ -268,7 +268,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  background: #1db954;
+  background: var(--color-accent);
   color: #fff;
   border: 1px solid #19a449;
   padding: 0.8rem 1.5rem;
@@ -302,7 +302,7 @@
 }
 
 .landing-cta:hover:not(:disabled) {
-  background: #1ed760;
+  background: var(--color-accent-hover);
   border-color: #1bbf52;
 }
 
@@ -406,7 +406,7 @@
   }
 }
 
-/* App-style card — pops against the dark stage. */
+/* App-style card ג€” pops against the dark stage. */
 .landing-demo {
   position: relative;
   z-index: 2;
@@ -476,7 +476,7 @@
 
 .landing-demo-ring {
   fill: none;
-  stroke: #1db954;
+  stroke: var(--color-accent);
   stroke-width: 8;
   stroke-linecap: round;
   transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1);
@@ -543,8 +543,8 @@
 }
 
 .landing-demo-task.done .landing-demo-check {
-  background: #1db954;
-  border-color: #1db954;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .landing-demo-task.done .landing-demo-name {
@@ -602,7 +602,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #1db954;
+  background: var(--color-accent);
   color: #fff;
   font-size: 0.65rem;
   flex-shrink: 0;
