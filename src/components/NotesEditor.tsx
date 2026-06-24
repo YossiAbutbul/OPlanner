@@ -184,9 +184,19 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
           <div className={expanded ? "ne-head" : "ne-inline-toolbar"}>
             {expanded && <span className="ne-title">Notes</span>}
             <NotesToolbar editor={editor} />
-            {expanded && (
+            {expanded ? (
               <button type="button" className="ne-close" onClick={saveNotes} title="Close" aria-label="Close">
                 <X size={16} strokeWidth={2.5} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="ne-bar-expand"
+                onClick={() => setExpanded(true)}
+                title="Expand"
+                aria-label="Expand notes"
+              >
+                <Maximize2 size={14} strokeWidth={2} />
               </button>
             )}
           </div>
@@ -201,15 +211,19 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
             </button>
           </div>
         ) : (
-          <button
-            type="button"
-            className="ne-expand-btn"
-            onClick={() => setExpanded(true)}
-            title="Expand"
-            aria-label="Expand notes"
-          >
-            <Maximize2 size={14} strokeWidth={2} />
-          </button>
+          // No toolbar bar here (HomeworkModal / TimeBlockModal) — keep a
+          // floating expand button in the editor's corner.
+          !inlineToolbar && (
+            <button
+              type="button"
+              className="ne-expand-btn"
+              onClick={() => setExpanded(true)}
+              title="Expand"
+              aria-label="Expand notes"
+            >
+              <Maximize2 size={14} strokeWidth={2} />
+            </button>
+          )
         )}
       </div>
     </div>

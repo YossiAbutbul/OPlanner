@@ -9,17 +9,23 @@
 }
 
 /* Inline toolbar sits flush on top of the collapsed editor, sharing its
-   rounded box (toolbar = top corners, editor = bottom corners). */
+   rounded box (toolbar = top corners, editor = bottom corners). The tools
+   take the row and wrap internally; the expand button stays pinned top-right. */
 .ne-inline-toolbar {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  flex-wrap: nowrap;
   gap: 0.25rem;
   padding: 0.3rem 0.4rem;
   background: #f6f6f7;
   border: 1px solid #d6d6da;
   border-bottom: none;
   border-radius: 6px 6px 0 0;
+}
+
+.ne-inline-toolbar .ne-toolbar {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .ne-wrap-toolbar .ne-collapsed {
@@ -145,7 +151,31 @@
   float: left;
 }
 
-/* ===== Expand button (collapsed only) ===== */
+/* Expand button living at the right end of the inline toolbar bar. */
+.ne-bar-expand {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #555;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex: 0 0 auto;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.ne-bar-expand:hover {
+  background: #f0f0f2;
+  border-color: #d6d6da;
+  color: #1a1a1a;
+}
+
+/* ===== Floating expand button (no-toolbar editors only) ===== */
 .ne-expand-btn {
   position: absolute;
   right: 6px;
