@@ -270,7 +270,7 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
           key={`${activeTab.year}|${activeTab.semester}|${activeTab.course}`}
           value={meta.courseNotes ?? ""}
           onChange={handleNotesChange}
-          placeholder="Syllabus highlights, grading breakdown, anything course-wide…"
+          placeholder="Syllabus highlights, grading breakdown, anything course-wide"
           inlineToolbar
           links={links}
           onSave={saveNotesNow}
