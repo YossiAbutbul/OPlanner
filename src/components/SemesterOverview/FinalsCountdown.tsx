@@ -34,8 +34,7 @@ const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => {
         let urgency = "none";
         if (days !== null) {
           if (days < 0) {
-            const n = Math.abs(days);
-            badge = `${n} ${n === 1 ? "day" : "days"} ago`;
+            badge = "Done";
             badgeClass = "finals-badge-past";
             urgency = "past";
           } else if (days === 0) {
