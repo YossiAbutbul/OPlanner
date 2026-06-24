@@ -7,8 +7,6 @@ interface Props {
   onChange: (px: number) => void;
 }
 
-// Custom font-size dropdown — replaces the unstyleable native <select> popup
-// with a styled popover matching the rest of the toolbar (see HighlightPicker).
 const FontSizePicker: React.FC<Props> = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -29,29 +27,27 @@ const FontSizePicker: React.FC<Props> = ({ value, onChange }) => {
         className="ne-fs-trigger"
         title="Font size"
         aria-label="Font size"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onMouseDown={(e) => e.preventDefault()} // keep editor selection
+        onMouseDown={(e) => e.preventDefault()}
         onClick={() => setOpen((v) => !v)}
       >
         <span className="ne-fs-value">{value}</span>
-        <ChevronDown size={13} strokeWidth={2.5} className="ne-fs-caret" />
+        <ChevronDown className="ne-fs-caret" size={12} strokeWidth={2.5} />
       </button>
       {open && (
-        <ul className="ne-fs-pop" role="listbox" aria-label="Font size">
-          {FONT_SIZES.map((s) => (
+        <ul className="ne-fs-pop" role="listbox">
+          {FONT_SIZES.map((sz) => (
             <li
-              key={s}
+              key={sz}
+              className={`ne-fs-item ${sz === value ? "ne-fs-item-active" : ""}`}
               role="option"
-              aria-selected={s === value}
-              className={`ne-fs-item ${s === value ? "ne-fs-item-active" : ""}`}
+              aria-selected={sz === value}
               onMouseDown={(e) => {
-                e.preventDefault(); // keep editor selection
-                onChange(s);
+                e.preventDefault();
+                onChange(sz);
                 setOpen(false);
               }}
             >
-              {s}
+              {sz}
             </li>
           ))}
         </ul>
