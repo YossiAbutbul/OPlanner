@@ -1,19 +1,17 @@
-import React, { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EditorContent, useEditor } from "@tiptap/react";
+import type { Extensions } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { TextStyle, FontSize } from "@tiptap/extension-text-style";
+import { Color } from "@tiptap/extension-color";
+import { Highlight } from "@tiptap/extension-highlight";
+import { TextAlign } from "@tiptap/extension-text-align";
+import { Placeholder } from "@tiptap/extensions";
+import Mention from "@tiptap/extension-mention";
 import { Maximize2, X } from "lucide-react";
 import NotesToolbar from "./NotesEditor/NotesToolbar";
-import {
-  DEFAULT_FONT_SIZE,
-  applyDirToSelection,
-  applyFontSize,
-  autoLinkAtCaret,
-  handleListTriggerSpace,
-  insertMentionLink,
-  readActiveFontSize,
-  readActiveFormatting,
-  readMentionQuery,
-  sanitize,
-} from "../utility/notesEditorDom";
+import { makeMentionSuggestion } from "./NotesEditor/mentionSuggestion";
+import { sanitize } from "../utility/notesEditorDom";
 import "../css/NotesEditor.css";
 
 // A course link the user can @-mention into the notes.
@@ -39,348 +37,181 @@ interface Props {
 
 const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional", inlineToolbar = false, links, onSave }) => {
   const [expanded, setExpanded] = useState(false);
-  // Open @-mention picker state: the query typed after @, caret rect for
-  // positioning, and the highlighted item. Null when closed.
-  const [mention, setMention] = useState<{ query: string; top: number; left: number } | null>(null);
-  const [mentionIndex, setMentionIndex] = useState(0);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const collapsedRef = useRef<HTMLDivElement>(null);
-  const expandedRef = useRef<HTMLDivElement>(null);
-  // Tracks the last sanitized HTML we emitted. When the parent re-renders
-  // with the same string, we skip the re-sync — otherwise DOMPurify's
-  // normalized output would diverge from the browser's live innerHTML and
-  // we'd reset the DOM mid-edit (wiping caret + freshly-set dir attribute).
+  // Tracks the last sanitized HTML we emitted, so an external `value` echoing
+  // our own change back doesn't trigger a setContent (which would reset caret).
   const lastEmittedRef = useRef<string | null>(null);
-  const [active, setActive] = useState<{ bold: boolean; underline: boolean; dir: "" | "ltr" | "rtl"; fontSize: number }>({
-    bold: false,
-    underline: false,
-    dir: "ltr",
-    fontSize: DEFAULT_FONT_SIZE,
-  });
+  // Bumped on every editor transaction to re-render the toolbar's active state.
+  const [, setTick] = useState(0);
 
-  // Sync external value into collapsed editor only when it diverges AND it's
-  // not just our own emit echoing back.
+  // Keep a live getter for the @-mention picker so it always sees current links
+  // without re-creating the editor when `links` changes.
+  const linksRef = useRef<MentionLink[]>(links ?? []);
   useEffect(() => {
-    const el = collapsedRef.current;
-    if (!el) return;
-    if (value === lastEmittedRef.current) return;
-    if (el.innerHTML !== value) el.innerHTML = sanitize(value);
-  }, [value]);
+    linksRef.current = links ?? [];
+  }, [links]);
+  const getLinks = useCallback(() => linksRef.current, []);
 
-  // When entering expanded, seed it with current value. Don't re-sync on
-  // every value change — expanded is a staging area until Save.
+  const hasMentions = (links ?? []).length > 0;
+
+  const extensions = useMemo(() => {
+    const base: Extensions = [
+      StarterKit.configure({
+        heading: { levels: [1, 2] },
+        link: {
+          openOnClick: true,
+          autolink: true,
+          HTMLAttributes: { target: "_blank", rel: "noopener noreferrer" },
+        },
+      }),
+      TextStyle,
+      FontSize,
+      Color,
+      Highlight.configure({ multicolor: true }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Placeholder.configure({ placeholder }),
+    ];
+    if (hasMentions) {
+      base.push(
+        Mention.configure({
+          // getLinks reads linksRef only when the picker fires at runtime, never
+          // during render — the ref-in-render rule is a false positive here.
+          // eslint-disable-next-line react-hooks/refs
+          suggestion: makeMentionSuggestion(getLinks) as never,
+        })
+      );
+    }
+    return base;
+    // Re-create only when mentions toggle on/off or the placeholder changes;
+    // getLinks is stable and keeps the picker's link list fresh without rebuild.
+  }, [placeholder, hasMentions, getLinks]);
+
+  const editor = useEditor(
+    {
+      extensions,
+      // Registers the `dir` attribute on all nodes (default ltr = the app's
+      // base direction); setTextDirection('rtl') then flips a block — including
+      // its list markers, which follow the inline-start edge.
+      textDirection: "ltr",
+      content: sanitize(value),
+      onUpdate: ({ editor }) => {
+        const html = sanitize(editor.getHTML());
+        lastEmittedRef.current = html;
+        onChange(html);
+      },
+      onTransaction: () => setTick((t) => t + 1),
+    },
+    [extensions]
+  );
+
+  // Sync external value changes into the editor (e.g. parent reset / load) but
+  // skip our own emit echoing back, which would wipe the caret mid-edit.
+  useEffect(() => {
+    if (!editor) return;
+    if (value === lastEmittedRef.current) return;
+    if (sanitize(editor.getHTML()) === sanitize(value)) return;
+    editor.commands.setContent(sanitize(value), { emitUpdate: false });
+  }, [value, editor]);
+
+  // Lock body scroll while the expanded overlay is open.
   useEffect(() => {
     if (!expanded) return;
-    const el = expandedRef.current;
-    if (el) {
-      el.innerHTML = sanitize(value);
-      el.focus();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expanded]);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    editor?.commands.focus();
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [expanded, editor]);
 
-  const editorEl = () => (expanded ? expandedRef : collapsedRef).current;
-
-  const emitCollapsed = () => {
-    const el = collapsedRef.current;
-    if (!el) return;
-    const sanitized = sanitize(el.innerHTML);
-    lastEmittedRef.current = sanitized;
-    onChange(sanitized);
-  };
-
-  const mentionLinks = links ?? [];
-  const filteredLinks = mention
-    ? mentionLinks.filter((l) => l.label.toLowerCase().includes(mention.query.toLowerCase()))
-    : [];
-
-  // Re-evaluate whether the caret is in an "@token" and (re)open the picker.
-  const detectMention = () => {
-    if (mentionLinks.length === 0) return;
-    const el = editorEl();
-    if (!el) return;
-    const res = readMentionQuery(el);
-    if (res) {
-      setMention({ query: res.query, top: res.rect.bottom + 4, left: res.rect.left });
-      setMentionIndex(0);
-    } else {
-      setMention(null);
-    }
-  };
-
-  const selectMention = (link: MentionLink) => {
-    const el = editorEl();
-    if (!el || !mention) return;
-    insertMentionLink(el, mention.query, link.label, link.url);
-    setMention(null);
-    if (!expanded) emitCollapsed();
-  };
-
-  // Collapsed editor emits on every input; both editors run mention detection.
-  const handleCollapsedInput = () => {
-    emitCollapsed();
-    detectMention();
-  };
-
-  // Open links on click — contenteditable normally suppresses link nav.
-  const handleEditorClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement | null;
-    if (!target) return;
-    const a = target.closest("a") as HTMLAnchorElement | null;
-    if (!a) return;
-    e.preventDefault();
-    window.open(a.href, "_blank", "noopener,noreferrer");
-  };
-
-  const refreshActive = () => {
-    const el = editorEl();
-    if (!el) return;
-    setActive({ ...readActiveFormatting(el), fontSize: readActiveFontSize(el) });
-  };
-
-  useEffect(() => {
-    const onSel = () => refreshActive();
-    document.addEventListener("selectionchange", onSel);
-    return () => document.removeEventListener("selectionchange", onSel);
-  }, [expanded]);
-
-  const handleSaveExpanded = () => {
-    const el = expandedRef.current;
-    if (el) onChange(sanitize(el.innerHTML));
-    setExpanded(false);
-  };
-
-  // Persist the notes (overlay commit when expanded, otherwise flush the
-  // collapsed editor). Shared by the in-editor keydown and the document-level
-  // Ctrl/Cmd+S listener below.
+  // Persist: in the collapsed view, flush + let the host show its "saved" toast.
+  // In the expanded overlay, save/close just commits-and-collapses.
   const saveNotes = () => {
-    setMention(null);
+    if (!editor) return;
+    const html = sanitize(editor.getHTML());
+    lastEmittedRef.current = html;
+    onChange(html);
     if (expanded) {
-      handleSaveExpanded(); // commits overlay edits + closes the overlay
+      setExpanded(false);
       return;
     }
-    emitCollapsed();
-    // onSave owns the "saved" confirmation toast (see CourseInfoPanel).
     onSave?.();
   };
-
-  // Keep a fresh ref so the document listener (registered once) always runs
-  // the latest closure without re-binding on every render.
   const saveNotesRef = useRef(saveNotes);
   useEffect(() => {
     saveNotesRef.current = saveNotes;
   });
 
-  // Ctrl/Cmd+S anywhere within this editor (incl. toolbar buttons / popovers,
-  // where focus isn't in the contentEditable) saves instead of letting the
-  // browser save the page. Capture phase so we win before the default.
+  // Ctrl/Cmd+S anywhere within this editor saves instead of the browser saving
+  // the page. Capture phase so we win before the default.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       // Match the physical S key (e.code) — with a non-Latin layout (e.g.
-      // Hebrew) e.key is the mapped letter ("ד"), so e.key === "s" misses.
+      // Hebrew) e.key is the mapped letter, so e.key === "s" alone misses.
       const isSaveKey = e.code === "KeyS" || e.key === "s" || e.key === "S";
       if (!((e.ctrlKey || e.metaKey) && isSaveKey)) return;
-      // Another listener already handled this press (e.g. a second editor
-      // instance, or StrictMode's double-mount) — don't save/toast twice.
       if (e.defaultPrevented) return;
       const a = document.activeElement;
-      const relevant =
-        !!expandedRef.current || // expanded overlay open (covers overlay focus)
-        wrapRef.current?.contains(a); // focus within the inline editor
+      const relevant = expanded || wrapRef.current?.contains(a);
       if (!relevant) return;
       e.preventDefault();
-      // stopImmediatePropagation: also blocks sibling document listeners
-      // (other NotesEditor instances, HomeworkModal's own Ctrl+S).
       e.stopImmediatePropagation();
       saveNotesRef.current();
     };
     document.addEventListener("keydown", onKeyDown, true);
     return () => document.removeEventListener("keydown", onKeyDown, true);
-  }, []);
+  }, [expanded]);
 
-  const handleEditorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    // Ctrl/Cmd+S handled by the document listener above; swallow here too so
-    // it never falls through to the browser when focus is in the editor.
-    if ((e.ctrlKey || e.metaKey) && (e.code === "KeyS" || e.key === "s" || e.key === "S")) {
-      e.preventDefault();
-      return;
-    }
-    // While the @-mention picker is open, hijack nav/confirm/dismiss keys.
-    if (mention && filteredLinks.length > 0) {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setMentionIndex((i) => (i + 1) % filteredLinks.length);
-        return;
-      }
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setMentionIndex((i) => (i - 1 + filteredLinks.length) % filteredLinks.length);
-        return;
-      }
-      if (e.key === "Enter" || e.key === "Tab") {
-        e.preventDefault();
-        selectMention(filteredLinks[mentionIndex]);
-        return;
-      }
+  // Esc collapses the expanded overlay.
+  useEffect(() => {
+    if (!expanded) return;
+    const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        setMention(null);
-        return;
+        saveNotesRef.current();
       }
-    }
-    if (e.key === "Escape" && mention) setMention(null);
-    if (e.key === " " || e.key === "Enter") autoLinkAtCaret();
-    if (e.key !== " ") return;
-    const root = e.currentTarget;
-    if (handleListTriggerSpace(root)) {
-      e.preventDefault();
-      if (!expanded) emitCollapsed();
-    }
-  };
-
-  const exec = (cmd: "bold" | "underline") => {
-    editorEl()?.focus();
-    document.execCommand(cmd, false);
-    if (!expanded) emitCollapsed();
-    refreshActive();
-  };
-
-  const applyDir = (dir: "ltr" | "rtl") => {
-    const root = editorEl();
-    if (!root) return;
-    applyDirToSelection(root, dir);
-    if (!expanded) emitCollapsed();
-    refreshActive();
-  };
-
-  const applyFont = (px: number) => {
-    const root = editorEl();
-    if (!root) return;
-    applyFontSize(root, px);
-    if (!expanded) emitCollapsed();
-    refreshActive();
-  };
-
-  const applyColor = (cmd: "foreColor" | "hiliteColor", color: string) => {
-    const el = editorEl();
-    if (!el) return;
-    el.focus();
-    if (cmd === "hiliteColor") {
-      const ok = document.execCommand("hiliteColor", false, color);
-      if (!ok) document.execCommand("backColor", false, color);
-    } else {
-      document.execCommand(cmd, false, color);
-    }
-    if (!expanded) emitCollapsed();
-  };
-
-  const handleDiscardExpanded = () => setExpanded(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [expanded]);
 
   return (
-    <div ref={wrapRef} className={`ne-wrap ${inlineToolbar ? "ne-wrap-toolbar" : ""}`}>
-      {inlineToolbar && !expanded && (
-        <div className="ne-inline-toolbar">
-          <NotesToolbar
-            active={active}
-            onExec={exec}
-            onColor={(c) => applyColor("foreColor", c)}
-            onHighlight={(c) => applyColor("hiliteColor", c)}
-            onDir={applyDir}
-            onFontSize={applyFont}
-          />
-        </div>
-      )}
-      <div
-        ref={collapsedRef}
-        className="ne-collapsed"
-        contentEditable
-        suppressContentEditableWarning
-        data-placeholder={placeholder}
-        onInput={handleCollapsedInput}
-        onKeyDown={handleEditorKeyDown}
-        onClick={handleEditorClick}
-        onBlur={() => setTimeout(() => setMention(null), 150)}
-      />
-      <button
-        type="button"
-        className="ne-expand-btn"
-        onClick={() => setExpanded(true)}
-        title="Expand"
-        aria-label="Expand notes"
-      >
-        <Maximize2 size={14} strokeWidth={2} />
-      </button>
+    <div ref={wrapRef} className={`ne-wrap ${inlineToolbar ? "ne-wrap-toolbar" : ""} ${expanded ? "ne-wrap-expanded" : ""}`}>
+      {expanded && <div className="ne-backdrop" onMouseDown={saveNotes} />}
 
-      {expanded && createPortal(
-        <div className="ne-overlay">
-          <div className="ne-panel">
-            <div className="ne-head">
-              <span className="ne-title">Notes</span>
-              <NotesToolbar
-                active={active}
-                onExec={exec}
-                onColor={(c) => applyColor("foreColor", c)}
-                onHighlight={(c) => applyColor("hiliteColor", c)}
-                onDir={applyDir}
-                onFontSize={applyFont}
-              />
-              <button
-                type="button"
-                className="ne-close"
-                onClick={handleDiscardExpanded}
-                title="Close (discard)"
-                aria-label="Close"
-              >
+      <div className="ne-panel-box">
+        {(inlineToolbar || expanded) && (
+          <div className={expanded ? "ne-head" : "ne-inline-toolbar"}>
+            {expanded && <span className="ne-title">Notes</span>}
+            <NotesToolbar editor={editor} />
+            {expanded && (
+              <button type="button" className="ne-close" onClick={saveNotes} title="Close" aria-label="Close">
                 <X size={16} strokeWidth={2.5} />
               </button>
-            </div>
-            <div
-              ref={expandedRef}
-              className="ne-editor"
-              contentEditable
-              suppressContentEditableWarning
-              data-placeholder={placeholder}
-              onInput={detectMention}
-              onKeyDown={handleEditorKeyDown}
-              onClick={handleEditorClick}
-              onBlur={() => setTimeout(() => setMention(null), 150)}
-            />
-            <div className="ne-footer">
-              <button type="button" className="ne-save-btn" onClick={handleSaveExpanded}>
-                Save
-              </button>
-            </div>
+            )}
           </div>
-        </div>,
-        document.body
-      )}
+        )}
 
-      {mention && filteredLinks.length > 0 && createPortal(
-        <ul
-          className="ne-mention-pop"
-          style={{ top: mention.top, left: mention.left }}
-          role="listbox"
-        >
-          {filteredLinks.map((l, i) => (
-            <li
-              key={l.id}
-              className={`ne-mention-item ${i === mentionIndex ? "ne-mention-item-active" : ""}`}
-              role="option"
-              aria-selected={i === mentionIndex}
-              // mousedown (not click) + preventDefault keeps the editor's
-              // selection alive so we can insert at the caret.
-              onMouseDown={(e) => {
-                e.preventDefault();
-                selectMention(l);
-              }}
-              onMouseEnter={() => setMentionIndex(i)}
-            >
-              {l.label}
-            </li>
-          ))}
-        </ul>,
-        document.body
-      )}
+        <EditorContent editor={editor} className={expanded ? "ne-editor" : "ne-collapsed"} />
+
+        {expanded ? (
+          <div className="ne-footer">
+            <button type="button" className="ne-save-btn" onClick={saveNotes}>
+              Save
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="ne-expand-btn"
+            onClick={() => setExpanded(true)}
+            title="Expand"
+            aria-label="Expand notes"
+          >
+            <Maximize2 size={14} strokeWidth={2} />
+          </button>
+        )}
+      </div>
     </div>
   );
 };

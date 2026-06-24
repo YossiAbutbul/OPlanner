@@ -8,7 +8,7 @@ import DOMPurify from "dompurify";
 // dangerous schemes (javascript:, data:), and the editor only ever emits
 // http(s)/mailto links anyway.
 const SANITIZE_CFG = {
-  ALLOWED_TAGS: ["b", "strong", "i", "em", "u", "br", "div", "p", "span", "a", "ul", "ol", "li"],
+  ALLOWED_TAGS: ["b", "strong", "i", "em", "u", "s", "mark", "br", "div", "p", "span", "a", "ul", "ol", "li", "h1", "h2"],
   ALLOWED_ATTR: ["href", "target", "rel", "dir", "style", "class"],
 };
 
