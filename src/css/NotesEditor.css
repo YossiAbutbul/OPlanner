@@ -445,10 +445,7 @@
 }
 
 .ne-fs-pop {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  left: auto;
+  position: fixed;
   z-index: var(--z-popover);
   margin: 0;
   padding: 0.2rem;
@@ -494,9 +491,7 @@
 }
 
 .ne-hl-pop {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
+  position: fixed;
   background: #fff;
   border: 1px solid #e3e3e6;
   border-radius: 8px;
