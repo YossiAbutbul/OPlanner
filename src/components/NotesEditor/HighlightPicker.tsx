@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Highlighter } from "lucide-react";
 
 const HIGHLIGHT_COLORS: { label: string; value: string; swatch: string }[] = [
@@ -16,15 +17,33 @@ interface Props {
 
 const HighlightPicker: React.FC<Props> = ({ onPick }) => {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+
+  // Position the portalled popup under the trigger (fixed coords).
+  useLayoutEffect(() => {
+    if (!open || !wrapRef.current) return;
+    const r = wrapRef.current.getBoundingClientRect();
+    setPos({ top: r.bottom + 4, left: r.left });
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (wrapRef.current?.contains(t) || popRef.current?.contains(t)) return;
+      setOpen(false);
     };
+    const onReflow = () => setOpen(false);
     document.addEventListener("mousedown", onDown, true);
-    return () => document.removeEventListener("mousedown", onDown, true);
+    window.addEventListener("resize", onReflow);
+    window.addEventListener("scroll", onReflow, true);
+    return () => {
+      document.removeEventListener("mousedown", onDown, true);
+      window.removeEventListener("resize", onReflow);
+      window.removeEventListener("scroll", onReflow, true);
+    };
   }, [open]);
 
   return (
@@ -39,25 +58,28 @@ const HighlightPicker: React.FC<Props> = ({ onPick }) => {
       >
         <Highlighter size={14} strokeWidth={2.5} />
       </button>
-      {open && (
-        <div className="ne-hl-pop">
-          {HIGHLIGHT_COLORS.map((c) => (
-            <button
-              key={c.label}
-              type="button"
-              className={`ne-hl-swatch ${c.value === "transparent" ? "ne-hl-swatch-none" : ""}`}
-              style={{ background: c.swatch }}
-              title={c.label}
-              aria-label={c.label}
-              onMouseDown={(e) => {
-                e.preventDefault(); // keep editor selection
-                onPick(c.value);
-                setOpen(false);
-              }}
-            />
-          ))}
-        </div>
-      )}
+      {open &&
+        pos &&
+        createPortal(
+          <div ref={popRef} className="ne-hl-pop" style={{ top: pos.top, left: pos.left }}>
+            {HIGHLIGHT_COLORS.map((c) => (
+              <button
+                key={c.label}
+                type="button"
+                className={`ne-hl-swatch ${c.value === "transparent" ? "ne-hl-swatch-none" : ""}`}
+                style={{ background: c.swatch }}
+                title={c.label}
+                aria-label={c.label}
+                onMouseDown={(e) => {
+                  e.preventDefault(); // keep editor selection
+                  onPick(c.value);
+                  setOpen(false);
+                }}
+              />
+            ))}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };
