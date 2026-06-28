@@ -176,6 +176,9 @@
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+  /* Inner room so the selected-swatch ring and hover-scale aren't clipped by
+     the modal edge. No negative margin (that caused a horizontal scrollbar). */
+  padding: 5px;
 }
 
 .cp-preset {
