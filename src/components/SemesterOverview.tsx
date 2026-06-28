@@ -15,7 +15,7 @@ import FinalsCountdown from "./SemesterOverview/FinalsCountdown";
 import AddCourseModal from "./SemesterOverview/AddCourseModal";
 import { useSemesterStats } from "../hooks/useSemesterStats";
 import type { CourseInfo, HomeworkEntry } from "../types/models";
-import { BookPlus, Download } from "lucide-react";
+import { BookPlus, CalendarClock, CalendarPlus, Download, ListChecks } from "lucide-react";
 import "../css/SemesterOverview.css";
 
 interface Props {
@@ -121,26 +121,28 @@ const SemesterOverview: React.FC<Props> = ({
           <h1>{semester}</h1>
           <span className="overview-year">{year}</span>
         </div>
-        <div className="overview-header-actions">
-          <button
-            className="overview-import"
-            data-tour="import"
-            onClick={() => fileInputRef.current?.click()}
-            title="Import calendar (.ics)"
-          >
-            <Download size={16} />
-            <span>Import calendar</span>
-          </button>
-          <button
-            className="overview-add-course"
-            data-tour="add-course"
-            onClick={() => setAddOpen(true)}
-            title="Add course"
-          >
-            <BookPlus size={16} />
-            <span>Add course</span>
-          </button>
-        </div>
+        {!isEmpty && (
+          <div className="overview-header-actions">
+            <button
+              className="overview-import"
+              data-tour="import"
+              onClick={() => fileInputRef.current?.click()}
+              title="Import calendar (.ics)"
+            >
+              <Download size={16} />
+              <span>Import calendar</span>
+            </button>
+            <button
+              className="overview-add-course"
+              data-tour="add-course"
+              onClick={() => setAddOpen(true)}
+              title="Add course"
+            >
+              <BookPlus size={16} />
+              <span>Add course</span>
+            </button>
+          </div>
+        )}
         <input
           ref={fileInputRef}
           type="file"
@@ -171,13 +173,47 @@ const SemesterOverview: React.FC<Props> = ({
       />
 
       {isEmpty ? (
-        <section className="overview-cta">
-          <div className="overview-cta-icon">📅</div>
-          <h2>Plan your next semester</h2>
-          <p>
-            {semester} is empty. Add courses to start tracking tasks, set final exam
-            dates, and import your calendar.
+        <section className="overview-empty">
+          <div className="overview-empty-art" aria-hidden="true">
+            <CalendarPlus size={32} strokeWidth={1.7} />
+          </div>
+          <h2 className="overview-empty-title">Let's build {semester}</h2>
+          <p className="overview-empty-text">
+            No courses here yet. Add your first one to start tracking tasks,
+            counting down to finals and importing your calendar.
           </p>
+          <div className="overview-empty-actions">
+            <button
+              className="overview-add-course"
+              data-tour="add-course"
+              onClick={() => setAddOpen(true)}
+            >
+              <BookPlus size={16} />
+              <span>Add your first course</span>
+            </button>
+            <button
+              className="overview-import"
+              data-tour="import"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Download size={16} />
+              <span>Import calendar</span>
+            </button>
+          </div>
+          <ul className="overview-empty-hints">
+            <li>
+              <ListChecks size={16} strokeWidth={2} />
+              Track every assignment
+            </li>
+            <li>
+              <CalendarClock size={16} strokeWidth={2} />
+              Live finals countdown
+            </li>
+            <li>
+              <CalendarPlus size={16} strokeWidth={2} />
+              One-click .ics import
+            </li>
+          </ul>
         </section>
       ) : !loaded ? null : (
         <>

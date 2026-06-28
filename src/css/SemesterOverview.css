@@ -563,34 +563,84 @@
   opacity: 0;
 }
 
-/* Empty Semester C CTA */
-.overview-cta {
-  margin-top: 2rem;
-  background: #fff;
-  border: 1px dashed #c5c8cc;
-  border-radius: 12px;
-  padding: 2.5rem 1.5rem;
+/* Empty-semester state — same plain card as the rest of the overview */
+.overview-empty {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  color: #444;
+  padding: 3rem 1.5rem;
+  background: #fff;
+  border: 1px solid #e7e8eb;
+  border-radius: 12px;
+  animation: overviewFadeUp 0.4s ease both;
 }
 
-.overview-cta-icon {
-  font-size: 2.4rem;
-  margin-bottom: 0.6rem;
+.overview-empty-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 1.2rem;
+  border-radius: 16px;
+  color: var(--color-accent);
+  background: rgba(29, 185, 84, 0.1);
 }
 
-.overview-cta h2 {
+.overview-empty-title {
   margin: 0 0 0.5rem;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: #1a1a1a;
 }
 
-.overview-cta p {
-  margin: 0 auto;
-  max-width: 480px;
+.overview-empty-text {
+  margin: 0 auto 0.5rem;
+  max-width: 46ch;
   color: #666;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.overview-empty-text strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.overview-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-top: 1.4rem;
+}
+
+.overview-empty-hints {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem 1.4rem;
+  list-style: none;
+  margin: 1.8rem 0 0;
+  padding: 1.4rem 0 0;
+  width: 100%;
+  max-width: 540px;
+  border-top: 1px solid #f0f0f2;
+}
+
+.overview-empty-hints li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.overview-empty-hints svg {
+  color: var(--color-accent);
 }
 
 /* Entry animation for overview cards */
