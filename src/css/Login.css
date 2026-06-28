@@ -6,14 +6,26 @@
    ============================================================ */
 
 .landing {
+  position: relative;
   min-height: 100vh;
   min-height: 100dvh;
   width: 100vw;
-  background: #0e0f12;
+  background:
+    radial-gradient(140% 100% at 50% -20%, #16241c 0%, #0e0f12 55%),
+    #0e0f12;
   color: #e7e9ee;
   display: flex;
   flex-direction: column;
   font-family: inherit;
+  overflow: hidden;
+}
+
+/* Keep page content above the aurora backdrop. */
+.landing > .landing-nav,
+.landing > .landing-main,
+.landing > .landing-footer {
+  position: relative;
+  z-index: 1;
 }
 
 /* ---------- nav ---------- */
@@ -45,19 +57,6 @@
   display: inline-flex;
   align-items: center;
   gap: 1rem;
-}
-
-.landing-nav-link {
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-decoration: none;
-  opacity: 0.75;
-  transition: opacity 0.15s ease;
-}
-
-.landing-nav-link:hover {
-  opacity: 1;
 }
 
 .landing-nav-btn {
@@ -315,13 +314,29 @@
   cursor: default;
 }
 
+/* Hidden until hover: collapses width and cancels the parent gap so the
+   resting button has no trailing space, then slides in on hover. */
 .landing-cta-arrow {
-  display: inline-block;
-  transition: translate 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  display: inline-flex;
+  align-items: center;
+  max-width: 0;
+  margin-left: -0.6rem;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateX(-4px);
+  transition:
+    max-width 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    margin-left 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease,
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.landing-cta:hover:not(:disabled) .landing-cta-arrow {
-  translate: 4px 0;
+.landing-cta:hover:not(:disabled) .landing-cta-arrow,
+.landing-cta:focus-visible:not(:disabled) .landing-cta-arrow {
+  max-width: 1.4em;
+  margin-left: 0;
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .landing-cta-note {
@@ -342,7 +357,7 @@
 
 .landing-point {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.8rem;
 }
 
@@ -560,70 +575,6 @@
   color: #888;
 }
 
-/* Floating status chips. */
-.landing-chip {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: #15171c;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #e7e9ee;
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.45rem 0.75rem;
-  border-radius: 999px;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
-  white-space: nowrap;
-  z-index: 3;
-  animation: chipFloat 7s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-}
-
-.landing-chip-ics {
-  top: -44px;
-  left: 6%;
-  animation-delay: 0.9s;
-}
-
-.landing-chip-exam {
-  bottom: -44px;
-  right: 4%;
-  animation-delay: 0.4s;
-}
-
-.landing-chip-exam strong {
-  color: #fca5a5;
-}
-
-.landing-chip-check {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  color: #fff;
-  font-size: 0.65rem;
-  flex-shrink: 0;
-}
-
-@keyframes chipFloat {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  50% {
-    translate: 0 -7px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-chip {
-    animation: none;
-  }
-}
-
 /* ---------- footer ---------- */
 
 .landing-footer {
@@ -681,14 +632,6 @@
     width: 100%;
     max-width: 340px;
     box-sizing: border-box;
-  }
-  .landing-chip-ics {
-    top: -40px;
-    left: 0;
-  }
-  .landing-chip-exam {
-    bottom: -40px;
-    right: 0;
   }
   .landing-hero-glow {
     top: auto;

@@ -194,57 +194,285 @@
   }
 }
 
-/* ===== ErrorBoundary fallback ג€” matches the toast aesthetic ===== */
-.error-boundary {
-  max-width: 480px;
-  margin: 10vh auto;
-  padding: 2rem;
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: var(--radius-lg, 16px);
-  text-align: center;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-}
-
-.error-boundary h1 {
-  margin: 0 0 0.5rem;
-  font-size: 1.5rem;
-  color: #1a1a1a;
-}
-
-.error-boundary-msg {
-  color: #555;
-  margin: 0 0 1.25rem;
-  font-size: 0.95rem;
-  word-wrap: break-word;
-}
-
-.error-boundary-actions {
+/* ===== ErrorBoundary fallback — dark, on-theme "wow" ===== */
+.eb-screen {
+  position: fixed;
+  inset: 0;
+  min-height: 100vh;
   display: flex;
-  gap: 0.6rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow: hidden;
+  background:
+    radial-gradient(140% 100% at 50% -20%, #16241c 0%, #0e0f12 55%),
+    #0e0f12;
+  z-index: var(--z-modal, 2000);
+}
+
+/* ===== Shared aurora backdrop (landing + error page) ===== */
+.aurora-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(95px);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.aurora-blob-1 {
+  width: 520px;
+  height: 520px;
+  top: -160px;
+  left: -120px;
+  opacity: 0.6;
+  background: radial-gradient(circle, rgba(29, 185, 84, 0.6), transparent 70%);
+  animation: aurora-drift-1 18s ease-in-out infinite;
+}
+
+.aurora-blob-2 {
+  width: 560px;
+  height: 560px;
+  bottom: -200px;
+  right: -160px;
+  opacity: 0.5;
+  background: radial-gradient(circle, rgba(30, 215, 96, 0.45), transparent 70%);
+  animation: aurora-drift-2 22s ease-in-out infinite;
+}
+
+.aurora-blob-3 {
+  width: 420px;
+  height: 420px;
+  top: 35%;
+  left: 50%;
+  opacity: 0.32;
+  background: radial-gradient(circle, rgba(16, 130, 153, 0.5), transparent 70%);
+  animation: aurora-drift-3 26s ease-in-out infinite;
+}
+
+@keyframes aurora-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(70px, 50px) scale(1.14); }
+}
+
+@keyframes aurora-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-60px, -36px) scale(1.12); }
+}
+
+@keyframes aurora-drift-3 {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-58%, -42%) scale(1.2); }
+}
+
+/* Faint graph-paper grid for a planner feel. */
+.aurora-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 46px 46px;
+  mask-image: radial-gradient(130% 110% at 50% 40%, #000 25%, transparent 78%);
+  -webkit-mask-image: radial-gradient(130% 110% at 50% 40%, #000 25%, transparent 78%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob { animation: none; }
+}
+
+.eb-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 500px;
+  padding: 3rem 2.6rem 2rem;
+  text-align: center;
+  background: rgba(20, 22, 26, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 30px 80px rgba(0, 0, 0, 0.55);
+  animation: eb-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes eb-rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Animated badge: floating glyph wrapped in pulsing accent rings. */
+.eb-badge {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 1.6rem;
+  display: flex;
+  align-items: center;
   justify-content: center;
 }
 
-.error-boundary-btn {
-  padding: 0.55rem 1.1rem;
-  background: var(--color-accent);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm, 6px);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
+/* A glowing dot orbiting the badge. */
+.eb-badge-orbit {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px dashed rgba(29, 185, 84, 0.25);
+  animation: eb-spin 7s linear infinite;
 }
 
-.error-boundary-btn:hover {
+.eb-badge-orbit::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  border-radius: 50%;
+  background: #1ed760;
+  box-shadow: 0 0 14px 3px rgba(30, 215, 96, 0.8);
+}
+
+@keyframes eb-spin {
+  to { transform: rotate(360deg); }
+}
+
+.eb-badge-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(29, 185, 84, 0.5);
+  animation: eb-pulse 2.6s ease-out infinite;
+}
+
+.eb-badge-ring-2 {
+  animation-delay: 1.3s;
+}
+
+@keyframes eb-pulse {
+  0% { transform: scale(0.7); opacity: 0.9; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.eb-badge-core {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #1ed760;
+  background: radial-gradient(circle at 50% 35%, rgba(29, 185, 84, 0.3), rgba(29, 185, 84, 0.1));
+  box-shadow:
+    0 0 0 1px rgba(29, 185, 84, 0.35) inset,
+    0 0 46px rgba(29, 185, 84, 0.4);
+}
+
+.eb-title {
+  margin: 0 0 0.7rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.18;
+  background: linear-gradient(180deg, #ffffff, #b6f0cd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.eb-text {
+  color: #9aa4ad;
+  margin: 0 auto 1.9rem;
+  max-width: 36ch;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.eb-actions {
+  display: flex;
+  gap: 0.7rem;
+  justify-content: center;
+}
+
+/* Same recipe as the landing buttons — flat, no glow. */
+.eb-btn {
+  padding: 0.7rem 1.4rem;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+}
+
+.eb-btn:active {
+  transform: translateY(1px);
+}
+
+.eb-btn-primary {
+  color: #fff;
+  background: var(--color-accent);
+  border-color: #19a449;
+}
+
+.eb-btn-primary:hover {
   background: var(--color-accent-hover);
 }
 
-.error-boundary-btn + .error-boundary-btn {
-  background: #f3f3f5;
-  color: #1a1a1a;
+.eb-btn-ghost {
+  color: #e7e9ee;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
-.error-boundary-btn + .error-boundary-btn:hover {
-  background: #e8e8eb;
+.eb-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Subtle one-line error reference — enough context without alarming detail. */
+.eb-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1.5rem auto 0;
+  max-width: 100%;
+  color: #7b848c;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.76rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eb-error-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff6b6b;
+  box-shadow: 0 0 8px rgba(255, 107, 107, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eb-badge-core,
+  .eb-badge-ring,
+  .eb-badge-orbit,
+  .eb-card {
+    animation: none;
+  }
 }

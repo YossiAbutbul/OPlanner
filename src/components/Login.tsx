@@ -6,8 +6,9 @@ import {
   useSpring,
   type Variants,
 } from "framer-motion";
-import { FileDown, Palette, TimerReset } from "lucide-react";
+import { ArrowRight, CalendarClock, CalendarPlus, LayoutGrid } from "lucide-react";
 import AuthModal from "./AuthModal";
+import AuroraBackground from "./AuroraBackground";
 import "../css/Login.css";
 
 const rise: Variants = {
@@ -157,7 +158,7 @@ const HeroDemo: React.FC = () => {
       <div className="landing-demo-foot">
         {pct === 100
           ? "That's the feeling. Every time. 🎉"
-          : "This card is real — clear the list."}
+          : "This card is real - clear the list."}
       </div>
     </div>
   );
@@ -165,19 +166,19 @@ const HeroDemo: React.FC = () => {
 
 const FEATURES = [
   {
-    icon: FileDown,
-    title: "Drop in your .ics file",
-    text: "Courses and dates import themselves. Set up in 30 seconds.",
+    icon: CalendarPlus,
+    title: "Your whole semester, in one drop",
+    text: "Import a single .ics and every course, class and deadline lands in place. Thirty seconds, no typing.",
   },
   {
-    icon: Palette,
-    title: "Tabs, like your browser",
-    text: "Years, semesters, courses - color-coded, zero learning curve.",
+    icon: LayoutGrid,
+    title: "Organised the way you think",
+    text: "Years, semesters and courses as colour-coded tabs you already know how to use. Nothing to learn.",
   },
   {
-    icon: TimerReset,
-    title: "Finals countdown",
-    text: "One date per course. The honest number of days left, always on.",
+    icon: CalendarClock,
+    title: "Never blindsided by a deadline",
+    text: "A live countdown to every assignment and final - the honest days left, always in view.",
   },
 ];
 
@@ -193,20 +194,13 @@ const Login: React.FC = () => {
 
   return (
     <div className="landing">
+      <AuroraBackground />
       <nav className="landing-nav">
         <div className="landing-brand">
           <img src="./Logo.svg" alt="" className="landing-logo" />
           <span>OPlanner</span>
         </div>
         <div className="landing-nav-right">
-          <a
-            className="landing-nav-link"
-            href="https://github.com/YossiAbutbul/OPlanner"
-            target="_blank"
-            rel="noreferrer"
-          >
-            GitHub
-          </a>
           <button
             className="landing-nav-btn"
             onClick={() => openAuth("signin")}
@@ -249,7 +243,7 @@ const Login: React.FC = () => {
                 >
                   Start free
                   <span className="landing-cta-arrow" aria-hidden>
-                    →
+                    <ArrowRight size={18} strokeWidth={2.5} />
                   </span>
                 </button>
               </motion.div>
@@ -280,42 +274,11 @@ const Login: React.FC = () => {
                 damping: 26,
               }}
             >
-              <motion.div
-                className="landing-chip landing-chip-ics"
-                aria-hidden
-                initial={reduceMotion ? false : { opacity: 0, scale: 0.6 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{
-                  delay: 0.8,
-                  type: "spring",
-                  stiffness: 380,
-                  damping: 20,
-                }}
-              >
-                <span className="landing-chip-check">✓</span>
-                calendar.ics imported
-              </motion.div>
-
               <div className="landing-demo-float">
                 <TiltCard>
                   <HeroDemo />
                 </TiltCard>
               </div>
-
-              <motion.div
-                className="landing-chip landing-chip-exam"
-                aria-hidden
-                initial={reduceMotion ? false : { opacity: 0, scale: 0.6 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{
-                  delay: 1,
-                  type: "spring",
-                  stiffness: 380,
-                  damping: 20,
-                }}
-              >
-                ⏳ Moed A in <strong>6 days</strong>
-              </motion.div>
             </motion.div>
           </div>
         </section>

@@ -221,7 +221,6 @@ const App: React.FC = () => {
       <Suspense fallback={null}>
         <Tour run={tour.tourRun} onFinish={tour.finishTour} onSetMobileNav={setMobileNavOpen} />
       </Suspense>
-
     </div>
   );
 };
