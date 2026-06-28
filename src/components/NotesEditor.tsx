@@ -107,7 +107,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   // Sync external value changes into the editor (e.g. parent reset / load) but
   // skip our own emit echoing back, which would wipe the caret mid-edit.
   useEffect(() => {
-    if (!editor) return;
+    if (!editor || editor.isDestroyed) return;
     if (value === lastEmittedRef.current) return;
     if (sanitize(editor.getHTML()) === sanitize(value)) return;
     editor.commands.setContent(sanitize(value), { emitUpdate: false });
@@ -127,7 +127,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
   // Persist: in the collapsed view, flush + let the host show its "saved" toast.
   // In the expanded overlay, save/close just commits-and-collapses.
   const saveNotes = () => {
-    if (!editor) return;
+    if (!editor || editor.isDestroyed) return;
     const html = sanitize(editor.getHTML());
     lastEmittedRef.current = html;
     onChange(html);
