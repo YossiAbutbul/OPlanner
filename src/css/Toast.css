@@ -381,6 +381,16 @@
     0 0 46px rgba(29, 185, 84, 0.4);
 }
 
+/* 404 badge: bold numerals inside the same glowing core used by the error
+   page, instead of an SVG glyph. */
+.nf-badge-core {
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #c9ffdd;
+  text-shadow: 0 0 18px rgba(29, 185, 84, 0.5);
+}
+
 .eb-title {
   margin: 0 0 0.7rem;
   font-size: 1.75rem;
@@ -409,11 +419,13 @@
 
 /* Same recipe as the landing buttons — flat, no glow. */
 .eb-btn {
+  display: inline-block;
   padding: 0.7rem 1.4rem;
   border-radius: 8px;
   font-size: 0.92rem;
   font-weight: 600;
   font-family: inherit;
+  text-decoration: none;
   cursor: pointer;
   border: 1px solid transparent;
   transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;

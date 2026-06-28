@@ -4,6 +4,7 @@ import './css/InstallHelpModal.css';
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import NotFound from "./components/NotFound";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ToastList from "./components/ToastList";
 import PwaReloadPrompt from "./components/PwaReloadPrompt";
@@ -20,26 +21,38 @@ if (import.meta.env.DEV && new URLSearchParams(location.search).get("debug") ===
   import("eruda").then(({ default: eruda }) => eruda.init());
 }
 
+// The app has no client-side router — it lives only at the configured base
+// path (/ on Vercel, /OPlanner/ on GitHub Pages). The host serves index.html
+// for every path, so an unknown URL like /1 would otherwise silently render
+// the full app. Compare against the base and show a 404 instead.
+const normalizePath = (p: string) => p.replace(/\/+$/, "") || "/";
+const isKnownRoute =
+  normalizePath(window.location.pathname) === normalizePath(import.meta.env.BASE_URL);
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <ToastProvider>
-        <AuthProvider>
-          <CoinsProvider>
-            <PomodoroProvider>
-              <HomeworkProvider>
-                <TimeBlockProvider>
-                  <NotificationProvider>
-                    <App />
-                    <ToastList />
-                    <PwaReloadPrompt />
-                  </NotificationProvider>
-                </TimeBlockProvider>
-              </HomeworkProvider>
-            </PomodoroProvider>
-          </CoinsProvider>
-        </AuthProvider>
-      </ToastProvider>
+      {isKnownRoute ? (
+        <ToastProvider>
+          <AuthProvider>
+            <CoinsProvider>
+              <PomodoroProvider>
+                <HomeworkProvider>
+                  <TimeBlockProvider>
+                    <NotificationProvider>
+                      <App />
+                      <ToastList />
+                      <PwaReloadPrompt />
+                    </NotificationProvider>
+                  </TimeBlockProvider>
+                </HomeworkProvider>
+              </PomodoroProvider>
+            </CoinsProvider>
+          </AuthProvider>
+        </ToastProvider>
+      ) : (
+        <NotFound />
+      )}
     </ErrorBoundary>
   </React.StrictMode>
 );
