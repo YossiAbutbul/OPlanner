@@ -21,11 +21,15 @@ const fmtDate = (iso: string) => {
   return `${d}/${m}/${y}`;
 };
 
+const toIso = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
 const courseLabel = (c: string) =>
   c === "reminders" ? "Reminder" : c;
-
-/** True when the string contains any Hebrew character. */
-const hasHebrew = (s?: string) => !!s && /[֐-׿]/.test(s);
 
 const DayTasksModal: React.FC<Props> = ({
   isOpen,
@@ -58,13 +62,24 @@ const DayTasksModal: React.FC<Props> = ({
         <p className="day-empty">No tasks on this day.</p>
       ) : (
         (() => {
-          const todo = tasks.filter((t) => t.status !== "COMPLETED");
+          const now = new Date();
+          const todayIso = toIso(now);
+          const nowHHmm = `${String(now.getHours()).padStart(2, "0")}:${String(
+            now.getMinutes()
+          ).padStart(2, "0")}`;
+          // Overdue: incomplete and its deadline has passed. Past days are always
+          // overdue; today's tasks only once their end time (if any) is behind us.
+          const isOverdue = (t: HomeworkEntry) =>
+            t.dueDate < todayIso ||
+            (t.dueDate === todayIso && !!t.endTime && t.endTime < nowHHmm);
+          const pending = tasks.filter((t) => t.status !== "COMPLETED");
+          const overdue = pending.filter(isOverdue);
+          const todo = pending.filter((t) => !isOverdue(t));
           const done = tasks.filter((t) => t.status === "COMPLETED");
 
           const renderItem = (t: HomeworkEntry) => (
             <li
               key={t.id}
-              dir={hasHebrew(t.name) || hasHebrew(t.course) ? "rtl" : "ltr"}
               className={`day-task${t.status === "COMPLETED" ? " is-done" : ""}`}
             >
               <div className={`day-task-main${showCourse && t.course ? " has-course" : ""}`}>
@@ -80,20 +95,27 @@ const DayTasksModal: React.FC<Props> = ({
             </li>
           );
 
+          // Headers stay LTR (English labels); only the rows flip per their
+          // own dir when the task text is Hebrew.
+          const renderSection = (
+            label: string,
+            list: HomeworkEntry[],
+            headClass = ""
+          ) =>
+            list.length > 0 && (
+              <section className="day-section">
+                <h4 className={`day-section-head ${headClass}`}>
+                  {label} <span>{list.length}</span>
+                </h4>
+                <ul className="day-tasks">{list.map(renderItem)}</ul>
+              </section>
+            );
+
           return (
             <div className="day-scroll">
-              {todo.length > 0 && (
-                <section className="day-section">
-                  <h4 className="day-section-head">To do <span>{todo.length}</span></h4>
-                  <ul className="day-tasks">{todo.map(renderItem)}</ul>
-                </section>
-              )}
-              {done.length > 0 && (
-                <section className="day-section">
-                  <h4 className="day-section-head day-section-done">Done <span>{done.length}</span></h4>
-                  <ul className="day-tasks">{done.map(renderItem)}</ul>
-                </section>
-              )}
+              {renderSection("Overdue", overdue, "day-section-overdue")}
+              {renderSection("To do", todo)}
+              {renderSection("Done", done, "day-section-done")}
             </div>
           );
         })()
