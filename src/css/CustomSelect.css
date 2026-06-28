@@ -27,6 +27,12 @@
   border-color: #d6d6da;
 }
 
+.cs-trigger:disabled {
+  cursor: not-allowed;
+  background: #f3f3f4;
+  color: #9a9a9f;
+}
+
 .cs-trigger:focus,
 .cs-trigger:focus-visible {
   outline: none;

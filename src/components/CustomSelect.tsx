@@ -13,15 +13,28 @@ interface Props {
   onChange: (value: string) => void;
   placeholder?: string;
   id?: string;
+  disabled?: boolean;
 }
 
-const CustomSelect: React.FC<Props> = ({ value, options, onChange, placeholder = "Select", id }) => {
+const CustomSelect: React.FC<Props> = ({
+  value,
+  options,
+  onChange,
+  placeholder = "Select",
+  id,
+  disabled = false,
+}) => {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find((o) => o.value === value);
+
+  // Force-close if the control becomes disabled while open.
+  useEffect(() => {
+    if (disabled && open) setOpen(false);
+  }, [disabled, open]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -71,7 +84,9 @@ const CustomSelect: React.FC<Props> = ({ value, options, onChange, placeholder =
         id={id}
         type="button"
         className="cs-trigger"
-        onClick={() => setOpen((v) => !v)}
+        disabled={disabled}
+        aria-disabled={disabled}
+        onClick={() => !disabled && setOpen((v) => !v)}
       >
         <span className={`cs-value ${selected ? "" : "cs-value-empty"}`}>
           {selected?.label ?? placeholder}

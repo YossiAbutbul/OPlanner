@@ -32,6 +32,29 @@ const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ isOpen, o
           ? { label: "Blocked — enable notifications in your browser settings", tone: "warn" }
           : { label: "Your browser will ask you to allow this once", tone: "warn" };
 
+  // Lead-time picker is meaningless when reminders are switched off — dim it.
+  const leadDisabled = !settings.enabled;
+
+  const statusIcon =
+    status.tone === "ok" ? (
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+        strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    ) : status.tone === "warn" ? (
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+        strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="8" x2="12" y2="13" />
+        <line x1="12" y1="17" x2="12.01" y2="17" />
+      </svg>
+    ) : (
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+        strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="11" x2="12" y2="16" />
+        <line x1="12" y1="7" x2="12.01" y2="7" />
+      </svg>
+    );
+
   return (
     <Modal
       isOpen={isOpen}
@@ -44,30 +67,63 @@ const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ isOpen, o
       }
     >
       <div className="rsx">
-        <p>Popup notifications for upcoming exams and tasks while OPlanner is open.</p>
+        {/* Hero: ringing bell badge + one-line purpose. */}
+        <div className="rsx-hero">
+          <span className="rsx-hero-icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </span>
+          <p className="rsx-hero-text">
+            Popup notifications for upcoming exams and tasks while OPlanner is open.
+          </p>
+        </div>
 
-        <label className="hw-ignore-overdue">
-          <input
-            type="checkbox"
-            checked={settings.enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-          />
-          <span>Enable desktop reminders</span>
-        </label>
+        {/* Settings card: enable switch on top, lead-time below a divider. */}
+        <div className="rsx-card">
+          <label className="rsx-row rsx-switch-row">
+            <span className="rsx-row-text">
+              <span className="rsx-row-title">Enable desktop reminders</span>
+              <span className="rsx-row-sub">Show a popup when something is coming up.</span>
+            </span>
+            <span className="rsx-switch">
+              <input
+                type="checkbox"
+                checked={settings.enabled}
+                onChange={(e) => setEnabled(e.target.checked)}
+              />
+              <span className="rsx-switch-track" aria-hidden="true">
+                <span className="rsx-switch-thumb" />
+              </span>
+            </span>
+          </label>
 
-        <label htmlFor="rsx-lead">Remind before a task starts</label>
-        <CustomSelect
-          id="rsx-lead"
-          value={String(settings.leadMinutes)}
-          onChange={(v) => setLeadMinutes(Number(v))}
-          options={LEAD_OPTIONS.map((m) => ({ value: String(m), label: `${m} min before` }))}
-        />
+          <div className={`rsx-row rsx-lead-row${leadDisabled ? " is-disabled" : ""}`}>
+            <span className="rsx-row-text">
+              <span className="rsx-row-title">Remind before a task starts</span>
+              <span className="rsx-row-sub">How early the second nudge fires.</span>
+            </span>
+            <div className="rsx-lead-select">
+              <CustomSelect
+                id="rsx-lead"
+                disabled={leadDisabled}
+                value={String(settings.leadMinutes)}
+                onChange={(v) => setLeadMinutes(Number(v))}
+                options={LEAD_OPTIONS.map((m) => ({ value: String(m), label: `${m} min before` }))}
+              />
+            </div>
+          </div>
+        </div>
 
+        {/* Permission status banner. */}
         <div className={`rsx-status rsx-status-${status.tone}`}>
-          <span>{status.label}</span>
+          <span className="rsx-status-icon" aria-hidden="true">{statusIcon}</span>
+          <span className="rsx-status-label">{status.label}</span>
           {supported && isDesktop && permission === "default" && (
             <button type="button" className="rsx-allow" onClick={() => void requestPermission()}>
-              Allow in browser…
+              Allow…
             </button>
           )}
         </div>
