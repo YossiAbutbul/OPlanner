@@ -22,6 +22,9 @@ import {
   totalDayPx,
 } from "../../utility/dayCalendar";
 
+/** True when the string contains any Hebrew character. */
+const hasHebrew = (s?: string) => !!s && /[֐-׿]/.test(s);
+
 type DragState = {
   kind: "task" | "block";
   id: string;
@@ -401,12 +404,13 @@ const DayPanel: React.FC<Props> = ({
               return (
                 <div
                   key={`allday-${it.kind}-${it.id}`}
+                  dir={hasHebrew(it.title) ? "rtl" : "ltr"}
                   className="rs-day-event rs-day-event-allday"
                   style={{
                     top: adTop,
                     height: adH,
                     background: hexToRgba(accent, 0.18),
-                    borderLeftColor: accent,
+                    borderInlineStartColor: accent,
                     color: accent,
                     left: `calc(${idx * widthPct}% + 2px)`,
                     width: `calc(${widthPct}% - 4px)`,
@@ -435,12 +439,13 @@ const DayPanel: React.FC<Props> = ({
               return (
                 <div
                   key={`task-${t.id}`}
+                  dir={hasHebrew(t.name) || hasHebrew(t.course) ? "rtl" : "ltr"}
                   className={`rs-day-event rs-day-event-task ${isDragging ? "rs-day-event-dragging" : ""} ${compact ? "rs-day-event-compact" : ""}`}
                   style={{
                     top,
                     height,
                     background: hexToRgba(accent, 0.45),
-                    borderLeftColor: accent,
+                    borderInlineStartColor: accent,
                     color: accent,
                     ...slotStyle(`task-${t.id}`),
                   }}
@@ -486,12 +491,13 @@ const DayPanel: React.FC<Props> = ({
               return (
                 <div
                   key={`block-${b.id}`}
+                  dir={hasHebrew(b.title) ? "rtl" : "ltr"}
                   className={`rs-day-event rs-day-event-block ${isDragging ? "rs-day-event-dragging" : ""} ${compact ? "rs-day-event-compact" : ""}`}
                   style={{
                     top,
                     height,
                     background: hexToRgba(accent, 0.45),
-                    borderLeftColor: accent,
+                    borderInlineStartColor: accent,
                     color: accent,
                     ...slotStyle(`block-${b.id}`),
                   }}

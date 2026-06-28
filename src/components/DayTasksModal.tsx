@@ -24,6 +24,9 @@ const fmtDate = (iso: string) => {
 const courseLabel = (c: string) =>
   c === "reminders" ? "Reminder" : c;
 
+/** True when the string contains any Hebrew character. */
+const hasHebrew = (s?: string) => !!s && /[֐-׿]/.test(s);
+
 const DayTasksModal: React.FC<Props> = ({
   isOpen,
   date,
@@ -59,7 +62,11 @@ const DayTasksModal: React.FC<Props> = ({
           const done = tasks.filter((t) => t.status === "COMPLETED");
 
           const renderItem = (t: HomeworkEntry) => (
-            <li key={t.id} className={`day-task${t.status === "COMPLETED" ? " is-done" : ""}`}>
+            <li
+              key={t.id}
+              dir={hasHebrew(t.name) || hasHebrew(t.course) ? "rtl" : "ltr"}
+              className={`day-task${t.status === "COMPLETED" ? " is-done" : ""}`}
+            >
               <div className={`day-task-main${showCourse && t.course ? " has-course" : ""}`}>
                 <div className="day-task-name">{t.name}</div>
                 {showCourse && t.course && (
