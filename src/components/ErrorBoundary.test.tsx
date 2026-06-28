@@ -24,10 +24,10 @@ describe("ErrorBoundary", () => {
         <Bomb msg="boom" />
       </ErrorBoundary>
     );
-    expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+    expect(screen.getByText(/wasn't on the schedule/i)).toBeInTheDocument();
     expect(screen.getByText("boom")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /reload page/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /reload app/i })).toBeInTheDocument();
     errSpy.mockRestore();
   });
 
