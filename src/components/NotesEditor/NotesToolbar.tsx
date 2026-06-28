@@ -9,11 +9,11 @@ import {
   ListOrdered,
   Redo2,
   Strikethrough,
-  Type,
   Underline,
   Undo2,
 } from "lucide-react";
 import HighlightPicker from "./HighlightPicker";
+import TextColorPicker from "./TextColorPicker";
 import FontSizePicker from "./FontSizePicker";
 import { DEFAULT_FONT_SIZE } from "../../utility/notesEditorDom";
 
@@ -125,14 +125,14 @@ const NotesToolbar: React.FC<Props> = ({ editor }) => {
 
       <span className="ne-sep" />
 
-      <label className="ne-btn ne-color-btn" title="Text color" aria-label="Text color" onMouseDown={(e) => e.preventDefault()}>
-        <Type size={14} strokeWidth={2.5} />
-        <input
-          type="color"
-          defaultValue="#1a1a1a"
-          onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
-        />
-      </label>
+      <TextColorPicker
+        value={editor.getAttributes("textStyle").color as string | undefined}
+        onPick={(c) =>
+          c === "default"
+            ? editor.chain().focus().unsetColor().run()
+            : editor.chain().focus().setColor(c).run()
+        }
+      />
       <HighlightPicker
         onPick={(c) =>
           c === "transparent"

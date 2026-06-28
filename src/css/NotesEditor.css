@@ -523,6 +523,149 @@
     #fff;
 }
 
+/* ===== Text color picker ===== */
+.ne-tc-btn {
+  position: relative;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ne-tc-bar {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.ne-tc-pop {
+  position: fixed;
+  width: 208px;
+  box-sizing: border-box;
+  background: #fdfdfd;
+  border: 1px solid #ececef;
+  border-radius: 16px;
+  padding: 0.85rem;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.05),
+    0 16px 40px rgba(0, 0, 0, 0.12);
+  z-index: var(--z-popover);
+}
+
+.ne-tc-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #8c929b;
+  margin-bottom: 0.55rem;
+}
+
+.ne-tc-label-custom {
+  margin-top: 0.8rem;
+}
+
+.ne-tc-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  row-gap: 0.5rem;
+  column-gap: 0.25rem;
+  justify-items: center;
+}
+
+.ne-tc-swatch {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.ne-tc-swatch:hover {
+  transform: scale(1.14);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1),
+    0 4px 10px rgba(0, 0, 0, 0.16);
+}
+
+.ne-tc-swatch-active:hover {
+  transform: scale(1.14);
+}
+
+.ne-tc-check {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  color: #fff;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.5));
+}
+
+.ne-tc-custom {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ne-tc-wheel {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.14s ease;
+}
+
+.ne-tc-wheel:hover {
+  transform: scale(1.14);
+}
+
+.ne-tc-wheel-dot {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.ne-tc-wheel input[type="color"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ne-tc-hex {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 0 0.65rem;
+  border: 1px solid #e2e2e6;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.02em;
+  color: #333;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.ne-tc-hex:focus {
+  outline: none;
+}
+
+.ne-tc-hex::placeholder {
+  color: #b6b9bf;
+}
+
 /* ===== Save button ===== */
 .ne-save-btn {
   background: var(--color-accent);
