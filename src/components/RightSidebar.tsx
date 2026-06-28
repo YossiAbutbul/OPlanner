@@ -9,6 +9,7 @@ const HomeworkModal = lazy(() => import("./HomeworkModal"));
 const TimeBlockModal = lazy(() => import("./TimeBlockModal"));
 import UpcomingPanel from "./RightSidebar/UpcomingPanel";
 import DayPanel from "./RightSidebar/DayPanel";
+import RemindersModal from "./RemindersModal";
 import { courseColor } from "../utility/courseColor";
 import { isOverdue, startOfDay, toIso } from "../utility/dayCalendar";
 import type { HomeworkEntry, TimeBlock, YearTreeData } from "../types/models";
@@ -51,6 +52,16 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
 
   // Day-tab selected date.
   const [dayDate, setDayDate] = useState<string>(() => toIso(new Date()));
+
+  // "All reminders" modal (opened from the sidebar bell via a window event).
+  const [remindersOpen, setRemindersOpen] = useState(false);
+  // When adding from that modal, default the HomeworkModal's course to reminders.
+  const [addingReminder, setAddingReminder] = useState(false);
+
+  const reminders = useMemo(
+    () => allSemesterTasks.filter((t) => t.course === "reminders"),
+    [allSemesterTasks]
+  );
 
   const sources = useMemo(() => {
     const out: { year: number; semester: string; course: string }[] = [];
@@ -115,6 +126,13 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     };
     window.addEventListener("oplanner:select-day", onPick);
     return () => window.removeEventListener("oplanner:select-day", onPick);
+  }, []);
+
+  // Sidebar "All reminders" button asks us to open the reminders modal.
+  useEffect(() => {
+    const onOpen = () => setRemindersOpen(true);
+    window.addEventListener("oplanner:open-reminders", onOpen);
+    return () => window.removeEventListener("oplanner:open-reminders", onOpen);
   }, []);
 
   // Task accent: per-task color → course color → deterministic fallback.
@@ -237,6 +255,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         onClose={() => {
           setModalOpen(false);
           setEditTask(null);
+          setAddingReminder(false);
           setHwPrefillDate(null);
           setHwPrefillStart(null);
           setHwPrefillEnd(null);
@@ -248,6 +267,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           await addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, prevLocation, startTime, endTime, notes, color);
           setModalOpen(false);
           setEditTask(null);
+          setAddingReminder(false);
           setHwPrefillDate(null);
           setHwPrefillStart(null);
           setHwPrefillEnd(null);
@@ -264,7 +284,11 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           editTask
             ? { year: editTask.year, semester: editTask.semester, course: selectedCourse ?? undefined }
             : selectedYear !== null && selectedSemester
-              ? { year: selectedYear, semester: selectedSemester, course: selectedCourse ?? undefined }
+              ? {
+                  year: selectedYear,
+                  semester: selectedSemester,
+                  course: addingReminder ? "reminders" : selectedCourse ?? undefined,
+                }
               : null
         }
         prefilledDueDate={hwPrefillDate}
@@ -282,6 +306,27 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       />
         </Suspense>
       )}
+
+      <RemindersModal
+        isOpen={remindersOpen}
+        reminders={reminders}
+        onClose={() => setRemindersOpen(false)}
+        onEdit={(t) => {
+          setRemindersOpen(false);
+          handleTaskClick(t);
+        }}
+        onDelete={async (t) => {
+          await removeHomework(t.id, t.year, t.semester, t.course);
+          setAllSemesterTasks((prev) => prev.filter((x) => x.id !== t.id));
+          toast.success(`Deleted “${t.name}”`);
+        }}
+        onAdd={() => {
+          setRemindersOpen(false);
+          setEditTask(null);
+          setAddingReminder(true);
+          setModalOpen(true);
+        }}
+      />
 
       {tbModalOpen && (
         <Suspense fallback={null}>

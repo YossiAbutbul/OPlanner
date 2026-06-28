@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, CalendarPlus, LogOut, HelpCircle, Download, Timer, Bell, PartyPopper, Check } from "lucide-react";
+import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Check } from "lucide-react";
 import { useConfettiPref } from "../hooks/useConfettiPref";
 
 // Feature flag — the Focus / Pomodoro tab is temporarily hidden from the
@@ -30,7 +30,6 @@ interface SidebarProps {
   onYearsChanged: () => void | Promise<void>;
   onAddYear: () => void;
   addingYear: boolean;
-  onReplayTour: () => void;
   onUpdateCourseColor: (
     year: number,
     semesterKey: string,
@@ -56,7 +55,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   onYearsChanged,
   onAddYear,
   addingYear,
-  onReplayTour,
   onUpdateCourseColor,
   mobileOpen,
   onCloseMobile,
@@ -219,7 +217,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {canManage && courses.length === 0 && (
             <li className="open-empty">No courses yet</li>
           )}
-          {courses.map((c, idx) => {
+          {courses.map((c) => {
             const name = c.name;
             const isActive = name === selectedCourse;
             const isDragging = draggingName === name;
@@ -267,7 +265,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <span className="open-item-label">{capitalizeWords(name)}</span>
                 <button
                   className="open-item-menu-btn"
-                  data-tour={idx === 0 ? "course-menu" : undefined}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (menuOpen === name) {
@@ -324,7 +321,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
         <button
           className="footer-settings"
-          data-tour="settings"
           onClick={() => setSettingsOpen((o) => !o)}
           title="Settings"
           aria-label="Open settings menu"
@@ -348,20 +344,21 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={() => {
                 setSettingsOpen(false);
-                setReminderOpen(true);
+                onCloseMobile();
+                window.dispatchEvent(new CustomEvent("oplanner:open-reminders"));
               }}
             >
-              <Bell size={16} />
-              <span>Reminders</span>
+              <BellRing size={16} />
+              <span>All reminders</span>
             </button>
             <button
               onClick={() => {
                 setSettingsOpen(false);
-                onReplayTour();
+                setReminderOpen(true);
               }}
             >
-              <HelpCircle size={16} />
-              <span>Replay tour</span>
+              <Bell size={16} />
+              <span>Reminder settings</span>
             </button>
             <button
               role="menuitemcheckbox"
