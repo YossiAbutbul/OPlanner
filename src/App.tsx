@@ -6,7 +6,6 @@ import MainContent from "./components/MainContent";
 import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
 import PomodoroPage from "./components/PomodoroPage";
-import ReminderAnnounceModal from "./components/ReminderAnnounceModal";
 
 // Tour pulls in react-joyride (~100KB). One-shot per user, mostly never seen
 // on repeat visits. Lazy-load so it doesn't bloat the initial JS bundle.
@@ -223,7 +222,6 @@ const App: React.FC = () => {
         <Tour run={tour.tourRun} onFinish={tour.finishTour} onSetMobileNav={setMobileNavOpen} />
       </Suspense>
 
-      <ReminderAnnounceModal />
     </div>
   );
 };
