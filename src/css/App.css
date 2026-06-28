@@ -364,6 +364,12 @@
     min-height: 0 !important;
   }
 
+  /* Mobile cells must hold day-number + 2 task pills + the "+N more" pill;
+     the desktop 4.7rem cap clipped the "+N more" pill (overflow:hidden). */
+  .overview-calendar-section .cal-grid {
+    grid-auto-rows: minmax(5.6rem, auto) !important;
+  }
+
   .overview-cta {
     padding: 1.5rem 1rem;
   }
