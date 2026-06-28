@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useCallback, useMemo, useEffect, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Loader2, PanelRight } from "lucide-react";
 import "./css/App.css";
 import Sidebar from "./components/Sidebar";
@@ -7,14 +7,10 @@ import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
 import PomodoroPage from "./components/PomodoroPage";
 
-// Tour pulls in react-joyride (~100KB). One-shot per user, mostly never seen
-// on repeat visits. Lazy-load so it doesn't bloat the initial JS bundle.
-const Tour = lazy(() => import("./components/Tour"));
 import { useAuth } from "./context/AuthContext";
 import { useHomework } from "./context/HomeworkContext";
 import { useYearTree } from "./hooks/useYearTree";
 import { useSelection, pickSemesterForYear } from "./hooks/useSelection";
-import { useOnboardingTour } from "./hooks/useOnboardingTour";
 import { useOfflineToast } from "./hooks/useOfflineToast";
 import { useEdgeSwipe } from "./hooks/useEdgeSwipe";
 import { usePwaMobile } from "./hooks/usePwaMobile";
@@ -73,23 +69,6 @@ const App: React.FC = () => {
     selectedYear: sel.selectedYear,
     selectedSemester: sel.selectedSemester,
   });
-  const tour = useOnboardingTour({
-    user,
-    years: tree.years,
-    yearsLoading: tree.yearsLoading,
-    selectedYear: sel.selectedYear,
-    selectedSemester: sel.selectedSemester,
-    refreshYears: tree.refreshYears,
-  });
-
-  // Close mobile nav whenever the tour starts.
-  useEffect(() => {
-    if (tour.tourRun) {
-      setMobileNavOpen(false);
-      setMobileRightOpen(false);
-    }
-  }, [tour.tourRun]);
-
   const handleDeleteYear = useCallback(
     async (year: number) => {
       const ok = await tree.handleDeleteYear(year);
@@ -177,7 +156,6 @@ const App: React.FC = () => {
         onYearsChanged={tree.refreshYears}
         onAddYear={tree.handleAddYear}
         addingYear={tree.addingYear}
-        onReplayTour={tour.replayTour}
         onUpdateCourseColor={tree.handleUpdateCourseColor}
         mobileOpen={mobileNavOpen}
         onCloseMobile={() => setMobileNavOpen(false)}
@@ -216,11 +194,6 @@ const App: React.FC = () => {
         selectedCourse={sel.selectedCourse}
         mobileOpen={mobileRightOpen}
       />
-
-      {/* Tour chunk loads on demand; null fallback — invisible while loading. */}
-      <Suspense fallback={null}>
-        <Tour run={tour.tourRun} onFinish={tour.finishTour} onSetMobileNav={setMobileNavOpen} />
-      </Suspense>
     </div>
   );
 };

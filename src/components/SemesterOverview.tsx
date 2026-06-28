@@ -125,7 +125,6 @@ const SemesterOverview: React.FC<Props> = ({
           <div className="overview-header-actions">
             <button
               className="overview-import"
-              data-tour="import"
               onClick={() => fileInputRef.current?.click()}
               title="Import calendar (.ics)"
             >
@@ -134,7 +133,6 @@ const SemesterOverview: React.FC<Props> = ({
             </button>
             <button
               className="overview-add-course"
-              data-tour="add-course"
               onClick={() => setAddOpen(true)}
               title="Add course"
             >
@@ -185,7 +183,6 @@ const SemesterOverview: React.FC<Props> = ({
           <div className="overview-empty-actions">
             <button
               className="overview-add-course"
-              data-tour="add-course"
               onClick={() => setAddOpen(true)}
             >
               <BookPlus size={16} />
@@ -193,7 +190,6 @@ const SemesterOverview: React.FC<Props> = ({
             </button>
             <button
               className="overview-import"
-              data-tour="import"
               onClick={() => fileInputRef.current?.click()}
             >
               <Download size={16} />

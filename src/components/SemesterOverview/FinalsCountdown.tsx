@@ -27,7 +27,7 @@ const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => {
   <section className="overview-section">
     <h2>Finals Countdown</h2>
     <ul className="finals-list">
-      {sorted.map((c, idx) => {
+      {sorted.map((c) => {
         const days = c.finalDate ? daysUntil(c.finalDate) : null;
         let badge = "";
         let badgeClass = "";
@@ -77,7 +77,6 @@ const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => {
                 <button
                   type="button"
                   className="finals-date"
-                  data-tour={idx === 0 ? "finals" : undefined}
                   onClick={open}
                 >
                   <svg

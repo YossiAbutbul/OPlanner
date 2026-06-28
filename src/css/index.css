@@ -55,7 +55,6 @@
   --z-modal: 2100;          /* modal content */
   --z-popover: 3000;        /* date/time picker, custom select dropdowns */
   --z-toast: 4000;          /* reserved for future toasts */
-  --z-tour: 5000;           /* joyride overlay */
 
   /* Breakpoints ג€” documented; use in media queries:
      phone:        max-width 480px
