@@ -172,7 +172,7 @@ const FEATURES = [
   {
     icon: Palette,
     title: "Tabs, like your browser",
-    text: "Years, semesters, courses — color-coded, zero learning curve.",
+    text: "Years, semesters, courses - color-coded, zero learning curve.",
   },
   {
     icon: TimerReset,
@@ -239,7 +239,7 @@ const Login: React.FC = () => {
 
               <motion.p className="landing-lead" variants={rise}>
                 OPlanner turns your university calendar into a live semester
-                plan — assignments, finals and the countdown to both.
+                plan - assignments, finals and the countdown to both.
               </motion.p>
 
               <motion.div className="landing-cta-row" variants={rise}>
