@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   clearDeferredPrompt,
   getDeferredPrompt,
-  isStandalone,
+  isInstalled,
   subscribeInstall,
 } from "../utility/installPrompt";
 
@@ -12,13 +12,13 @@ import {
 // once that event exists and the app isn't already installed; promptInstall()
 // shows the native dialog and resolves with the user's choice.
 export function useInstallPrompt() {
-  const [installed, setInstalled] = useState<boolean>(() => isStandalone());
+  const [installed, setInstalled] = useState<boolean>(() => isInstalled());
   // Bump to re-read getDeferredPrompt() when availability changes.
   const [, force] = useState(0);
 
   useEffect(() => {
     const unsub = subscribeInstall(() => {
-      if (isStandalone()) setInstalled(true);
+      setInstalled(isInstalled());
       force((n) => n + 1);
     });
     return unsub;

@@ -10,6 +10,19 @@ interface BeforeInstallPromptEvent extends Event {
   readonly userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
+// Persisted across tabs/sessions so the install option stays hidden after
+// install even in a plain browser tab (where display-mode isn't standalone).
+const INSTALLED_KEY = "oplanner.pwa.installed";
+const readFlag = () => {
+  try { return localStorage.getItem(INSTALLED_KEY) === "1"; } catch { return false; }
+};
+const writeFlag = (v: boolean) => {
+  try {
+    if (v) localStorage.setItem(INSTALLED_KEY, "1");
+    else localStorage.removeItem(INSTALLED_KEY);
+  } catch { /* ignore */ }
+};
+
 let deferred: BeforeInstallPromptEvent | null = null;
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((l) => l());
@@ -19,10 +32,15 @@ if (typeof window !== "undefined") {
     // Stop Chrome's mini-infobar; we surface our own install affordance.
     e.preventDefault();
     deferred = e as BeforeInstallPromptEvent;
+    // The event only fires when the app is installable and NOT installed — so
+    // if a stale "installed" flag is set (user uninstalled), clear it now so
+    // the option reappears for re-testing.
+    writeFlag(false);
     notify();
   });
   window.addEventListener("appinstalled", () => {
     deferred = null;
+    writeFlag(true);
     notify();
   });
 }
@@ -49,3 +67,8 @@ export const isStandalone = (): boolean => {
   if (window.matchMedia?.("(display-mode: standalone)").matches) return true;
   return (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 };
+
+/** True when installed — either running standalone, or the persisted flag is
+ *  set (covers a normal browser tab after install). Cleared automatically when
+ *  the app becomes installable again (uninstall), so re-testing just works. */
+export const isInstalled = (): boolean => isStandalone() || readFlag();
