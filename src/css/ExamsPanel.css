@@ -31,7 +31,7 @@
 .ep-subhead-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
 }
 
@@ -55,6 +55,206 @@
   display: block;
 }
 
+/* Header action cluster: Add question (secondary) + Add exam (primary). */
+.ep-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* Secondary "Add question" — outlined so the filled "Add exam" stays primary. */
+.ep-add-q-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0.4rem 0.8rem;
+  background: #fff;
+  border: 1px solid #bfe3cb;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a8a44;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+}
+
+.ep-add-q-btn svg {
+  display: block;
+}
+
+.ep-add-q-btn:hover:not(:disabled) {
+  background: #f1fbf4;
+  border-color: #9ed7b2;
+}
+
+.ep-add-q-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ep-add-q-btn:disabled {
+  color: #aeb2b8;
+  border-color: #e3e3e6;
+  cursor: default;
+}
+
+/* ===== Setup call-to-action (no table yet) — mirrors the empty-semester card. */
+.ep-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: #fff;
+  border: 1px solid #e7e8eb;
+  border-radius: 12px;
+}
+
+.ep-setup-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 1.2rem;
+  border-radius: 16px;
+  color: var(--color-accent);
+  background: rgba(29, 185, 84, 0.1);
+}
+
+.ep-setup-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.ep-setup-text {
+  margin: 0 auto 1.4rem;
+  max-width: 46ch;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #666;
+}
+
+/* Match the empty-course "Add your first course" button exactly. */
+.ep-setup-btn {
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* ===== Setup modal ===== */
+.exam-setup-lead {
+  margin: 0 0 1.1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #666;
+}
+
+.exam-setup-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0;
+}
+
+.exam-setup-field + .exam-setup-field {
+  border-top: 1px solid #f0f0f2;
+}
+
+.exam-setup-field label {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* Connected pill stepper: [−][ value ][+] sharing one rounded border. */
+.exam-setup-stepper {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #d6d6da;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.exam-setup-step-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: #f7f7f8;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.exam-setup-step-btn:first-child {
+  border-right: 1px solid #e3e3e6;
+}
+
+.exam-setup-step-btn:last-child {
+  border-left: 1px solid #e3e3e6;
+}
+
+.exam-setup-step-btn svg {
+  display: block;
+}
+
+.exam-setup-step-btn:hover:not(:disabled) {
+  background: #ececef;
+  color: #111;
+}
+
+.exam-setup-step-btn:disabled {
+  color: #c2c6cc;
+  cursor: not-allowed;
+}
+
+.exam-setup-step-input {
+  width: 52px;
+  height: 36px;
+  box-sizing: border-box;
+  text-align: center;
+  border: none;
+  background: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #1a1a1a;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.exam-setup-step-input::-webkit-outer-spin-button,
+.exam-setup-step-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.exam-setup-step-input:focus {
+  outline: none;
+}
+
+.exam-setup-preview {
+  margin: 1.1rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid #f0f0f2;
+  font-size: 0.82rem;
+  color: #8a9098;
+  text-align: center;
+}
+
 .ep-add-exam-btn:hover:not(:disabled) {
   background: var(--color-accent-hover);
 }
@@ -74,14 +274,6 @@
   font-size: 0.95rem;
   font-weight: 700;
   color: #222;
-}
-
-.ep-subhead {
-  margin: 0;
-  font-size: 0.8rem;
-  line-height: 1.4;
-  color: #777;
-  max-width: 46ch;
 }
 
 .ep-hint {
@@ -156,93 +348,23 @@
   position: relative;
 }
 
-/* Horizontal scroll wrapper ג€” many question columns shouldn't blow out the
-   page width. Scroll works but the bar is hidden (web + PWA + app). */
+/* Horizontal scroll wrapper — many question columns overflow into a scroll
+   instead of squeezing. A slim bar is kept visible so it's clear the table
+   scrolls sideways. */
 .ep-table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   background: #fff;
   border: 1px solid #e3e3e6;
   border-radius: 10px;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* old Edge/IE */
-}
-
-.ep-table-scroll::-webkit-scrollbar {
-  display: none; /* Chromium, Safari, PWA/WebView */
-}
-
-/* Word-style circular "+" insert handles ג€” a round button centered on the
-   table edge, revealed on hover, lit blue when hovered. */
-.ep-edge-add {
-  position: absolute;
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Lock to a true circle ג€” global button styles must not stretch it. */
-  width: 18px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0;
-  flex: 0 0 auto;
-  box-sizing: border-box;
-  background: #fff;
-  border: 1.5px solid #c7cace;
-  border-radius: 50%;
-  color: #5b6168;
-  cursor: pointer;
-  /* Always visible (not hover-gated) ג€” discoverable on desktop and touch. */
-  opacity: 1;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-  transition:
-    opacity 0.12s ease,
-    background-color 0.12s ease,
-    color 0.12s ease,
-    border-color 0.12s ease,
-    transform 0.1s ease;
-}
-
-.ep-edge-add-row:hover:not(:disabled) {
-  transform: translateX(-50%) scale(1.12);
-}
-
-.ep-edge-add-col:hover:not(:disabled) {
-  transform: translateY(-50%) scale(1.12);
-}
-
-.ep-edge-add svg {
-  display: block;
-}
-
-.ep-edge-add:hover:not(:disabled) {
-  background: #2f80ed;
-  border-color: #2f80ed;
-  color: #fff;
-}
-
-.ep-edge-add:disabled {
-  opacity: 0;
-  cursor: default;
-}
-
-/* Straddling the bottom border ג†’ add exam row. Negative offset = half the
-   circle sits over the table edge, so the table itself reaches full width. */
-.ep-edge-add-row {
-  bottom: -9px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-/* Straddling the right border ג†’ add question column. */
-.ep-edge-add-col {
-  top: 50%;
-  right: -9px;
-  transform: translateY(-50%);
 }
 
 .ep-table {
-  border-collapse: collapse;
+  /* Separate (not collapse): collapsed borders make sticky cells jitter and
+     leak the scrolling content through 1px seams. Separate + zero spacing
+     keeps the frozen columns rock-solid. */
+  border-collapse: separate;
+  border-spacing: 0;
   /* Fixed layout: exam-name + Done columns hold their set widths; the rest is
      split evenly among question columns. Widths are authoritative, so editing
      a header never resizes its column. */
@@ -252,6 +374,9 @@
 
 .ep-table th,
 .ep-table td {
+  /* border-box so the set column widths (150 / 46) are exact — the frozen
+     Done column then pins precisely at left:150 with no seam. */
+  box-sizing: border-box;
   border-bottom: 1px solid #eef0f2;
   border-right: 1px solid #eef0f2;
 }
@@ -266,12 +391,8 @@
   border-right: none;
 }
 
-/* Header row (questions) ג€” sticks to the top while scrolling exams.
-   Chrome matches the Links table header (.cip-table-head). */
+/* Header row (questions). Nothing is frozen — the whole table scrolls as one. */
 .ep-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 3;
   background: #f6f6f7;
   font-size: 0.85rem;
   font-weight: 600;
@@ -283,16 +404,17 @@
 
 .ep-corner {
   text-align: left;
+  /* Freeze just the exam-name column so names stay visible while scrolling
+     through questions. */
   position: sticky;
   left: 0;
-  /* Above both the sticky header row and the sticky exam column. */
-  z-index: 4;
+  z-index: 2;
   background: #f6f6f7;
   /* Inset the "Exam" label like the Links table header (1rem). */
   padding-left: 1rem;
   /* Fixed first column for exam names; question columns split the rest
-     evenly (Word-style even grid). */
-  width: 124px;
+     evenly (Word-style even grid). Matches NAME_COL_W in ExamsPanel.tsx. */
+  width: 180px;
 }
 
 .ep-col-head {
@@ -300,22 +422,45 @@
   width: auto;
   padding-left: 0.4rem;
   padding-right: 0.4rem;
+  /* Anchor for the absolutely-positioned delete button. */
+  position: relative;
 }
 
-/* Narrow progress column right after the exam name. */
-.ep-progress-head {
-  width: 46px;
+/* Delete sits in the top-right corner of the header, out of the text flow, so
+   the question label always gets the full column width (never clipped). */
+.ep-col-del {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+/* Narrow progress column right after the exam name — frozen left, just past
+   the 150px name column, so both stay visible while scrolling questions. */
+/* Qualified so it beats `.ep-table thead th`'s padding — otherwise the header
+   inset (1rem) wouldn't match the cell's (0.3rem) and "Done" sits off-centre. */
+.ep-table thead th.ep-progress-head {
+  width: 56px;
   padding-left: 0.3rem;
   padding-right: 0.3rem;
   text-align: center;
+  position: sticky;
+  left: 180px;
+  z-index: 2;
+  background: #f6f6f7;
 }
 
 .ep-progress-cell {
-  width: 46px;
+  width: 56px;
   padding-left: 0.3rem;
   padding-right: 0.3rem;
   text-align: center;
   vertical-align: middle;
+  position: sticky;
+  left: 180px;
+  z-index: 1;
+  background: #fff;
 }
 
 .ep-col-head-inner,
@@ -339,7 +484,7 @@
   min-width: 0;
 }
 
-/* Exam-name column ג€” sticky so it stays visible while scrolling questions. */
+/* Exam-name column — frozen left so names stay visible while scrolling. */
 .ep-row-head {
   text-align: left;
   position: sticky;
@@ -348,7 +493,7 @@
   background: #fff;
   /* left 0.7rem + the label button's own 0.3rem = 1rem, matching .ep-corner. */
   padding: 0.3rem 0.5rem 0.3rem 0.7rem;
-  width: 124px;
+  width: 180px;
 }
 
 
@@ -558,27 +703,6 @@
   }
 }
 
-/* Mobile ג€” don't pin the exam-name column; it eats too much of a narrow
-   viewport. Let it scroll with the rest of the table. */
-@media (max-width: 768px) {
-  .ep-corner,
-  .ep-row-head {
-    position: static;
-  }
-
-  /* Auto layout + min-widths so columns keep a usable size and the table
-     overflows into a horizontal scroll instead of being squeezed/cut. */
-  .ep-table {
-    table-layout: auto;
-    width: max-content;
-    min-width: 100%;
-  }
-  .ep-col-head,
-  .ep-cell {
-    min-width: 72px;
-  }
-}
-
 /* Touch rename bottom sheet ------------------------------------------------ */
 .ep-sheet-backdrop {
   position: fixed;
@@ -656,4 +780,16 @@
   background: var(--color-accent);
   border: 1px solid #19a449;
   color: #fff;
+}
+
+/* Mobile — don't freeze the exam-name / Done columns; a narrow viewport has no
+   room to spare, so the whole table scrolls together. Placed last so it wins
+   the source-order tie against the sticky rules above. */
+@media (max-width: 768px) {
+  .ep-corner,
+  .ep-row-head,
+  .ep-table thead th.ep-progress-head,
+  .ep-progress-cell {
+    position: static;
+  }
 }

@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, FilePlus2, Plus, Trash2 } from "lucide-react";
+import { Check, FilePlus2, ListChecks, Plus, Trash2 } from "lucide-react";
 import DeleteModal from "./DeleteModal";
+import ExamSetupModal from "./ExamSetupModal";
 import { useCourseMeta } from "../hooks/useCourseMeta";
 import { useToast } from "../context/ToastContext";
 import { MAX_EXAM_COLUMNS, MAX_EXAM_ROWS, MAX_EXAM_LABEL_LEN } from "../services/courseMeta";
@@ -12,15 +13,15 @@ interface Props {
   activeTab: CourseTab;
 }
 
-// Starter table shown for a course with no exam data yet: one exam row and
-// two question columns (Q1, Q2). Not persisted until the user interacts.
-const buildDefaultTable = (): ExamTable => ({
-  columns: [
-    { id: crypto.randomUUID(), label: "Q1" },
-    { id: crypto.randomUUID(), label: "Q2" },
-  ],
-  rows: [{ id: crypto.randomUUID(), label: "New exam", checks: {} }],
-});
+// Column widths (px). The question columns hold a usable minimum so a wide
+// table overflows into a horizontal scroll instead of squeezing to nothing.
+const NAME_COL_W = 180;
+const DONE_COL_W = 56;
+const Q_COL_MIN = 80;
+
+// Empty placeholder before the user runs setup — nothing is rendered/persisted
+// until they create the grid via the setup modal.
+const emptyTable = (): ExamTable => ({ columns: [], rows: [] });
 
 // Touch devices: auto-opening the new row's name input pops the keyboard and
 // scrolls unexpectedly. Let the user tap the cell they want instead.
@@ -145,10 +146,11 @@ const RenameSheet: React.FC<{
 // Both axes' labels rename inline. Rows and columns add/delete freely. The
 // whole table is persisted optimistically on every edit, like course links.
 const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
-  const { meta, save } = useCourseMeta(activeTab);
+  const { meta, loading, save } = useCourseMeta(activeTab);
   const toast = useToast();
 
-  const [table, setTable] = useState<ExamTable>(buildDefaultTable);
+  const [table, setTable] = useState<ExamTable>(emptyTable);
+  const [setupOpen, setSetupOpen] = useState(false);
   // Row just added — its name cell mounts in edit mode with the text selected.
   const [autoEditRowId, setAutoEditRowId] = useState<string | null>(null);
   // Touch rename target (bottom sheet). null = closed.
@@ -172,7 +174,7 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
       }
     } else {
       lastRemoteRef.current = "";
-      setTable(buildDefaultTable());
+      setTable(emptyTable());
     }
   }, [meta.examTable]);
 
@@ -188,8 +190,26 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
     });
   };
 
+  // No columns and no rows → show the setup call-to-action instead of an empty
+  // grid. Covers a fresh course and a table the user fully cleared out.
+  const needsSetup = table.columns.length === 0 && table.rows.length === 0;
   const atColumnLimit = table.columns.length >= MAX_EXAM_COLUMNS;
   const atRowLimit = table.rows.length >= MAX_EXAM_ROWS;
+
+  // Build the initial grid from the setup modal: N exams × M questions.
+  const createTable = (questions: number, exams: number) => {
+    const columns: ExamColumn[] = Array.from({ length: questions }, (_, i) => ({
+      id: crypto.randomUUID(),
+      label: `Q${i + 1}`,
+    }));
+    const rows: ExamRow[] = Array.from({ length: exams }, (_, i) => ({
+      id: crypto.randomUUID(),
+      label: `Exam ${i + 1}`,
+      checks: {},
+    }));
+    commit({ columns, rows });
+    setSetupOpen(false);
+  };
 
   const addColumn = () => {
     if (atColumnLimit) return;
@@ -261,37 +281,58 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
           <div className="ep-section-title">
             <h3>Exams</h3>
             <div className="ep-subhead-row">
-              <p className="ep-subhead">Track which past exams you've solved.</p>
-              <button
-                type="button"
-                className="ep-add-exam-btn"
-                onClick={addRow}
-                disabled={atRowLimit}
-                title={atRowLimit ? `Limit of ${MAX_EXAM_ROWS} exams` : "Add exam"}
-              >
-                <FilePlus2 size={15} />
-                Add exam
-              </button>
+              {!needsSetup && (
+                <div className="ep-head-actions">
+                  <button
+                    type="button"
+                    className="ep-add-q-btn"
+                    onClick={addColumn}
+                    disabled={atColumnLimit}
+                    title={atColumnLimit ? `Limit of ${MAX_EXAM_COLUMNS} questions` : "Add question column"}
+                  >
+                    <Plus size={15} />
+                    Add question
+                  </button>
+                  <button
+                    type="button"
+                    className="ep-add-exam-btn"
+                    onClick={addRow}
+                    disabled={atRowLimit}
+                    title={atRowLimit ? `Limit of ${MAX_EXAM_ROWS} exams` : "Add exam"}
+                  >
+                    <FilePlus2 size={15} />
+                    Add exam
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* "+" on the right border adds a question column. Exam rows are added
-            from the "Add exam" button up in the header. */}
-        <div className="ep-grid">
-          <button
-            type="button"
-            className="ep-edge-add ep-edge-add-col"
-            onClick={addColumn}
-            disabled={atColumnLimit}
-            aria-label="Add question column"
-            title={atColumnLimit ? `Limit of ${MAX_EXAM_COLUMNS} questions` : "Add question"}
-          >
-            <Plus size={12} />
-          </button>
-
-          <div className="ep-table-scroll">
-            <table className="ep-table">
+        {needsSetup ? (
+          loading ? null : (
+            <div className="ep-setup">
+              <div className="ep-setup-icon" aria-hidden="true">
+                <ListChecks size={30} strokeWidth={1.7} />
+              </div>
+              <h2 className="ep-setup-title">Set up your exam tracker</h2>
+              <p className="ep-setup-text">
+                Tell us how many questions each exam has and we'll build the grid.
+                You can adjust the rows and columns anytime.
+              </p>
+              <button type="button" className="ep-add-exam-btn ep-setup-btn" onClick={() => setSetupOpen(true)}>
+                <ListChecks size={16} />
+                Set up table
+              </button>
+            </div>
+          )
+        ) : (
+          <div className="ep-grid">
+            <div className="ep-table-scroll">
+            <table
+              className="ep-table"
+              style={{ minWidth: NAME_COL_W + DONE_COL_W + table.columns.length * Q_COL_MIN }}
+            >
               <thead>
                 <tr>
                   <th className="ep-corner">Exam</th>
@@ -306,16 +347,16 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                           onTouchEdit={() => setSheet({ title: "Rename question", value: c.label, onSave: (v) => renameColumn(c.id, v) })}
                           onCommit={(label) => renameColumn(c.id, label)}
                         />
-                        <button
-                          type="button"
-                          className="ep-icon-btn ep-icon-delete"
-                          onClick={() => setPendingDelete({ kind: "column", id: c.id, label: c.label })}
-                          aria-label={`Delete question ${c.label}`}
-                          title="Delete question"
-                        >
-                          <Trash2 size={13} />
-                        </button>
                       </div>
+                      <button
+                        type="button"
+                        className="ep-icon-btn ep-icon-delete ep-col-del"
+                        onClick={() => setPendingDelete({ kind: "column", id: c.id, label: c.label })}
+                        aria-label={`Delete question ${c.label}`}
+                        title="Delete question"
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </th>
                   ))}
                 </tr>
@@ -383,8 +424,15 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
               </tbody>
             </table>
           </div>
-        </div>
+          </div>
+        )}
       </section>
+
+      <ExamSetupModal
+        isOpen={setupOpen}
+        onClose={() => setSetupOpen(false)}
+        onCreate={createTable}
+      />
 
       <DeleteModal
         isOpen={pendingDelete !== null}
