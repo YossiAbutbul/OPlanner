@@ -110,7 +110,7 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask, loading
           ))}
         </div>
       ) : sortedHomework.length === 0 ? (
-        <p className="homework-empty">No tasks yet. Click "Add task" above to get started.</p>
+        <p className="homework-empty">No tasks yet. Click "New task" above to get started.</p>
       ) : (
         <>
         {!isMobile && (
