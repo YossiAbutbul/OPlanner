@@ -165,6 +165,32 @@
   background: #eef0f3;
 }
 
+/* Overdue indicator — faint red wash on the cell + an alert badge top-right. */
+.cal-cell-overdue {
+  background: #fef2f2;
+  border-color: #fbd5d5;
+}
+
+.cal-cell-overdue:hover {
+  background: #fde8e8;
+}
+
+.cal-overdue-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #dc2626;
+  box-shadow: 0 0 0 2px #fafafb;
+  pointer-events: none;
+}
+
+.cal-cell-overdue .cal-overdue-dot {
+  box-shadow: 0 0 0 2px #fef2f2;
+}
+
 .cal-cell.out {
   background: transparent;
 }
@@ -380,6 +406,11 @@
 .cal-popover-status.is-done {
   color: #117a35;
   background: rgba(29, 185, 84, 0.14);
+}
+
+.cal-popover-status.is-overdue {
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.14);
 }
 
 .cal-popover-hint {

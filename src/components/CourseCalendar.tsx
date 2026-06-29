@@ -2,6 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { HomeworkEntry } from "../context/HomeworkContext";
+import { isOverdue } from "../utility/dayCalendar";
 import "../css/CourseCalendar.css";
 
 interface Props {
@@ -238,16 +239,20 @@ const CourseCalendar: React.FC<Props> = ({
           const dayTasks = tasksByDate.get(iso) || [];
           const visible = dayTasks.slice(0, maxVisibleTasks);
           const more = dayTasks.length - visible.length;
+          const hasOverdue = dayTasks.some(
+            (t) => t.status !== "COMPLETED" && isOverdue(t.dueDate, t.endTime ?? t.startTime)
+          );
           return (
             <button
               key={iso}
               type="button"
-              className={`cal-cell ${inMonth ? "" : "out"} ${isToday ? "today" : ""} ${isSelected ? "selected" : ""}`}
+              className={`cal-cell ${inMonth ? "" : "out"} ${isToday ? "today" : ""} ${isSelected ? "selected" : ""} ${hasOverdue ? "cal-cell-overdue" : ""}`}
               onClick={() => onSelectDate(iso)}
               onDoubleClick={() => onCreateOnDate(iso)}
               onMouseEnter={(e) => handleCellEnter(e, iso, dayTasks.length > 0)}
               onMouseLeave={handleCellLeave}
             >
+              {hasOverdue && <span className="cal-overdue-dot" title="Overdue task" aria-label="Overdue task" />}
               <span className="cal-day-num">{date.getDate()}</span>
               {visible.length > 0 && (
                 <span className="cal-tasks">
@@ -294,6 +299,9 @@ const CourseCalendar: React.FC<Props> = ({
             {hoverTasks.map((t) => {
               const c = colorOf?.(t);
               const done = t.status === "COMPLETED";
+              const overdue = !done && isOverdue(t.dueDate, t.endTime ?? t.startTime);
+              const status = done ? "Done" : overdue ? "Overdue" : "Pending";
+              const statusClass = done ? "is-done" : overdue ? "is-overdue" : "is-pending";
               return (
                 <li key={t.id}>
                   <span
@@ -301,8 +309,8 @@ const CourseCalendar: React.FC<Props> = ({
                     style={c ? { background: c } : undefined}
                   />
                   <span className="cal-popover-name">{t.name}</span>
-                  <span className={`cal-popover-status ${done ? "is-done" : "is-pending"}`}>
-                    {done ? "Done" : "Pending"}
+                  <span className={`cal-popover-status ${statusClass}`}>
+                    {status}
                   </span>
                 </li>
               );
