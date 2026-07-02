@@ -553,31 +553,70 @@
   gap: 0.45rem;
 }
 
-/* Link icons — always visible when the exam has a URL. */
-.ep-row-link {
-  display: inline-flex;
-  align-items: center;
+/* Kebab (⋮) — one action button per row; always visible (not hover-gated). */
+.ep-row-head .ep-kebab,
+.ep-kebab {
   flex-shrink: 0;
-  color: var(--color-accent);
-  transition: color 0.15s ease;
+  opacity: 1;
+  color: #6b7280;
 }
 
-.ep-row-link:hover {
-  color: var(--color-accent-hover);
-}
-
-/* Solution link uses an amber "idea" tint to distinguish it from the exam link. */
-.ep-row-link-solution {
-  color: #d97706;
-}
-
-.ep-row-link-solution:hover {
-  color: #b45309;
-}
-
-/* Edit (pencil) shares the hover-reveal behaviour of the delete icon. */
-.ep-row-edit:hover {
+.ep-row-head .ep-kebab:hover {
   color: #1a1a1a;
+}
+
+/* ===== Row action menu (portal) ===== */
+.ep-row-menu {
+  position: fixed;
+  z-index: var(--z-popover, 2000);
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  padding: 0.3rem;
+  background: #fff;
+  border: 1px solid #e3e3e6;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+
+.ep-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.6rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #333;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ep-menu-item svg {
+  flex-shrink: 0;
+  color: #6b7280;
+}
+
+.ep-menu-item:hover {
+  background: #f1f2f4;
+}
+
+.ep-menu-danger {
+  color: #c53030;
+}
+
+.ep-menu-danger svg {
+  color: #c53030;
+}
+
+.ep-menu-danger:hover {
+  background: #fde2e2;
 }
 
 /* ===== Exam row modal fields — label above a full-width input ===== */

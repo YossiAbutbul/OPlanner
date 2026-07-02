@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, ExternalLink, FilePlus2, Lightbulb, ListChecks, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, ExternalLink, FilePlus2, Lightbulb, ListChecks, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import DeleteModal from "./DeleteModal";
 import ExamSetupModal from "./ExamSetupModal";
 import ExamRowModal from "./ExamRowModal";
@@ -154,6 +154,8 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
   const [setupOpen, setSetupOpen] = useState(false);
   // Exam being edited (name + link) in the row modal. null = closed.
   const [editRow, setEditRow] = useState<ExamRow | null>(null);
+  // Open row action menu (kebab): the row + anchored screen position.
+  const [rowMenu, setRowMenu] = useState<{ row: ExamRow; top: number; left: number } | null>(null);
   // Touch rename target (bottom sheet). null = closed.
   const [sheet, setSheet] = useState<{ title: string; value: string; onSave: (v: string) => void } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<
@@ -181,6 +183,25 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
 
   const saveRef = useRef(save);
   useEffect(() => { saveRef.current = save; }, [save]);
+
+  // Dismiss the row action menu on outside click, scroll, or resize.
+  useEffect(() => {
+    if (!rowMenu) return;
+    const close = () => setRowMenu(null);
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.closest(".ep-row-menu") || t.closest(".ep-kebab")) return;
+      close();
+    };
+    document.addEventListener("mousedown", onDown, true);
+    window.addEventListener("resize", close);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      document.removeEventListener("mousedown", onDown, true);
+      window.removeEventListener("resize", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [rowMenu]);
 
   const commit = (next: ExamTable) => {
     lastRemoteRef.current = JSON.stringify(next);
@@ -390,49 +411,20 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                         >
                           {r.label}
                         </button>
-                        {r.url && (
-                          <a
-                            className="ep-row-link"
-                            href={r.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label={`Open exam link for ${r.label}`}
-                            title="Open exam link"
-                          >
-                            <ExternalLink size={13} />
-                          </a>
-                        )}
-                        {r.solutionUrl && (
-                          <a
-                            className="ep-row-link ep-row-link-solution"
-                            href={r.solutionUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label={`Open solution link for ${r.label}`}
-                            title="Open solution link"
-                          >
-                            <Lightbulb size={13} />
-                          </a>
-                        )}
                         <button
                           type="button"
-                          className="ep-icon-btn ep-row-edit"
-                          onClick={() => setEditRow(r)}
-                          aria-label={`Edit exam ${r.label}`}
-                          title="Edit exam"
+                          className="ep-icon-btn ep-kebab"
+                          aria-label={`Actions for ${r.label}`}
+                          title="Actions"
+                          onClick={(e) => {
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            // Open to the right of the kebab (left edge at it),
+                            // clamped so the 180px menu stays on screen.
+                            const left = Math.max(8, Math.min(rect.left, window.innerWidth - 192));
+                            setRowMenu({ row: r, top: rect.bottom + 10, left });
+                          }}
                         >
-                          <Pencil size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          className="ep-icon-btn ep-icon-delete"
-                          onClick={() => setPendingDelete({ kind: "row", id: r.id, label: r.label })}
-                          aria-label={`Delete exam ${r.label}`}
-                          title="Delete exam"
-                        >
-                          <Trash2 size={13} />
+                          <MoreVertical size={15} />
                         </button>
                       </div>
                     </th>
@@ -487,6 +479,51 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
         onSave={(name, url, solutionUrl) => editRow && saveRow(editRow.id, name, url, solutionUrl)}
         onClose={() => setEditRow(null)}
       />
+
+      {rowMenu && createPortal(
+        <div className="ep-row-menu" style={{ top: rowMenu.top, left: rowMenu.left }}>
+          <button
+            type="button"
+            className="ep-menu-item"
+            onClick={() => { setEditRow(rowMenu.row); setRowMenu(null); }}
+          >
+            <Pencil size={14} /> Edit
+          </button>
+          {rowMenu.row.url && (
+            <a
+              className="ep-menu-item"
+              href={rowMenu.row.url}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setRowMenu(null)}
+            >
+              <ExternalLink size={14} /> Open exam link
+            </a>
+          )}
+          {rowMenu.row.solutionUrl && (
+            <a
+              className="ep-menu-item"
+              href={rowMenu.row.solutionUrl}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setRowMenu(null)}
+            >
+              <Lightbulb size={14} /> Open solution
+            </a>
+          )}
+          <button
+            type="button"
+            className="ep-menu-item ep-menu-danger"
+            onClick={() => {
+              setPendingDelete({ kind: "row", id: rowMenu.row.id, label: rowMenu.row.label });
+              setRowMenu(null);
+            }}
+          >
+            <Trash2 size={14} /> Delete
+          </button>
+        </div>,
+        document.body
+      )}
 
       <DeleteModal
         isOpen={pendingDelete !== null}
