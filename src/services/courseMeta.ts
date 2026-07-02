@@ -117,7 +117,14 @@ const normalizeExamTable = (data: unknown): ExamTable | undefined => {
               if (colIds.has(k) && v === true) checks[k] = true;
             }
           }
-          return { id: r.id as string, label: (r.label as string).slice(0, MAX_EXAM_LABEL_LEN), checks };
+          const row: ExamRow = {
+            id: r.id as string,
+            label: (r.label as string).slice(0, MAX_EXAM_LABEL_LEN),
+            checks,
+          };
+          if (typeof r.url === "string" && isValidLinkUrl(r.url)) row.url = r.url;
+          if (typeof r.solutionUrl === "string" && isValidLinkUrl(r.solutionUrl)) row.solutionUrl = r.solutionUrl;
+          return row;
         })
     : [];
 

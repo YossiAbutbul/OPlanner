@@ -13,25 +13,11 @@
   gap: 0.6rem;
 }
 
+/* "Exams" title on the left, action buttons on the right of the same row. */
 .ep-section-head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.ep-section-title {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  width: 100%;
-}
-
-/* Subhead text on the left, "Add exam" button on the right of the same row. */
-.ep-subhead-row {
-  display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 1rem;
 }
 
@@ -535,6 +521,110 @@
   font-size: 0.88rem;
   font-weight: 600;
   flex: 1 1 auto;
+}
+
+/* Exam name — a text button that opens the edit modal (name + link). */
+.ep-row-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.2rem 0.3rem;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #222;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+/* Hover matches the row-hover tint so the button blends into the row. */
+.ep-row-name:hover {
+  background: #eaf2fd;
+}
+
+/* Space the trailing action icons so edit/delete aren't cramped together. */
+.ep-row-head-inner {
+  gap: 0.45rem;
+}
+
+/* Link icons — always visible when the exam has a URL. */
+.ep-row-link {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-accent);
+  transition: color 0.15s ease;
+}
+
+.ep-row-link:hover {
+  color: var(--color-accent-hover);
+}
+
+/* Solution link uses an amber "idea" tint to distinguish it from the exam link. */
+.ep-row-link-solution {
+  color: #d97706;
+}
+
+.ep-row-link-solution:hover {
+  color: #b45309;
+}
+
+/* Edit (pencil) shares the hover-reveal behaviour of the delete icon. */
+.ep-row-edit:hover {
+  color: #1a1a1a;
+}
+
+/* ===== Exam row modal fields — label above a full-width input ===== */
+.exam-row-field {
+  display: block;
+  margin-bottom: 1.1rem;
+}
+
+.exam-row-field:last-child {
+  margin-bottom: 0;
+}
+
+.exam-row-field > span {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.exam-row-field em {
+  color: #9aa0a8;
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* Every input identical to the exam-name field. */
+.exam-row-field input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 0.75rem;
+  border: 1px solid #d6d6da;
+  border-radius: 8px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #1a1a1a;
+}
+
+.exam-row-field input::placeholder {
+  color: #b6b9bf;
+}
+
+.exam-row-field input:focus {
+  outline: none;
 }
 
 .ep-label-empty {

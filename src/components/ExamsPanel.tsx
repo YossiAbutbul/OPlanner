@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, FilePlus2, ListChecks, Plus, Trash2 } from "lucide-react";
+import { Check, ExternalLink, FilePlus2, Lightbulb, ListChecks, Pencil, Plus, Trash2 } from "lucide-react";
 import DeleteModal from "./DeleteModal";
 import ExamSetupModal from "./ExamSetupModal";
+import ExamRowModal from "./ExamRowModal";
 import { useCourseMeta } from "../hooks/useCourseMeta";
 import { useToast } from "../context/ToastContext";
 import { MAX_EXAM_COLUMNS, MAX_EXAM_ROWS, MAX_EXAM_LABEL_LEN } from "../services/courseMeta";
@@ -151,8 +152,8 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
 
   const [table, setTable] = useState<ExamTable>(emptyTable);
   const [setupOpen, setSetupOpen] = useState(false);
-  // Row just added — its name cell mounts in edit mode with the text selected.
-  const [autoEditRowId, setAutoEditRowId] = useState<string | null>(null);
+  // Exam being edited (name + link) in the row modal. null = closed.
+  const [editRow, setEditRow] = useState<ExamRow | null>(null);
   // Touch rename target (bottom sheet). null = closed.
   const [sheet, setSheet] = useState<{ title: string; value: string; onSave: (v: string) => void } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<
@@ -227,17 +228,30 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
       ? table.columns
       : [{ id: crypto.randomUUID(), label: "Q1" }];
     commit({ ...table, columns, rows: [...table.rows, row] });
-    if (!isCoarsePointer()) setAutoEditRowId(row.id);
+    // Open the edit modal on the fresh row so the user names it (and can add a
+    // link) right away.
+    setEditRow(row);
   };
 
   const renameColumn = (id: string, label: string) =>
     commit({ ...table, columns: table.columns.map((c) => (c.id === id ? { ...c, label } : c)) });
 
-  const renameRow = (id: string, label: string) => {
-    // Disallow duplicate exam names — uniquify against the other rows.
+  // Save name + links from the row modal. Name is uniquified against siblings.
+  // Empty url keys are omitted entirely — Firestore rejects `undefined`.
+  const saveRow = (id: string, label: string, url: string, solutionUrl: string) => {
     const taken = new Set(table.rows.filter((r) => r.id !== id).map((r) => r.label));
     const unique = uniqueLabel(label, taken);
-    commit({ ...table, rows: table.rows.map((r) => (r.id === id ? { ...r, label: unique } : r)) });
+    commit({
+      ...table,
+      rows: table.rows.map((r) => {
+        if (r.id !== id) return r;
+        const next: ExamRow = { id: r.id, label: unique, checks: r.checks };
+        if (url) next.url = url;
+        if (solutionUrl) next.solutionUrl = solutionUrl;
+        return next;
+      }),
+    });
+    setEditRow(null);
   };
 
   const removeColumn = (id: string) =>
@@ -278,35 +292,31 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
     <div className="ep">
       <section className="ep-section">
         <div className="ep-section-head">
-          <div className="ep-section-title">
-            <h3>Exams</h3>
-            <div className="ep-subhead-row">
-              {!needsSetup && (
-                <div className="ep-head-actions">
-                  <button
-                    type="button"
-                    className="ep-add-q-btn"
-                    onClick={addColumn}
-                    disabled={atColumnLimit}
-                    title={atColumnLimit ? `Limit of ${MAX_EXAM_COLUMNS} questions` : "Add question column"}
-                  >
-                    <Plus size={15} />
-                    Add question
-                  </button>
-                  <button
-                    type="button"
-                    className="ep-add-exam-btn"
-                    onClick={addRow}
-                    disabled={atRowLimit}
-                    title={atRowLimit ? `Limit of ${MAX_EXAM_ROWS} exams` : "Add exam"}
-                  >
-                    <FilePlus2 size={15} />
-                    Add exam
-                  </button>
-                </div>
-              )}
+          <h3>Exams</h3>
+          {!needsSetup && (
+            <div className="ep-head-actions">
+              <button
+                type="button"
+                className="ep-add-q-btn"
+                onClick={addColumn}
+                disabled={atColumnLimit}
+                title={atColumnLimit ? `Limit of ${MAX_EXAM_COLUMNS} questions` : "Add question column"}
+              >
+                <Plus size={15} />
+                Add question
+              </button>
+              <button
+                type="button"
+                className="ep-add-exam-btn"
+                onClick={addRow}
+                disabled={atRowLimit}
+                title={atRowLimit ? `Limit of ${MAX_EXAM_ROWS} exams` : "Add exam"}
+              >
+                <FilePlus2 size={15} />
+                Add exam
+              </button>
             </div>
-          </div>
+          )}
         </div>
 
         {needsSetup ? (
@@ -372,14 +382,49 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                   <tr key={r.id} className={complete ? "ep-row-complete" : ""}>
                     <th scope="row" className="ep-row-head">
                       <div className="ep-row-head-inner">
-                        <EditableLabel
-                          value={r.label}
-                          placeholder="Exam name"
-                          className="ep-row-label"
-                          autoEdit={r.id === autoEditRowId}
-                          onTouchEdit={() => setSheet({ title: "Rename exam", value: r.label, onSave: (v) => renameRow(r.id, v) })}
-                          onCommit={(label) => renameRow(r.id, label)}
-                        />
+                        <button
+                          type="button"
+                          className="ep-row-name"
+                          title="Edit exam"
+                          onClick={() => setEditRow(r)}
+                        >
+                          {r.label}
+                        </button>
+                        {r.url && (
+                          <a
+                            className="ep-row-link"
+                            href={r.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={`Open exam link for ${r.label}`}
+                            title="Open exam link"
+                          >
+                            <ExternalLink size={13} />
+                          </a>
+                        )}
+                        {r.solutionUrl && (
+                          <a
+                            className="ep-row-link ep-row-link-solution"
+                            href={r.solutionUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={`Open solution link for ${r.label}`}
+                            title="Open solution link"
+                          >
+                            <Lightbulb size={13} />
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          className="ep-icon-btn ep-row-edit"
+                          onClick={() => setEditRow(r)}
+                          aria-label={`Edit exam ${r.label}`}
+                          title="Edit exam"
+                        >
+                          <Pencil size={13} />
+                        </button>
                         <button
                           type="button"
                           className="ep-icon-btn ep-icon-delete"
@@ -432,6 +477,15 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
         isOpen={setupOpen}
         onClose={() => setSetupOpen(false)}
         onCreate={createTable}
+      />
+
+      <ExamRowModal
+        isOpen={editRow !== null}
+        initialName={editRow?.label ?? ""}
+        initialUrl={editRow?.url ?? ""}
+        initialSolutionUrl={editRow?.solutionUrl ?? ""}
+        onSave={(name, url, solutionUrl) => editRow && saveRow(editRow.id, name, url, solutionUrl)}
+        onClose={() => setEditRow(null)}
       />
 
       <DeleteModal

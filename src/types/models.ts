@@ -55,6 +55,8 @@ export interface ExamRow {
   id: string;                       // crypto.randomUUID()
   label: string;                    // e.g. "2022b moed 87"
   checks: Record<string, boolean>;  // keyed by ExamColumn id — questions done
+  url?: string;                     // optional link to the exam
+  solutionUrl?: string;             // optional link to the solution
 }
 
 // Per-course exam tracker: a checkbox grid of exams (rows) × questions
