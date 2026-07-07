@@ -422,6 +422,69 @@
   z-index: 1;
 }
 
+/* Wraps the table so insert handles can be positioned against its full height.
+   Carries the table's min-width (inline) so many columns overflow into the
+   scroll while the table itself just fills the wrapper. */
+.ep-table-inner {
+  position: relative;
+  min-width: 100%;
+}
+
+/* Overlay holding the inter-column insert handles. Non-interactive except for
+   the handles themselves. */
+.ep-col-inserts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Insert handle — a hover zone centered on a column border. Hovering reveals a
+   white "+" circle with a green glyph (Word/Excel style). */
+.ep-col-insert {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 22px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 4;
+}
+
+.ep-col-insert-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--color-accent);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--color-accent);
+  opacity: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  transition: opacity 0.12s ease, transform 0.1s ease;
+}
+
+.ep-col-insert-btn svg {
+  display: block;
+}
+
+.ep-col-insert:hover .ep-col-insert-btn {
+  opacity: 1;
+}
+
+.ep-col-insert:hover .ep-col-insert-btn {
+  transform: scale(1.12);
+}
+
 /* Narrow progress column right after the exam name — frozen left, just past
    the 150px name column, so both stay visible while scrolling questions. */
 /* Qualified so it beats `.ep-table thead th`'s padding — otherwise the header

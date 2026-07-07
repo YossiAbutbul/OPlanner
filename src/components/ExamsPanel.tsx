@@ -156,6 +156,11 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
   const [editRow, setEditRow] = useState<ExamRow | null>(null);
   // Open row action menu (kebab): the row + anchored screen position.
   const [rowMenu, setRowMenu] = useState<{ row: ExamRow; top: number; left: number } | null>(null);
+  // Measured table width + header height — drive the position of the
+  // inter-column insert handles (centered on the body rows, below the header).
+  const tableRef = useRef<HTMLTableElement>(null);
+  const [tableW, setTableW] = useState(0);
+  const [headH, setHeadH] = useState(0);
   // Touch rename target (bottom sheet). null = closed.
   const [sheet, setSheet] = useState<{ title: string; value: string; onSave: (v: string) => void } | null>(null);
   const [pendingDelete, setPendingDelete] = useState<
@@ -183,6 +188,24 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
 
   const saveRef = useRef(save);
   useEffect(() => { saveRef.current = save; }, [save]);
+
+  // Track the table's rendered width so insert handles land on the borders.
+  useEffect(() => {
+    const el = tableRef.current;
+    if (!el) return;
+    const update = () => {
+      setTableW(el.offsetWidth);
+      setHeadH(el.tHead?.offsetHeight ?? 0);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [table.columns.length]);
 
   // Dismiss the row action menu on outside click, scroll, or resize.
   useEffect(() => {
@@ -218,6 +241,12 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
   const atColumnLimit = table.columns.length >= MAX_EXAM_COLUMNS;
   const atRowLimit = table.rows.length >= MAX_EXAM_ROWS;
 
+  // Rendered width of one question column — used to place the insert handles on
+  // each inter-column border (fixed layout splits the space evenly).
+  const qWidth = table.columns.length
+    ? (tableW - NAME_COL_W - DONE_COL_W) / table.columns.length
+    : 0;
+
   // Build the initial grid from the setup modal: N exams × M questions.
   const createTable = (questions: number, exams: number) => {
     const columns: ExamColumn[] = Array.from({ length: questions }, (_, i) => ({
@@ -233,10 +262,29 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
     setSetupOpen(false);
   };
 
+  // Lowest free "Qn" name — so inserting into a gap (Q4|Q6) yields Q5, and
+  // appending after Q1..Q3 yields Q4, regardless of column count.
+  const nextQLabel = (): string => {
+    const taken = new Set(table.columns.map((c) => c.label));
+    let n = 1;
+    while (taken.has(`Q${n}`)) n++;
+    return `Q${n}`;
+  };
+
   const addColumn = () => {
     if (atColumnLimit) return;
-    const col: ExamColumn = { id: crypto.randomUUID(), label: `Q${table.columns.length + 1}` };
+    const col: ExamColumn = { id: crypto.randomUUID(), label: nextQLabel() };
     commit({ ...table, columns: [...table.columns, col] });
+  };
+
+  // Insert a question column right after the given index (Word/Excel-style
+  // border "+" handle). Checks are keyed by column id, so no remapping needed.
+  const insertColumnAt = (index: number) => {
+    if (atColumnLimit) return;
+    const col: ExamColumn = { id: crypto.randomUUID(), label: nextQLabel() };
+    const columns = [...table.columns];
+    columns.splice(index + 1, 0, col);
+    commit({ ...table, columns });
   };
 
   const addRow = () => {
@@ -360,10 +408,11 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
         ) : (
           <div className="ep-grid">
             <div className="ep-table-scroll">
-            <table
-              className="ep-table"
+            <div
+              className="ep-table-inner"
               style={{ minWidth: NAME_COL_W + DONE_COL_W + table.columns.length * Q_COL_MIN }}
             >
+            <table ref={tableRef} className="ep-table">
               <thead>
                 <tr>
                   <th className="ep-corner">Exam</th>
@@ -460,6 +509,30 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                 })}
               </tbody>
             </table>
+
+            {/* Word/Excel-style insert handles centered on each inter-column
+                border. Overlaid so the "+" sits on the full-height border, not
+                in the header. */}
+            {!atColumnLimit && tableW > 0 && qWidth > 0 && (
+              <div className="ep-col-inserts" style={{ top: headH }}>
+                {table.columns.slice(0, -1).map((c, i) => (
+                  <button
+                    key={`ins-${c.id}`}
+                    type="button"
+                    className="ep-col-insert"
+                    style={{ left: NAME_COL_W + DONE_COL_W + (i + 1) * qWidth }}
+                    onClick={() => insertColumnAt(i)}
+                    aria-label="Insert question here"
+                    title="Insert question here"
+                  >
+                    <span className="ep-col-insert-btn">
+                      <Plus size={11} strokeWidth={3} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+            </div>
           </div>
           </div>
         )}
