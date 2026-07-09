@@ -192,6 +192,12 @@
     width: 28px;
     height: 28px;
   }
+  /* Phone: suppress transient toasts entirely — they clutter the small screen.
+     Keep only sticky prompts (update available / offline), which are actionable
+     and require the user to click a button. */
+  .toast:not(.toast-sticky) {
+    display: none;
+  }
 }
 
 /* ===== ErrorBoundary fallback — dark, on-theme "wow" ===== */

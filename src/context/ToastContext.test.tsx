@@ -55,6 +55,39 @@ describe("ToastContext", () => {
     expect(result.current.toasts).toHaveLength(0);
   });
 
+  it("coalesces identical non-sticky toasts into one, refreshing its timer", () => {
+    const { result } = renderHook(() => useToast(), { wrapper });
+    act(() => result.current.success("Notes saved"));
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    // Spam the same message — should stay a single toast.
+    act(() => result.current.success("Notes saved"));
+    act(() => result.current.success("Notes saved"));
+    expect(result.current.toasts).toHaveLength(1);
+
+    // Timer was refreshed by the last push: original 4.5s window has passed
+    // (3000 + 2000 = 5000) but the toast survives.
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(result.current.toasts).toHaveLength(1);
+    // ...and clears 4.5s after the last push.
+    act(() => {
+      vi.advanceTimersByTime(2500);
+    });
+    expect(result.current.toasts).toHaveLength(0);
+  });
+
+  it("caps the stack at 3, evicting the oldest non-sticky toast", () => {
+    const { result } = renderHook(() => useToast(), { wrapper });
+    act(() => result.current.info("a"));
+    act(() => result.current.info("b"));
+    act(() => result.current.info("c"));
+    act(() => result.current.info("d"));
+    expect(result.current.toasts.map((t) => t.message)).toEqual(["b", "c", "d"]);
+  });
+
   it("dismiss removes the toast immediately", () => {
     const { result } = renderHook(() => useToast(), { wrapper });
     act(() => result.current.success("a"));
