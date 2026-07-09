@@ -53,13 +53,13 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
       const spaceAbove = rect.top;
       const openUp = spaceBelow < popH + 12 && spaceAbove > spaceBelow;
       const top = openUp ? rect.top - popH - 6 : rect.bottom + 6;
-      // Right-align popover with trigger (popover right edge = button right
-      // edge). Flip to left-align if that would push past viewport left.
-      const desiredLeft = rect.right - POPOVER_WIDTH;
-      const fitsRightAligned = desiredLeft >= 8;
-      const left = fitsRightAligned
-        ? desiredLeft
-        : Math.min(rect.left, window.innerWidth - POPOVER_WIDTH - 8);
+      // Left-align popover with trigger (popover left edge = field left edge)
+      // so it reads as attached to the input. Flip to right-align only if a
+      // left-aligned popover would overflow the viewport's right edge.
+      const overflowsRight = rect.left + POPOVER_WIDTH > window.innerWidth - 8;
+      const left = overflowsRight
+        ? Math.max(8, rect.right - POPOVER_WIDTH)
+        : rect.left;
       setPos({ top, left });
     };
     updatePos();
