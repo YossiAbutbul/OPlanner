@@ -490,17 +490,24 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                     {table.columns.map((c) => {
                       const done = !!r.checks[c.id];
                       return (
-                        <td key={c.id} className="ep-cell">
-                          <button
-                            type="button"
-                            className={`ep-check ${done ? "ep-check-done" : ""}`}
-                            onClick={() => toggleCheck(r.id, c.id)}
-                            role="checkbox"
-                            aria-checked={done}
-                            aria-label={`${r.label} — ${c.label}`}
-                          >
+                        <td
+                          key={c.id}
+                          className="ep-cell"
+                          onClick={() => toggleCheck(r.id, c.id)}
+                          role="checkbox"
+                          aria-checked={done}
+                          aria-label={`${r.label} — ${c.label}`}
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === " " || e.key === "Enter") {
+                              e.preventDefault();
+                              toggleCheck(r.id, c.id);
+                            }
+                          }}
+                        >
+                          <span className={`ep-check ${done ? "ep-check-done" : ""}`}>
                             {done && <Check size={11} strokeWidth={3} />}
-                          </button>
+                          </span>
                         </td>
                       );
                     })}

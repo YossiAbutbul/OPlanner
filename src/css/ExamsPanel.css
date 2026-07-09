@@ -755,6 +755,13 @@
 .ep-cell {
   text-align: center;
   padding: 0.25rem;
+  cursor: pointer;
+}
+
+.ep-cell:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+  border-radius: 6px;
 }
 
 .ep-check {
@@ -785,11 +792,11 @@
   display: block;
 }
 
-.ep-check:hover {
+.ep-cell:hover .ep-check {
   border-color: var(--color-accent);
 }
 
-.ep-check:active {
+.ep-cell:active .ep-check {
   transform: scale(0.9);
 }
 
