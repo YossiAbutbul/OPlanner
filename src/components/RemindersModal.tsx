@@ -33,7 +33,9 @@ const RemindersModal: React.FC<Props> = ({
   const pending = sorted.filter((t) => t.status !== "COMPLETED");
   const overdue = pending.filter((t) => isOverdue(t.dueDate, t.endTime ?? t.startTime));
   const upcoming = pending.filter((t) => !isOverdue(t.dueDate, t.endTime ?? t.startTime));
-  const done = sorted.filter((t) => t.status === "COMPLETED");
+  // Done reminders read newest-first — the thing you just ticked off should be
+  // at the top, not buried under everything you finished weeks ago.
+  const done = sorted.filter((t) => t.status === "COMPLETED").reverse();
 
   const renderItem = (t: HomeworkEntry) => {
     const preview = notesPreview(t.notes);
