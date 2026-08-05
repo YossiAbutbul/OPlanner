@@ -1,0 +1,45 @@
+version: 2
+
+updates:
+  # npm deps. Grouped so a quiet week is one PR, not fifteen — CI runs
+  # lint/typecheck/test/build on each, so a grouped PR still gets verified.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Jerusalem
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+      include: scope
+    groups:
+      # Security fixes land on their own so they can be merged without
+      # waiting on an unrelated major in the same PR.
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+      production:
+        applies-to: version-updates
+        dependency-type: production
+        update-types: [minor, patch]
+      development:
+        applies-to: version-updates
+        dependency-type: development
+        update-types: [minor, patch]
+    # Majors still get their own PR — they need a human read of the changelog.
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Jerusalem
+    commit-message:
+      prefix: chore(ci)
+    groups:
+      actions:
+        patterns: ["*"]
