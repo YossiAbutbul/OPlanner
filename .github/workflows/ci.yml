@@ -34,7 +34,11 @@ jobs:
 
       - name: Typecheck
         # tsc has its own check independent of vite build's esbuild pass.
-        run: npx tsc -p tsconfig.app.json --noEmit
+        # Build mode (-b) walks the whole solution — the root project and
+        # both references. Checking tsconfig.app.json alone left root-level
+        # project wiring unverified, which is how a TS6305 collision there
+        # reached main while CI stayed green.
+        run: npx tsc -b
 
       - name: Test
         run: npm test
