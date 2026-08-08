@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Version files are parsed literally by tooling — a CRLF checkout on Windows
+# can leave a stray \r in the version string.
+.node-version text eol=lf
