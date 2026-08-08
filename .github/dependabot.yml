@@ -30,6 +30,12 @@ updates:
         dependency-type: development
         update-types: [minor, patch]
     # Majors still get their own PR — they need a human read of the changelog.
+    ignore:
+      # typescript-eslint 8.x peers on typescript ">=4.8.4 <6.1.0", so a TS 7
+      # bump fails install outright. Drop this once typescript-eslint ships a
+      # release that peers on 7.x.
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
