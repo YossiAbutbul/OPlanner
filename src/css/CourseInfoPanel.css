@@ -4,6 +4,11 @@
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
+  /* Links + Assignments cap out at this many rows and scroll internally, so
+     neither list can push Notes (and each other) far off-screen. Row height is
+     padding (0.7rem x 2) + the 28px action buttons. */
+  --cip-row-h: 50px;
+  --cip-max-rows: 5;
   /* Breathing room below the last section so it doesn't butt against the
      panel's bottom border (scroll-container padding can't be relied on). */
   padding-bottom: 1rem;
@@ -82,14 +87,17 @@
   gap: 0.5rem;
 }
 
-/* The whole tab panel scrolls now, so the table flows at full height
-   instead of having its own nested scrollbar. */
+/* Capped list: the tab panel still scrolls as a whole, but the assignments
+   body scrolls inside itself once it passes --cip-max-rows. The header lives
+   in its own table outside .homework-table-scroll, so it stays put. */
 .cip-assignments .homework-table-container {
   flex: 0 0 auto;
 }
 
 .cip-assignments .homework-table-scroll {
-  overflow: visible;
+  flex: 0 0 auto;
+  overflow-y: auto;
+  max-height: calc(var(--cip-row-h) * var(--cip-max-rows));
 }
 
 /* Bigger notes ג€” default editor is 88px; quadruple it for the dedicated
@@ -109,6 +117,35 @@
   border: 1px solid #e3e3e6;
   border-radius: 10px;
   overflow: hidden;
+}
+
+/* Scrolls once the link rows pass --cip-max-rows; the head row above stays
+   fixed because it sits outside this element. */
+.cip-table-body {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(var(--cip-row-h) * var(--cip-max-rows));
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+
+.cip-table-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cip-table-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cip-table-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
+  border: 2px solid #fff;
+}
+
+.cip-table-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.32);
 }
 
 .cip-table-head,
@@ -144,10 +181,12 @@
   border-bottom: 1px solid #eef0f2;
   position: relative;
   flex-wrap: wrap;
+  /* Never let the capped body squash rows — it scrolls instead. */
+  flex-shrink: 0;
   transition: background-color 0.15s ease;
 }
 
-.cip-table-row:last-child {
+.cip-table-body > .cip-table-row:last-child {
   border-bottom: none;
 }
 
@@ -308,6 +347,16 @@
   font-size: 0.75rem;
   color: #e74c3c;
   margin-top: 0.2rem;
+}
+
+/* Below 1024px App.css forces .homework-table-scroll to overflow: visible, so
+   a max-height there would clip rows instead of scrolling them. Let both lists
+   flow at full height on small screens and rely on the page scroll. */
+@media (max-width: 1024px) {
+  .cip-assignments .homework-table-scroll,
+  .cip-table-body {
+    max-height: none;
+  }
 }
 
 @media (max-width: 900px) {

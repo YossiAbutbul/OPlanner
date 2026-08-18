@@ -209,56 +209,58 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
             <span role="columnheader" className="cip-col-actions">Actions</span>
           </div>
 
-          {links.length === 0 && !draft && (
-            <div className="cip-table-empty">
-              No links yet. Add Moodle, Zoom, a Drive folder…
-            </div>
-          )}
-
-          {links.map((l) =>
-            draft && !draft.isNew && draft.id === l.id ? (
-              <React.Fragment key={l.id}>{renderEditRow()}</React.Fragment>
-            ) : (
-              <div key={l.id} className="cip-table-row" role="row">
-                <span role="cell" className="cip-col-name cip-cell-label">{l.label}</span>
-                <a
-                  role="cell"
-                  className="cip-col-url cip-cell-url"
-                  href={l.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={l.url}
-                >
-                  {l.url}
-                  <ExternalLink size={12} className="cip-cell-url-icon" />
-                </a>
-                <span role="cell" className="cip-col-actions">
-                  <button
-                    type="button"
-                    className="cip-row-btn"
-                    onClick={() => startEdit(l)}
-                    disabled={editing}
-                    aria-label="Edit link"
-                    title="Edit"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    className="cip-row-btn cip-row-delete"
-                    onClick={() => setPendingDelete(l)}
-                    disabled={editing}
-                    aria-label="Delete link"
-                    title="Delete"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </span>
+          <div className="cip-table-body">
+            {links.length === 0 && !draft && (
+              <div className="cip-table-empty">
+                No links yet. Add Moodle, Zoom, a Drive folder…
               </div>
-            )
-          )}
+            )}
 
-          {draft?.isNew && renderEditRow()}
+            {links.map((l) =>
+              draft && !draft.isNew && draft.id === l.id ? (
+                <React.Fragment key={l.id}>{renderEditRow()}</React.Fragment>
+              ) : (
+                <div key={l.id} className="cip-table-row" role="row">
+                  <span role="cell" className="cip-col-name cip-cell-label">{l.label}</span>
+                  <a
+                    role="cell"
+                    className="cip-col-url cip-cell-url"
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={l.url}
+                  >
+                    {l.url}
+                    <ExternalLink size={12} className="cip-cell-url-icon" />
+                  </a>
+                  <span role="cell" className="cip-col-actions">
+                    <button
+                      type="button"
+                      className="cip-row-btn"
+                      onClick={() => startEdit(l)}
+                      disabled={editing}
+                      aria-label="Edit link"
+                      title="Edit"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      className="cip-row-btn cip-row-delete"
+                      onClick={() => setPendingDelete(l)}
+                      disabled={editing}
+                      aria-label="Delete link"
+                      title="Delete"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </span>
+                </div>
+              )
+            )}
+
+            {draft?.isNew && renderEditRow()}
+          </div>
         </div>
       </section>
 
