@@ -113,6 +113,31 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try { lsCache.write(cacheKey(year, semester, course), list); } catch { /* ignore */ }
   }, []);
 
+  // Instant a task became COMPLETED, the only timestamp the app records, and
+  // what the weekly report measures on-time vs late against. Kept stable once
+  // set so re-saving a finished task doesn't reset it; cleared when the task
+  // leaves COMPLETED. `prev` may live in state or, for a course that isn't the
+  // loaded one, in its cache entry.
+  const stampCompletedAt = useCallback((
+    id: string | null,
+    status: string,
+    year: number,
+    semester: string,
+    course: string
+  ): string | undefined => {
+    if (status !== "COMPLETED") return undefined;
+    if (!id) return new Date().toISOString();
+    let prev = homework.find((h) => h.id === id);
+    if (!prev) {
+      try {
+        const cached = lsCache.read<HomeworkEntry[]>(cacheKey(year, semester, course));
+        if (Array.isArray(cached)) prev = cached.find((h) => h.id === id);
+      } catch { /* ignore */ }
+    }
+    if (prev?.status === "COMPLETED" && prev.completedAt) return prev.completedAt;
+    return new Date().toISOString();
+  }, [homework]);
+
   // Calculate notifications when homework changes
   useEffect(() => {
     const now = new Date();
@@ -165,6 +190,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   ) => {
     try {
       const uid = requireUid();
+      const completedAt = stampCompletedAt(id, status, year, semester, course);
 
       if (id) {
         const prevEntry: { year: number; semester: string; course: string } | undefined =
@@ -184,6 +210,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         const task: HomeworkEntry = {
           id, name, dueDate, status, year, semester, course, ignoreOverdue,
+          ...(completedAt ? { completedAt } : {}),
           ...(startTime ? { startTime } : {}),
           ...(endTime ? { endTime } : {}),
           ...(notes !== undefined ? { notes } : {}),
@@ -196,7 +223,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           const next = exists
             ? prev.map((entry) =>
                 entry.id === id
-                  ? { ...entry, name, dueDate, status, year, semester, course, ignoreOverdue, startTime, endTime, notes, color }
+                  ? { ...entry, name, dueDate, status, year, semester, course, ignoreOverdue, completedAt, startTime, endTime, notes, color }
                   : entry
               )
             : [...prev, task];
@@ -234,6 +261,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           semester,
           course,
           ignoreOverdue,
+          ...(completedAt ? { completedAt } : {}),
           ...(startTime ? { startTime } : {}),
           ...(endTime ? { endTime } : {}),
           ...(notes !== undefined ? { notes } : {}),
@@ -250,7 +278,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error("Error adding/updating homework:", error);
     }
-  }, [homework, writeCache]);
+  }, [homework, writeCache, stampCompletedAt]);
 
   const removeHomework = useCallback(async (
     id: string,

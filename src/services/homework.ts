@@ -1,6 +1,7 @@
 import {
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDocs,
   setDoc,
@@ -37,7 +38,14 @@ export const saveTask = async (
     tasksPath(uid, task.year, task.semester, task.course),
     task.id
   );
-  await setDoc(ref, task, { merge: true });
+  // completedAt is cleared (not left stale) when a task leaves COMPLETED:
+  // merge:true would otherwise keep the old instant on the doc.
+  const { completedAt, ...rest } = task;
+  await setDoc(
+    ref,
+    { ...rest, completedAt: completedAt ?? deleteField() },
+    { merge: true }
+  );
 };
 
 export const createTaskRef = (

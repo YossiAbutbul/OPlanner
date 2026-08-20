@@ -7,6 +7,7 @@ export interface HomeworkEntry {
   name: string;
   dueDate: string;        // YYYY-MM-DD
   status: string;         // "PENDING" | "DONE" | ...
+  completedAt?: string;   // ISO instant the task flipped to COMPLETED
   year: number;
   semester: string;
   course: string;

@@ -1,0 +1,739 @@
+/* Weekly report: a bento of six tiles on a 12 x 6 grid. The dark hero anchors
+   the top left, charts take the wide slots, lists take the bottom band. The
+   section owns the available height and never scrolls; lists scroll in place. */
+
+.wr {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+  min-height: 0;
+  color: #1a1a1a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- header ---------- */
+
+.wr-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex: none;
+}
+
+.wr-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.wr-range {
+  color: #8b8e94;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.wr-live {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.wr-nav {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.wr-weeknav {
+  display: inline-flex;
+  border: 1px solid #e6e7ea;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: #fff;
+}
+
+.wr-weeknav button {
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #1a1a1a;
+  padding: 0.28rem 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.wr-weeknav button + button {
+  border-left: 1px solid #eff0f2;
+}
+
+.wr-weeknav button:hover:not(:disabled) {
+  background: #f5f5f7;
+}
+
+.wr-btn {
+  padding: 0.32rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid #e6e7ea;
+  background: #fff;
+  color: #1a1a1a;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.wr-btn:hover:not(:disabled) {
+  background: #f5f5f7;
+}
+
+.wr-weeknav button:disabled,
+.wr-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ---------- bento grid ---------- */
+
+.wr-bento {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+.wr-hero        { grid-area: 1 / 1 / 3 / 5; }
+.wr-t-rhythm    { grid-area: 1 / 5 / 4 / 13; }
+.wr-t-trend     { grid-area: 3 / 1 / 4 / 5; }
+.wr-t-courses   { grid-area: 4 / 1 / 6 / 4; }
+.wr-t-ontime    { grid-area: 4 / 4 / 6 / 8; }
+.wr-t-deadlines { grid-area: 4 / 8 / 6 / 13; }
+
+.wr-tile {
+  background: #fff;
+  border: 1px solid #ebecef;
+  border-radius: 14px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  box-shadow: 0 1px 2px rgba(16, 18, 22, 0.03);
+}
+
+.wr-tile-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: 0.55rem;
+  flex: none;
+}
+
+.wr-label {
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #9a9da3;
+}
+
+.wr-note {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: #b0b3b9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wr-empty {
+  margin: auto 0;
+  color: #b4b7bc;
+  font-size: 0.85rem;
+}
+
+.wr-dot,
+.wr-keys i,
+.wr-rows i {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  flex: none;
+}
+
+/* ---------- hero ---------- */
+
+/* The hero is the one tinted tile: a soft wash of the app accent so it leads
+   the bento without going dark against a light canvas. */
+.wr-hero {
+  background: linear-gradient(160deg, #f3faf6 0%, #e9f6ef 100%);
+  border-color: #d8ece1;
+  color: #16241c;
+  justify-content: space-between;
+  gap: 0.5rem;
+  box-shadow: 0 2px 6px rgba(18, 146, 63, 0.06);
+}
+
+.wr-hero-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+.wr-label-dark {
+  color: #6f8579;
+}
+
+.wr-chip {
+  margin-left: auto;
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-full);
+  background: rgba(22, 36, 28, 0.06);
+  color: #6f8579;
+}
+
+.wr-chip.is-up {
+  background: rgba(18, 146, 63, 0.12);
+  color: #0f7f38;
+}
+
+.wr-chip.is-down {
+  background: rgba(194, 43, 43, 0.10);
+  color: #c22b2b;
+}
+
+.wr-hero-figure {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.55rem;
+  line-height: 1;
+}
+
+.wr-hero-num {
+  font-size: clamp(2.4rem, 6vh, 3.6rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.wr-hero-unit {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6f8579;
+  line-height: 1.15;
+  padding-bottom: 0.3rem;
+}
+
+.wr-hero-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: none;
+}
+
+.wr-hero-bar {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: rgba(18, 146, 63, 0.12);
+  overflow: hidden;
+}
+
+.wr-hero-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  transition: width 0.3s ease;
+}
+
+.wr-hero-progress-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6f8579;
+}
+
+.wr-hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid rgba(22, 36, 28, 0.10);
+  padding-top: 0.55rem;
+  flex: none;
+}
+
+.wr-hero-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+  padding-left: 0.7rem;
+  border-left: 1px solid rgba(22, 36, 28, 0.10);
+}
+
+.wr-hero-stats > div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.wr-hero-stat-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.wr-hero-stat-val.is-bad {
+  color: #c22b2b;
+}
+
+.wr-hero-stat-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7d9187;
+}
+
+/* ---------- rhythm ---------- */
+
+.wr-chart {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+  flex: 1;
+  min-height: 0;
+}
+
+.wr-avg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed #dcdee2;
+  pointer-events: none;
+  margin-bottom: 1.2rem;
+}
+
+.wr-avg span {
+  position: absolute;
+  right: 0;
+  top: -0.72rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #b0b3b9;
+  background: #fff;
+  padding: 0 0.25rem;
+}
+
+.wr-day {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.25rem;
+  height: 100%;
+  min-width: 0;
+}
+
+.wr-day-bar {
+  width: 100%;
+  max-width: 54px;
+  border-radius: 8px;
+  background: #e4f1ea;
+  min-height: 3px;
+  transition: height 0.25s ease;
+}
+
+.wr-day.is-best .wr-day-bar {
+  background: var(--color-accent);
+}
+
+.wr-day.is-today .wr-day-bar {
+  box-shadow: inset 0 0 0 2px rgba(29, 185, 84, 0.35);
+}
+
+.wr-day-val {
+  font-size: 0.63rem;
+  font-weight: 600;
+  color: #8b8e94;
+  min-height: 0.82rem;
+}
+
+.wr-day.is-best .wr-day-val {
+  color: #0f7f38;
+}
+
+.wr-day-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.2rem;
+}
+
+.wr-day-label {
+  font-size: 0.68rem;
+  color: #b0b3b9;
+  font-weight: 700;
+}
+
+.wr-day-count {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #c5c7cb;
+  background: #f4f4f6;
+  border-radius: var(--radius-full);
+  padding: 0 0.3rem;
+}
+
+.wr-day-count.is-on {
+  color: #12923f;
+  background: #e7f7ed;
+}
+
+/* ---------- six week trend ---------- */
+
+.wr-trend {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.wr-trend-col {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.wr-trend-bar {
+  width: 100%;
+  border-radius: 6px;
+  background: #edeef1;
+  min-height: 3px;
+}
+
+.wr-trend-col.is-current .wr-trend-bar {
+  background: #9fd9b8;
+}
+
+.wr-trend-tick {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #c1c4c9;
+}
+
+.wr-trend-col.is-current .wr-trend-tick {
+  color: #12923f;
+}
+
+/* ---------- courses ----------
+   One row per course, ranked by time. The share bar is the row itself: a
+   tinted fill behind the label, so the tile reads as a chart, not a table. */
+
+.wr-courses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  /* Rows keep a fixed height, so two courses look the same as six, and the
+     list stays anchored to the top of the tile. */
+  justify-content: flex-start;
+  gap: 0.3rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.wr-courses li {
+  position: relative;
+  flex: none;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.6rem;
+  border-radius: 8px;
+  border-left: 3px solid transparent;
+  background: #f7f8f9;
+  overflow: hidden;
+  font-size: 0.78rem;
+}
+
+.wr-course-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  transition: width 0.3s ease;
+}
+
+.wr-course-name {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  unicode-bidi: isolate;
+  font-weight: 500;
+  color: #33363b;
+  text-align: left;
+}
+
+.wr-course-val {
+  position: relative;
+  font-weight: 700;
+  color: #1a1a1a;
+  white-space: nowrap;
+}
+
+/* ---------- punctuality ---------- */
+
+.wr-punct {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.wr-donut {
+  position: relative;
+  flex: 0 1 auto;
+  min-height: 0;
+  height: 62%;
+  max-height: 210px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+}
+
+.wr-donut svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.wr-donut-val {
+  position: absolute;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.wr-donut-val.is-na {
+  color: #b4b7bc;
+  font-size: 1.15rem;
+}
+
+.wr-keys {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 0.35rem 1.1rem;
+  font-size: 0.78rem;
+  color: #55585e;
+  flex: none;
+}
+
+.wr-keys li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.wr-keys b {
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+.wr-keys .is-soft,
+.wr-keys .is-soft b {
+  color: #b0b3b9;
+}
+
+/* ---------- deadlines timeline ----------
+   A time gutter, a rail with one dot per item, then the task. Overdue items
+   lead in red, the next two days in amber, the rest stay quiet. */
+
+.wr-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.wr-timeline li {
+  display: grid;
+  grid-template-columns: 3.6rem 14px minmax(0, 1fr);
+  align-items: start;
+  gap: 0.6rem;
+  padding: 0.24rem 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.wr-tl-when {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #a9acb2;
+  text-align: right;
+  padding-top: 0.12rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wr-timeline li.is-over .wr-tl-when {
+  color: #c22b2b;
+}
+
+.wr-timeline li.is-soon .wr-tl-when {
+  color: #b1650f;
+}
+
+/* The rail: a hairline through the whole column with a dot per item. */
+.wr-tl-rail {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
+  padding-top: 0.3rem;
+}
+
+.wr-tl-rail::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: -0.6rem;
+  width: 1px;
+  background: #eceef1;
+}
+
+.wr-timeline li:last-child .wr-tl-rail::before {
+  bottom: auto;
+  height: 0.3rem;
+}
+
+.wr-tl-rail i {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 0 3px #fff;
+}
+
+.wr-timeline li.is-exam .wr-tl-rail i {
+  background: #fff !important;
+  border: 2px solid currentColor;
+  color: #b0b3b9;
+}
+
+.wr-tl-body {
+  min-width: 0;
+  padding-bottom: 0.15rem;
+}
+
+.wr-tl-name {
+  display: block;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+.wr-timeline li.is-over .wr-tl-name {
+  font-weight: 600;
+}
+
+.wr-tl-meta {
+  display: block;
+  font-size: 0.68rem;
+  color: #b0b3b9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 1150px) {
+  /* The real canvas sits between two sidebars, so this is the common case:
+     paired tiles two across, then the trend strip and the timeline full width. */
+  .wr-bento {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
+  .wr-hero        { grid-area: 1 / 1 / 3 / 4; }
+  .wr-t-rhythm    { grid-area: 1 / 4 / 3 / 7; }
+  .wr-t-courses   { grid-area: 3 / 1 / 5 / 4; }
+  .wr-t-ontime    { grid-area: 3 / 4 / 5 / 7; }
+  .wr-t-trend     { grid-area: 5 / 1 / 6 / 7; }
+  .wr-t-deadlines { grid-area: 6 / 1 / 8 / 7; }
+  .wr-punct {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--space-4);
+  }
+  .wr-donut {
+    height: 100%;
+    max-height: 124px;
+  }
+  .wr-keys {
+    grid-template-columns: auto;
+    gap: 0.3rem;
+  }
+  /* Wide enough for two columns of deadlines. */
+  .wr-timeline {
+    columns: 2;
+    column-gap: var(--space-6);
+  }
+  .wr-timeline li {
+    break-inside: avoid;
+  }
+  .wr-tl-rail::before {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  /* Phones and narrow tablets scroll; one screenful is a desktop promise. */
+  .wr {
+    overflow-y: auto;
+  }
+  .wr-bento {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-auto-rows: minmax(190px, auto);
+    flex: none;
+  }
+  .wr-tile {
+    grid-area: auto !important;
+  }
+  .wr-donut {
+    max-height: 120px;
+  }
+}

@@ -13,9 +13,10 @@ import OverviewStats from "./SemesterOverview/OverviewStats";
 import CoursesPanel from "./SemesterOverview/CoursesPanel";
 import FinalsCountdown from "./SemesterOverview/FinalsCountdown";
 import AddCourseModal from "./SemesterOverview/AddCourseModal";
+import WeeklyReport from "./SemesterOverview/WeeklyReport";
 import { useSemesterStats } from "../hooks/useSemesterStats";
 import type { CourseInfo, HomeworkEntry } from "../types/models";
-import { BookPlus, CalendarClock, CalendarPlus, Download, ListChecks } from "lucide-react";
+import { BarChart3, BookPlus, CalendarClock, CalendarPlus, Download, LayoutGrid, ListChecks } from "lucide-react";
 import "../css/SemesterOverview.css";
 
 interface Props {
@@ -53,6 +54,7 @@ const SemesterOverview: React.FC<Props> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [view, setView] = useState<"overview" | "report">("overview");
   const [calSelected, setCalSelected] = useState<string | null>(null);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [taskPrefillDate, setTaskPrefillDate] = useState<string | null>(null);
@@ -123,6 +125,26 @@ const SemesterOverview: React.FC<Props> = ({
         </div>
         {!isEmpty && (
           <div className="overview-header-actions">
+            <div className="overview-view-switch" role="tablist" aria-label="Semester view">
+              <button
+                role="tab"
+                aria-selected={view === "overview"}
+                className={view === "overview" ? "is-active" : ""}
+                onClick={() => setView("overview")}
+              >
+                <LayoutGrid size={15} />
+                <span>Overview</span>
+              </button>
+              <button
+                role="tab"
+                aria-selected={view === "report"}
+                className={view === "report" ? "is-active" : ""}
+                onClick={() => setView("report")}
+              >
+                <BarChart3 size={15} />
+                <span>Weekly report</span>
+              </button>
+            </div>
             <button
               className="overview-import"
               onClick={() => fileInputRef.current?.click()}
@@ -211,7 +233,9 @@ const SemesterOverview: React.FC<Props> = ({
             </li>
           </ul>
         </section>
-      ) : !loaded ? null : (
+      ) : !loaded ? null : view === "report" ? (
+        <WeeklyReport semester={semester} courses={courses} tasks={allTasks} />
+      ) : (
         <>
           <OverviewStats totals={totals} completionPct={completionPct} />
 
