@@ -235,17 +235,17 @@ const WeeklyReport: React.FC<Props> = ({ courses, tasks }) => {
           <div className="wr-punct">
             <div className="wr-donut">
               <svg viewBox="0 0 42 42" role="img" aria-label={`${report.onTime} on time, ${report.late} late, ${report.unfinished} open`}>
-                <circle cx="21" cy="21" r="15.9" fill="none" stroke="#f1f2f4" strokeWidth="5" />
+                <circle cx="21" cy="21" r="15.9" fill="none" stroke="#f1f2f4" strokeWidth="8" />
                 {report.onTimeReliable && onTimeSeg > 0 && (
-                  <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--color-accent)" strokeWidth="5"
+                  <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--color-accent)" strokeWidth="8"
                     strokeLinecap="round" strokeDasharray={`${onTimeSeg} ${100 - onTimeSeg}`} strokeDashoffset="25" />
                 )}
                 {report.onTimeReliable && lateSeg > 0 && (
-                  <circle cx="21" cy="21" r="15.9" fill="none" stroke="#f0a742" strokeWidth="5"
+                  <circle cx="21" cy="21" r="15.9" fill="none" stroke="#f0a742" strokeWidth="8"
                     strokeLinecap="round" strokeDasharray={`${lateSeg} ${100 - lateSeg}`} strokeDashoffset={`${25 - onTimeSeg}`} />
                 )}
                 {report.onTimeReliable && openSeg > 0 && (
-                  <circle cx="21" cy="21" r="15.9" fill="none" stroke="#d23030" strokeWidth="5"
+                  <circle cx="21" cy="21" r="15.9" fill="none" stroke="#d23030" strokeWidth="8"
                     strokeLinecap="round" strokeDasharray={`${openSeg} ${100 - openSeg}`} strokeDashoffset={`${25 - onTimeSeg - lateSeg}`} />
                 )}
               </svg>
