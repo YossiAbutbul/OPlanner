@@ -1,22 +1,12 @@
 import React, { useState } from "react";
-import {
-  BookPlus,
-  Coins,
-  Download,
-  GraduationCap,
-  ListChecks,
-  Settings,
-  Undo2,
-} from "lucide-react";
+import { BookPlus, Coins, Download, GraduationCap, ListChecks, Settings, Undo2 } from "lucide-react";
 import { usePlan } from "../context/PlanContext";
 import { useToast } from "../context/ToastContext";
 import { usePlanStats } from "../hooks/usePlanStats";
-import DegreeCard from "./StudyPlan/DegreeCard";
-import RequirementsPanel from "./StudyPlan/RequirementsPanel";
+import DegreeHero from "./StudyPlan/DegreeHero";
+import NextUpPanel from "./StudyPlan/NextUpPanel";
 import GradesPanel from "./StudyPlan/GradesPanel";
 import MoneyPanel from "./StudyPlan/MoneyPanel";
-import TimelinePanel from "./StudyPlan/TimelinePanel";
-import TermsPanel from "./StudyPlan/TermsPanel";
 import PlanCoursesTable from "./StudyPlan/PlanCoursesTable";
 import PlanCourseModal from "./StudyPlan/PlanCourseModal";
 import PlanSettingsModal from "./StudyPlan/PlanSettingsModal";
@@ -26,8 +16,9 @@ import DeleteModal from "./DeleteModal";
 import type { PlanCourse, PlanPayment } from "../types/models";
 import "../css/StudyPlan.css";
 
-// Degree-wide view: credits, grades, money and graduation term for the whole
-// degree. Global by design — no year or semester selection reaches it.
+// Degree-wide view: credits, grades and money for the whole degree. Left to
+// right like the rest of OPlanner; Hebrew course names are bidi-isolated so
+// they still read correctly inside the rows.
 const StudyPlanPage: React.FC = () => {
   const {
     config,
@@ -66,8 +57,7 @@ const StudyPlanPage: React.FC = () => {
     toast.success(isNew ? `Course “${course.name}” added` : `Course “${course.name}” updated`);
   };
 
-  // Inline grade edit from the courses table. A completed course keeps its
-  // status; a graded planned course becomes completed or failed by its mark.
+  // Inline grade edit. A grade on a planned or running course settles it.
   const handleSetGrade = async (course: PlanCourse, grade: number | undefined) => {
     const next: PlanCourse = { ...course, grade };
     if (grade === undefined) delete next.grade;
@@ -77,14 +67,9 @@ const StudyPlanPage: React.FC = () => {
     await upsertCourse(next);
   };
 
-  // Requirement targets are editable straight from the panel.
-  const handleSetTarget = async (groupId: string, credits: number) => {
-    await saveConfig({
-      ...config,
-      groups: config.groups.map((g) =>
-        g.id === groupId ? { ...g, requiredCredits: credits } : g
-      ),
-    });
+  const handleSchedule = async (course: PlanCourse, year: number, semester: string) => {
+    await upsertCourse({ ...course, year, semester });
+    toast.success(`“${course.name}” moved to ${semester.replace("Semester ", "Sem ")} ${year}`);
   };
 
   const handleImport = async (
@@ -134,7 +119,7 @@ const StudyPlanPage: React.FC = () => {
         </div>
         {!isEmpty && (
           <div className="sp-header-actions">
-            <button type="button" className="sp-btn sp-btn-ghost" onClick={() => setImportOpen(true)}>
+            <button type="button" className="sp-btn" onClick={() => setImportOpen(true)}>
               <Download size={16} />
               <span>Import</span>
             </button>
@@ -162,21 +147,25 @@ const StudyPlanPage: React.FC = () => {
       {isEmpty ? (
         <section className="sp-empty">
           <div className="sp-empty-art" aria-hidden="true">
-            <GraduationCap size={32} strokeWidth={1.7} />
+            <GraduationCap size={34} strokeWidth={1.7} />
           </div>
           <h2 className="sp-empty-title">Let's map out your degree</h2>
           <p className="sp-empty-text">
-            Track every course of the degree in one place: credits earned against
-            credits required, grades per year, and what the whole thing costs.
+            Every course of the degree in one place: credits earned against credits required,
+            grades, and what the whole thing costs.
           </p>
           <div className="sp-empty-actions">
-            <button type="button" className="sp-btn sp-btn-primary" onClick={() => setImportOpen(true)}>
+            <button
+              type="button"
+              className="sp-btn sp-btn-primary"
+              onClick={() => setImportOpen(true)}
+            >
               <Download size={16} />
               <span>Import from your university</span>
             </button>
             <button
               type="button"
-              className="sp-btn sp-btn-ghost"
+              className="sp-btn"
               onClick={() => setCourseModal({ open: true, course: null })}
             >
               <BookPlus size={16} />
@@ -186,15 +175,15 @@ const StudyPlanPage: React.FC = () => {
           <ul className="sp-empty-hints">
             <li>
               <ListChecks size={16} strokeWidth={2} />
-              Credits tracked per requirement group
+              Credits tracked to the last point
             </li>
             <li>
               <GraduationCap size={16} strokeWidth={2} />
-              Weighted average and graduation term
+              Average and graduation term
             </li>
             <li>
               <Coins size={16} strokeWidth={2} />
-              Paid so far and projected to the end
+              Paid so far and still ahead
             </li>
           </ul>
           <button type="button" className="sp-link-btn" onClick={() => setSettingsOpen(true)}>
@@ -204,25 +193,22 @@ const StudyPlanPage: React.FC = () => {
         </section>
       ) : (
         <>
-          <DegreeCard
+          <DegreeHero stats={stats} config={config} onOpenSettings={() => setSettingsOpen(true)} />
+
+          <NextUpPanel
+            courses={courses}
             stats={stats}
-            config={config}
-            onOpenSettings={() => setSettingsOpen(true)}
+            onSchedule={handleSchedule}
+            onAddCourse={() => setCourseModal({ open: true, course: null })}
           />
 
-          <div className="sp-grid">
-            <RequirementsPanel
-              stats={stats}
-              onConfigure={() => setSettingsOpen(true)}
-              onSetTarget={handleSetTarget}
-            />
+          <div className="sp-two">
             <GradesPanel
               stats={stats}
               config={config}
               courses={courses}
               onSetGrade={handleSetGrade}
             />
-            <TermsPanel stats={stats} />
             <MoneyPanel
               stats={stats}
               config={config}
@@ -232,7 +218,6 @@ const StudyPlanPage: React.FC = () => {
               onDelete={(p) => setConfirmPayment(p)}
               onConfigure={() => setSettingsOpen(true)}
             />
-            <TimelinePanel stats={stats} courses={courses} />
           </div>
 
           <PlanCoursesTable
@@ -247,7 +232,8 @@ const StudyPlanPage: React.FC = () => {
             <div className="sp-footnote">
               <span>
                 Last import {lastImport.fileName ? `“${lastImport.fileName}”` : ""} added{" "}
-                {lastImport.createdIds.length} and updated {lastImport.updatedBefore.length} courses.
+                {lastImport.createdIds.length} and updated {lastImport.updatedBefore.length}{" "}
+                courses.
               </span>
               <button
                 type="button"

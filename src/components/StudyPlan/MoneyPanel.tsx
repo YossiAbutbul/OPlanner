@@ -1,5 +1,5 @@
 import React from "react";
-import { Coins, Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import type { PlanConfig, PlanPayment } from "../../types/models";
 import type { PlanStats } from "../../hooks/usePlanStats";
 import { formatMoney } from "../../utility/planFormat";
@@ -49,138 +49,132 @@ const MoneyPanel: React.FC<Props> = ({
     config.cost.pricePerCredit > 0 ||
     (config.cost.pricePerCourse ?? 0) > 0 ||
     config.cost.perSemesterFee > 0;
-  const configured = priced || payments.length > 0;
 
   const denom = Math.max(1, total);
   const pct = (value: number) => `${Math.max(0, (value / denom) * 100)}%`;
   const ordered = [...payments].sort((a, b) => b.date.localeCompare(a.date));
 
-  if (!configured) {
-    return (
-      <section className="sp-panel">
-        <header className="sp-panel-head">
-          <h3>Money</h3>
-        </header>
-        <div className="sp-blank">
-          <Coins size={22} strokeWidth={1.7} />
-          <p>
-            Add what a credit or a course costs and OPlanner works out what the degree
-            has cost you and what is still ahead.
+  return (
+    <section className="sp-block">
+      <header className="sp-block-head">
+        <h2>Money</h2>
+        <button type="button" className="sp-link-btn" onClick={onConfigure}>
+          Tuition settings
+        </button>
+      </header>
+
+      {!priced && payments.length === 0 ? (
+        <>
+          <p className="sp-block-note">
+            Add what a credit or a course costs and the degree total, what is left, and the
+            paid-course cap all fill in.
           </p>
-          <div className="sp-blank-actions">
+          <div className="sp-actions">
             <button type="button" className="sp-btn sp-btn-primary" onClick={onConfigure}>
               Set tuition
             </button>
-            <button type="button" className="sp-btn sp-btn-ghost" onClick={onAdd}>
+            <button type="button" className="sp-btn" onClick={onAdd}>
               Add a payment
             </button>
           </div>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="sp-panel">
-      <header className="sp-panel-head">
-        <h3>Money</h3>
-        <span className="sp-hint">{formatMoney(total, currency)} for the degree</span>
-      </header>
-
-      <div className="sp-money-top">
-        <div className="sp-money-fig">
-          <span className="sp-money-value">{formatMoney(spent, currency)}</span>
-          <span className="sp-money-label">paid</span>
-        </div>
-        <div className="sp-money-fig">
-          <span className="sp-money-value">{formatMoney(due + projected, currency)}</span>
-          <span className="sp-money-label">still to pay</span>
-        </div>
-      </div>
-
-      <div className="sp-split" aria-hidden="true">
-        <i className="sp-split-paid" style={{ width: pct(Math.max(0, spent)) }} />
-        <i className="sp-split-due" style={{ width: pct(Math.max(0, due)) }} />
-        <i className="sp-split-future" style={{ width: pct(projected) }} />
-      </div>
-      <div className="sp-legend">
-        <span>
-          <i className="sp-sw sp-sw-done" />
-          paid
-        </span>
-        <span>
-          <i className="sp-sw sp-sw-active" />
-          billed {formatMoney(due, currency)}
-        </span>
-        <span>
-          <i className="sp-sw sp-sw-future" />
-          projected {formatMoney(projected, currency)}
-        </span>
-      </div>
-
-      {perCourse && stats.money.coursesLeftToPay !== null && (
-        <div className="sp-cap">
-          <div className="sp-cap-top">
-            <span className="sp-cap-name">Paid courses used</span>
-            <span className="sp-cap-num">
-              <b>{Math.min(stats.money.coursesBilled, cap)}</b> / {cap}
-            </span>
+        </>
+      ) : (
+        <>
+          <div className="sp-money-figures">
+            <div className="sp-money-figure">
+              <span className="sp-money-num">{formatMoney(spent, currency)}</span>
+              <span className="sp-money-cap">paid so far</span>
+            </div>
+            <div className="sp-money-figure">
+              <span className="sp-money-num">{formatMoney(due + projected, currency)}</span>
+              <span className="sp-money-cap">still to pay</span>
+            </div>
           </div>
-          <div
-            className="sp-bar"
-            role="progressbar"
-            aria-label="Paid courses used"
-            aria-valuenow={Math.round(capPct)}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
-            <i className="sp-bar-done" style={{ width: `${capPct}%` }} />
-          </div>
-          <span className="sp-hint">
-            {stats.money.coursesLeftToPay === 0
-              ? `Cap reached, every remaining course is free (${stats.money.coursesFree} so far).`
-              : `${stats.money.coursesLeftToPay} paid courses left, then the rest is free.`}
-          </span>
-        </div>
-      )}
 
-      {ordered.length > 0 && (
-        <div className="sp-ledger">
-          {ordered.slice(0, 5).map((p) => (
-            <div className="sp-led-row" key={p.id}>
-              <span className="sp-led-when">{formatDate(p.date)}</span>
-              <span className="sp-led-what">
-                {p.note?.trim() || KIND_LABEL[p.kind]}
-                {p.semester ? ` · ${p.semester.replace("Semester ", "Sem ")}` : ""}
-              </span>
-              <span className={`sp-led-amt ${p.amount < 0 ? "sp-neg" : p.paid ? "" : "sp-due"}`}>
-                {formatMoney(p.amount, currency)}
-              </span>
-              <span className="sp-led-actions">
-                <button type="button" onClick={() => onEdit(p)} aria-label="Edit payment">
-                  <Pencil size={14} />
-                </button>
-                <button
-                  type="button"
-                  className="sp-danger"
-                  onClick={() => onDelete(p)}
-                  aria-label="Delete payment"
-                >
-                  <Trash2 size={14} />
-                </button>
+          <div className="sp-money-bar" aria-hidden="true">
+            <i className="sp-seg-paid" style={{ width: pct(Math.max(0, spent)) }} />
+            <i className="sp-seg-due" style={{ width: pct(Math.max(0, due)) }} />
+            <i className="sp-seg-future" style={{ width: pct(projected) }} />
+          </div>
+          <ul className="sp-key">
+            <li>
+              <i className="sp-sw sp-sw-done" />
+              paid
+            </li>
+            <li>
+              <i className="sp-sw sp-sw-active" />
+              billed {formatMoney(due, currency)}
+            </li>
+            <li>
+              <i className="sp-sw sp-sw-left" />
+              projected {formatMoney(projected, currency)}
+            </li>
+          </ul>
+
+          {perCourse && stats.money.coursesLeftToPay !== null && (
+            <div className="sp-cap">
+              <div className="sp-cap-line">
+                <span className="sp-cap-name">Paid courses used</span>
+                <span className="sp-cap-num">
+                  <b>{Math.min(stats.money.coursesBilled, cap)}</b> / {cap}
+                </span>
+              </div>
+              <div
+                className="sp-cap-bar"
+                role="progressbar"
+                aria-label="Paid courses used"
+                aria-valuenow={Math.round(capPct)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                <i style={{ width: `${capPct}%` }} />
+              </div>
+              <span className="sp-dim">
+                {stats.money.coursesLeftToPay === 0
+                  ? `Cap reached — every remaining course is free (${stats.money.coursesFree} so far).`
+                  : `${stats.money.coursesLeftToPay} paid courses left, then the rest is free.`}
               </span>
             </div>
-          ))}
-          {ordered.length > 5 && (
-            <span className="sp-hint">{ordered.length - 5} older payments not shown</span>
           )}
-        </div>
-      )}
 
-      <button type="button" className="sp-btn sp-btn-ghost sp-btn-block" onClick={onAdd}>
-        <Plus size={15} />
-        Add payment
-      </button>
+          {ordered.length > 0 && (
+            <ul className="sp-ledger">
+              {ordered.slice(0, 5).map((p) => (
+                <li className="sp-led-row" key={p.id}>
+                  <span className="sp-led-when">{formatDate(p.date)}</span>
+                  <span className="sp-led-what">
+                    {p.note?.trim() || KIND_LABEL[p.kind]}
+                    {p.semester ? ` · ${p.semester.replace("Semester ", "Sem ")}` : ""}
+                  </span>
+                  <span
+                    className={`sp-led-amt ${p.amount < 0 ? "sp-neg" : p.paid ? "" : "sp-due"}`}
+                  >
+                    {formatMoney(p.amount, currency)}
+                  </span>
+                  <span className="sp-led-actions">
+                    <button type="button" onClick={() => onEdit(p)} aria-label="Edit payment">
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      className="sp-danger"
+                      onClick={() => onDelete(p)}
+                      aria-label="Delete payment"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button type="button" className="sp-btn" onClick={onAdd}>
+            <Plus size={16} />
+            Add payment
+          </button>
+        </>
+      )}
     </section>
   );
 };

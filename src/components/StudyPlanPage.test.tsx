@@ -1,9 +1,16 @@
 import React from "react";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../context/ToastContext";
 import type { PlanCourse, PlanPayment } from "../types/models";
 import { defaultPlanConfig } from "../services/plan";
+
+// jsdom has no canvas, so the chart.js canvases are stubbed. The numbers and
+// the progressbar around them are ours and still render.
+vi.mock("react-chartjs-2", () => ({
+  Doughnut: () => null,
+  Bar: () => null,
+}));
 
 // Firestore never runs in tests — the page reads everything through the
 // context, which is mocked per case below.
@@ -86,16 +93,18 @@ const renderPage = (value: unknown) => {
 };
 
 describe("StudyPlanPage", () => {
-  it("shows the degree headline, credits and average", () => {
+  it("shows the degree headline, credits and average", async () => {
     renderPage(plan);
 
     expect(screen.getByRole("heading", { name: "Study Plan" })).toBeInTheDocument();
     expect(screen.getByText(/B\.Sc\. Software Engineering/)).toBeInTheDocument();
 
     // 5 of 100 credits earned; Calculus is the only completed course.
-    expect(screen.getByText(/\/ 100 credits/)).toBeInTheDocument();
+    expect(screen.getByText("/ 100")).toBeInTheDocument();
+    expect(screen.getByText("credits earned")).toBeInTheDocument();
+    // The ring sweeps up from 0 the way the semester overview chart does.
     const progress = screen.getByRole("progressbar", { name: "Degree progress" });
-    expect(progress).toHaveAttribute("aria-valuenow", "5");
+    await waitFor(() => expect(progress).toHaveAttribute("aria-valuenow", "5"));
     // Average is 91: the in-progress course is projected, not averaged in.
     expect(screen.getByText("Average").parentElement).toHaveTextContent("91");
   });
