@@ -101,3 +101,112 @@ export interface CourseTab {
   semester: string;
   course: string;
 }
+
+// ─── Study Plan ──────────────────────────────────────────────────────────
+// Degree-wide data: every course of the degree with its credits, grade and
+// cost. Lives outside the year/semester tree — see docs/study-plan.md.
+
+export type PlanCourseStatus =
+  | "COMPLETED"
+  | "IN_PROGRESS"
+  | "PLANNED"
+  | "EXEMPT"
+  | "FAILED"
+  | "DROPPED";
+
+// One graded part of a course: final exam, midterm, assignment average, lab.
+export interface GradeComponent {
+  id: string;
+  label: string;
+  weight: number;   // 0..100, should sum to 100 across the course
+  grade?: number;   // 0..100, blank while unknown
+}
+
+// One course of the degree. Stored at users/{uid}/planCourses/{id}.
+export interface PlanCourse {
+  id: string;
+  code?: string;            // catalog number from the portal — the dedupe key
+  name: string;
+  credits: number;          // 0..30
+  status: PlanCourseStatus;
+  year?: number;            // academic year, e.g. 2026
+  semester?: string;        // "Semester A" | "Semester B" | "Semester C"
+  groupId?: string;         // RequirementGroup id
+  grade?: number;           // final grade, 0..100
+  components?: GradeComponent[];
+  countsToward?: boolean;   // false = audited, excluded from credits + average
+  passFail?: boolean;       // credits count, grade stays out of the average
+  costOverride?: number;    // per-course cost when it deviates from the model
+  linkedCourse?: CourseTab; // matching course in the planner tree
+  note?: string;
+  source?: string;          // "manual" or the import batch id
+  updatedAt: number;
+}
+
+export interface RequirementGroup {
+  id: string;
+  label: string;
+  requiredCredits: number;
+  color?: string;
+}
+
+export interface OneTimeFee {
+  id: string;
+  label: string;
+  amount: number;
+  paid?: boolean;
+}
+
+export interface CostModel {
+  currency: string;          // ISO-ish code, "ILS" default
+  pricePerCredit: number;
+  perSemesterFee: number;    // registration, welfare, insurance
+  oneTimeFees: OneTimeFee[];
+  semestersRemainingOverride?: number;
+}
+
+export type PaymentKind =
+  | "TUITION"
+  | "FEE"
+  | "BOOKS"
+  | "SCHOLARSHIP"
+  | "REFUND"
+  | "OTHER";
+
+// One charge or payment. Stored at users/{uid}/planPayments/{id}.
+export interface PlanPayment {
+  id: string;
+  date: string;      // YYYY-MM-DD
+  amount: number;    // negative for a scholarship or refund
+  kind: PaymentKind;
+  year?: number;
+  semester?: string;
+  note?: string;
+  paid: boolean;     // false = scheduled, still due
+}
+
+// Single config doc at users/{uid}/plan/config.
+export interface PlanConfig {
+  degreeName: string;
+  institution?: string;
+  totalCreditsRequired: number;
+  groups: RequirementGroup[];
+  cost: CostModel;
+  targetAverage?: number;
+  passMark: number;          // 60 default
+  startYear?: number;
+  expectedEndYear?: number;
+  updatedAt: number;
+}
+
+// Record of one import, kept so the batch can be undone.
+// Stored at users/{uid}/planImports/{id}.
+export interface PlanImportBatch {
+  id: string;
+  createdAt: number;
+  fileName?: string;
+  adapter: string;
+  createdIds: string[];
+  // Pre-import snapshots of the courses this batch overwrote.
+  updatedBefore: PlanCourse[];
+}

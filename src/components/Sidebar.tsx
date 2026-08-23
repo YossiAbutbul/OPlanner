@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Check } from "lucide-react";
+import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Check, GraduationCap } from "lucide-react";
 import { useConfettiPref } from "../hooks/useConfettiPref";
 
 // Feature flag — the Focus / Pomodoro tab is temporarily hidden from the
@@ -40,6 +40,8 @@ interface SidebarProps {
   onCloseMobile: () => void;
   pomodoroActive: boolean;
   onOpenPomodoro: () => void;
+  planActive: boolean;
+  onOpenPlan: () => void;
 }
 
 const capitalizeWords = (str: string) =>
@@ -60,6 +62,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
   pomodoroActive,
   onOpenPomodoro,
+  planActive,
+  onOpenPlan,
 }) => {
   const { user, logout } = useAuth();
   const toast = useToast();
@@ -287,8 +291,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         </ul>
       </div>
 
-      {FOCUS_TAB_ENABLED && (
-        <nav className="sidebar-nav">
+      <nav className="sidebar-nav">
+        {FOCUS_TAB_ENABLED && (
           <button
             className={`sidebar-nav-item pomodoro-nav ${pomodoroActive ? "active" : ""}`}
             onClick={() => { onOpenPomodoro(); onCloseMobile(); }}
@@ -298,8 +302,16 @@ const Sidebar: React.FC<SidebarProps> = ({
             <span className="sidebar-nav-label">Focus</span>
             <span className="sidebar-nav-spark" aria-hidden />
           </button>
-        </nav>
-      )}
+        )}
+        <button
+          className={`sidebar-nav-item ${planActive ? "active" : ""}`}
+          onClick={() => { onOpenPlan(); onCloseMobile(); }}
+          title="Study plan"
+        >
+          <span className="sidebar-nav-icon"><GraduationCap size={18} /></span>
+          <span className="sidebar-nav-label">Study Plan</span>
+        </button>
+      </nav>
 
       <div className="sidebar-footer" ref={settingsRef}>
         <button

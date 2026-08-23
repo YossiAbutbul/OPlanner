@@ -6,6 +6,7 @@ import MainContent from "./components/MainContent";
 import RightSidebar from "./components/RightSidebar";
 import Login from "./components/Login";
 import PomodoroPage from "./components/PomodoroPage";
+import StudyPlanPage from "./components/StudyPlanPage";
 
 import { useAuth } from "./context/AuthContext";
 import { useHomework } from "./context/HomeworkContext";
@@ -27,6 +28,8 @@ const App: React.FC = () => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   // Pomodoro is a standalone page that overlays the planner main area.
   const [pomodoroOpen, setPomodoroOpen] = useState(false);
+  // Study Plan is degree-wide, so it replaces the main area the same way.
+  const [planOpen, setPlanOpen] = useState(false);
   const [mobileRightOpen, setMobileRightOpen] = useState(false);
   // Surface online/offline transitions via toasts.
   useOfflineToast();
@@ -151,7 +154,11 @@ const App: React.FC = () => {
         selectedSemester={sel.selectedSemester}
         selectedCourse={sel.selectedCourse}
         courses={semesterCourses}
-        onSelectCourse={(c) => { setPomodoroOpen(false); sel.setSelectedCourse(c); }}
+        onSelectCourse={(c) => {
+          setPomodoroOpen(false);
+          setPlanOpen(false);
+          sel.setSelectedCourse(c);
+        }}
         onReorderCourses={tree.handleReorderCourses}
         onYearsChanged={tree.refreshYears}
         onAddYear={tree.handleAddYear}
@@ -160,12 +167,26 @@ const App: React.FC = () => {
         mobileOpen={mobileNavOpen}
         onCloseMobile={() => setMobileNavOpen(false)}
         pomodoroActive={pomodoroOpen}
-        onOpenPomodoro={() => setPomodoroOpen((o) => !o)}
+        onOpenPomodoro={() => {
+          setPlanOpen(false);
+          setPomodoroOpen((o) => !o);
+        }}
+        planActive={planOpen}
+        onOpenPlan={() => {
+          setPomodoroOpen(false);
+          setPlanOpen((o) => !o);
+        }}
       />
       {pomodoroOpen ? (
         <div className="main-layout">
           <div className="main-content">
             <PomodoroPage />
+          </div>
+        </div>
+      ) : planOpen ? (
+        <div className="main-layout">
+          <div className="main-content">
+            <StudyPlanPage />
           </div>
         </div>
       ) : (

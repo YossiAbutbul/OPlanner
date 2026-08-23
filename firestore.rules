@@ -33,6 +33,28 @@ service cloud.firestore {
         )
         // Exam tracker: a map of { columns: list, rows: list }; row/column
         // counts bounded (per-cell sizes enforced client-side).
+        // Study plan: requirement groups, one-time fees, grade parts and
+        // import undo snapshots are all bounded lists.
+        && (
+          !("groups" in request.resource.data)
+          || (request.resource.data.groups is list
+              && request.resource.data.groups.size() <= 12)
+        )
+        && (
+          !("components" in request.resource.data)
+          || (request.resource.data.components is list
+              && request.resource.data.components.size() <= 20)
+        )
+        && (
+          !("createdIds" in request.resource.data)
+          || (request.resource.data.createdIds is list
+              && request.resource.data.createdIds.size() <= 1000)
+        )
+        && (
+          !("updatedBefore" in request.resource.data)
+          || (request.resource.data.updatedBefore is list
+              && request.resource.data.updatedBefore.size() <= 200)
+        )
         && (
           !("examTable" in request.resource.data)
           || (request.resource.data.examTable is map
