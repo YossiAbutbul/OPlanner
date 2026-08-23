@@ -88,9 +88,14 @@ export interface RequirementGroup {
   color?: string;
 }
 
+export type PricingMode = "PER_CREDIT" | "PER_COURSE";
+
 export interface CostModel {
   currency: string;         // "ILS" default, symbol resolved for display
-  pricePerCredit: number;   // 0 when the school bills a flat semester fee
+  pricingMode?: PricingMode;// undefined = PER_CREDIT (legacy docs)
+  pricePerCredit: number;
+  pricePerCourse?: number;  // schools that bill a whole course
+  paidCoursesCap?: number;  // pay for N courses, the rest of the degree is free
   perSemesterFee: number;   // registration, welfare, insurance
   oneTimeFees: { id: string; label: string; amount: number }[];
   semestersRemainingOverride?: number;
@@ -162,11 +167,15 @@ courseGrade    = explicit grade, else the component estimate when weights
                  cover 100%, else blank
 
 spent          = sum(payments where paid)
-committed      = sum(payments where !paid and dated in the current term)
-projectedLeft  = creditsLeft * pricePerCredit
-                 + perSemesterFee * semestersRemaining
-                 + sum(unpaid oneTimeFees)
-totalDegree    = spent + committed + projectedLeft
+due            = sum(payments where !paid)        // already billed
+coursesBilled  = count of COMPLETED / IN_PROGRESS / FAILED / DROPPED courses
+coursesLeft    = paidCoursesCap ? max(0, cap - coursesBilled) : null
+coursesAhead   = max(plannedCourses, ceil(creditsToBuy / avgCreditsPerCourse))
+tuitionAhead   = PER_COURSE ? min(coursesAhead, coursesLeft ?? Inf) * pricePerCourse
+                            : creditsLeft * pricePerCredit
+projectedLeft  = max(0, tuitionAhead + perSemesterFee * semestersRemaining
+                 + sum(unpaid oneTimeFees) - due)   // due is already itemized
+totalDegree    = spent + due + projectedLeft
 costPerCredit  = spent / max(1, creditsDone)      // reality check vs the model
 
 semestersRemaining = override ?? ceil(creditsLeft / avgCreditsPerSemester)
@@ -201,6 +210,7 @@ file or paste  ->  detect adapter  ->  parse to raw rows  ->  column mapping
 | `.csv` / `.tsv` | Grade sheet or degree audit exported from the portal |
 | `.html` file or pasted table | Most Israeli portals render grades as an HTML table; parsed with `DOMParser`, text only, never injected into the DOM |
 | Pasted text | Tab or multi-space separated, the copy-paste path from a portal page |
+| Open University page | `תכניות לימודים אישיות` copied from sheilta, or the text of the PDF printed from it: one course per block (`code - name credits סטטוס:`, then `רמה`, `סמסטר`, `נכלל?`). The adapter also reads `נקודות זכות בתכנית` and offers to set it as the required credits, and offers to create the levels (`רגיל`, `מתקדם`, ...) as requirement groups |
 | `.ics` | Already supported for schedules, unchanged, not a Study Plan source |
 
 **Adapters.** `src/utility/planImport/` holds a registry:
@@ -341,6 +351,8 @@ src/utility/planImport/normalize.test.ts dedupe and diff behavior
 
 1. Grading scale: assume 0-100 with a 60 pass mark (Israeli standard) and make
    the pass mark configurable, or support a 4.0 GPA scale as well in v1?
+   PDF import: the Open University PDF has to be copy-pasted as text today.
+   Reading the PDF directly would need a parser dependency (~300KB).
 2. Retakes: keep every attempt in history, or keep only the counted attempt?
    Current plan keeps both, counts one.
 3. Currency: default `ILS` with a symbol map, or a free-text symbol field?

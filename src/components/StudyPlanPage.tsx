@@ -263,6 +263,7 @@ const StudyPlanPage: React.FC = () => {
         courses={courses}
         onClose={() => setImportOpen(false)}
         onImport={handleImport}
+        onSaveConfig={saveConfig}
       />
 
       {confirmCourse && (

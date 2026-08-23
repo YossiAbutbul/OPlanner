@@ -3,7 +3,7 @@ import { Plus, Trash2 } from "lucide-react";
 import Modal from "../Modal";
 import CustomSelect from "../CustomSelect";
 import { CURRENCIES, MAX_FEES, MAX_GROUPS } from "../../services/plan";
-import type { PlanConfig, RequirementGroup } from "../../types/models";
+import type { PlanConfig, PricingMode, RequirementGroup } from "../../types/models";
 
 interface Props {
   isOpen: boolean;
@@ -23,6 +23,8 @@ const PlanSettingsModal: React.FC<Props> = ({ isOpen, config, onClose, onSave })
   const [draft, setDraft] = useState<PlanConfig>(config);
   const [total, setTotal] = useState("");
   const [perCredit, setPerCredit] = useState("");
+  const [perCourse, setPerCourse] = useState("");
+  const [cap, setCap] = useState("");
   const [perSemester, setPerSemester] = useState("");
   const [target, setTarget] = useState("");
   const [passMark, setPassMark] = useState("");
@@ -34,12 +36,16 @@ const PlanSettingsModal: React.FC<Props> = ({ isOpen, config, onClose, onSave })
     setDraft(config);
     setTotal(String(config.totalCreditsRequired || ""));
     setPerCredit(String(config.cost.pricePerCredit || ""));
+    setPerCourse(String(config.cost.pricePerCourse || ""));
+    setCap(String(config.cost.paidCoursesCap || ""));
     setPerSemester(String(config.cost.perSemesterFee || ""));
     setTarget(config.targetAverage !== undefined ? String(config.targetAverage) : "");
     setPassMark(String(config.passMark ?? 60));
     setError(null);
     setSaving(false);
   }, [isOpen, config]);
+
+  const perCourseMode = draft.cost.pricingMode === "PER_COURSE";
 
   const updateGroup = (id: string, patch: Partial<RequirementGroup>) =>
     setDraft((d) => ({
@@ -71,7 +77,10 @@ const PlanSettingsModal: React.FC<Props> = ({ isOpen, config, onClose, onSave })
         .map((g) => ({ ...g, label: g.label.trim() })),
       cost: {
         ...draft.cost,
+        pricingMode: draft.cost.pricingMode ?? "PER_CREDIT",
         pricePerCredit: numOrZero(perCredit),
+        pricePerCourse: numOrZero(perCourse),
+        paidCoursesCap: numOrZero(cap) || undefined,
         perSemesterFee: numOrZero(perSemester),
         oneTimeFees: draft.cost.oneTimeFees.filter((f) => f.label.trim()),
       },
@@ -259,17 +268,70 @@ const PlanSettingsModal: React.FC<Props> = ({ isOpen, config, onClose, onSave })
               />
             </div>
             <div className="sp-field">
-              <label htmlFor="sp-per-credit">Price per credit</label>
-              <input
-                id="sp-per-credit"
-                type="number"
-                min={0}
-                value={perCredit}
-                onChange={(e) => setPerCredit(e.target.value)}
-                placeholder="416"
+              <label>Billed</label>
+              <CustomSelect
+                value={draft.cost.pricingMode ?? "PER_CREDIT"}
+                options={[
+                  { value: "PER_CREDIT", label: "Per credit" },
+                  { value: "PER_COURSE", label: "Per course" },
+                ]}
+                onChange={(v) =>
+                  setDraft({
+                    ...draft,
+                    cost: { ...draft.cost, pricingMode: v as PricingMode },
+                  })
+                }
               />
             </div>
           </div>
+
+          {perCourseMode ? (
+            <div className="sp-field-row">
+              <div className="sp-field">
+                <label htmlFor="sp-per-course">Price per course</label>
+                <input
+                  id="sp-per-course"
+                  type="number"
+                  min={0}
+                  value={perCourse}
+                  onChange={(e) => setPerCourse(e.target.value)}
+                  placeholder="1600"
+                />
+              </div>
+              <div className="sp-field">
+                <label htmlFor="sp-cap">Courses you pay for</label>
+                <input
+                  id="sp-cap"
+                  type="number"
+                  min={0}
+                  value={cap}
+                  onChange={(e) => setCap(e.target.value)}
+                  placeholder="20"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="sp-field-row">
+              <div className="sp-field">
+                <label htmlFor="sp-per-credit">Price per credit</label>
+                <input
+                  id="sp-per-credit"
+                  type="number"
+                  min={0}
+                  value={perCredit}
+                  onChange={(e) => setPerCredit(e.target.value)}
+                  placeholder="416"
+                />
+              </div>
+            </div>
+          )}
+
+          {perCourseMode && (
+            <p className="sp-hint">
+              After {cap.trim() || "that many"} paid courses the rest of the degree
+              is free, so the projection stops charging for them.
+            </p>
+          )}
           <div className="sp-field-row">
             <div className="sp-field">
               <label htmlFor="sp-per-sem">Fee per semester</label>

@@ -157,9 +157,18 @@ export interface OneTimeFee {
   paid?: boolean;
 }
 
+// How tuition is billed. Per credit is the common case; per course fits
+// schools that price a whole course (the Open University, for example), often
+// with a cap: once you have paid for `paidCoursesCap` courses, the rest of the
+// degree costs nothing.
+export type PricingMode = "PER_CREDIT" | "PER_COURSE";
+
 export interface CostModel {
   currency: string;          // ISO-ish code, "ILS" default
+  pricingMode?: PricingMode; // undefined = PER_CREDIT (legacy docs)
   pricePerCredit: number;
+  pricePerCourse?: number;
+  paidCoursesCap?: number;   // 0 or undefined = no cap, every course is billed
   perSemesterFee: number;    // registration, welfare, insurance
   oneTimeFees: OneTimeFee[];
   semestersRemainingOverride?: number;

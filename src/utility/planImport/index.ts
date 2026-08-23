@@ -1,5 +1,6 @@
 import { detectDelimited, parseDelimited, type TableData } from "./csv";
 import { detectHtmlTable, parseHtmlTable } from "./htmlTable";
+import { detectOpenU, openUMeta, parseOpenU } from "./openu";
 import {
   MAX_IMPORT_ROWS,
   guessMapping,
@@ -11,6 +12,7 @@ import {
 export * from "./normalize";
 export { parseDelimited, detectDelimiter } from "./csv";
 export { parseHtmlTable } from "./htmlTable";
+export { parseOpenU, detectOpenU } from "./openu";
 export type { TableData } from "./csv";
 
 // An adapter reads one input shape into a header/rows table. Adding support
@@ -20,9 +22,23 @@ export interface PlanImportAdapter {
   label: string;
   detect: (text: string) => number; // confidence 0..1
   parse: (text: string) => TableData;
+  // Facts the source carries beyond the course rows, like the number of
+  // credits the whole program requires.
+  meta?: (text: string) => ImportMeta;
+}
+
+export interface ImportMeta {
+  programCredits?: number;
 }
 
 export const ADAPTERS: PlanImportAdapter[] = [
+  {
+    id: "openu",
+    label: "Open University study program",
+    detect: detectOpenU,
+    parse: parseOpenU,
+    meta: openUMeta,
+  },
   {
     id: "html-table",
     label: "HTML table",
@@ -57,6 +73,7 @@ export interface ParsedImport {
   table: TableData;
   mapping: PlanField[];
   truncated: boolean;
+  meta: ImportMeta;
 }
 
 // Text in, table plus a pre-filled column mapping out. Row count is capped
@@ -70,6 +87,7 @@ export const parseImportText = (text: string): ParsedImport => {
     table: truncated ? { ...table, rows: table.rows.slice(0, MAX_IMPORT_ROWS) } : table,
     mapping: guessMapping(table.headers),
     truncated,
+    meta: adapter.meta ? adapter.meta(text) : {},
   };
 };
 
@@ -96,4 +114,5 @@ export const MAPPABLE_FIELDS: { value: PlanField; label: string }[] = [
   { value: "group", label: "Requirement group" },
   { value: "cost", label: "Cost" },
   { value: "status", label: "Status" },
+  { value: "counts", label: "Counts toward the degree" },
 ];

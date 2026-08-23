@@ -37,6 +37,11 @@ const MoneyPanel: React.FC<Props> = ({ stats, config, payments, onAdd, onEdit, o
 
   const ordered = [...payments].sort((a, b) => b.date.localeCompare(a.date));
 
+  // Paid-course cap: schools that bill per course often stop charging after a
+  // fixed number of them.
+  const cap = config.cost.paidCoursesCap ?? 0;
+  const capPct = cap > 0 ? Math.min(100, (stats.money.coursesBilled / cap) * 100) : 0;
+
   return (
     <section className="sp-panel">
       <div className="sp-panel-head">
@@ -63,6 +68,35 @@ const MoneyPanel: React.FC<Props> = ({ stats, config, payments, onAdd, onEdit, o
           Projected <b>{formatMoney(projected, currency)}</b>
         </span>
       </div>
+
+      {config.cost.pricingMode === "PER_COURSE" && stats.money.coursesLeftToPay !== null && (
+        <div className="sp-cap">
+          <div className="sp-cap-top">
+            <span className="sp-cap-name">Courses you pay for</span>
+            <span className="sp-cap-num">
+              <b>{Math.min(stats.money.coursesBilled, cap)}</b> / {cap}
+            </span>
+          </div>
+          <div
+            className="sp-bar"
+            role="progressbar"
+            aria-label="Paid courses used"
+            aria-valuenow={Math.round(capPct)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <span data-level={capPct >= 100 ? "high" : "mid"} style={{ width: `${capPct}%` }} />
+          </div>
+          <span className="sp-hint">
+            {stats.money.coursesLeftToPay === 0
+              ? "Cap reached. Every remaining course is free."
+              : `${stats.money.coursesLeftToPay} paid ${
+                  stats.money.coursesLeftToPay === 1 ? "course" : "courses"
+                } left, then the rest of the degree is free.`}
+            {stats.money.coursesFree > 0 && ` ${stats.money.coursesFree} free so far.`}
+          </span>
+        </div>
+      )}
 
       {ordered.length === 0 ? (
         <p className="sp-empty-line">

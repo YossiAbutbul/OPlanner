@@ -110,9 +110,13 @@ const PlanStatsRow: React.FC<Props> = ({ stats, config }) => {
             {formatMoney(stats.money.due + stats.money.projected, currency)}
           </div>
           <div className="sp-stat-sub">
-            {stats.money.due > 0
-              ? `${formatMoney(stats.money.due, currency)} already billed`
-              : `${stats.semestersRemaining} semesters projected`}
+            {config.cost.pricingMode === "PER_COURSE" && stats.money.coursesLeftToPay !== null
+              ? stats.money.coursesLeftToPay === 0
+                ? "rest of the degree is free"
+                : `${stats.money.coursesLeftToPay} paid courses left`
+              : stats.money.due > 0
+                ? `${formatMoney(stats.money.due, currency)} already billed`
+                : `${stats.semestersRemaining} semesters projected`}
           </div>
         </div>
 

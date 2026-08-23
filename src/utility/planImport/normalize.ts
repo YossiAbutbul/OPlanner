@@ -12,7 +12,8 @@ export type PlanField =
   | "semester"
   | "group"
   | "cost"
-  | "status";
+  | "status"
+  | "counts";
 
 export interface RawPlanRow {
   code?: string;
@@ -25,6 +26,7 @@ export interface RawPlanRow {
   cost?: number;
   status?: PlanCourseStatus;
   passFail?: boolean;
+  countsToward?: boolean;
 }
 
 export const MAX_IMPORT_ROWS = 1000;
@@ -43,6 +45,7 @@ const FIELD_ALIASES: Record<Exclude<PlanField, "ignore">, string[]> = {
   group: ["group", "category", "type", "requirement", "kind", "קבוצה", "סוג", "אשכול", "חובהבחירה"],
   cost: ["cost", "price", "tuition", "amount", "paid", "עלות", "מחיר", "שכרלימוד", "תשלום"],
   status: ["status", "state", "סטטוס", "מצב"],
+  counts: ["counts", "counted", "included", "include", "נכלל", "נכללבתכנית"],
 };
 
 const stripHeader = (s: string) =>
@@ -173,6 +176,12 @@ const STATUS_WORDS: Record<string, PlanCourseStatus> = {
   נכשל: "FAILED",
   dropped: "DROPPED",
   בוטל: "DROPPED",
+  // Open University wording.
+  הצלחה: "COMPLETED",
+  בלימוד: "IN_PROGRESS",
+  רשום: "IN_PROGRESS",
+  כישלון: "FAILED",
+  ביטול: "DROPPED",
 };
 
 export const parseStatusCell = (value: string | undefined): PlanCourseStatus | undefined =>
@@ -239,6 +248,14 @@ export const rowFromCells = (
       case "status": {
         const s = parseStatusCell(text);
         if (s) row.status = s;
+        break;
+      }
+      case "counts": {
+        // "נכלל? כן" / "Included: no" — whether the course counts toward
+        // the degree at all.
+        const flat = stripHeader(text);
+        if (["לא", "no", "false", "0"].includes(flat)) row.countsToward = false;
+        else if (["כן", "yes", "true", "1"].includes(flat)) row.countsToward = true;
         break;
       }
     }
@@ -354,6 +371,8 @@ export const applyRow = (
   if (row.cost !== undefined) merged.costOverride = row.cost;
   if (row.status) merged.status = row.status;
   if (row.passFail) merged.passFail = true;
+  if (row.countsToward === false) merged.countsToward = false;
+  else if (row.countsToward === true) delete merged.countsToward;
   merged.source = source;
   merged.updatedAt = now;
 

@@ -32,6 +32,14 @@ export interface MoneyStats {
   projected: number;
   total: number;
   perCredit: number;
+  /** Courses already registered, so already billed. */
+  coursesBilled: number;
+  /** Courses still to take, from what is planned or from the credits left. */
+  coursesRemaining: number;
+  /** Courses still inside the paid-courses cap. null when there is no cap. */
+  coursesLeftToPay: number | null;
+  /** Courses that fall past the cap and therefore cost nothing. */
+  coursesFree: number;
 }
 
 export interface PlanStats {
@@ -55,6 +63,7 @@ export interface PlanStats {
 }
 
 const DEFAULT_CREDITS_PER_SEMESTER = 15;
+const DEFAULT_CREDITS_PER_COURSE = 4;
 const SEMESTER_ORDER = ["Semester A", "Semester B", "Semester C"];
 
 export const level = (pct: number): "low" | "mid" | "high" =>
@@ -65,6 +74,10 @@ const counts = (c: PlanCourse) => c.countsToward !== false;
 // Credits are earned by courses that finished successfully. A failed
 // attempt keeps its row for history but earns nothing.
 const EARNING: PlanCourseStatus[] = ["COMPLETED", "EXEMPT"];
+
+// Statuses that mean the course was registered, so tuition was charged for
+// it. Exempt courses are free; planned ones have not been billed yet.
+const BILLED: PlanCourseStatus[] = ["COMPLETED", "IN_PROGRESS", "FAILED", "DROPPED"];
 
 // Weighted grade of a course from its parts, using only the parts that
 // already have a grade. Returns null while nothing is graded.
@@ -229,10 +242,45 @@ export const computePlanStats = (
   const unpaidFees = config.cost.oneTimeFees
     .filter((f) => !f.paid)
     .reduce((s, f) => s + f.amount, 0);
+
+  // Courses that have been registered are already billed; exempt ones never
+  // cost anything, planned ones have not been billed yet.
+  const coursesBilled = counted.filter((c) => BILLED.includes(c.status)).length;
+  const plannedCourses = counted.filter((c) => c.status === "PLANNED").length;
+  const withCredits = counted.filter((c) => (c.credits || 0) > 0);
+  const avgCreditsPerCourse =
+    withCredits.length > 0
+      ? withCredits.reduce((s, c) => s + c.credits, 0) / withCredits.length
+      : DEFAULT_CREDITS_PER_COURSE;
+  // In-progress credits are inside creditsLeft but are already billed.
+  const creditsToBuy = Math.max(0, creditsLeft - creditsActive);
+  const coursesRemaining = Math.max(
+    plannedCourses,
+    avgCreditsPerCourse > 0 ? Math.ceil(creditsToBuy / avgCreditsPerCourse) : 0
+  );
+
+  const cap = config.cost.paidCoursesCap && config.cost.paidCoursesCap > 0
+    ? config.cost.paidCoursesCap
+    : null;
+  const coursesLeftToPay = cap === null ? null : Math.max(0, cap - coursesBilled);
+  // Everything past the cap is free, both what is already taken and what is
+  // still to come.
+  const coursesFree =
+    cap === null
+      ? 0
+      : Math.max(0, coursesBilled - cap) +
+        Math.max(0, coursesRemaining - (coursesLeftToPay ?? 0));
+
+  const perCourse = config.cost.pricePerCourse ?? 0;
+  const billableRemaining =
+    coursesLeftToPay === null ? coursesRemaining : Math.min(coursesRemaining, coursesLeftToPay);
+  const tuitionAhead =
+    config.cost.pricingMode === "PER_COURSE"
+      ? billableRemaining * perCourse
+      : creditsLeft * config.cost.pricePerCredit;
+
   const rawProjection =
-    creditsLeft * config.cost.pricePerCredit +
-    config.cost.perSemesterFee * semestersRemaining +
-    unpaidFees;
+    tuitionAhead + config.cost.perSemesterFee * semestersRemaining + unpaidFees;
   const projected = Math.max(0, rawProjection - Math.max(0, due));
   const money: MoneyStats = {
     spent,
@@ -240,6 +288,10 @@ export const computePlanStats = (
     projected,
     total: spent + due + projected,
     perCredit: creditsDone > 0 ? spent / creditsDone : 0,
+    coursesBilled,
+    coursesRemaining,
+    coursesLeftToPay,
+    coursesFree,
   };
 
   const statusCounts = courses.reduce(

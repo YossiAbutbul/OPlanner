@@ -222,6 +222,95 @@ describe("computePlanStats money", () => {
   });
 });
 
+describe("computePlanStats per-course pricing", () => {
+  const perCourseConfig = (cap?: number, required = 121): PlanConfig =>
+    config({
+      totalCreditsRequired: required,
+      cost: {
+        currency: "ILS",
+        pricingMode: "PER_COURSE",
+        pricePerCredit: 0,
+        pricePerCourse: 1600,
+        paidCoursesCap: cap,
+        perSemesterFee: 0,
+        oneTimeFees: [],
+      },
+    });
+
+  const many = (count: number, patch: Partial<PlanCourse>) =>
+    Array.from({ length: count }, (_, i) =>
+      course({ name: `Course ${patch.status}-${i}`, credits: 5, ...patch })
+    );
+
+  it("charges only for the courses still inside the cap", () => {
+    const stats = computePlanStats(
+      perCourseConfig(20),
+      [...many(12, { status: "COMPLETED" }), ...many(10, { status: "PLANNED" })],
+      []
+    );
+    expect(stats.money.coursesBilled).toBe(12);
+    expect(stats.money.coursesLeftToPay).toBe(8);
+    // 10 courses are planned, but they only cover 50 of the 61 credits left,
+    // so about 13 courses are still needed.
+    expect(stats.money.coursesRemaining).toBe(13);
+    // Only 8 of them are still inside the cap: 8 x 1600.
+    expect(stats.money.projected).toBe(12800);
+    expect(stats.money.coursesFree).toBe(5);
+  });
+
+  it("stops charging once the cap is reached", () => {
+    const stats = computePlanStats(
+      perCourseConfig(20),
+      [
+        ...many(18, { status: "COMPLETED" }),
+        ...many(2, { status: "IN_PROGRESS" }),
+        ...many(5, { status: "PLANNED" }),
+      ],
+      []
+    );
+    expect(stats.money.coursesBilled).toBe(20);
+    expect(stats.money.coursesLeftToPay).toBe(0);
+    expect(stats.money.projected).toBe(0);
+    expect(stats.money.coursesFree).toBe(5);
+  });
+
+  it("counts a failed course against the cap but an exempt one not at all", () => {
+    const stats = computePlanStats(
+      perCourseConfig(20),
+      [
+        course({ credits: 5, status: "FAILED", grade: 40 }),
+        course({ credits: 5, status: "EXEMPT" }),
+      ],
+      []
+    );
+    expect(stats.money.coursesBilled).toBe(1);
+    expect(stats.money.coursesLeftToPay).toBe(19);
+  });
+
+  it("charges every remaining course when there is no cap", () => {
+    const stats = computePlanStats(
+      perCourseConfig(undefined, 40),
+      [...many(4, { status: "COMPLETED" }), ...many(4, { status: "PLANNED" })],
+      []
+    );
+    expect(stats.money.coursesLeftToPay).toBeNull();
+    expect(stats.money.coursesFree).toBe(0);
+    expect(stats.money.projected).toBe(4 * 1600);
+  });
+
+  it("still prices per credit when that is the mode", () => {
+    const stats = computePlanStats(
+      config({
+        totalCreditsRequired: 100,
+        cost: { ...defaultPlanConfig().cost, pricingMode: "PER_CREDIT", pricePerCredit: 100 },
+      }),
+      [course({ credits: 40 })],
+      []
+    );
+    expect(stats.money.projected).toBe(6000);
+  });
+});
+
 describe("computePlanStats timeline", () => {
   it("projects graduation from the current term and remaining credits", () => {
     const stats = computePlanStats(

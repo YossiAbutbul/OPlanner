@@ -511,6 +511,37 @@
   color: #1a1a1a;
 }
 
+/* Paid-course cap: how many of the courses you pay for are used up. */
+.sp-cap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid #e3e3e6;
+  border-radius: 9px;
+  background: #fafafb;
+}
+
+.sp-cap-top {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+}
+
+.sp-cap-name {
+  font-weight: 600;
+}
+
+.sp-cap-num {
+  margin-left: auto;
+  color: #555;
+}
+
+.sp-cap-num b {
+  color: #1a1a1a;
+}
+
 .sp-ledger {
   display: flex;
   flex-direction: column;

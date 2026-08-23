@@ -69,7 +69,9 @@ export const DEFAULT_GROUPS: RequirementGroup[] = [
 
 export const DEFAULT_COST: CostModel = {
   currency: "ILS",
+  pricingMode: "PER_CREDIT",
   pricePerCredit: 0,
+  pricePerCourse: 0,
   perSemesterFee: 0,
   oneTimeFees: [],
 };
@@ -130,7 +132,13 @@ export const normalizePlanConfig = (data: unknown): PlanConfig => {
     groups,
     cost: {
       currency: str(rawCost.currency, "ILS") || "ILS",
+      pricingMode: rawCost.pricingMode === "PER_COURSE" ? "PER_COURSE" : "PER_CREDIT",
       pricePerCredit: Math.max(0, num(rawCost.pricePerCredit)),
+      pricePerCourse: Math.max(0, num(rawCost.pricePerCourse)),
+      paidCoursesCap:
+        typeof rawCost.paidCoursesCap === "number" && rawCost.paidCoursesCap > 0
+          ? Math.floor(rawCost.paidCoursesCap)
+          : undefined,
       perSemesterFee: Math.max(0, num(rawCost.perSemesterFee)),
       oneTimeFees: fees,
       semestersRemainingOverride:

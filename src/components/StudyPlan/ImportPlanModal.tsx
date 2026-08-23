@@ -15,7 +15,7 @@ import {
   type ParsedImport,
   type PlanField,
 } from "../../utility/planImport";
-import type { PlanConfig, PlanCourse } from "../../types/models";
+import type { PlanConfig, PlanCourse, RequirementGroup } from "../../types/models";
 
 interface Props {
   isOpen: boolean;
@@ -28,13 +28,23 @@ interface Props {
     before: PlanCourse[],
     meta: { fileName?: string; adapter: string }
   ) => Promise<void>;
+  // Imports can also fill in setup the source carries: the credits the
+  // program requires and the requirement groups it uses.
+  onSaveConfig: (config: PlanConfig) => Promise<void>;
 }
 
 type Step = "input" | "map";
 
 const ACCEPT = ".csv,.tsv,.txt,.html,.htm,text/csv,text/plain,text/html";
 
-const ImportPlanModal: React.FC<Props> = ({ isOpen, config, courses, onClose, onImport }) => {
+const ImportPlanModal: React.FC<Props> = ({
+  isOpen,
+  config,
+  courses,
+  onClose,
+  onImport,
+  onSaveConfig,
+}) => {
   const fileRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>("input");
   const [pasted, setPasted] = useState("");
@@ -42,6 +52,8 @@ const ImportPlanModal: React.FC<Props> = ({ isOpen, config, courses, onClose, on
   const [parsed, setParsed] = useState<ParsedImport | null>(null);
   const [mapping, setMapping] = useState<PlanField[]>([]);
   const [skipped, setSkipped] = useState<Set<string>>(new Set());
+  const [takeCredits, setTakeCredits] = useState(true);
+  const [takeGroups, setTakeGroups] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +64,8 @@ const ImportPlanModal: React.FC<Props> = ({ isOpen, config, courses, onClose, on
     setParsed(null);
     setMapping([]);
     setSkipped(new Set());
+    setTakeCredits(true);
+    setTakeGroups(true);
     setError(null);
     setBusy(false);
   };
@@ -95,6 +109,21 @@ const ImportPlanModal: React.FC<Props> = ({ isOpen, config, courses, onClose, on
     return { entries: diffRows(rows, courses), groupByLabel: byLabel };
   }, [parsed, mapping, config.groups, config.passMark, courses]);
 
+  // Group names the source uses that the plan has no requirement group for.
+  const missingGroups = useMemo(() => {
+    const seen = new Map<string, string>();
+    entries.forEach((e) => {
+      const label = (e.row.group ?? "").trim();
+      if (!label || groupByLabel.has(label.toLowerCase())) return;
+      seen.set(label.toLowerCase(), label);
+    });
+    return [...seen.values()];
+  }, [entries, groupByLabel]);
+
+  const programCredits = parsed?.meta.programCredits;
+  const creditsDiffer =
+    programCredits !== undefined && programCredits !== config.totalCreditsRequired;
+
   const changed = entries.filter((e) => e.kind !== "same");
   const selected = changed.filter((e) => !skipped.has(rowKey(e.row)));
   const newCount = changed.filter((e) => e.kind === "new").length;
@@ -115,12 +144,23 @@ const ImportPlanModal: React.FC<Props> = ({ isOpen, config, courses, onClose, on
     const updated: PlanCourse[] = [];
     const before: PlanCourse[] = [];
 
+    // Groups the source names but the plan doesn't have yet, created up front
+    // so the imported courses can point at them.
+    const createGroups = takeGroups ? missingGroups : [];
+    const newGroups: RequirementGroup[] = createGroups.map((label) => ({
+      id: crypto.randomUUID(),
+      label,
+      requiredCredits: 0,
+    }));
+    const groupIds = new Map(groupByLabel);
+    newGroups.forEach((g) => groupIds.set(g.label.toLowerCase(), g.id));
+
     selected.forEach((entry) => {
       const merged = applyRow(entry.row, entry.existing, "import");
       // Map a text group name onto a configured requirement group when it
       // matches one by label; otherwise leave the course ungrouped.
       const groupText = (entry.row.group ?? "").toLowerCase();
-      const groupId = groupByLabel.get(groupText);
+      const groupId = groupIds.get(groupText);
       if (groupId) merged.groupId = groupId;
 
       if (entry.existing) {
@@ -133,6 +173,14 @@ const ImportPlanModal: React.FC<Props> = ({ isOpen, config, courses, onClose, on
 
     try {
       setBusy(true);
+      const wantsCredits = creditsDiffer && takeCredits && programCredits !== undefined;
+      if (newGroups.length > 0 || wantsCredits) {
+        await onSaveConfig({
+          ...config,
+          totalCreditsRequired: wantsCredits ? programCredits : config.totalCreditsRequired,
+          groups: [...config.groups, ...newGroups],
+        });
+      }
       await onImport(created, updated, before, {
         fileName,
         adapter: parsed.adapter.id,
@@ -199,7 +247,7 @@ const ImportPlanModal: React.FC<Props> = ({ isOpen, config, courses, onClose, on
               <FileUp size={22} strokeWidth={1.7} />
               <span className="sp-drop-title">Choose a file or drop it here</span>
               <span className="sp-drop-meta">
-                CSV, TSV or an HTML grades page, up to 2MB and {MAX_IMPORT_ROWS} rows.
+                CSV, TSV or a saved grades page, up to 2MB and {MAX_IMPORT_ROWS} rows.
                 Parsed on your device, nothing is uploaded.
               </span>
             </button>
@@ -216,7 +264,10 @@ const ImportPlanModal: React.FC<Props> = ({ isOpen, config, courses, onClose, on
             />
 
             <div className="sp-field">
-              <label htmlFor="sp-paste">Or paste the table straight from the portal</label>
+              <label htmlFor="sp-paste">
+                Or paste straight from the portal (Open University study
+                programs, a grades table, or any table you copied)
+              </label>
               <textarea
                 id="sp-paste"
                 className="sp-paste"
@@ -261,6 +312,32 @@ const ImportPlanModal: React.FC<Props> = ({ isOpen, config, courses, onClose, on
                 </div>
               ))}
             </div>
+
+            {(creditsDiffer || missingGroups.length > 0) && (
+              <div className="sp-checks">
+                {creditsDiffer && (
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={takeCredits}
+                      onChange={(e) => setTakeCredits(e.target.checked)}
+                    />
+                    Set credits required to {programCredits} (from the program header)
+                  </label>
+                )}
+                {missingGroups.length > 0 && (
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={takeGroups}
+                      onChange={(e) => setTakeGroups(e.target.checked)}
+                    />
+                    Add {missingGroups.length} requirement{" "}
+                    {missingGroups.length === 1 ? "group" : "groups"}: {missingGroups.join(", ")}
+                  </label>
+                )}
+              </div>
+            )}
 
             <div className="sp-diff">
               <div className="sp-diff-card sp-diff-new">
