@@ -77,6 +77,10 @@ export interface PlanStats {
   semestersRemaining: number;
   graduationTerm: string | null;
   creditsPerSemesterNeeded: number;
+  /** Credits still to place after the term in progress. */
+  creditsAfterThisTerm: number;
+  /** Average credits carried in the last few terms. */
+  pace: number;
   statusCounts: Record<PlanCourseStatus, number>;
   /** Completed courses that actually carry a grade. */
   gradedCount: number;
@@ -285,14 +289,27 @@ export const computePlanStats = (
       const key = termKey(c.year as number, c.semester as string);
       termLoads.set(key, (termLoads.get(key) ?? 0) + (c.credits || 0));
     });
+  // Pace from the four most recent terms rather than the whole history: a
+  // light first year should not hold the forecast back for the whole degree.
+  const recentLoads = [...termLoads.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .slice(-4)
+    .map(([, credits]) => credits);
   const pace =
-    termLoads.size > 0
-      ? [...termLoads.values()].reduce((s, v) => s + v, 0) / termLoads.size
+    recentLoads.length > 0
+      ? recentLoads.reduce((s, v) => s + v, 0) / recentLoads.length
       : DEFAULT_CREDITS_PER_SEMESTER;
 
+  // The term in progress is already paid for and already loaded, so the
+  // forecast only has to place the credits that come after it.
+  const creditsAfterThisTerm = Math.max(0, creditsLeft - creditsActive);
+  const termsAfterThisOne =
+    creditsAfterThisTerm > 0 ? Math.ceil(creditsAfterThisTerm / Math.max(1, pace)) : 0;
   const semestersRemaining =
     config.cost.semestersRemainingOverride ??
-    (creditsLeft > 0 ? Math.max(1, Math.ceil(creditsLeft / Math.max(1, pace))) : 0);
+    (creditsLeft > 0
+      ? Math.max(1, (creditsActive > 0 ? 1 : 0) + termsAfterThisOne)
+      : 0);
 
   const graduationTerm =
     semestersRemaining > 0 && currentTerm
@@ -301,8 +318,13 @@ export const computePlanStats = (
         ? formatTerm(currentTerm)
         : null;
 
+  // What each remaining term after this one has to carry.
   const creditsPerSemesterNeeded =
-    semestersRemaining > 0 ? creditsLeft / semestersRemaining : 0;
+    termsAfterThisOne > 0
+      ? creditsAfterThisTerm / termsAfterThisOne
+      : semestersRemaining > 0
+        ? creditsLeft / semestersRemaining
+        : 0;
 
   // Money. Paid rows are history, unpaid rows are a bill already issued, and
   // the projection covers what has not been billed yet. The billed amount is
@@ -401,6 +423,8 @@ export const computePlanStats = (
     semestersRemaining,
     graduationTerm,
     creditsPerSemesterNeeded,
+    creditsAfterThisTerm,
+    pace,
     statusCounts,
     gradedCount,
     currentTerm,

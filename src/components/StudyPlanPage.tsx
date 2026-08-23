@@ -11,7 +11,7 @@ import {
 import { usePlan } from "../context/PlanContext";
 import { useToast } from "../context/ToastContext";
 import { usePlanStats } from "../hooks/usePlanStats";
-import PlanStatsRow from "./StudyPlan/PlanStats";
+import DegreeCard from "./StudyPlan/DegreeCard";
 import RequirementsPanel from "./StudyPlan/RequirementsPanel";
 import GradesPanel from "./StudyPlan/GradesPanel";
 import MoneyPanel from "./StudyPlan/MoneyPanel";
@@ -204,7 +204,11 @@ const StudyPlanPage: React.FC = () => {
         </section>
       ) : (
         <>
-          <PlanStatsRow stats={stats} config={config} />
+          <DegreeCard
+            stats={stats}
+            config={config}
+            onOpenSettings={() => setSettingsOpen(true)}
+          />
 
           <div className="sp-grid">
             <RequirementsPanel
@@ -226,6 +230,7 @@ const StudyPlanPage: React.FC = () => {
               onAdd={() => setPaymentModal({ open: true, payment: null })}
               onEdit={(p) => setPaymentModal({ open: true, payment: p })}
               onDelete={(p) => setConfirmPayment(p)}
+              onConfigure={() => setSettingsOpen(true)}
             />
             <TimelinePanel stats={stats} courses={courses} />
           </div>

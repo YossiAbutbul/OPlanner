@@ -178,8 +178,12 @@ projectedLeft  = max(0, tuitionAhead + perSemesterFee * semestersRemaining
 totalDegree    = spent + due + projectedLeft
 costPerCredit  = spent / max(1, creditsDone)      // reality check vs the model
 
-semestersRemaining = override ?? ceil(creditsLeft / avgCreditsPerSemester)
-graduationTerm     = startYear + semesters walked forward over A/B/C terms
+pace               = mean credits of the last 4 terms that carried any
+creditsAfterNow    = max(0, creditsLeft - creditsActive)   // this term is set
+semestersRemaining = override ?? (creditsActive > 0 ? 1 : 0)
+                     + ceil(creditsAfterNow / pace)
+creditsPerSemester = creditsAfterNow / terms after this one
+graduationTerm     = currentTerm walked forward over A/B terms
 ```
 
 Per group: `done / required` with the same low/mid/high level thresholds the

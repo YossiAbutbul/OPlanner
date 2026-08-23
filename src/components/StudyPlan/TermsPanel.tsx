@@ -6,29 +6,24 @@ interface Props {
   stats: PlanStats;
 }
 
-// Credits carried per semester, stacked by what is earned, running and
-// planned. Shows the real workload pattern across the degree.
+// Credits carried per semester, stacked by earned / running / planned. Shows
+// the real workload pattern, and the pace the forecast is built on.
 const TermsPanel: React.FC<Props> = ({ stats }) => {
-  const terms = stats.byTerm;
+  const terms = stats.byTerm.filter((t) => t.done + t.active + t.planned > 0);
   const max = Math.max(1, ...terms.map((t) => t.done + t.active + t.planned));
-  const average =
-    terms.length > 0
-      ? terms.reduce((s, t) => s + t.done + t.active + t.planned, 0) / terms.length
-      : 0;
 
   return (
     <section className="sp-panel">
-      <div className="sp-panel-head">
-        <h3>Credits per semester</h3>
+      <header className="sp-panel-head">
+        <h3>Semester load</h3>
         <span className="sp-hint">
-          {terms.length > 0 ? `${average.toFixed(1)} on average` : "credits by term"}
+          {terms.length > 0 ? `${stats.pace.toFixed(1)} credits recently` : "credits per term"}
         </span>
-      </div>
+      </header>
 
       {terms.length === 0 ? (
         <p className="sp-empty-line">
-          Give courses a year and semester to see how the load spreads across
-          the degree.
+          Give courses a year and semester to see how the load spreads across the degree.
         </p>
       ) : (
         <>
@@ -39,7 +34,12 @@ const TermsPanel: React.FC<Props> = ({ stats }) => {
               return (
                 <div className="sp-term" key={`${t.year}-${t.semester}`}>
                   <span className="sp-term-total">{formatCredits(total)}</span>
-                  <div className="sp-term-stack" title={`${t.courses} courses`}>
+                  <div
+                    className="sp-term-stack"
+                    title={`${t.courses} course${t.courses === 1 ? "" : "s"}, ${formatCredits(
+                      total
+                    )} credits`}
+                  >
                     {t.planned > 0 && (
                       <i className="sp-term-planned" style={{ height: h(t.planned) }} />
                     )}

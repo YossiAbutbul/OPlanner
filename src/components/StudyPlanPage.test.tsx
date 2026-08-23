@@ -93,7 +93,7 @@ describe("StudyPlanPage", () => {
     expect(screen.getByText(/B\.Sc\. Software Engineering/)).toBeInTheDocument();
 
     // 5 of 100 credits earned; Calculus is the only completed course.
-    expect(screen.getByText("/ 100")).toBeInTheDocument();
+    expect(screen.getByText(/\/ 100 credits/)).toBeInTheDocument();
     const progress = screen.getByRole("progressbar", { name: "Degree progress" });
     expect(progress).toHaveAttribute("aria-valuenow", "5");
     // Average is 91: the in-progress course is projected, not averaged in.

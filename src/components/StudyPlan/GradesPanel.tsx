@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { Plus, X } from "lucide-react";
 import type { PlanConfig, PlanCourse } from "../../types/models";
 import type { PlanStats } from "../../hooks/usePlanStats";
 import { effectiveGrade } from "../../hooks/usePlanStats";
@@ -16,19 +17,16 @@ interface Props {
 const FLOOR = 50;
 const CEIL = 100;
 const scale = (grade: number) =>
-  Math.max(6, Math.min(100, ((grade - FLOOR) / (CEIL - FLOOR)) * 100));
+  Math.max(8, Math.min(100, ((grade - FLOOR) / (CEIL - FLOOR)) * 100));
 
 const GradesPanel: React.FC<Props> = ({ stats, config, courses, onSetGrade }) => {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const hasData = stats.byYear.length > 0;
-  const target = config.targetAverage;
-  const projectedOnly =
-    stats.projectedAverage !== null &&
-    stats.average !== null &&
-    Math.abs(stats.projectedAverage - stats.average) >= 0.05;
+  const [entryOpen, setEntryOpen] = useState(false);
 
-  // Courses that are done or running but carry no grade yet. They can be
-  // filled in right here instead of opening each course.
+  const hasChart = stats.byYear.length > 0;
+  const target = config.targetAverage;
+
+  // Courses that are done or running but carry no grade yet.
   const missing = useMemo(
     () =>
       courses
@@ -58,61 +56,79 @@ const GradesPanel: React.FC<Props> = ({ stats, config, courses, onSetGrade }) =>
     await onSetGrade(course, grade);
   };
 
+  const showEntry = entryOpen || (!hasChart && missing.length > 0);
+
   return (
     <section className="sp-panel">
-      <div className="sp-panel-head">
-        <h3>Average by year</h3>
-        <span className="sp-hint">
-          {stats.average !== null ? `overall ${stats.average.toFixed(1)}` : "weighted by credits"}
-        </span>
+      <header className="sp-panel-head">
+        <h3>Grades</h3>
+        {missing.length > 0 && (
+          <button
+            type="button"
+            className="sp-link-btn"
+            onClick={() => setEntryOpen((v) => !v)}
+          >
+            {showEntry && entryOpen ? <X size={14} /> : <Plus size={14} />}
+            {showEntry && entryOpen ? "Close" : `Add grades (${missing.length})`}
+          </button>
+        )}
+      </header>
+
+      <div className="sp-grade-head">
+        {stats.average !== null && (
+          <div className="sp-grade-big">
+            {formatGrade(stats.average)}
+            {target !== undefined && <span className="sp-grade-target">target {target}</span>}
+          </div>
+        )}
+        <p className="sp-grade-note">
+          {stats.average === null
+            ? "Weighted average across your graded courses. Add a grade to get started."
+            : `Weighted by credits across ${stats.gradedCount} course${
+                stats.gradedCount === 1 ? "" : "s"
+              }.${
+                stats.projectedAverage !== null &&
+                Math.abs(stats.projectedAverage - stats.average) >= 0.05
+                  ? ` Projected ${formatGrade(stats.projectedAverage)} with courses in progress.`
+                  : ""
+              }`}
+        </p>
       </div>
 
-      {hasData && (
-        <>
-          <div
-            className="sp-chart"
-            style={{ gridTemplateColumns: `repeat(${stats.byYear.length}, minmax(0, 1fr))` }}
-          >
-            <div className="sp-gridline" style={{ bottom: "82%" }} />
-            <div className="sp-gridline" style={{ bottom: "46%" }} />
-            {target !== undefined && target > FLOOR && (
-              <div className="sp-target" style={{ bottom: `${scale(target)}%` }}>
-                <span>target {target}</span>
-              </div>
-            )}
-            {stats.byYear.map((y) => (
-              <div className="sp-col" key={y.year}>
-                <div className="sp-col-val">{formatGrade(y.average)}</div>
-                <div
-                  className="sp-col-fill"
-                  style={{ height: `${scale(y.average)}%` }}
-                  title={`${y.credits} credits graded`}
-                />
-                <div className="sp-col-cap">
-                  {y.year}
-                  <span className="sp-col-sub">{y.credits} cr</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          {projectedOnly && (
-            <div className="sp-hint">
-              Projected {formatGrade(stats.projectedAverage)} with courses in progress.
+      {hasChart && (
+        <div
+          className="sp-chart"
+          style={{ gridTemplateColumns: `repeat(${stats.byYear.length}, minmax(0, 1fr))` }}
+        >
+          <div className="sp-gridline" style={{ bottom: "82%" }} />
+          <div className="sp-gridline" style={{ bottom: "46%" }} />
+          {target !== undefined && target > FLOOR && (
+            <div className="sp-target" style={{ bottom: `${scale(target)}%` }}>
+              <span>target</span>
             </div>
           )}
-        </>
+          {stats.byYear.map((y) => (
+            <div className="sp-col" key={y.year}>
+              <span className="sp-col-val">{formatGrade(y.average)}</span>
+              <div
+                className="sp-col-fill"
+                style={{ height: `${scale(y.average)}%` }}
+                title={`${y.credits} credits graded in ${y.year}`}
+              />
+              <span className="sp-col-cap">{y.year}</span>
+            </div>
+          ))}
+        </div>
       )}
 
-      {missing.length > 0 ? (
+      {showEntry && missing.length > 0 && (
         <div className="sp-fill">
           <div className="sp-fill-head">
-            <h4>Add grades</h4>
-            <span className="sp-hint">
-              {missing.length} course{missing.length === 1 ? "" : "s"} without one
-            </span>
+            <h4>Type a grade, press Enter</h4>
+            <span className="sp-hint">{missing.length} without one</span>
           </div>
           <div className="sp-fill-list">
-            {missing.slice(0, 8).map((c) => (
+            {missing.slice(0, 12).map((c) => (
               <label className="sp-fill-row" key={c.id}>
                 <span className="sp-fill-name" title={c.name}>
                   {c.name}
@@ -123,7 +139,7 @@ const GradesPanel: React.FC<Props> = ({ stats, config, courses, onSetGrade }) =>
                   type="number"
                   min={0}
                   max={100}
-                  placeholder="grade"
+                  placeholder="—"
                   value={drafts[c.id] ?? ""}
                   onChange={(e) => setDrafts((d) => ({ ...d, [c.id]: e.target.value }))}
                   onBlur={() => void save(c)}
@@ -136,18 +152,18 @@ const GradesPanel: React.FC<Props> = ({ stats, config, courses, onSetGrade }) =>
               </label>
             ))}
           </div>
-          {missing.length > 8 && (
+          {missing.length > 12 && (
             <p className="sp-hint">
-              {missing.length - 8} more in the courses table, where grades are editable too.
+              {missing.length - 12} more in the courses table, where grades are editable too.
             </p>
           )}
         </div>
-      ) : (
-        !hasData && (
-          <p className="sp-empty-line">
-            Grades appear here once a course is completed with a grade and a year.
-          </p>
-        )
+      )}
+
+      {!hasChart && missing.length === 0 && (
+        <p className="sp-empty-line">
+          Grades appear here once a course is completed with a grade and a year.
+        </p>
       )}
     </section>
   );
