@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from "react";
-import { FileUp, Upload } from "lucide-react";
+import { FileUp, Loader2, Upload } from "lucide-react";
 import Modal from "../Modal";
 import CustomSelect from "../CustomSelect";
 import {
@@ -15,6 +15,7 @@ import {
   type ParsedImport,
   type PlanField,
 } from "../../utility/planImport";
+import { MAX_PDF_BYTES, extractPdfText, isPdf } from "../../utility/planImport/pdf";
 import type { PlanConfig, PlanCourse, RequirementGroup } from "../../types/models";
 
 interface Props {
@@ -35,7 +36,7 @@ interface Props {
 
 type Step = "input" | "map";
 
-const ACCEPT = ".csv,.tsv,.txt,.html,.htm,text/csv,text/plain,text/html";
+const ACCEPT = ".pdf,.csv,.tsv,.txt,.html,.htm,application/pdf,text/csv,text/plain,text/html";
 
 const ImportPlanModal: React.FC<Props> = ({
   isOpen,
@@ -55,6 +56,7 @@ const ImportPlanModal: React.FC<Props> = ({
   const [takeCredits, setTakeCredits] = useState(true);
   const [takeGroups, setTakeGroups] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [reading, setReading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const reset = () => {
@@ -64,6 +66,7 @@ const ImportPlanModal: React.FC<Props> = ({
     setParsed(null);
     setMapping([]);
     setSkipped(new Set());
+    setReading(false);
     setTakeCredits(true);
     setTakeGroups(true);
     setError(null);
@@ -93,6 +96,23 @@ const ImportPlanModal: React.FC<Props> = ({
   };
 
   const handleFile = async (file: File) => {
+    setError(null);
+    if (isPdf(file)) {
+      if (file.size > MAX_PDF_BYTES) {
+        setError("That PDF is over 10MB. Print just the study program or grades pages.");
+        return;
+      }
+      try {
+        setReading(true);
+        const text = await extractPdfText(await file.arrayBuffer());
+        ingest(text, file.name);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Could not read that PDF.");
+      } finally {
+        setReading(false);
+      }
+      return;
+    }
     if (file.size > MAX_IMPORT_BYTES) {
       setError("That file is over 2MB. Export just the grades table.");
       return;
@@ -237,19 +257,31 @@ const ImportPlanModal: React.FC<Props> = ({
               type="button"
               className="sp-drop"
               onClick={() => fileRef.current?.click()}
+              disabled={reading}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
+                if (reading) return;
                 const file = e.dataTransfer.files?.[0];
                 if (file) void handleFile(file);
               }}
             >
-              <FileUp size={22} strokeWidth={1.7} />
-              <span className="sp-drop-title">Choose a file or drop it here</span>
-              <span className="sp-drop-meta">
-                CSV, TSV or a saved grades page, up to 2MB and {MAX_IMPORT_ROWS} rows.
-                Parsed on your device, nothing is uploaded.
-              </span>
+              {reading ? (
+                <>
+                  <Loader2 size={22} strokeWidth={1.7} className="sp-spin" />
+                  <span className="sp-drop-title">Reading the PDF…</span>
+                  <span className="sp-drop-meta">Text is pulled out on your device.</span>
+                </>
+              ) : (
+                <>
+                  <FileUp size={22} strokeWidth={1.7} />
+                  <span className="sp-drop-title">Choose a file or drop it here</span>
+                  <span className="sp-drop-meta">
+                    PDF, CSV, TSV or a saved grades page, up to {MAX_IMPORT_ROWS} rows.
+                    Parsed on your device, nothing is uploaded.
+                  </span>
+                </>
+              )}
             </button>
             <input
               ref={fileRef}

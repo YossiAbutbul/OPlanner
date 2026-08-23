@@ -44,6 +44,11 @@ export default defineConfig(({ mode }) => {
         // dropped, but the glob is defensive).
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+          // The PDF importer (pdf.js parser chunk) stays out of the precache:
+          // it is ~430KB, only loads when someone imports a PDF, and its
+          // worker ships as .mjs which the glob above never matched anyway —
+          // so precaching the parser alone would buy nothing offline.
+          globIgnores: ['**/pdf-*.js', '**/pdf.worker*'],
           // Drop caches from superseded SW versions so an old shell can't
           // linger and reference evicted/renamed chunks.
           cleanupOutdatedCaches: true,

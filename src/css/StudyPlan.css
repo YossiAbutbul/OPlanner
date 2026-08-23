@@ -1476,3 +1476,35 @@
     display: none;
   }
 }
+
+/* Spinner used while a PDF is being read. */
+.sp-spin {
+  animation: spSpin 0.9s linear infinite;
+}
+
+@keyframes spSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-spin { animation: none; }
+}
+
+.sp-drop:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+/* Course names arrive in Hebrew or English; isolate them so an RTL name
+   doesn't drag the English label after it around the line. */
+.sp-prev-name,
+.sp-cname,
+.sp-req-name,
+.sp-led-what {
+  unicode-bidi: isolate;
+}
+
+.sp-prev-add,
+.sp-prev-changes {
+  padding-left: 0.5rem;
+}
