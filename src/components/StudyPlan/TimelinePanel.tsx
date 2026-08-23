@@ -49,7 +49,7 @@ const TimelinePanel: React.FC<Props> = ({ stats, courses }) => {
   const activePct = Math.min(100 - donePct, stats.activePct);
 
   return (
-    <section className="sp-panel">
+    <section className="sp-panel sp-panel-wide">
       <div className="sp-panel-head">
         <h3>Timeline</h3>
         <span className="sp-hint">

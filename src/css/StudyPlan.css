@@ -8,7 +8,7 @@
   color: #1a1a1a;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.9rem;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -129,108 +129,217 @@
   color: #d23030;
 }
 
-/* ── Hero: ring + supporting stats ──────────────────────────────────── */
-.sp-hero {
+/* ── Summary strip: degree ring + tiles, all on the light surface ──── */
+.sp-summary {
   display: grid;
   grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
-  gap: 0.5rem;
+  gap: 0.7rem;
 }
 
-.sp-hero-card {
-  background: linear-gradient(160deg, #101216 0%, #0e0f12 60%);
-  color: #ffffff;
-  border: 1px solid #1e2127;
-  border-radius: 10px;
-  padding: 0.85rem 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 0.95rem;
+.sp-card {
+  background: #ffffff;
+  border: 1px solid #e7e8eb;
+  border-radius: 12px;
+  padding: 0.95rem 1.05rem;
   min-width: 0;
 }
 
-.sp-ring {
+.sp-card-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.71rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.sp-card-label svg {
+  color: #b0b4ba;
+}
+
+/* Credits card: the ring plus the split of done / running / left. */
+.sp-card-credits {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: linear-gradient(135deg, rgba(29, 185, 84, 0.08), #ffffff 62%);
+  border-color: rgba(29, 185, 84, 0.28);
+}
+
+.sp-credits-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.sp-credits-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #1a1a1a;
+}
+
+.sp-credits-value small {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #888;
+}
+
+.sp-key {
+  list-style: none;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  font-size: 0.76rem;
+  color: #555;
+}
+
+.sp-key li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Donut */
+.sp-donut {
   position: relative;
-  width: 92px;
-  height: 92px;
   flex: 0 0 auto;
 }
 
-.sp-ring svg {
+.sp-donut svg {
   transform: rotate(-90deg);
 }
 
-.sp-ring circle {
-  fill: none;
-  stroke-width: 10;
-  stroke-linecap: round;
+.sp-donut circle {
   transition: stroke-dasharray 0.35s ease;
 }
 
-.sp-ring-track { stroke: rgba(255, 255, 255, 0.09); }
-.sp-ring-done { stroke: var(--color-accent); }
-.sp-ring-active { stroke: #f5b544; }
+.sp-donut-track {
+  stroke: #ebedf0;
+}
 
-.sp-ring-mid {
+.sp-donut-mid {
   position: absolute;
   inset: 0;
   display: grid;
   place-content: center;
   text-align: center;
+  line-height: 1.15;
 }
 
-.sp-ring-big {
-  font-size: 1.35rem;
+.sp-donut-big {
+  font-size: 1.25rem;
   font-weight: 800;
-  line-height: 1;
   letter-spacing: -0.02em;
+  color: #1a1a1a;
 }
 
-.sp-ring-small {
-  font-size: 0.62rem;
+.sp-donut-small {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.sp-donut-sub {
+  font-size: 0.6rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #a7a7a7;
+  color: #999;
 }
 
-.sp-hero-meta {
+/* Tiles */
+.sp-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.sp-tile {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.18rem;
+}
+
+.sp-tile-value {
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sp-tile-term {
+  font-size: 1.15rem;
+}
+
+.sp-tile-sub {
+  font-size: 0.72rem;
+  color: #888;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sp-tile-grade .sp-tile-value {
+  color: #117a35;
+}
+
+.sp-up { color: #117a35; font-weight: 700; }
+.sp-down { color: #d23030; font-weight: 700; }
+
+.sp-spark {
+  margin-top: auto;
+  width: 100%;
+  height: 24px;
+}
+
+.sp-spark polyline {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.sp-spark circle {
+  fill: var(--color-accent);
+}
+
+/* Status mix inside the courses tile */
+.sp-status-bar {
+  display: flex;
+  height: 7px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #ebedf0;
+  margin: 0.1rem 0 0.05rem;
+}
+
+.sp-status-bar i {
+  display: block;
   min-width: 0;
 }
 
-.sp-hero-k {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #a7a7a7;
+.sp-sb-done { background: var(--color-accent); }
+.sp-sb-now { background: #f0a52a; }
+.sp-sb-plan { background: #c7cbd1; }
+.sp-sb-fail { background: #e05a5a; }
+
+.sp-split-slim {
+  height: 7px;
+  margin: 0.1rem 0 0.05rem;
 }
 
-.sp-hero-v {
-  font-size: 1.45rem;
-  font-weight: 700;
-  line-height: 1.1;
-}
-
-.sp-hero-v small {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #a7a7a7;
-}
-
-.sp-hero-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.1rem 0.7rem;
-  font-size: 0.74rem;
-  color: #c9ccd2;
-}
-
-.sp-hero-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.32rem;
+.sp-split-slim i {
+  min-width: 0;
 }
 
 .sp-sw {
@@ -238,77 +347,179 @@
   height: 8px;
   border-radius: 3px;
   flex: 0 0 auto;
+  display: inline-block;
 }
 
 .sp-sw-done { background: var(--color-accent); }
-.sp-sw-active { background: #f5b544; }
-.sp-sw-left { background: rgba(255, 255, 255, 0.2); }
+.sp-sw-active { background: #f0a52a; }
+.sp-sw-left { background: #d8dbe0; }
+.sp-sw-planned { background: #c7cbd1; }
 .sp-sw-future { background: #dcdee3; }
 
-.sp-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.5rem;
+/* Requirement rings */
+.sp-rings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.9rem;
+  padding-bottom: 0.15rem;
 }
 
-.sp-stat {
-  background: #ffffff;
-  border: 1px solid #e3e3e6;
-  border-radius: 10px;
-  padding: 0.7rem 0.8rem;
+.sp-ring-item {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.15rem;
+  width: 88px;
   min-width: 0;
+  text-align: center;
 }
 
-.sp-stat-label {
+.sp-ring-name {
   font-size: 0.71rem;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  color: #888;
-}
-
-.sp-stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  color: #555;
+  max-width: 100%;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  unicode-bidi: isolate;
 }
 
-.sp-stat-term {
-  font-size: 1.2rem;
+.sp-ring-num {
+  font-size: 0.68rem;
+  color: #999;
 }
 
-.sp-stat-value.sp-good {
-  color: var(--color-accent-active);
+.sp-req-left {
+  color: #999;
 }
 
-.sp-stat-sub {
+/* Credits per semester */
+.sp-terms {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.35rem;
+  height: 130px;
+  overflow-x: auto;
+  padding-bottom: 0.1rem;
+}
+
+.sp-term {
+  flex: 1 0 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  height: 100%;
+  min-width: 34px;
+}
+
+.sp-term-total {
   font-size: 0.72rem;
-  color: #888;
+  font-weight: 700;
+  color: #555;
+}
+
+.sp-term-stack {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border-radius: 6px 6px 0 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+  background: #f4f5f7;
+}
+
+.sp-term-stack i {
+  display: block;
+  width: 100%;
+}
+
+.sp-term-done { background: linear-gradient(180deg, #34d399, var(--color-accent)); }
+.sp-term-active { background: #f0a52a; }
+.sp-term-planned {
+  background: repeating-linear-gradient(135deg, #d6d9de 0 5px, #e7e9ec 5px 10px);
+}
+
+.sp-term-label {
+  font-size: 0.68rem;
+  color: #888;
+  border-top: 1px solid #e3e3e6;
+  width: 100%;
+  text-align: center;
+  padding-top: 0.22rem;
+}
+
+/* Cost per term, inside the money panel */
+.sp-money-terms {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.3rem;
+  height: 74px;
+  overflow-x: auto;
+}
+
+.sp-money-term {
+  flex: 1 0 44px;
+  min-width: 44px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.2rem;
+}
+
+.sp-money-term-amt {
+  font-size: 0.66rem;
+  color: #888;
   white-space: nowrap;
+}
+
+.sp-money-term-stack {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border-radius: 5px 5px 0 0;
+  overflow: hidden;
+  background: #f4f5f7;
+}
+
+.sp-money-term-stack i { display: block; width: 100%; }
+.sp-mt-paid { background: linear-gradient(180deg, #34d399, var(--color-accent)); }
+.sp-mt-due { background: #f0a52a; }
+.sp-mt-neg { background: #7cc4f2; }
+
+.sp-money-term-label {
+  font-size: 0.66rem;
+  color: #888;
+  border-top: 1px solid #e3e3e6;
+  width: 100%;
+  text-align: center;
+  padding-top: 0.2rem;
 }
 
 /* ── Panels ─────────────────────────────────────────────────────────── */
 .sp-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.7rem;
 }
 
 .sp-panel {
   background: #ffffff;
-  border: 1px solid #e3e3e6;
-  border-radius: 10px;
-  padding: 0.8rem 0.95rem 0.9rem;
+  border: 1px solid #e7e8eb;
+  border-radius: 12px;
+  padding: 1rem 1.1rem 1.1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.85rem;
   min-width: 0;
 }
 
@@ -321,8 +532,9 @@
 
 .sp-panel-head h3 {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .sp-hint {
@@ -378,13 +590,13 @@
 .sp-req {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.85rem;
 }
 
 .sp-req-row {
   display: flex;
   flex-direction: column;
-  gap: 0.26rem;
+  gap: 0.3rem;
 }
 
 .sp-req-top {
@@ -1310,13 +1522,15 @@
 }
 
 /* ── Tablet ─────────────────────────────────────────────────────────── */
-@media (max-width: 1100px) {
-  .sp-hero {
+@media (max-width: 1250px) {
+  .sp-summary {
     grid-template-columns: minmax(0, 1fr);
   }
+}
 
-  .sp-stats {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+@media (max-width: 1100px) {
+  .sp-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -1345,20 +1559,37 @@
     flex: 1 1 0;
   }
 
-  .sp-stats {
+  .sp-tiles {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .sp-stat-value {
-    font-size: 1.25rem;
+  .sp-tile-value {
+    font-size: 1.2rem;
   }
 
-  .sp-stat-term {
-    font-size: 1.05rem;
+  .sp-tile-term {
+    font-size: 1rem;
   }
 
-  .sp-hero-card {
-    padding: 0.75rem 0.85rem;
+  .sp-card-credits {
+    padding: 0.7rem 0.75rem;
+    gap: 0.7rem;
+  }
+
+  .sp-credits-value {
+    font-size: 1.35rem;
+  }
+
+  .sp-rings {
+    gap: 0.4rem 0.6rem;
+  }
+
+  .sp-ring-item {
+    width: 66px;
+  }
+
+  .sp-terms {
+    height: 108px;
   }
 
   .sp-search {
@@ -1507,4 +1738,209 @@
 .sp-prev-add,
 .sp-prev-changes {
   padding-left: 0.5rem;
+}
+
+/* Grades panel: status donut beside the yearly chart. */
+.sp-grades-top {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.sp-sw-fail { background: #e05a5a; }
+
+/* A panel that runs the full width of the grid. */
+.sp-panel-wide {
+  grid-column: 1 / -1;
+}
+
+/* Requirement rows: the target is editable in place. */
+.sp-req-num {
+  margin-left: auto;
+  background: none;
+  border: none;
+  padding: 0.1rem 0.2rem;
+  border-radius: 5px;
+  font: inherit;
+  font-size: 0.83rem;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.sp-req-num:hover {
+  background: #f4f4f6;
+}
+
+.sp-req-num b {
+  color: #1a1a1a;
+}
+
+.sp-req-active {
+  color: #946100;
+}
+
+.sp-req-set {
+  color: var(--color-accent-active);
+  font-weight: 600;
+}
+
+.sp-req-input {
+  margin-left: auto;
+  width: 78px;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.83rem;
+  text-align: right;
+  color: #1a1a1a;
+  background: #fff;
+}
+
+.sp-req-foot {
+  font-size: 0.72rem;
+  color: #999;
+}
+
+/* The bar can carry a second, in-progress segment. */
+.sp-bar {
+  display: flex;
+}
+
+.sp-bar-active {
+  background: #f0a52a;
+  opacity: 0.75;
+}
+
+/* No target set: the bar is just a share of the degree, so it stays neutral
+   green rather than borrowing the red/amber/green scale. */
+.sp-bar-untargeted > span:first-child {
+  background: #a7dcbc;
+}
+
+/* Inline grade editing in the courses table. */
+.sp-grade-btn {
+  background: none;
+  border: none;
+  padding: 0.15rem 0.35rem;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sp-grade-btn:hover {
+  background: rgba(29, 185, 84, 0.12);
+  color: #117a35;
+}
+
+.sp-grade-btn.sp-grade-soft {
+  color: #b6bac0;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.sp-grade-input {
+  width: 62px;
+  padding: 0.18rem 0.35rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-align: right;
+  color: #1a1a1a;
+  background: #fff;
+}
+
+/* Quick grade entry inside the grades panel. */
+.sp-fill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  border-top: 1px solid #eef0f2;
+  padding-top: 0.8rem;
+}
+
+.sp-fill-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sp-fill-head h4 {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.sp-fill-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 208px;
+  overflow-y: auto;
+}
+
+.sp-fill-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid #f2f3f5;
+  font-size: 0.85rem;
+  cursor: text;
+}
+
+.sp-fill-row:last-child {
+  border-bottom: none;
+}
+
+.sp-fill-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  unicode-bidi: isolate;
+}
+
+.sp-fill-term {
+  font-size: 0.75rem;
+  color: #999;
+  flex: 0 0 auto;
+}
+
+.sp-fill-input {
+  flex: 0 0 auto;
+  width: 66px;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid #d6d6da;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-align: right;
+  color: #1a1a1a;
+  background: #fff;
+}
+
+.sp-fill-input:hover {
+  border-color: #b8bbc0;
+}
+
+/* A single graded year would otherwise stretch one bar across the panel. */
+.sp-col-fill {
+  width: 100%;
+  max-width: 88px;
+  margin: 0 auto;
+}
+
+/* The page is a scrolling flex column: its children must keep their natural
+   height, otherwise flex-shrink squeezes the last card (the courses table)
+   down to its borders once the content is taller than the viewport. */
+.sp-page > * {
+  flex: 0 0 auto;
 }

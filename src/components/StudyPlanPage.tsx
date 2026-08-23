@@ -16,6 +16,7 @@ import RequirementsPanel from "./StudyPlan/RequirementsPanel";
 import GradesPanel from "./StudyPlan/GradesPanel";
 import MoneyPanel from "./StudyPlan/MoneyPanel";
 import TimelinePanel from "./StudyPlan/TimelinePanel";
+import TermsPanel from "./StudyPlan/TermsPanel";
 import PlanCoursesTable from "./StudyPlan/PlanCoursesTable";
 import PlanCourseModal from "./StudyPlan/PlanCourseModal";
 import PlanSettingsModal from "./StudyPlan/PlanSettingsModal";
@@ -63,6 +64,27 @@ const StudyPlanPage: React.FC = () => {
     const isNew = !courses.some((c) => c.id === course.id);
     await upsertCourse(course);
     toast.success(isNew ? `Course “${course.name}” added` : `Course “${course.name}” updated`);
+  };
+
+  // Inline grade edit from the courses table. A completed course keeps its
+  // status; a graded planned course becomes completed or failed by its mark.
+  const handleSetGrade = async (course: PlanCourse, grade: number | undefined) => {
+    const next: PlanCourse = { ...course, grade };
+    if (grade === undefined) delete next.grade;
+    if (grade !== undefined && (course.status === "PLANNED" || course.status === "IN_PROGRESS")) {
+      next.status = grade >= config.passMark ? "COMPLETED" : "FAILED";
+    }
+    await upsertCourse(next);
+  };
+
+  // Requirement targets are editable straight from the panel.
+  const handleSetTarget = async (groupId: string, credits: number) => {
+    await saveConfig({
+      ...config,
+      groups: config.groups.map((g) =>
+        g.id === groupId ? { ...g, requiredCredits: credits } : g
+      ),
+    });
   };
 
   const handleImport = async (
@@ -185,8 +207,18 @@ const StudyPlanPage: React.FC = () => {
           <PlanStatsRow stats={stats} config={config} />
 
           <div className="sp-grid">
-            <RequirementsPanel stats={stats} onConfigure={() => setSettingsOpen(true)} />
-            <GradesPanel stats={stats} config={config} />
+            <RequirementsPanel
+              stats={stats}
+              onConfigure={() => setSettingsOpen(true)}
+              onSetTarget={handleSetTarget}
+            />
+            <GradesPanel
+              stats={stats}
+              config={config}
+              courses={courses}
+              onSetGrade={handleSetGrade}
+            />
+            <TermsPanel stats={stats} />
             <MoneyPanel
               stats={stats}
               config={config}
@@ -203,6 +235,7 @@ const StudyPlanPage: React.FC = () => {
             config={config}
             onEdit={(c) => setCourseModal({ open: true, course: c })}
             onDelete={(c) => setConfirmCourse(c)}
+            onSetGrade={handleSetGrade}
           />
 
           {lastImport && (

@@ -11,6 +11,8 @@ interface Props {
   config: PlanConfig;
   onEdit: (course: PlanCourse) => void;
   onDelete: (course: PlanCourse) => void;
+  /** Inline grade edits save straight from the table. */
+  onSetGrade: (course: PlanCourse, grade: number | undefined) => Promise<void>;
 }
 
 type Filter = "ALL" | PlanCourseStatus;
@@ -36,11 +38,34 @@ const STATUS_CLASS: Record<PlanCourseStatus, string> = {
 const termSortValue = (c: PlanCourse) =>
   (c.year ?? 0) * 10 + (c.semester ? "ABC".indexOf(c.semester.slice(-1)) + 1 : 0);
 
-const PlanCoursesTable: React.FC<Props> = ({ courses, config, onEdit, onDelete }) => {
+const PlanCoursesTable: React.FC<Props> = ({
+  courses,
+  config,
+  onEdit,
+  onDelete,
+  onSetGrade,
+}) => {
   const [filter, setFilter] = useState<Filter>("ALL");
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("term");
   const [asc, setAsc] = useState(false);
+  // Course whose grade cell is currently an input, and its draft value.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+
+  const startEdit = (course: PlanCourse) => {
+    setEditingId(course.id);
+    setDraft(course.grade !== undefined ? String(course.grade) : "");
+  };
+
+  const commitEdit = async (course: PlanCourse) => {
+    setEditingId(null);
+    const text = draft.trim();
+    const next = text === "" ? undefined : Number(text);
+    if (next !== undefined && (!Number.isFinite(next) || next < 0 || next > 100)) return;
+    if (next === course.grade) return;
+    await onSetGrade(course, next);
+  };
 
   const groupLabel = useMemo(() => {
     const map = new Map(config.groups.map((g) => [g.id, g.label]));
@@ -185,16 +210,44 @@ const PlanCoursesTable: React.FC<Props> = ({ courses, config, onEdit, onDelete }
                     <td data-label="Term">{termLabel(c.year, c.semester)}</td>
                     <td data-label="Group">{groupLabel(c.groupId)}</td>
                     <td data-label="Credits" className="sp-n">{formatCredits(c.credits)}</td>
-                    <td data-label="Grade" className="sp-n">
-                      <span
-                        className={`sp-grade ${grade === null ? "sp-grade-soft" : ""} ${
-                          grade !== null && grade < config.passMark ? "sp-grade-bad" : ""
-                        }`}
-                        title={estimated ? "Estimated from graded parts" : undefined}
-                      >
-                        {c.passFail && grade === null ? "pass" : formatGrade(grade)}
-                        {estimated ? " est." : ""}
-                      </span>
+                    <td data-label="Grade" className="sp-n sp-grade-cell">
+                      {editingId === c.id ? (
+                        <input
+                          className="sp-grade-input"
+                          type="number"
+                          min={0}
+                          max={100}
+                          autoFocus
+                          value={draft}
+                          onChange={(e) => setDraft(e.target.value)}
+                          onBlur={() => void commitEdit(c)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") void commitEdit(c);
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                          aria-label={`Grade for ${c.name}`}
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          className={`sp-grade sp-grade-btn ${grade === null ? "sp-grade-soft" : ""} ${
+                            grade !== null && grade < config.passMark ? "sp-grade-bad" : ""
+                          }`}
+                          title={
+                            estimated
+                              ? "Estimated from graded parts — click to set the final grade"
+                              : "Click to edit the grade"
+                          }
+                          onClick={() => startEdit(c)}
+                        >
+                          {c.passFail && grade === null
+                            ? "pass"
+                            : grade === null
+                              ? "add"
+                              : formatGrade(grade)}
+                          {estimated ? " est." : ""}
+                        </button>
+                      )}
                     </td>
                     <td data-label="Status">
                       <span className={`sp-pill ${STATUS_CLASS[c.status]}`}>

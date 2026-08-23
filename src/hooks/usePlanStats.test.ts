@@ -106,6 +106,15 @@ describe("computePlanStats average", () => {
     expect(stats.average).toBe(80);
   });
 
+  it("falls back to a plain mean when graded courses carry no credits", () => {
+    const stats = computePlanStats(
+      config(),
+      [course({ credits: 0, grade: 90 }), course({ credits: 0, grade: 80 })],
+      []
+    );
+    expect(stats.average).toBe(85);
+  });
+
   it("returns null when nothing is graded", () => {
     const stats = computePlanStats(config(), [course({ status: "PLANNED" })], []);
     expect(stats.average).toBeNull();

@@ -42,6 +42,23 @@ export interface MoneyStats {
   coursesFree: number;
 }
 
+export interface TermLoad {
+  year: number;
+  semester: string;
+  label: string;
+  done: number;
+  active: number;
+  planned: number;
+  courses: number;
+}
+
+export interface TermMoney {
+  key: string;
+  label: string;
+  paid: number;
+  due: number;
+}
+
 export interface PlanStats {
   creditsDone: number;
   creditsActive: number;
@@ -54,11 +71,15 @@ export interface PlanStats {
   projectedAverage: number | null;
   byGroup: GroupProgress[];
   byYear: YearAverage[];
+  byTerm: TermLoad[];
+  moneyByTerm: TermMoney[];
   money: MoneyStats;
   semestersRemaining: number;
   graduationTerm: string | null;
   creditsPerSemesterNeeded: number;
   statusCounts: Record<PlanCourseStatus, number>;
+  /** Completed courses that actually carry a grade. */
+  gradedCount: number;
   currentTerm: { year: number; semester: string } | null;
 }
 
@@ -97,10 +118,14 @@ export const effectiveGrade = (course: PlanCourse): number | null =>
   typeof course.grade === "number" ? course.grade : componentEstimate(course);
 
 const weightedAverage = (entries: { grade: number; credits: number }[]): number | null => {
+  if (entries.length === 0) return null;
   const usable = entries.filter((e) => e.credits > 0);
-  if (usable.length === 0) return null;
+  // Courses imported without a credit count would otherwise weigh nothing and
+  // leave the average blank; fall back to a plain mean in that case.
+  if (usable.length === 0) {
+    return entries.reduce((s, e) => s + e.grade, 0) / entries.length;
+  }
   const credits = usable.reduce((s, e) => s + e.credits, 0);
-  if (credits <= 0) return null;
   return usable.reduce((s, e) => s + e.grade * e.credits, 0) / credits;
 };
 
@@ -193,6 +218,51 @@ export const computePlanStats = (
     }))
     .filter((y) => y.average > 0)
     .sort((a, b) => a.year - b.year);
+
+  // Credits carried in each term, split by what has been earned, what is
+  // running now and what is only planned.
+  const termMap = new Map<number, TermLoad>();
+  counted
+    .filter((c) => typeof c.year === "number" && typeof c.semester === "string")
+    .forEach((c) => {
+      const year = c.year as number;
+      const semester = c.semester as string;
+      const key = termKey(year, semester);
+      const entry =
+        termMap.get(key) ??
+        {
+          year,
+          semester,
+          label: `${semester.replace("Semester ", "")}${String(year).slice(2)}`,
+          done: 0,
+          active: 0,
+          planned: 0,
+          courses: 0,
+        };
+      const credits = c.credits || 0;
+      if (EARNING.includes(c.status)) entry.done += credits;
+      else if (c.status === "IN_PROGRESS") entry.active += credits;
+      else if (c.status === "PLANNED") entry.planned += credits;
+      entry.courses += 1;
+      termMap.set(key, entry);
+    });
+  const byTerm = [...termMap.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([, load]) => load);
+
+  // Payments grouped by the term they belong to, for the cost-per-term chart.
+  const moneyMap = new Map<string, TermMoney>();
+  payments.forEach((p) => {
+    const label = p.semester
+      ? `${p.semester.replace("Semester ", "")}${String(p.year ?? "").slice(2)}`
+      : String(p.year ?? p.date.slice(0, 4));
+    const key = `${p.year ?? p.date.slice(0, 4)}|${p.semester ?? ""}`;
+    const entry = moneyMap.get(key) ?? { key, label, paid: 0, due: 0 };
+    if (p.paid) entry.paid += p.amount;
+    else entry.due += p.amount;
+    moneyMap.set(key, entry);
+  });
+  const moneyByTerm = [...moneyMap.values()].sort((a, b) => a.key.localeCompare(b.key));
 
   // Where the student is right now: latest term that has a course in it.
   const termed = courses.filter(
@@ -294,6 +364,10 @@ export const computePlanStats = (
     coursesFree,
   };
 
+  const gradedCount = counted.filter(
+    (c) => c.status === "COMPLETED" && !c.passFail && effectiveGrade(c) !== null
+  ).length;
+
   const statusCounts = courses.reduce(
     (acc, c) => {
       acc[c.status] += 1;
@@ -321,11 +395,14 @@ export const computePlanStats = (
     projectedAverage,
     byGroup,
     byYear,
+    byTerm,
+    moneyByTerm,
     money,
     semestersRemaining,
     graduationTerm,
     creditsPerSemesterNeeded,
     statusCounts,
+    gradedCount,
     currentTerm,
   };
 };

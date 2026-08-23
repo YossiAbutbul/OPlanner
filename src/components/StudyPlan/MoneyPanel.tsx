@@ -41,6 +41,10 @@ const MoneyPanel: React.FC<Props> = ({ stats, config, payments, onAdd, onEdit, o
   // fixed number of them.
   const cap = config.cost.paidCoursesCap ?? 0;
   const capPct = cap > 0 ? Math.min(100, (stats.money.coursesBilled / cap) * 100) : 0;
+  const termMax = Math.max(
+    1,
+    ...stats.moneyByTerm.map((t) => Math.abs(t.paid + t.due))
+  );
 
   return (
     <section className="sp-panel">
@@ -95,6 +99,27 @@ const MoneyPanel: React.FC<Props> = ({ stats, config, payments, onAdd, onEdit, o
                 } left, then the rest of the degree is free.`}
             {stats.money.coursesFree > 0 && ` ${stats.money.coursesFree} free so far.`}
           </span>
+        </div>
+      )}
+
+      {stats.moneyByTerm.length > 1 && (
+        <div className="sp-money-terms">
+          {stats.moneyByTerm.map((t) => {
+            const total = t.paid + t.due;
+            const height = `${Math.max(4, (Math.abs(total) / termMax) * 100)}%`;
+            return (
+              <div className="sp-money-term" key={t.key}>
+                <span className="sp-money-term-amt">{formatMoney(total, currency)}</span>
+                <div className="sp-money-term-stack">
+                  {t.due !== 0 && <i className="sp-mt-due" style={{ height }} />}
+                  {t.paid !== 0 && (
+                    <i className={total < 0 ? "sp-mt-neg" : "sp-mt-paid"} style={{ height }} />
+                  )}
+                </div>
+                <span className="sp-money-term-label">{t.label}</span>
+              </div>
+            );
+          })}
         </div>
       )}
 
