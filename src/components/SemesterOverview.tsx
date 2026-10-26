@@ -3,6 +3,7 @@ import { useHomework } from "../context/HomeworkContext";
 import { useToast } from "../context/ToastContext";
 import { parseIcs, IcsEvent } from "../utility/parseIcs";
 import { courseColor } from "../utility/courseColor";
+import { FINAL_TASK_ID } from "../utility/initializeDatabase";
 import CourseCalendar from "./CourseCalendar";
 import DayTasksModal from "./DayTasksModal";
 import DeleteModal from "./DeleteModal";
@@ -248,7 +249,18 @@ const SemesterOverview: React.FC<Props> = ({
             </section>
             <div className="overview-grid-right">
               <CoursesPanel byCourse={byCourse} courses={courses} onSelectCourse={onSelectCourse} />
-              <FinalsCountdown courses={courses} onChangeFinalDate={handleFinalDateChange} />
+              <FinalsCountdown
+                courses={courses}
+                onChangeFinalDate={handleFinalDateChange}
+                onOpenFinal={(course) => {
+                  const final = allTasks.find(
+                    (t) => t.course === course && t.id === FINAL_TASK_ID
+                  );
+                  if (!final) return;
+                  setTaskEditTask(final);
+                  setTaskModalOpen(true);
+                }}
+              />
             </div>
           </div>
         </>

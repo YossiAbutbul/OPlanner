@@ -15,9 +15,11 @@ const daysUntil = (iso: string): number => {
 interface Props {
   courses: CourseInfo[];
   onChangeFinalDate: (course: string, value: string) => void;
+  // Opens the course's final-exam task; omitted where there is none.
+  onOpenFinal?: (course: string) => void;
 }
 
-const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => {
+const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate, onOpenFinal }) => {
   // Soonest finals first; courses without a date sink to the bottom.
   // Copy so the sidebar order (the `courses` prop) is left untouched.
   const sorted = [...courses].sort((a, b) => {
@@ -104,10 +106,16 @@ const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => {
               <span className="finals-sub" dir="ltr">{sub}</span>
             </span>
             {badge && (
-              <span className={`finals-badge ${badgeClass}`}>
+              <button
+                type="button"
+                className={`finals-badge ${badgeClass}`}
+                onClick={() => onOpenFinal?.(c.name)}
+                title="Open the final exam task"
+                aria-label={`Open the final exam task for ${c.name}`}
+              >
                 {urgency === "past" && <Check size={12} strokeWidth={3} />}
                 {badge}
-              </span>
+              </button>
             )}
           </li>
         );
