@@ -551,10 +551,10 @@
   background: var(--separator);
 }
 
-/* Calendar-page tile: month on a coloured band, day number below. Its
-   colour follows urgency, and it is the button that edits the date. */
+/* Calendar-page tile: month on a band in the course colour (set inline as
+   --tile-color, matching the course rings above), day number below. It is
+   also the button that edits the date. Urgency lives in the pill. */
 .finals-tile {
-  --tile-color: var(--color-accent);
   flex-shrink: 0;
   width: 40px;
   height: 42px;
@@ -586,7 +586,7 @@
 .finals-tile-month {
   display: block;
   padding: 2px 0 1px;
-  background: var(--tile-color);
+  background: var(--tile-color, var(--color-accent));
   color: #fff;
   font-size: 0.6rem;
   font-weight: 700;
@@ -617,14 +617,10 @@
 }
 
 .finals-tile.is-empty:hover {
-  color: var(--accent-text);
-  border-color: var(--color-accent);
+  color: var(--tile-color);
+  border-color: var(--tile-color);
 }
 
-.finals-row[data-urgency="soon"] .finals-tile { --tile-color: var(--danger); }
-.finals-row[data-urgency="near"] .finals-tile { --tile-color: var(--warning); }
-.finals-row[data-urgency="far"] .finals-tile { --tile-color: var(--color-accent); }
-.finals-row[data-urgency="past"] .finals-tile { --tile-color: var(--label-4); }
 
 .finals-text {
   flex: 1;

@@ -3,6 +3,7 @@ import { CalendarPlus, Check } from "lucide-react";
 import type { CourseInfo } from "../../types/models";
 import DatePicker from "../DatePicker";
 import { capitalizeWords } from "../../utility/dayCalendar";
+import { courseColor } from "../../utility/courseColor";
 
 const daysUntil = (iso: string): number => {
   const target = new Date(iso + "T00:00:00");
@@ -66,7 +67,12 @@ const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => {
             })
           : "Tap the calendar to set a date";
         return (
-          <li key={c.name} className="finals-row" data-urgency={urgency}>
+          <li
+            key={c.name}
+            className="finals-row"
+            data-urgency={urgency}
+            style={{ "--tile-color": courseColor(c.name, c.color) } as React.CSSProperties}
+          >
             <DatePicker
               value={c.finalDate ?? null}
               onChange={(v) => onChangeFinalDate(c.name, v ?? "")}
