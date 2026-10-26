@@ -50,7 +50,7 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         },
 
-        includeAssets: ['Logo.svg', 'pwa-icon.svg', 'og-image.png'],
+        includeAssets: ['Logo.svg', 'pwa-icon.svg', 'og-image.png', 'notification-icon.png', 'notification-badge.png'],
 
         manifest: {
           // Keep the name short — the OS shows it as the app label in the

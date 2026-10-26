@@ -39,7 +39,11 @@ interface PushPayload {
   tag: string;
 }
 
-const iconUrl = new URL("pwa-icon.svg", self.registration.scope).href;
+// PNGs, not the SVG: Android ignores SVG notification art, and it paints the
+// badge from the alpha channel only, so the opaque app tile showed up as a
+// plain white square. The badge is the bare calendar glyph on transparency.
+const iconUrl = new URL("notification-icon.png", self.registration.scope).href;
+const badgeUrl = new URL("notification-badge.png", self.registration.scope).href;
 
 self.addEventListener("push", (event) => {
   let data: PushPayload;
@@ -53,7 +57,7 @@ self.addEventListener("push", (event) => {
     body: data.body,
     tag: data.tag,
     icon: iconUrl,
-    badge: iconUrl,
+    badge: badgeUrl,
     renotify: true,
   };
   event.waitUntil(self.registration.showNotification(data.title, options));
