@@ -24,17 +24,25 @@ const OverviewSkeleton: React.FC<{ courses: CourseInfo[] }> = ({ courses }) => {
   return (
     <div className="ov-skel" aria-busy="true" aria-label="Loading semester">
       <section className="overview-stats">
-        {["Tasks", "Completed", "Pending", "Overdue"].map((label) => (
-          <div key={label} className="stat-card">
-            <div className="stat-label">{label}</div>
-            <div className="stat-value"><Bar w="2.2rem" /></div>
+        <div className="ovs-ring-block">
+          <div className="ovs-ring">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <circle className="ovs-ring-track" cx="32" cy="32" r="27" />
+            </svg>
           </div>
-        ))}
-        <div className="stat-card stat-card-wide">
-          <div className="stat-label">Completion</div>
-          <div className="stat-value"><Bar w="3rem" /></div>
-          <div className="stat-bar" />
+          <div className="ovs-ring-text">
+            <span className="ovs-label">Completion</span>
+            <span className="ovs-caption"><Bar w="9rem" /></span>
+          </div>
         </div>
+        <dl className="ovs-metrics">
+          {["Tasks", "Completed", "Pending", "Overdue"].map((label) => (
+            <div key={label} className="ovs-metric">
+              <dt className="ovs-label">{label}</dt>
+              <dd className="ovs-value"><Bar w="2.2rem" /></dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <div className="overview-grid">

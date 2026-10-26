@@ -1,9 +1,10 @@
 import React from "react";
-import { Check } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { CourseInfo } from "../../types/models";
 import type { CourseStats } from "../../hooks/useSemesterStats";
 import { courseColor } from "../../utility/courseColor";
 import { capitalizeWords } from "../../utility/dayCalendar";
+import RollingNumber from "../RollingNumber";
 
 interface Props {
   byCourse: CourseStats[];
@@ -11,8 +12,38 @@ interface Props {
   onSelectCourse: (course: string) => void;
 }
 
+// Checkmark that draws itself in once the ring has closed, and fades back
+// out if the course drops below 100%.
+const RingCheck: React.FC = () => {
+  const reduce = useReducedMotion();
+  return (
+    <motion.svg
+      className="course-ring-check"
+      viewBox="0 0 24 24"
+      width={14}
+      height={14}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
+      transition={{ type: "spring", bounce: 0, visualDuration: 0.3, delay: reduce ? 0 : 0.45 }}
+    >
+      <motion.path
+        d="M5 12.5l4.5 4.5L19 7.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: reduce ? 1 : 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: reduce ? 0 : 0.55 }}
+      />
+    </motion.svg>
+  );
+};
+
 // Activity-style ring in the course colour. pathLength=100 lets the dash
-// array read as a plain percentage.
+// array read as a plain percentage; CSS transitions it when the value moves.
 export const CourseRing: React.FC<{ pct: number; done: boolean }> = ({ pct, done }) => (
   <span className="course-ring" aria-hidden="true">
     <svg className="course-ring-svg" viewBox="0 0 36 36">
@@ -26,7 +57,7 @@ export const CourseRing: React.FC<{ pct: number; done: boolean }> = ({ pct, done
         style={{ strokeDasharray: `${pct} 100` }}
       />
     </svg>
-    {done && <Check className="course-ring-check" size={14} strokeWidth={3} />}
+    <AnimatePresence initial={true}>{done && <RingCheck key="check" />}</AnimatePresence>
   </span>
 );
 
@@ -60,7 +91,9 @@ const CoursesPanel: React.FC<Props> = ({ byCourse, courses, onSelectCourse }) =>
                 )}
               </span>
             </span>
-            <span className="course-stat-pct">{pct}%</span>
+            <span className="course-stat-pct">
+              <RollingNumber value={pct} suffix="%" />
+            </span>
           </li>
         );
       })}

@@ -43,14 +43,15 @@ const SemesterOverview: React.FC<Props> = ({
   onYearsChanged,
   onError,
 }) => {
-  const { getCourseTasks, homework, addHomework, removeHomework } = useHomework();
+  const { getCourseTasks, homework, addHomework, removeHomework, applyEdits } = useHomework();
   const toast = useToast();
   const { byCourse, allTasks, loaded, totals, completionPct } = useSemesterStats(
     year,
     semesterKey,
     courses,
     homework,
-    getCourseTasks
+    getCourseTasks,
+    applyEdits
   );
 
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -343,14 +343,6 @@
     justify-content: center;
   }
 
-  .overview-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-
-  .stat-card-wide {
-    grid-column: span 2 !important;
-  }
-
   .overview-grid {
     grid-template-columns: 1fr !important;
     flex: none !important;

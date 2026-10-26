@@ -30,14 +30,15 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   selectedCourse,
   mobileOpen = false,
 }) => {
-  const { getCourseTasks, addHomework, removeHomework, homework } = useHomework();
+  const { getCourseTasks, addHomework, removeHomework, homework, applyEdits } = useHomework();
   const { blocks, saveBlock, removeBlock } = useTimeBlocks();
   const toast = useToast();
 
   const [tab, setTab] = useState<"upcoming" | "day">("upcoming");
 
   // Shared semester-wide task pool (Upcoming filters it; Day filters by date).
-  const [allSemesterTasks, setAllSemesterTasks] = useState<HomeworkEntry[]>([]);
+  // Fetched from Firestore; optimistic edits are layered on below.
+  const [fetchedSemesterTasks, setAllSemesterTasks] = useState<HomeworkEntry[]>([]);
 
   // Modal state.
   const [editTask, setEditTask] = useState<HomeworkEntry | null>(null);
@@ -58,11 +59,6 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   // When adding from that modal, default the HomeworkModal's course to reminders.
   const [addingReminder, setAddingReminder] = useState(false);
 
-  const reminders = useMemo(
-    () => allSemesterTasks.filter((t) => t.course === "reminders"),
-    [allSemesterTasks]
-  );
-
   const sources = useMemo(() => {
     const out: { year: number; semester: string; course: string }[] = [];
     if (selectedYear !== null && selectedSemester) {
@@ -74,6 +70,20 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     }
     return out;
   }, [years, selectedYear, selectedSemester]);
+
+  // Pending saves show here at once instead of after the Firestore round trip.
+  const allSemesterTasks = useMemo(() => {
+    const names = new Set(sources.map((s) => s.course));
+    return applyEdits(
+      fetchedSemesterTasks,
+      (t) => t.year === selectedYear && (names.has(t.course) || t.course === "reminders")
+    );
+  }, [fetchedSemesterTasks, applyEdits, sources, selectedYear]);
+
+  const reminders = useMemo(
+    () => allSemesterTasks.filter((t) => t.course === "reminders"),
+    [allSemesterTasks]
+  );
 
   // Suppress the next Firestore refetch triggered by our own optimistic write,
   // so the drag-updated times don't snap back to stale server data.

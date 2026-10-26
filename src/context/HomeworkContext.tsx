@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { auth, requireUid } from "../firebase";
 import { lsCache } from "../hooks/useLocalStorageCache";
 import {
@@ -8,6 +8,7 @@ import {
   saveTask,
 } from "../services/homework";
 import { isOverdue, timeLeft } from "../utility/dayCalendar";
+import { useToast } from "./ToastContext";
 import type { HomeworkEntry, Notification } from "../types/models";
 
 // Re-export so existing imports keep working.
@@ -39,6 +40,19 @@ interface HomeworkContextProps {
     semester: string,
     course: string
   ) => Promise<void>;
+  /**
+   * Overlay this session's optimistic edits on a list fetched from
+   * Firestore: edited tasks are replaced, deleted ones dropped, new ones
+   * added when `inScope` accepts them. Changes identity whenever an edit
+   * lands or is rolled back, so it works as a memo/effect dependency.
+   */
+  applyEdits: (list: HomeworkEntry[], inScope: (t: HomeworkEntry) => boolean) => HomeworkEntry[];
+}
+
+// One optimistic change: the task as it should now look, or null if deleted.
+interface Edit {
+  entry: HomeworkEntry | null;
+  seq: number;
 }
 
 const HomeworkContext = createContext<HomeworkContextProps | undefined>(undefined);
@@ -57,6 +71,45 @@ const getDayStyle = (daysLeft: number): React.CSSProperties => {
 export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [homework, setHomework] = useState<HomeworkEntry[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const toast = useToast();
+
+  // Optimistic edits: applied to the UI immediately, written to Firestore in
+  // the background. Kept for the session (they match the server once the
+  // write lands); a failed write removes its own edit, which rolls the UI
+  // back, and shows an error toast.
+  const [edits, setEdits] = useState<Record<string, Edit>>({});
+  const seqRef = useRef(0);
+
+  const recordEdit = useCallback((id: string, entry: HomeworkEntry | null) => {
+    const seq = ++seqRef.current;
+    setEdits((prev) => ({ ...prev, [id]: { entry, seq } }));
+    return seq;
+  }, []);
+
+  // Undo one edit, unless a newer edit of the same task has replaced it.
+  const dropEdit = useCallback((id: string, seq: number) => {
+    setEdits((prev) => {
+      if (prev[id]?.seq !== seq) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  }, []);
+
+  const applyEdits = useCallback(
+    (list: HomeworkEntry[], inScope: (t: HomeworkEntry) => boolean) => {
+      const ids = Object.keys(edits);
+      if (ids.length === 0) return list;
+      const touched = new Set(ids);
+      const out = list.filter((t) => !touched.has(t.id));
+      for (const id of ids) {
+        const e = edits[id].entry;
+        if (e && inScope(e)) out.push(e);
+      }
+      return out;
+    },
+    [edits]
+  );
 
   const fetchHomework = useCallback(async (
     year: number,
@@ -148,6 +201,30 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     ]);
   }, [homework]);
 
+  // Rewrite the per-course cache for every location a change touched.
+  const syncCache = useCallback(
+    (list: HomeworkEntry[], locs: { year: number; semester: string; course: string }[]) => {
+      for (const l of locs) {
+        writeCache(
+          l.year,
+          l.semester,
+          l.course,
+          list.filter((h) => h.course === l.course && h.year === l.year && h.semester === l.semester)
+        );
+      }
+    },
+    [writeCache]
+  );
+
+  const failToast = useCallback(
+    (what: string) => toast.error(`Couldn't save ${what}. Your change was undone.`),
+    [toast]
+  );
+
+  // Optimistic: the task updates on screen (and in the local cache) right
+  // away and the promise resolves at once; Firestore is written in the
+  // background. If that write fails, the change is rolled back and an error
+  // toast explains it.
   const addHomework = useCallback(async (
     id: string | null,
     name: string,
@@ -163,94 +240,66 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     notes?: string,
     color?: string
   ) => {
+    let uid: string;
     try {
-      const uid = requireUid();
+      uid = requireUid();
+    } catch (error) {
+      console.error("Error adding/updating homework:", error);
+      return;
+    }
 
-      if (id) {
-        const prevEntry: { year: number; semester: string; course: string } | undefined =
-          prevLocation ?? homework.find((h) => h.id === id);
-        const movedLocation =
-          !!prevEntry &&
-          (prevEntry.course !== course ||
-            prevEntry.year !== year ||
-            prevEntry.semester !== semester);
-        if (movedLocation && prevEntry) {
+    const taskId = id ?? createTaskRef(uid, year, semester, course).id;
+    const task: HomeworkEntry = {
+      id: taskId, name, dueDate, status, year, semester, course, ignoreOverdue,
+      ...(startTime ? { startTime } : {}),
+      ...(endTime ? { endTime } : {}),
+      ...(notes !== undefined ? { notes } : {}),
+      ...(color !== undefined ? { color } : {}),
+    };
+    const previous = id ? homework.find((h) => h.id === id) : undefined;
+    const prevLoc: { year: number; semester: string; course: string } | undefined =
+      id ? prevLocation ?? previous : undefined;
+    const moved =
+      !!prevLoc &&
+      (prevLoc.course !== course || prevLoc.year !== year || prevLoc.semester !== semester);
+    const locs = moved && prevLoc ? [prevLoc, { year, semester, course }] : [{ year, semester, course }];
+
+    // 1. Show it now.
+    const seq = recordEdit(taskId, task);
+    setHomework((prev) => {
+      const exists = prev.some((entry) => entry.id === taskId);
+      const next = exists
+        ? prev.map((entry) => (entry.id === taskId ? { ...entry, ...task, startTime, endTime, notes, color } : entry))
+        : [...prev, task];
+      syncCache(next, locs);
+      return next;
+    });
+
+    // 2. Persist in the background; roll back on failure.
+    void (async () => {
+      try {
+        if (moved && prevLoc) {
           try {
-            await deleteTask(uid, prevEntry.year, prevEntry.semester, prevEntry.course, id);
+            await deleteTask(uid, prevLoc.year, prevLoc.semester, prevLoc.course, taskId);
           } catch (e) {
             console.error("Error deleting old task location:", e);
           }
         }
-
-        const task: HomeworkEntry = {
-          id, name, dueDate, status, year, semester, course, ignoreOverdue,
-          ...(startTime ? { startTime } : {}),
-          ...(endTime ? { endTime } : {}),
-          ...(notes !== undefined ? { notes } : {}),
-          ...(color !== undefined ? { color } : {}),
-        };
         await saveTask(uid, task);
-
+      } catch (error) {
+        console.error("Error adding/updating homework:", error);
+        dropEdit(taskId, seq);
         setHomework((prev) => {
-          const exists = prev.some((entry) => entry.id === id);
-          const next = exists
-            ? prev.map((entry) =>
-                entry.id === id
-                  ? { ...entry, name, dueDate, status, year, semester, course, ignoreOverdue, startTime, endTime, notes, color }
-                  : entry
-              )
-            : [...prev, task];
-          if (movedLocation && prevEntry) {
-            writeCache(
-              prevEntry.year,
-              prevEntry.semester,
-              prevEntry.course,
-              next.filter(
-                (h) =>
-                  h.course === prevEntry.course &&
-                  h.year === prevEntry.year &&
-                  h.semester === prevEntry.semester
-              )
-            );
-          }
-          writeCache(
-            year,
-            semester,
-            course,
-            next.filter(
-              (h) => h.course === course && h.year === year && h.semester === semester
-            )
-          );
+          const next = previous
+            ? prev.map((entry) => (entry.id === taskId ? previous : entry))
+            : prev.filter((entry) => entry.id !== taskId);
+          syncCache(next, locs);
           return next;
         });
-      } else {
-        const newRef = createTaskRef(uid, year, semester, course);
-        const newTask: HomeworkEntry = {
-          id: newRef.id,
-          name,
-          dueDate,
-          status,
-          year,
-          semester,
-          course,
-          ignoreOverdue,
-          ...(startTime ? { startTime } : {}),
-          ...(endTime ? { endTime } : {}),
-          ...(notes !== undefined ? { notes } : {}),
-          ...(color !== undefined ? { color } : {}),
-        };
-        await saveTask(uid, newTask);
-
-        setHomework((prev) => {
-          const next = [...prev, newTask];
-          writeCache(year, semester, course, next.filter((h) => h.course === course));
-          return next;
-        });
+        failToast(`“${name}”`);
       }
-    } catch (error) {
-      console.error("Error adding/updating homework:", error);
-    }
-  }, [homework, writeCache]);
+    })();
+  }, [homework, recordEdit, dropEdit, syncCache, failToast]);
 
   const removeHomework = useCallback(async (
     id: string,
@@ -258,23 +307,36 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     semester: string,
     course: string
   ) => {
-    const previous = homework;
-    try {
-      setHomework((prev) => {
-        const next = prev.filter((entry) => entry.id !== id);
-        writeCache(year, semester, course, next.filter((h) => h.course === course));
-        return next;
-      });
-      await deleteTask(requireUid(), year, semester, course, id);
-    } catch (error) {
-      console.error("Error removing homework:", error);
-      setHomework(previous);
-    }
-  }, [homework, writeCache]);
+    const previous = homework.find((h) => h.id === id);
+    const locs = [{ year, semester, course }];
+    const seq = recordEdit(id, null);
+    setHomework((prev) => {
+      const next = prev.filter((entry) => entry.id !== id);
+      syncCache(next, locs);
+      return next;
+    });
+
+    void (async () => {
+      try {
+        await deleteTask(requireUid(), year, semester, course, id);
+      } catch (error) {
+        console.error("Error removing homework:", error);
+        dropEdit(id, seq);
+        if (previous) {
+          setHomework((prev) => {
+            const next = prev.some((h) => h.id === id) ? prev : [...prev, previous];
+            syncCache(next, locs);
+            return next;
+          });
+        }
+        toast.error(`Couldn't delete ${previous ? `“${previous.name}”` : "the task"}. It was restored.`);
+      }
+    })();
+  }, [homework, recordEdit, dropEdit, syncCache, toast]);
 
   const value = useMemo<HomeworkContextProps>(
-    () => ({ homework, notifications, fetchHomework, getCourseTasks, addHomework, removeHomework }),
-    [homework, notifications, fetchHomework, getCourseTasks, addHomework, removeHomework]
+    () => ({ homework, notifications, fetchHomework, getCourseTasks, addHomework, removeHomework, applyEdits }),
+    [homework, notifications, fetchHomework, getCourseTasks, addHomework, removeHomework, applyEdits]
   );
 
   return <HomeworkContext.Provider value={value}>{children}</HomeworkContext.Provider>;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CourseInfo, HomeworkEntry } from "../types/models";
 import { isOverdue } from "../utility/dayCalendar";
 
@@ -21,7 +21,9 @@ export interface SemesterTotals {
 
 // Fetches all tasks for every course in the semester (plus the synthetic
 // "reminders" pseudo-course), computes per-course stats and overall totals,
-// and returns them along with the raw task list for downstream views.
+// and returns them along with the task list for downstream views. Optimistic
+// edits (applyEdits) are layered on top of the fetched lists, so a save
+// shows up immediately instead of after the Firestore round trip.
 // Triggers refetch when year/semester/course-set changes or when the
 // homework context emits a new value.
 export function useSemesterStats(
@@ -29,10 +31,10 @@ export function useSemesterStats(
   semesterKey: string,
   courses: CourseInfo[],
   homeworkSnapshot: HomeworkEntry[],
-  getCourseTasks: (year: number, sem: string, course: string) => Promise<HomeworkEntry[]>
+  getCourseTasks: (year: number, sem: string, course: string) => Promise<HomeworkEntry[]>,
+  applyEdits: (list: HomeworkEntry[], inScope: (t: HomeworkEntry) => boolean) => HomeworkEntry[]
 ) {
-  const [byCourse, setByCourse] = useState<CourseStats[]>([]);
-  const [allTasks, setAllTasks] = useState<HomeworkEntry[]>([]);
+  const [fetched, setFetched] = useState<HomeworkEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   // Reset the loaded gate only when the user navigates to a different
@@ -54,8 +56,29 @@ export function useSemesterStats(
         getCourseTasks(year, semesterKey, REMINDERS_COURSE),
       ]);
       if (cancelled) return;
-      const stats: CourseStats[] = courses.map((course, i) => {
-        const list = lists[i];
+      setFetched([...lists.flat(), ...reminders]);
+      setLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year, semesterKey, courseNamesKey, getCourseTasks, homeworkSnapshot]);
+
+  // Scope by year + course name: callers address a semester by key or by
+  // display name, so the semester field isn't a reliable match.
+  const allTasks = useMemo(() => {
+    const names = new Set(courses.map((c) => c.name));
+    return applyEdits(
+      fetched,
+      (t) => t.year === year && (names.has(t.course) || t.course === REMINDERS_COURSE)
+    );
+  }, [fetched, applyEdits, year, courses]);
+
+  const byCourse = useMemo<CourseStats[]>(
+    () =>
+      courses.map((course) => {
+        const list = allTasks.filter((t) => t.course === course.name);
         const completed = list.filter((t) => t.status === "COMPLETED").length;
         const isOver = (t: HomeworkEntry) =>
           t.status === "PENDING" &&
@@ -64,16 +87,9 @@ export function useSemesterStats(
         // Overdue tasks move out of pending — they're counted as overdue, not both.
         const pending = list.filter((t) => t.status === "PENDING" && !isOver(t)).length;
         return { course: course.name, total: list.length, completed, pending, overdue };
-      });
-      setByCourse(stats);
-      setAllTasks([...lists.flat(), ...reminders]);
-      setLoaded(true);
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [year, semesterKey, courseNamesKey, getCourseTasks, homeworkSnapshot]);
+      }),
+    [allTasks, courses]
+  );
 
   const totals = byCourse.reduce<SemesterTotals>(
     (acc, s) => ({
