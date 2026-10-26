@@ -1,5 +1,5 @@
 .notification-list {
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   margin-top: 15px;
   color: #e0e0e0; /* Softer light text color */
   display: flex;
@@ -87,12 +87,12 @@
 
 .notification-list ul::-webkit-scrollbar-track {
   background: #404040; /* Match the list background */
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
 }
 
 .notification-list ul::-webkit-scrollbar-thumb {
   background: #888;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
 }
 
 .notification-list ul::-webkit-scrollbar-thumb:hover {

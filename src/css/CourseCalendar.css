@@ -1,7 +1,7 @@
 .cal {
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1rem 1rem;
   display: flex;
   flex-direction: column;
@@ -23,14 +23,15 @@
 .cal-hint {
   margin: -0.3rem 0 0.6rem;
   font-size: 0.78rem;
-  color: #888;
+  color: var(--label-3);
   font-style: italic;
 }
 
 .cal-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #1a1a1a;
+  font-size: var(--text-md);
+  font-weight: 650;
+  letter-spacing: var(--tracking-title);
+  color: var(--label);
 }
 
 /* Segmented control matching the day-tab nav (.rs-day-seg): prev | Today |
@@ -39,9 +40,9 @@
   display: inline-flex;
   align-items: stretch;
   height: 32px;
-  background: #fff;
-  border: 1px solid #d8dade;
-  border-radius: 9px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -49,14 +50,14 @@
   border: none;
   border-radius: 0;
   background: transparent;
-  color: #5b6168;
+  color: var(--label-3);
   cursor: pointer;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: background-color 0.12s ease, color 0.12s ease;
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
 }
 
 .cal-nav button svg {
@@ -69,20 +70,28 @@
 }
 
 .cal-nav button:hover {
-  background: #f1f1f3;
-  color: #111;
+  background: var(--surface-2);
+  color: var(--label);
 }
 
 .cal-nav button:active {
-  background: #e9e9ec;
+  background: var(--surface-3);
+}
+
+.cal-nav button:active svg {
+  transform: scale(0.88);
+}
+
+.cal-nav button svg {
+  transition: transform var(--dur-press) var(--ease-out);
 }
 
 /* Hairline dividers between the arrows and the Today button. */
 .cal-nav .cal-nav-btn:first-child {
-  border-right: 1px solid #e3e3e6;
+  border-right: 1px solid var(--separator);
 }
 .cal-nav .cal-nav-btn:last-child {
-  border-left: 1px solid #e3e3e6;
+  border-left: 1px solid var(--separator);
 }
 
 /* Selector matches .cal-nav button's specificity (two classes) so the padding
@@ -92,7 +101,7 @@
   padding: 0 0.9rem;
   font-size: 0.78rem;
   font-weight: 700;
-  color: #444;
+  color: var(--label-2);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -109,11 +118,11 @@
 }
 
 .cal-weekday {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-caption);
   text-transform: none;
-  color: #888;
+  color: var(--label-3);
   text-align: center;
   padding: 0.25rem 0;
 }
@@ -134,11 +143,12 @@
   from { transform: translateX(-20px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+/* Months enter from the side the user is heading toward. */
 .cal-grid[data-slide="left"] {
-  animation: cal-slide-in-left 0.2s ease;
+  animation: cal-slide-in-left var(--dur-2) var(--ease-out);
 }
 .cal-grid[data-slide="right"] {
-  animation: cal-slide-in-right 0.2s ease;
+  animation: cal-slide-in-right var(--dur-2) var(--ease-out);
 }
 
 .cal-cell {
@@ -148,31 +158,35 @@
   align-items: stretch;
   justify-content: flex-start;
   padding: 4px 5px 5px;
-  background: #fafafb;
+  background: var(--surface-2);
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-family: inherit;
-  color: #333;
+  color: var(--label-2);
   text-align: left;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  transition: background-color 0.12s ease, border-color 0.12s ease;
+  transition: background-color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
 }
 
 .cal-cell:hover {
-  background: #eef0f3;
+  background: var(--surface-3);
+}
+
+.cal-cell:active {
+  background: var(--fill-2);
 }
 
 /* Overdue indicator — faint red wash on the cell + an alert badge top-right. */
 .cal-cell-overdue {
-  background: #fef2f2;
-  border-color: #fbd5d5;
+  background: var(--danger-tint);
+  border-color: var(--danger-tint);
 }
 
 .cal-cell-overdue:hover {
-  background: #fde8e8;
+  background: var(--danger-tint);
 }
 
 .cal-overdue-dot {
@@ -182,13 +196,13 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #dc2626;
-  box-shadow: 0 0 0 2px #fafafb;
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--surface-2);
   pointer-events: none;
 }
 
 .cal-cell-overdue .cal-overdue-dot {
-  box-shadow: 0 0 0 2px #fef2f2;
+  box-shadow: 0 0 0 2px var(--surface);
 }
 
 .cal-cell.out {
@@ -196,7 +210,7 @@
 }
 
 .cal-cell.out .cal-day-num {
-  color: #c4c4c8;
+  color: var(--label-4);
 }
 
 .cal-cell.out .cal-tasks {
@@ -205,11 +219,11 @@
 
 .cal-cell.today {
   border-color: var(--color-accent);
-  background: rgba(29, 185, 84, 0.08);
+  background: var(--accent-tint);
 }
 
 .cal-cell.today .cal-day-num {
-  color: var(--color-accent);
+  color: var(--accent-text);
   font-weight: 700;
 }
 
@@ -219,12 +233,13 @@
 
 .cal-cell.selected {
   border-color: var(--color-accent);
-  background: rgba(29, 185, 84, 0.08);
+  background: var(--accent-tint);
 }
 
 .cal-day-num {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
   align-self: flex-start;
   margin-bottom: 3px;
@@ -239,25 +254,25 @@
 }
 
 .cal-task {
-  font-size: 0.7rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
   padding: 1px 5px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   border-left: 3px solid;
 }
 
-.cal-task-danger    { background: rgba(210, 48, 48, 0.12); color: #b81e1e; border-left-color: #d23030; }
-.cal-task-warn      { background: rgba(224, 150, 0, 0.15); color: #946100; border-left-color: #e09600; }
-.cal-task-ok        { background: rgba(29, 185, 84, 0.12); color: #117a35; border-left-color: var(--color-accent); }
-.cal-task-completed { background: #e9e9eb;                 color: #888;    border-left-color: #b0b0b3; text-decoration: line-through; }
+.cal-task-danger    { background: rgba(210, 48, 48, 0.12); color: var(--danger-text); border-left-color: var(--danger); }
+.cal-task-warn      { background: rgba(224, 150, 0, 0.15); color: var(--warning-text); border-left-color: var(--warning); }
+.cal-task-ok        { background: rgba(29, 185, 84, 0.12); color: var(--success-text); border-left-color: var(--color-accent); }
+.cal-task-completed { background: var(--surface-3);                 color: var(--label-3);    border-left-color: var(--label-4); text-decoration: line-through; }
 
 .cal-task-more {
   font-size: 0.65rem;
   font-weight: 600;
-  color: #666;
+  color: var(--label-3);
   padding: 1px 5px;
 }
 
@@ -267,9 +282,9 @@
   gap: 0.7rem 1rem;
   margin-top: 0.7rem;
   padding-top: 0.6rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--separator);
   font-size: 0.72rem;
-  color: #666;
+  color: var(--label-3);
 }
 
 .cal-legend span {
@@ -307,17 +322,15 @@
      tasks than fit in the available space (maxHeight set inline). */
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border: 1px solid #e6e7ea;
-  border-radius: 12px;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 12px 32px -8px rgba(20, 24, 33, 0.22);
+  background: var(--elevated);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   padding: 0.7rem 0.8rem 0.75rem;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   pointer-events: auto;
   transform-origin: top left;
-  animation: cal-popover-in 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: cal-popover-in var(--dur-2) var(--ease-out);
 }
 
 .cal-popover-head {
@@ -327,22 +340,22 @@
   gap: 0.5rem;
   margin-bottom: 0.55rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #f0f0f2;
+  border-bottom: 1px solid var(--separator);
 }
 
 .cal-popover-date {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  letter-spacing: 0;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  color: var(--label);
+  letter-spacing: var(--tracking-body);
 }
 
 .cal-popover-count {
   flex-shrink: 0;
   font-size: 0.62rem;
   font-weight: 700;
-  color: #5b6470;
-  background: #f1f2f4;
+  color: var(--label-3);
+  background: var(--surface-2);
   border-radius: 999px;
   padding: 2px 8px;
   letter-spacing: 0.02em;
@@ -364,24 +377,24 @@
   min-width: 0;
   padding: 0.22rem 0.3rem;
   margin: 0 -0.3rem;
-  border-radius: 6px;
-  transition: background-color 0.1s ease;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--dur-press) var(--ease-out);
 }
 
 .cal-popover li:hover {
-  background: #f6f7f9;
+  background: var(--fill);
 }
 
 .cal-popover .cal-dot {
   width: 9px;
   height: 9px;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 0 0 3px var(--fill);
 }
 
 .cal-popover-name {
   flex: 1;
   min-width: 0;
-  color: #1a1a1a;
+  color: var(--label);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -399,26 +412,26 @@
 }
 
 .cal-popover-status.is-pending {
-  color: #946100;
+  color: var(--warning-text);
   background: rgba(224, 150, 0, 0.14);
 }
 
 .cal-popover-status.is-done {
-  color: #117a35;
+  color: var(--success-text);
   background: rgba(29, 185, 84, 0.14);
 }
 
 .cal-popover-status.is-overdue {
-  color: #b91c1c;
+  color: var(--danger-text);
   background: rgba(220, 38, 38, 0.14);
 }
 
 .cal-popover-hint {
   margin-top: 0.55rem;
   padding-top: 0.45rem;
-  border-top: 1px solid #f0f0f2;
+  border-top: 1px solid var(--separator);
   font-size: 0.68rem;
-  color: #9aa0a8;
+  color: var(--label-4);
   font-style: italic;
 }
 

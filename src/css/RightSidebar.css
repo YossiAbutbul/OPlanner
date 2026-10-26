@@ -5,7 +5,7 @@
   --rs-elev: #16181c;
   --rs-hover: #1d2026;
   --rs-row: #1a1c20;
-  --rs-text: #ffffff;
+  --rs-text: #f5f5f7;
   --rs-text-soft: #d4d4d4;
   --rs-text-muted: #a7a7a7;
   --rs-border: rgba(255, 255, 255, 0.06);
@@ -106,27 +106,33 @@
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  padding: 0.65rem 0.7rem;
+  padding: 0.6rem 0.7rem 0.6rem 0.6rem;
   background: var(--rs-elev);
   border: 1px solid var(--rs-border);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .rs-row:hover {
   background: var(--rs-hover);
 }
 
+.rs-row:active {
+  transform: scale(0.985);
+  background: var(--rs-row);
+}
+
 /* Pip */
 
 .rs-pip {
   flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -139,7 +145,8 @@
 .rs-pip-num {
   font-size: 1.4rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--tracking-display);
+  font-variant-numeric: tabular-nums;
   color: var(--rs-text);
   line-height: 1;
 }
@@ -191,8 +198,9 @@
 }
 
 .rs-name {
-  font-size: 0.92rem;
+  font-size: var(--text-sm);
   font-weight: 600;
+  letter-spacing: var(--tracking-body);
   color: var(--rs-text);
   white-space: nowrap;
   overflow: hidden;
@@ -202,7 +210,7 @@
 
 .rs-course {
   margin-top: 0.2rem;
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   font-weight: 500;
   color: var(--rs-text-soft);
   white-space: nowrap;
@@ -228,7 +236,7 @@
   color: var(--rs-text-muted);
   gap: 0.5rem;
   padding: 1.25rem 1rem;
-  animation: rs-empty-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: rs-empty-in 0.5s var(--ease-out) both;
 }
 
 .rs-empty-badge {
@@ -252,7 +260,7 @@
 .rs-empty-badge svg {
   stroke-dasharray: 30;
   stroke-dashoffset: 30;
-  animation: rs-empty-check 0.55s 0.25s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation: rs-empty-check 0.55s 0.25s var(--ease-in-out) forwards;
 }
 
 .rs-empty-title {
@@ -314,9 +322,9 @@
   background: transparent;
   border: none;
   color: var(--rs-text-muted);
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: var(--tracking-body);
   /* Fixed height so the strip's bottom border aligns with the page's year
      tab bar bottom line. */
   height: 41px;
@@ -327,8 +335,8 @@
   cursor: pointer;
   border-radius: 7px 7px 0 0;
   transition:
-    background-color 0.18s ease,
-    color 0.18s ease;
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
   min-height: 36px;
   text-align: center;
 }
@@ -351,7 +359,7 @@
   width: 50%;
   background: var(--rs-accent);
   border-radius: 2px 2px 0 0;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--dur-3) var(--ease-out);
   pointer-events: none;
 }
 
@@ -385,7 +393,7 @@
   height: 36px;
   background: var(--rs-elev);
   border: 1px solid var(--rs-border);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -417,7 +425,7 @@
   cursor: pointer;
   font-size: 1.1rem;
   line-height: 1;
-  transition: background-color 0.12s ease, color 0.12s ease;
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -448,12 +456,12 @@
   background: var(--rs-elev);
   color: var(--rs-text-soft);
   border: 1px solid var(--rs-border);
-  border-radius: 9px;
+  border-radius: var(--radius-md);
   padding: 0 0.85rem;
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  transition: background-color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
 }
 
 .rs-day-today:hover {
@@ -481,7 +489,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: color 0.12s ease;
+  transition: color var(--dur-1) var(--ease-out);
 }
 
 .rs-day-date:hover {
@@ -489,32 +497,34 @@
 }
 
 .rs-day-add {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.92rem;
-  font-weight: 600;
+  min-height: 36px;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 650;
   cursor: pointer;
   font-family: inherit;
   background: var(--color-accent);
   color: #ffffff;
-  border: 1px solid #19a449;
+  border: 1px solid var(--color-accent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.08s ease;
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .rs-day-add:hover {
   background: var(--color-accent-hover);
-  border-color: #1bbf52;
+  border-color: var(--color-accent-hover);
 }
 
 .rs-day-add:active {
-  transform: scale(0.97);
+  transform: scale(var(--press-scale));
+  background: var(--color-accent-active);
 }
 
 .rs-day-allday {
@@ -553,7 +563,7 @@
 .rs-day-allday-chip {
   border: none;
   border-left: 3px solid currentColor;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 4px 8px;
   font-size: 0.78rem;
   font-weight: 600;
@@ -565,7 +575,7 @@
   text-overflow: ellipsis;
   text-align: left;
   font-family: inherit;
-  transition: filter 0.12s ease;
+  transition: filter var(--dur-1) var(--ease-out);
 }
 
 .rs-day-allday-chip:hover {
@@ -648,14 +658,14 @@
   right: 4px;
   padding: 4px 8px;
   box-sizing: border-box;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 0.78rem;
   color: #fff;
   overflow: hidden;
   cursor: grab;
   border-inline-start: 3px solid rgba(0, 0, 0, 0.25);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-  transition: filter 0.12s;
+  transition: filter var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
   user-select: none;
 }
 
@@ -702,7 +712,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.55);
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--dur-1) var(--ease-out);
 }
 
 .rs-day-event-resize-top::after {
@@ -865,12 +875,12 @@
 .tb-notes-btn {
   width: 28px;
   height: 28px;
-  border: 1px solid #d6d6da;
-  background: #fff;
-  color: #1a1a1a;
-  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--label);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-family: inherit;
   display: inline-flex;
   align-items: center;
@@ -880,8 +890,8 @@
 }
 
 .tb-notes-btn:hover {
-  background: #f3f3f5;
-  border-color: #b8bbc0;
+  background: var(--surface-2);
+  border-color: var(--border-strong);
 }
 
 .tb-notes-expand {
@@ -891,7 +901,7 @@
 .tb-notes-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--scrim);
   z-index: var(--z-popover);
   display: flex;
   align-items: center;
@@ -900,14 +910,14 @@
 }
 
 .tb-notes-overlay-panel {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--elevated);
+  border-radius: var(--radius-xl);
   width: min(800px, 100%);
   height: min(600px, 100%);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-lg);
 }
 
 .tb-notes-overlay-head {
@@ -915,9 +925,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.7rem 1rem;
-  border-bottom: 1px solid #eaeaee;
-  font-weight: 700;
-  color: #1a1a1a;
+  border-bottom: 1px solid var(--separator);
+  font-weight: 650;
+  color: var(--label);
 }
 
 .tb-notes-overlay-head .tb-notes-toolbar {
@@ -934,7 +944,8 @@
   font-size: 0.95rem;
   line-height: 1.5;
   resize: none;
-  color: #1a1a1a;
+  color: var(--label);
+  background: transparent;
   box-sizing: border-box;
 }
 
@@ -947,7 +958,7 @@
   padding: 0;
   flex-shrink: 0;
   box-sizing: border-box;
-  transition: transform 0.12s ease;
+  transition: transform var(--dur-1) var(--ease-out);
 }
 
 .tb-color-swatch:hover {
@@ -955,8 +966,8 @@
 }
 
 .tb-color-swatch-active {
-  border-color: #fff;
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4);
+  border-color: var(--elevated);
+  box-shadow: 0 0 0 2px var(--label-3);
 }
 
 .tb-color-swatch-custom {
@@ -986,7 +997,7 @@
   flex-shrink: 0;
   margin: 0;
   padding: 0;
-  transition: transform 0.12s ease;
+  transition: transform var(--dur-1) var(--ease-out);
 }
 
 .tb-color-swatch-custom:hover {
@@ -1014,9 +1025,9 @@
   padding: 0;
   background: transparent;
   border: none;
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   font-weight: 500;
-  color: #1a1a1a;
+  color: var(--label);
   text-transform: none;
   letter-spacing: normal;
   cursor: pointer;
@@ -1027,5 +1038,5 @@
   width: 16px;
   height: 16px;
   cursor: pointer;
-  accent-color: #4c8bf5;
+  accent-color: var(--color-accent);
 }

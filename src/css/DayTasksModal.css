@@ -1,7 +1,6 @@
 .day-empty {
   margin: 0;
-  color: #888;
-  font-style: italic;
+  color: var(--label-3);
   text-align: center;
   padding: 0.5rem 0;
 }
@@ -25,24 +24,24 @@
   margin-top: 0.9rem;
 }
 
-/* Section header — small caps label with a count badge and a hairline rule. */
+/* Section header: small caps label with a count badge and a hairline rule. */
 .day-section-head {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin: 0 0 0.5rem;
-  font-size: 0.72rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
-  color: #888;
+  color: var(--label-3);
 }
 
 .day-section-head::after {
   content: "";
   flex: 1;
   height: 1px;
-  background: #ececef;
+  background: var(--separator);
 }
 
 .day-section-head span {
@@ -54,29 +53,31 @@
   min-width: 20px;
   height: 18px;
   padding: 0 0.4rem;
-  border-radius: 999px;
-  background: #f1f2f4;
-  color: #5b6470;
-  font-size: 0.68rem;
+  border-radius: var(--radius-full);
+  background: var(--fill-2);
+  color: var(--label-3);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
   line-height: 1;
 }
 
 .day-section-done {
-  color: #16a34a;
+  color: var(--success-text);
 }
 
 .day-section-done span {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--success-tint);
+  color: var(--success-text);
 }
 
 .day-section-overdue {
-  color: #dc2626;
+  color: var(--danger-text);
 }
 
 .day-section-overdue span {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--danger-tint);
+  color: var(--danger-text);
 }
 
 .day-tasks {
@@ -95,7 +96,7 @@
 
 .day-task.is-done .day-task-name {
   text-decoration: line-through;
-  text-decoration-color: #9aa0a8;
+  text-decoration-color: var(--label-4);
 }
 
 /* Fixed layout for every language: text on the left, actions on the right. */
@@ -104,9 +105,9 @@
   align-items: center;
   gap: 0.7rem;
   padding: 0.6rem 0.75rem;
-  background: #ffffff;
-  border: 1px solid #e3e3e6;
-  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-md);
   min-width: 0;
   flex-shrink: 0;
 }
@@ -121,9 +122,10 @@
 }
 
 .day-task-name {
-  color: #1a1a1a;
+  color: var(--label);
   font-size: 0.95rem;
   font-weight: 500;
+  letter-spacing: var(--tracking-body);
   overflow-wrap: anywhere;
   word-break: break-word;
   white-space: normal;
@@ -133,8 +135,8 @@
 }
 
 .day-task-course {
-  font-size: 0.75rem;
-  color: #888;
+  font-size: var(--text-xs);
+  color: var(--label-3);
   overflow-wrap: anywhere;
   word-break: break-word;
   text-align: left;
@@ -149,22 +151,23 @@
 .day-task .status-pill {
   flex-shrink: 0;
   padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
+  border-radius: var(--radius-full);
+  font-size: var(--text-2xs);
   font-weight: 600;
+  letter-spacing: var(--tracking-caption);
   border: 1px solid transparent;
 }
 
 .day-task .status-completed {
-  color: #166534;
-  background: #dcfce7;
-  border-color: #86efac;
+  color: var(--success-text);
+  background: var(--success-tint);
+  border-color: transparent;
 }
 
 .day-task .status-pending {
-  color: #92400e;
-  background: #fef3c7;
-  border-color: #fcd34d;
+  color: var(--warning-text);
+  background: var(--warning-tint);
+  border-color: transparent;
 }
 
 .day-task-actions {
@@ -174,33 +177,47 @@
 }
 
 .day-btn {
-  background: #ffffff;
-  color: #333;
-  border: 1px solid #d6d6da;
+  /* Raised one step above the row card in both appearances. */
+  background: var(--elevated);
+  color: var(--label-2);
+  border: 1px solid var(--border);
   padding: 0.35rem 0.7rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .day-btn:hover {
-  background: #f0f0f1;
-  border-color: #b8bbc0;
-  color: #1a1a1a;
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+  color: var(--label);
+}
+
+.day-btn:active {
+  transform: scale(var(--press-scale));
 }
 
 .day-btn.danger {
-  color: #c53030;
-  border-color: #f5b7b7;
+  color: var(--danger-text);
+  border-color: var(--danger-tint);
 }
 
 .day-btn.danger:hover {
-  background: #fde2e2;
-  border-color: #e53e3e;
-  color: #b91c1c;
+  background: var(--danger-tint);
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+
+/* Phones: action buttons sized for a thumb. */
+@media (max-width: 480px) {
+  .day-btn {
+    min-height: 40px;
+    padding: 0.4rem 0.8rem;
+  }
 }

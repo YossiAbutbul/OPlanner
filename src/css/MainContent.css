@@ -8,7 +8,7 @@
      URL bar, making the bottom of the scroll area unreachable. */
   height: 100dvh;
   min-height: 0;
-  background: #f8f8f6;
+  background: var(--canvas);
 }
 
 .main-content {
@@ -17,7 +17,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0.85rem 1.25rem 2.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
 }
@@ -36,7 +36,7 @@
 
 .tab-bar-empty {
   padding: 0.6rem 1rem;
-  color: #888;
+  color: var(--label-3);
   font-size: 0.9rem;
   font-style: italic;
 }
@@ -49,37 +49,41 @@
   cursor: pointer;
   user-select: none;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-body);
   padding: 0.55rem 0.85rem;
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
   background: transparent;
-  color: #555;
+  color: var(--label-2);
   white-space: nowrap;
-  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    box-shadow var(--dur-1) var(--ease-out);
 }
 
 .tab:hover {
-  background: rgba(0, 0, 0, 0.04);
-  color: #222;
+  background: var(--fill);
+  color: var(--label);
 }
 
 .tab.active {
-  color: #111;
-  font-weight: 700;
+  color: var(--label);
+  font-weight: 650;
 }
 
 /* Year level: muted light gray strip */
 .tab-bar-year {
-  background: #ededeb;
+  background: var(--strip-1);
   padding: 0.35rem 0.6rem 0;
-  border-bottom: 1px solid #e0dfdc;
+  border-bottom: 1px solid var(--separator);
   gap: 0.2rem;
 }
 
 .tab-bar-year .tab {
-  color: #666;
-  border-radius: 8px 8px 0 0;
-  font-size: 0.9rem;
+  color: var(--label-3);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  font-size: var(--text-sm);
   font-weight: 600;
   padding: 0.4rem 0.9rem;
   cursor: pointer;
@@ -97,13 +101,13 @@
   height: 18px;
   border: none;
   background: transparent;
-  color: #999;
+  color: var(--label-4);
   font-size: 1.05rem;
   line-height: 1;
   border-radius: 50%;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+  transition: opacity var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -116,20 +120,20 @@
 }
 
 .year-tab-delete:hover {
-  color: #e74c3c;
+  color: var(--danger-text);
 }
 
 .tab-bar-year .tab:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: #222;
+  background: var(--fill);
+  color: var(--label);
 }
 
 /* Active tab takes the page bg so it visually connects to the content
    below (folder-tab look), distinguished by its shadow + colored underline. */
 .tab-bar-year .tab.active {
-  background: #f8f8f6;
-  color: #111;
-  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.06);
+  background: var(--strip-2);
+  color: var(--label);
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .tab-color-dot {
@@ -160,40 +164,40 @@
 
 /* Semester level: light gray strip */
 .tab-bar-semester {
-  background: #f3f3f1;
+  background: var(--strip-2);
   padding: 0.3rem 0.6rem 0;
-  border-bottom: 1px solid #e4e3e0;
+  border-bottom: 1px solid var(--separator);
   gap: 0.2rem;
 }
 
 .tab-bar-semester .tab {
-  border-radius: 8px 8px 0 0;
-  font-size: 0.85rem;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  font-size: var(--text-sm);
   padding: 0.5rem 0.9rem;
 }
 
 .tab-bar-semester .tab.active {
-  background: #f8f8f6;
-  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
+  background: var(--strip-3);
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.04);
 }
 
 /* Course level: lighter strip */
 .tab-bar-course {
-  background: #fafafb;
+  background: var(--strip-3);
   padding: 0.25rem 0.6rem 0;
-  border-bottom: 1px solid #e3e3e6;
+  border-bottom: 1px solid var(--separator);
 }
 
 .tab-bar-course .tab.course-tab {
   position: relative;
-  border-radius: 4px 4px 0 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   padding: 0.5rem 0.55rem 0.5rem 0.8rem;
   max-width: 200px;
 }
 
 .tab-bar-course .tab.active {
-  background: #fff;
-  box-shadow: 0 -1px 0 0 #e3e3e6 inset;
+  background: var(--canvas);
+  box-shadow: none;
 }
 
 .tab-label {
@@ -210,15 +214,15 @@
   height: 20px;
   border: none;
   background: transparent;
-  color: #666;
-  border-radius: 4px;
+  color: var(--label-3);
+  border-radius: var(--radius-xs);
   cursor: pointer;
   opacity: 0.7;
   flex-shrink: 0;
   font-size: 18px;
   line-height: 1;
   font-weight: 500;
-  transition: opacity 0.15s ease, color 0.15s ease;
+  transition: opacity var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
 }
 
 .tab.course-tab:hover .tab-close,
@@ -227,17 +231,17 @@
 }
 
 .tab-close:hover {
-  color: #d23030;
+  color: var(--danger-text);
 }
 
 .tab-add {
-  color: #888;
+  color: var(--label-3);
   font-size: 0.85rem;
 }
 
 .tab-add:hover {
-  color: #333;
-  background: #efefef;
+  color: var(--label-2);
+  background: var(--surface-3);
 }
 
 .add-course-inline {
@@ -249,17 +253,17 @@
 
 .add-course-inline input {
   padding: 0.35rem 0.55rem;
-  border: 1px solid #cdd0d4;
-  border-radius: 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
   font-size: 0.85rem;
-  background: #fff;
-  color: #111;
+  background: var(--surface);
+  color: var(--label);
   outline: none;
   width: 160px;
 }
 
 .add-course-inline input::placeholder {
-  color: #888;
+  color: var(--label-3);
 }
 
 .add-course-inline input:focus {
@@ -273,13 +277,13 @@
   width: 28px;
   height: 28px;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   cursor: pointer;
   background: transparent;
   font-size: 16px;
   font-weight: 700;
   line-height: 1;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
 }
 
 .add-course-inline button.confirm {
@@ -287,17 +291,17 @@
 }
 
 .add-course-inline button.confirm:hover:not(:disabled) {
-  background: rgba(29, 185, 84, 0.15);
-  color: #128a3a;
+  background: var(--accent-tint);
+  color: var(--accent-text);
 }
 
 .add-course-inline button.cancel {
-  color: #888;
+  color: var(--label-3);
 }
 
 .add-course-inline button.cancel:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.08);
-  color: #d23030;
+  background: var(--fill-2);
+  color: var(--danger-text);
 }
 
 .add-course-inline button:disabled {
@@ -312,7 +316,7 @@
   gap: 0.4rem;
   padding: 0 0.6rem;
   align-self: center;
-  color: #777;
+  color: var(--label-3);
   font-size: 0.8rem;
   font-weight: 500;
   pointer-events: none;
@@ -321,8 +325,8 @@
 .year-adding-spinner {
   width: 12px;
   height: 12px;
-  border: 2px solid rgba(0, 0, 0, 0.15);
-  border-top-color: #555;
+  border: 2px solid var(--fill-3);
+  border-top-color: var(--label-2);
   border-radius: 50%;
   animation: yearAddingSpin 0.7s linear infinite;
   display: inline-block;
@@ -336,12 +340,12 @@
 .skeleton {
   cursor: default;
   pointer-events: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: linear-gradient(
     90deg,
-    rgba(0, 0, 0, 0.06) 0%,
-    rgba(0, 0, 0, 0.12) 50%,
-    rgba(0, 0, 0, 0.06) 100%
+    var(--fill) 0%,
+    var(--fill-3) 50%,
+    var(--fill) 100%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
@@ -363,14 +367,15 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #888;
+  color: var(--label-3);
   text-align: center;
 }
 
 .empty-state h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #555;
+  font-size: var(--text-xl);
+  font-weight: 650;
+  letter-spacing: var(--tracking-title);
+  color: var(--label-2);
   margin: 0 0 0.5rem;
 }
 
@@ -381,16 +386,18 @@
 .right-sidebar {
   width: 20%;
   min-width: 250px;
-  background-color: #1f1f1f;
-  color: white;
+  background-color: var(--inverse);
+  color: var(--on-inverse);
   padding: 1em;
   overflow-y: auto;
 }
 
 /* Title */
 .main-content h1 {
-  font-size: 1.8rem;
-  color: #1a1a1a;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-display);
+  color: var(--label);
   margin: 0;
   text-align: left;
   font-weight: 700;
@@ -422,15 +429,20 @@
 }
 
 .course-add-task {
+  min-height: 38px;
   padding: 0.5rem 1rem;
   background: var(--color-accent);
   color: #ffffff;
-  border: 1px solid #19a449;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 650;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+  box-shadow: 0 1px 2px rgba(17, 120, 54, 0.25);
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -440,18 +452,19 @@
 
 .course-add-task:hover {
   background: var(--color-accent-hover);
-  border-color: #1bbf52;
+  border-color: var(--color-accent);
 }
 
 .course-add-task:active {
-  transform: scale(0.97);
+  transform: scale(var(--press-scale));
+  background: var(--color-accent-active);
 }
 
 .course-header h2 {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-base);
   font-weight: 500;
-  color: #777;
+  color: var(--label-3);
 }
 
 /* Inner tab strip inside a course view: Overview vs Course info.
@@ -473,37 +486,40 @@
 
 .course-inner-tab {
   position: relative;
-  background: #f1f1f3;
-  border: 1px solid #e3e3e6;
+  background: var(--surface-2);
+  border: 1px solid var(--separator);
   border-bottom: none;
-  color: #888;
-  font-size: 0.88rem;
+  color: var(--label-3);
+  font-size: var(--text-sm);
   font-weight: 600;
   padding: 0.5rem 1.2rem 0.55rem;
   cursor: pointer;
-  border-radius: 8px 8px 0 0;
-  transition: background-color 0.18s ease, color 0.18s ease;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
 }
 
 .course-inner-tab:hover {
-  background: #e9e9ec;
-  color: #333;
+  background: var(--surface-3);
+  color: var(--label-2);
 }
 
 /* Active tab shares the panel's white bg and paints over the panel's top
    border to look like one continuous folder surface. */
 .course-inner-tab-active,
 .course-inner-tab-active:hover {
-  background: #fff;
-  color: #157a3c;
+  background: var(--surface);
+  color: var(--accent-text);
   padding-bottom: 0.65rem;
 }
 
 .course-tab-panel {
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 0 10px 10px 10px;
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
   padding: 1rem;
+  box-shadow: var(--shadow-xs);
   display: flex;
   flex-direction: column;
   /* Fixed to the remaining viewport height; content scrolls INSIDE the
@@ -544,7 +560,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  animation: courseTabFade 0.22s ease-out;
+  animation: courseTabFade var(--dur-2) var(--ease-out);
 }
 
 @keyframes courseTabFade {
@@ -566,9 +582,9 @@
 }
 
 .course-progress {
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
   padding: 0.85rem 1rem 1rem;
   display: flex;
   align-items: stretch;
@@ -589,25 +605,25 @@
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.85rem;
-  background: rgba(29, 185, 84, 0.08);
-  border: 1px solid rgba(29, 185, 84, 0.3);
-  border-radius: 8px;
+  background: var(--accent-tint);
+  border: 1px solid var(--accent-tint-strong);
+  border-radius: var(--radius-md);
   margin-bottom: 0.85rem;
   font-size: 0.85rem;
-  color: #1a1a1a;
+  color: var(--label);
 }
 
 .course-filter-bar button {
   margin-left: auto;
   padding: 0.25rem 0.7rem;
   background: transparent;
-  border: 1px solid #cdd0d4;
+  border: 1px solid var(--border);
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #444;
+  color: var(--label-2);
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
 }
 
 .course-filter-bar button:hover {
@@ -622,9 +638,9 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
 }
 
 @media (max-width: 900px) {
@@ -645,13 +661,13 @@
   width: 150px;
   height: 150px;
   border-radius: 50%;
-  background-color: #e6e6e6; /* Placeholder background */
+  background-color: var(--surface-3); /* Placeholder background */
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 1rem;
   font-weight: bold;
-  color: #555;
+  color: var(--label-2);
 }
 .progress-chart-container{
   justify-self: start;
@@ -662,13 +678,13 @@
 .calendar {
   margin-top: 20px;
   padding: 15px;
-  background-color: #ffffff; /* White background */
-  border-radius: 8px;
+  background-color: var(--surface); /* White background */
+  border-radius: var(--radius-md);
 }
 
 .calendar h2 {
   font-size: 1.5rem;
-  color: #333;
+  color: var(--label-2);
   margin-bottom: 15px;
   text-align: center;
 }

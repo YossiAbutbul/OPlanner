@@ -1,26 +1,36 @@
 .app-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  /* Dim to focus: a modal task gets a scrim plus a light blur so the page
+     recedes without disappearing. */
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(6px) saturate(140%);
+  backdrop-filter: blur(6px) saturate(140%);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--space-4);
+  box-sizing: border-box;
   z-index: var(--z-modal-overlay);
-  animation: appModalFade 0.15s ease-out;
+  animation: appModalFade var(--dur-2) var(--ease-out);
 }
 
 .app-modal {
   width: min(90%, 420px);
   max-width: 420px;
-  background: #ffffff;
-  border: 1px solid #e3e3e6;
-  border-radius: var(--radius-md, 12px);
-  padding: var(--space-5, 1.25rem);
-  color: #1a1a1a;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  background: var(--elevated);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5) var(--space-6) var(--space-6);
+  color: var(--label);
+  box-shadow: var(--shadow-lg);
   position: relative;
-  animation: appModalScaleIn 0.2s ease-out;
+  box-sizing: border-box;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Materialize: scale + lift + fade together, critically damped. */
+  animation: appModalScaleIn var(--dur-3) var(--ease-out);
 }
 
 /* ===== Mobile: bottom-sheet pattern =====
@@ -35,7 +45,7 @@
     /* Slide sheet up from the bottom edge instead of centering. */
     align-items: flex-end;
     /* Slightly stronger backdrop so the sheet edge reads cleanly. */
-    background: rgba(0, 0, 0, 0.55);
+    padding: 0;
   }
 
   .app-modal {
@@ -43,7 +53,7 @@
     max-width: 100%;
     max-height: 92vh;
     max-height: 92dvh;
-    border-radius: 18px 18px 0 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     border-left: none;
     border-right: none;
     border-bottom: none;
@@ -51,8 +61,10 @@
     /* Internal scroll: the body scrolls, sticky header/footer pin. */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    animation: appModalSheetIn 0.24s cubic-bezier(0.2, 0.85, 0.3, 1.05);
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
+    /* Sheet rises from the bottom edge, critically damped: no overshoot,
+       since nothing was flicked. */
+    animation: appModalSheetIn var(--dur-3) var(--ease-out);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
   }
 
   /* Sticky header bar ג€” title + close stay locked at the top of the
@@ -64,8 +76,11 @@
     z-index: 1;
     margin: 0;
     padding: 0.85rem var(--space-4, 1rem);
-    background: #ffffff;
-    border-bottom: 1px solid #ececef;
+    /* Floating chrome: translucent so the body scrolls visibly beneath. */
+    background: var(--material-thin);
+    -webkit-backdrop-filter: var(--material-blur);
+    backdrop-filter: var(--material-blur);
+    border-bottom: 1px solid var(--separator);
   }
 
   .app-modal-title {
@@ -85,22 +100,24 @@
     margin-top: 0;
     padding: 0.75rem var(--space-4, 1rem)
       calc(0.75rem + env(safe-area-inset-bottom, 0px));
-    background: #ffffff;
-    border-top: 1px solid #ececef;
+    background: var(--material-thin);
+    -webkit-backdrop-filter: var(--material-blur);
+    backdrop-filter: var(--material-blur);
+    border-top: 1px solid var(--separator);
     gap: 0.6rem;
   }
 
   .app-modal-actions button {
     flex: 1 1 0;
+    min-height: 44px;
     padding: 0.75rem 1rem;
-    font-size: 0.95rem;
+    font-size: var(--text-base);
   }
 }
 
 @keyframes appModalSheetIn {
   from {
     transform: translateY(100%);
-    opacity: 0.4;
   }
   to {
     transform: translateY(0);
@@ -121,9 +138,11 @@
 
 .app-modal-title {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: var(--text-lg);
+  font-weight: 650;
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-title);
+  color: var(--label);
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -140,23 +159,23 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #888;
-  border-radius: 6px;
+  color: var(--label-3);
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   transition:
-    color 0.15s ease,
-    background-color 0.15s ease;
+    color var(--dur-1) var(--ease-out),
+    background-color var(--dur-1) var(--ease-out);
 }
 
 .app-modal-close:hover {
-  color: #1a1a1a;
+  color: var(--label);
 }
 
 .app-modal-body {
-  color: #1a1a1a;
+  color: var(--label);
   font-size: 0.95rem;
   line-height: 1.5;
   min-width: 0;
@@ -165,7 +184,7 @@
 
 .app-modal-body p {
   margin: 0 0 0.75rem;
-  color: #555;
+  color: var(--label-2);
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -178,10 +197,10 @@
 .app-modal-body select {
   width: 100%;
   padding: 0.6rem 0.7rem;
-  border: 1px solid #d6d6da;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #1a1a1a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--label);
   font-size: 0.95rem;
   font-weight: 400;
   line-height: 1.2;
@@ -191,7 +210,7 @@
 }
 
 .app-modal-body input::placeholder {
-  color: #888;
+  color: var(--label-3);
   font-weight: 400;
 }
 
@@ -200,7 +219,7 @@
   -webkit-appearance: none;
   -moz-appearance: none;
   padding-right: 2.2rem;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 5 7 9 11 5'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 5 7 9 11 5'/></svg>");
   background-repeat: no-repeat;
   background-position: right 0.7rem center;
   background-size: 14px 14px;
@@ -209,13 +228,13 @@
 }
 
 .app-modal-body select:hover {
-  border-color: #b8bbc0;
+  border-color: var(--border-strong);
 }
 
 .app-modal-body select:focus,
 .app-modal-body select:focus-visible {
   outline: none;
-  border-color: #d6d6da;
+  border-color: var(--border);
   box-shadow: none;
 }
 
@@ -229,8 +248,8 @@
   }
 
   .app-modal-body select::picker-icon {
-    color: #555;
-    transition: transform 0.18s ease;
+    color: var(--label-2);
+    transition: transform var(--dur-1) var(--ease-out);
   }
 
   .app-modal-body select:open::picker-icon {
@@ -238,9 +257,9 @@
   }
 
   .app-modal-body ::picker(select) {
-    border: 1px solid #e3e3e6;
-    border-radius: 8px;
-    background: #fff;
+    border: 1px solid var(--separator);
+    border-radius: var(--radius-md);
+    background: var(--surface);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     padding: 0.35rem;
     margin-top: 4px;
@@ -250,8 +269,8 @@
 
   .app-modal-body option {
     padding: 0.45rem 0.65rem;
-    border-radius: 6px;
-    color: #1a1a1a;
+    border-radius: var(--radius-sm);
+    color: var(--label);
   }
 
   .app-modal-body option::checkmark,
@@ -264,15 +283,15 @@
   .app-modal-body option:focus,
   .app-modal-body option:focus-visible {
     background: transparent;
-    color: #1a1a1a;
+    color: var(--label);
     outline: none;
   }
 
   .app-modal-body option:checked,
   .app-modal-body option:checked:hover,
   .app-modal-body option:checked:focus {
-    background: #f0f0f1;
-    color: #1a1a1a;
+    background: var(--surface-2);
+    color: var(--label);
   }
 }
 
@@ -280,7 +299,7 @@
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #555;
+  color: var(--label-2);
   margin: 0.6rem 0 0.3rem;
   letter-spacing: 0.02em;
 }
@@ -303,15 +322,15 @@
   gap: 0.4rem;
   padding: 0.5rem 1rem;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
   box-sizing: border-box;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    transform 0.08s ease;
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .app-modal-actions button:disabled {
@@ -320,14 +339,14 @@
 }
 
 .app-modal-btn-cancel {
-  background: #ececef;
-  color: #333;
-  border: 1px solid #d6d6da;
+  background: var(--surface-3);
+  color: var(--label-2);
+  border: 1px solid var(--border);
 }
 
 .app-modal-btn-cancel:hover:not(:disabled) {
-  background: #dcdce0;
-  color: #1a1a1a;
+  background: var(--surface-3);
+  color: var(--label);
 }
 
 .app-modal-btn-primary {
@@ -340,12 +359,12 @@
 }
 
 .app-modal-btn-danger {
-  background: #e53e3e;
+  background: var(--danger);
   color: #ffffff;
 }
 
 .app-modal-btn-danger:hover:not(:disabled) {
-  background: #c53030;
+  background: var(--danger-hover);
 }
 
 @keyframes appModalFade {
@@ -395,36 +414,36 @@
   align-items: center;
   gap: 0.55rem;
   padding: 0.6rem 0.7rem;
-  border: 1px solid #d6d6da;
-  border-radius: 6px;
-  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
   cursor: pointer;
   font-size: 0.95rem;
   font-weight: 400;
   line-height: 1.2;
-  color: #1a1a1a;
+  color: var(--label);
   font-family: inherit;
   width: 100%;
   text-align: left;
   box-sizing: border-box;
   transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
+    border-color var(--dur-1) var(--ease-out),
+    background-color var(--dur-1) var(--ease-out);
 }
 
 .hw-date-trigger:hover {
-  background: #ffffff;
-  border-color: #d6d6da;
+  background: var(--surface);
+  border-color: var(--border);
 }
 
 .hw-date-trigger:focus,
 .hw-date-trigger:focus-visible {
   outline: none;
-  border-color: #d6d6da;
+  border-color: var(--border);
 }
 
 .hw-date-trigger-empty {
-  color: #888;
+  color: var(--label-3);
 }
 
 /* Time inputs ג€” match date trigger look */
@@ -434,7 +453,7 @@
   font-family: inherit;
   cursor: pointer;
   padding-left: 2.4rem;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><polyline points='12 7 12 12 15 14'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><polyline points='12 7 12 12 15 14'/></svg>");
   background-repeat: no-repeat;
   background-position: 0.75rem center;
   background-size: 16px 16px;
@@ -442,13 +461,13 @@
 }
 
 .app-modal-body input[type="time"]:hover {
-  border-color: #b8bbc0;
+  border-color: var(--border-strong);
 }
 
 .app-modal-body input[type="time"]:focus,
 .app-modal-body input[type="time"]:focus-visible {
   outline: none;
-  border-color: #b8bbc0;
+  border-color: var(--border-strong);
 }
 
 .app-modal-body input[type="time"]::-webkit-calendar-picker-indicator {
@@ -469,7 +488,7 @@
 /* Hide the date trigger icon since the field already has padding */
 .hw-date-trigger > svg {
   flex-shrink: 0;
-  color: #555;
+  color: var(--label-2);
 }
 
 .app-modal-body label.hw-ignore-overdue {
@@ -482,7 +501,7 @@
   border: none;
   font-size: 0.88rem;
   font-weight: 400;
-  color: #1a1a1a;
+  color: var(--label);
   text-transform: none;
   letter-spacing: normal;
   cursor: pointer;
@@ -495,15 +514,15 @@
   height: 16px;
   margin: 0;
   flex-shrink: 0;
-  background: #ffffff;
-  border: 1px solid #d6d6da;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 3px;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
 }
 
 .hw-ignore-overdue input[type="checkbox"]:hover {
-  border-color: #b8bbc0;
+  border-color: var(--border-strong);
 }
 
 .hw-ignore-overdue input[type="checkbox"]:checked {

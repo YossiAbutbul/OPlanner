@@ -16,7 +16,7 @@ const rise: Variants = {
   show: {
     opacity: 1,
     y: 0,
-    transition: { type: "spring", stiffness: 320, damping: 32 },
+    transition: { type: "spring", stiffness: 320, damping: 36 },
   },
 };
 
@@ -271,7 +271,7 @@ const Login: React.FC = () => {
                 delay: 0.3,
                 type: "spring",
                 stiffness: 240,
-                damping: 26,
+                damping: 31,
               }}
             >
               <div className="landing-demo-float">

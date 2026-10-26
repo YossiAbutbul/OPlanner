@@ -1,5 +1,5 @@
-/* Exams tab body ג€” matches the Course info tab chrome (.cip*). A single
-   card holds the exams ֳ— questions checkbox grid. */
+/* Exams tab body - matches the Course info tab chrome (.cip*). A single
+   card holds the exams x questions checkbox grid. */
 .ep {
   display: flex;
   flex-direction: column;
@@ -24,17 +24,25 @@
 .ep-add-exam-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
+  gap: 0.4rem;
   flex-shrink: 0;
-  padding: 0.4rem 0.8rem;
+  min-height: 38px;
+  padding: 0.5rem 1rem;
   background: var(--color-accent);
-  border: 1px solid #19a449;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  letter-spacing: var(--tracking-body);
   color: #fff;
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.08s ease;
+  box-shadow: 0 1px 2px rgba(17, 120, 54, 0.25);
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .ep-add-exam-btn svg {
@@ -49,21 +57,25 @@
   flex-shrink: 0;
 }
 
-/* Secondary "Add question" — outlined so the filled "Add exam" stays primary. */
+/* Secondary "Add question" - outlined so the filled "Add exam" stays primary. */
 .ep-add-q-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
+  gap: 0.4rem;
   flex-shrink: 0;
-  padding: 0.4rem 0.8rem;
-  background: #fff;
-  border: 1px solid #bfe3cb;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #1a8a44;
+  min-height: 38px;
+  padding: 0.5rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--accent-tint-strong);
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  letter-spacing: var(--tracking-body);
+  color: var(--accent-text);
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+  transition: background-color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), transform var(--dur-press) var(--ease-out);
 }
 
 .ep-add-q-btn svg {
@@ -71,30 +83,30 @@
 }
 
 .ep-add-q-btn:hover:not(:disabled) {
-  background: #f1fbf4;
-  border-color: #9ed7b2;
+  background: var(--accent-tint);
+  border-color: var(--color-accent);
 }
 
 .ep-add-q-btn:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(var(--press-scale));
 }
 
 .ep-add-q-btn:disabled {
-  color: #aeb2b8;
-  border-color: #e3e3e6;
+  color: var(--label-4);
+  border-color: var(--separator);
   cursor: default;
 }
 
-/* ===== Setup call-to-action (no table yet) — mirrors the empty-semester card. */
+/* ===== Setup call-to-action (no table yet) - mirrors the empty-semester card. */
 .ep-setup {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   padding: 3rem 1.5rem;
-  background: #fff;
-  border: 1px solid #e7e8eb;
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
 }
 
 .ep-setup-icon {
@@ -104,41 +116,41 @@
   width: 72px;
   height: 72px;
   margin-bottom: 1.2rem;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   color: var(--color-accent);
-  background: rgba(29, 185, 84, 0.1);
+  background: var(--accent-tint);
 }
 
 .ep-setup-title {
   margin: 0 0 0.5rem;
-  font-size: 1.35rem;
+  font-size: var(--text-xl);
   font-weight: 700;
-  color: #1a1a1a;
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-tight);
+  color: var(--label);
 }
 
 .ep-setup-text {
   margin: 0 auto 1.4rem;
   max-width: 46ch;
-  font-size: 0.95rem;
-  line-height: 1.55;
-  color: #666;
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  color: var(--label-3);
 }
 
-/* Match the empty-course "Add your first course" button exactly. */
+/* Match the empty-course "Add your first course" button exactly
+   (.overview-add-course); the base .ep-add-exam-btn already does. */
 .ep-setup-btn {
   gap: 0.4rem;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
 }
 
 /* ===== Setup modal ===== */
 .exam-setup-lead {
   margin: 0 0 1.1rem;
   font-size: 0.9rem;
-  line-height: 1.5;
-  color: #666;
+  line-height: var(--leading-body);
+  color: var(--label-3);
 }
 
 .exam-setup-field {
@@ -150,23 +162,23 @@
 }
 
 .exam-setup-field + .exam-setup-field {
-  border-top: 1px solid #f0f0f2;
+  border-top: 1px solid var(--separator);
 }
 
 .exam-setup-field label {
   font-size: 0.92rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--label);
 }
 
 /* Connected pill stepper: [−][ value ][+] sharing one rounded border. */
 .exam-setup-stepper {
   display: inline-flex;
   align-items: stretch;
-  border: 1px solid #d6d6da;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  background: #fff;
+  background: var(--surface);
 }
 
 .exam-setup-step-btn {
@@ -179,18 +191,18 @@
   padding: 0;
   border: none;
   border-radius: 0;
-  background: #f7f7f8;
-  color: #374151;
+  background: var(--surface-2);
+  color: var(--label-2);
   cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease;
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
 }
 
 .exam-setup-step-btn:first-child {
-  border-right: 1px solid #e3e3e6;
+  border-right: 1px solid var(--separator);
 }
 
 .exam-setup-step-btn:last-child {
-  border-left: 1px solid #e3e3e6;
+  border-left: 1px solid var(--separator);
 }
 
 .exam-setup-step-btn svg {
@@ -198,12 +210,18 @@
 }
 
 .exam-setup-step-btn:hover:not(:disabled) {
-  background: #ececef;
-  color: #111;
+  background: var(--surface-3);
+  color: var(--label);
+}
+
+/* Pressed: a fill change, not a scale (the buttons share one clipped pill). */
+.exam-setup-step-btn:active:not(:disabled) {
+  background: var(--fill-3);
+  transition-duration: var(--dur-press);
 }
 
 .exam-setup-step-btn:disabled {
-  color: #c2c6cc;
+  color: var(--label-4);
   cursor: not-allowed;
 }
 
@@ -213,11 +231,12 @@
   box-sizing: border-box;
   text-align: center;
   border: none;
-  background: #fff;
-  font-size: 1rem;
+  background: var(--surface);
+  font-family: inherit;
+  font-size: var(--text-md);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #1a1a1a;
+  color: var(--label);
   -moz-appearance: textfield;
   appearance: textfield;
 }
@@ -235,37 +254,46 @@
 .exam-setup-preview {
   margin: 1.1rem 0 0;
   padding-top: 0.9rem;
-  border-top: 1px solid #f0f0f2;
-  font-size: 0.82rem;
-  color: #8a9098;
+  border-top: 1px solid var(--separator);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--label-3);
   text-align: center;
 }
 
 .ep-add-exam-btn:hover:not(:disabled) {
   background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .ep-add-exam-btn:active:not(:disabled) {
-  transform: scale(0.97);
+  background: var(--color-accent-active);
+  border-color: var(--color-accent-active);
+  transform: scale(var(--press-scale));
 }
 
 .ep-add-exam-btn:disabled {
-  background: #cfd2d6;
-  border-color: #c2c5c9;
+  background: var(--fill-3);
+  border-color: transparent;
+  color: var(--label-4);
+  box-shadow: none;
   cursor: default;
 }
 
 .ep-section-head h3 {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--text-base);
   font-weight: 700;
-  color: #222;
+  letter-spacing: var(--tracking-title);
+  line-height: var(--leading-snug);
+  color: var(--label);
 }
 
 .ep-hint {
   margin: 0;
-  font-size: 0.78rem;
-  color: #777;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caption);
+  color: var(--label-3);
 }
 
 .ep-section-head-right {
@@ -277,18 +305,22 @@
 .ep-head-add {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.3rem;
-  padding: 0.3rem 0.65rem;
+  min-height: 32px;
+  padding: 0.3rem 0.8rem;
   background: var(--color-accent);
-  border: 1px solid #19a449;
-  border-radius: 7px;
-  font-size: 0.82rem;
-  font-weight: 600;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 650;
   color: #fff;
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    transform 0.08s ease;
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .ep-head-add:hover:not(:disabled) {
@@ -296,36 +328,36 @@
 }
 
 .ep-head-add:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(var(--press-scale));
 }
 
 .ep-head-add:disabled {
-  background: #cfd2d6;
-  border-color: #c2c5c9;
+  background: var(--fill-3);
+  border-color: transparent;
+  color: var(--label-4);
   cursor: default;
 }
 
-/* Secondary action (add column) ג€” outlined rather than filled so the
+/* Secondary action (add column) - outlined rather than filled so the
    primary "Exam" button stays the obvious default. */
 .ep-head-add-secondary {
-  background: #fff;
-  color: #1a8a44;
-  border-color: #bfe3cb;
+  background: var(--surface);
+  color: var(--accent-text);
+  border-color: var(--accent-tint-strong);
 }
 
 .ep-head-add-secondary:hover:not(:disabled) {
-  background: #f1fbf4;
+  background: var(--accent-tint);
 }
 
 .ep-empty {
   padding: 1.1rem;
-  font-size: 0.85rem;
-  color: #aaa;
-  font-style: italic;
+  font-size: var(--text-sm);
+  color: var(--label-3);
   text-align: center;
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
 }
 
 /* Positioned wrapper for the Notion-style edge handles. Padding leaves room
@@ -334,15 +366,15 @@
   position: relative;
 }
 
-/* Horizontal scroll wrapper — many question columns overflow into a scroll
+/* Horizontal scroll wrapper - many question columns overflow into a scroll
    instead of squeezing. A slim bar is kept visible so it's clear the table
    scrolls sideways. */
 .ep-table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
 }
 
 .ep-table {
@@ -360,11 +392,11 @@
 
 .ep-table th,
 .ep-table td {
-  /* border-box so the set column widths (150 / 46) are exact — the frozen
+  /* border-box so the set column widths (150 / 46) are exact - the frozen
      Done column then pins precisely at left:150 with no seam. */
   box-sizing: border-box;
-  border-bottom: 1px solid #eef0f2;
-  border-right: 1px solid #eef0f2;
+  border-bottom: 1px solid var(--separator);
+  border-right: 1px solid var(--separator);
 }
 
 .ep-table tr:last-child th,
@@ -377,13 +409,14 @@
   border-right: none;
 }
 
-/* Header row (questions). Nothing is frozen — the whole table scrolls as one. */
+/* Header row (questions). Nothing is frozen - the whole table scrolls as one. */
 .ep-table thead th {
-  background: #f6f6f7;
-  font-size: 0.85rem;
+  background: var(--surface-2);
+  font-size: var(--text-sm);
   font-weight: 600;
-  color: #555;
-  border-bottom: 1px solid #e3e3e6;
+  letter-spacing: var(--tracking-caption);
+  color: var(--label-2);
+  border-bottom: 1px solid var(--separator);
   padding: 0.7rem 1rem;
   vertical-align: middle;
 }
@@ -395,7 +428,7 @@
   position: sticky;
   left: 0;
   z-index: 2;
-  background: #f6f6f7;
+  background: var(--surface-2);
   /* Inset the "Exam" label like the Links table header (1rem). */
   padding-left: 1rem;
   /* Fixed first column for exam names; question columns split the rest
@@ -438,7 +471,7 @@
   pointer-events: none;
 }
 
-/* Insert handle — a hover zone centered on a column border. Hovering reveals a
+/* Insert handle - a hover zone centered on a column border. Hovering reveals a
    white "+" circle with a green glyph (Word/Excel style). */
 .ep-col-insert {
   position: absolute;
@@ -466,28 +499,31 @@
   box-sizing: border-box;
   border: 1.5px solid var(--color-accent);
   border-radius: 50%;
-  background: #fff;
+  background: var(--surface);
   color: var(--color-accent);
   opacity: 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-  transition: opacity 0.12s ease, transform 0.1s ease;
+  box-shadow: var(--shadow-sm);
+  transition: opacity var(--dur-1) var(--ease-out), transform var(--dur-press) var(--ease-out);
 }
 
 .ep-col-insert-btn svg {
   display: block;
 }
 
+/* The scale lives on the inner circle; the hit zone itself is positioned
+   with translate, so it must not get a transform of its own. */
 .ep-col-insert:hover .ep-col-insert-btn {
   opacity: 1;
-}
-
-.ep-col-insert:hover .ep-col-insert-btn {
   transform: scale(1.12);
 }
 
-/* Narrow progress column right after the exam name — frozen left, just past
+.ep-col-insert:active .ep-col-insert-btn {
+  transform: scale(var(--press-scale));
+}
+
+/* Narrow progress column right after the exam name - frozen left, just past
    the 150px name column, so both stay visible while scrolling questions. */
-/* Qualified so it beats `.ep-table thead th`'s padding — otherwise the header
+/* Qualified so it beats `.ep-table thead th`'s padding - otherwise the header
    inset (1rem) wouldn't match the cell's (0.3rem) and "Done" sits off-centre. */
 .ep-table thead th.ep-progress-head {
   width: 56px;
@@ -497,7 +533,7 @@
   position: sticky;
   left: 180px;
   z-index: 2;
-  background: #f6f6f7;
+  background: var(--surface-2);
 }
 
 .ep-progress-cell {
@@ -509,7 +545,7 @@
   position: sticky;
   left: 180px;
   z-index: 1;
-  background: #fff;
+  background: var(--surface);
 }
 
 .ep-col-head-inner,
@@ -533,13 +569,13 @@
   min-width: 0;
 }
 
-/* Exam-name column — frozen left so names stay visible while scrolling. */
+/* Exam-name column - frozen left so names stay visible while scrolling. */
 .ep-row-head {
   text-align: left;
   position: sticky;
   left: 0;
   z-index: 1;
-  background: #fff;
+  background: var(--surface);
   /* left 0.7rem + the label button's own 0.3rem = 1rem, matching .ep-corner. */
   padding: 0.3rem 0.5rem 0.3rem 0.7rem;
   width: 180px;
@@ -560,23 +596,24 @@
   border: 1px solid transparent;
   box-sizing: border-box;
   padding: 0.2rem 0.3rem;
-  /* font-family only ג€” let .ep-row-label/.ep-col-label own the size/weight so
+  /* font-family only - let .ep-row-label/.ep-col-label own the size/weight so
      text and edit-input render identically. */
   font-family: inherit;
-  color: #222;
+  color: var(--label);
   cursor: text;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   text-align: left;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--dur-1) var(--ease-out);
 }
 
 
 .ep-col-label {
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   text-align: center;
 }
 
@@ -586,29 +623,34 @@
   flex: 1 1 auto;
 }
 
-/* Exam name — a text button that opens the edit modal (name + link). */
+/* Exam name - a text button that opens the edit modal (name + link). */
 .ep-row-name {
   flex: 1 1 auto;
   min-width: 0;
   padding: 0.2rem 0.3rem;
   background: transparent;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   font-family: inherit;
   font-size: 0.88rem;
   font-weight: 600;
-  color: #222;
+  color: var(--label);
   text-align: left;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--dur-1) var(--ease-out);
 }
 
 /* Hover matches the row-hover tint so the button blends into the row. */
 .ep-row-name:hover {
-  background: #eaf2fd;
+  background: var(--info-tint);
+}
+
+.ep-row-name:active {
+  background: var(--fill-2);
+  transition-duration: var(--dur-press);
 }
 
 /* Space the trailing action icons so edit/delete aren't cramped together. */
@@ -616,16 +658,16 @@
   gap: 0.45rem;
 }
 
-/* Kebab (⋮) — one action button per row; always visible (not hover-gated). */
+/* Kebab (⋮) - one action button per row; always visible (not hover-gated). */
 .ep-row-head .ep-kebab,
 .ep-kebab {
   flex-shrink: 0;
   opacity: 1;
-  color: #6b7280;
+  color: var(--label-3);
 }
 
 .ep-row-head .ep-kebab:hover {
-  color: #1a1a1a;
+  color: var(--label);
 }
 
 /* ===== Row action menu (portal) ===== */
@@ -636,10 +678,24 @@
   display: flex;
   flex-direction: column;
   padding: 0.3rem;
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  background: var(--elevated);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  /* Opens just below the kebab with its left edge on it: grow from there. */
+  transform-origin: top left;
+  animation: ep-menu-in var(--dur-2) var(--ease-out);
+}
+
+@keyframes ep-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .ep-menu-item {
@@ -650,39 +706,46 @@
   box-sizing: border-box;
   padding: 0.5rem 0.6rem;
   border: none;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   background: transparent;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-weight: 500;
-  color: #333;
+  color: var(--label-2);
   text-align: left;
   text-decoration: none;
   cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-out);
 }
 
 .ep-menu-item svg {
   flex-shrink: 0;
-  color: #6b7280;
+  color: var(--label-3);
 }
 
 .ep-menu-item:hover {
-  background: #f1f2f4;
+  background: var(--fill-2);
+}
+
+.ep-menu-item:active {
+  background: var(--fill-3);
+  transition-duration: var(--dur-press);
 }
 
 .ep-menu-danger {
-  color: #c53030;
+  color: var(--danger-text);
 }
 
 .ep-menu-danger svg {
-  color: #c53030;
+  color: var(--danger-text);
 }
 
-.ep-menu-danger:hover {
-  background: #fde2e2;
+.ep-menu-danger:hover,
+.ep-menu-danger:active {
+  background: var(--danger-tint);
 }
 
-/* ===== Exam row modal fields — label above a full-width input ===== */
+/* ===== Exam row modal fields - label above a full-width input ===== */
 .exam-row-field {
   display: block;
   margin-bottom: 1.1rem;
@@ -697,11 +760,11 @@
   margin-bottom: 0.4rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--label);
 }
 
 .exam-row-field em {
-  color: #9aa0a8;
+  color: var(--label-4);
   font-style: normal;
   font-weight: 500;
 }
@@ -713,16 +776,16 @@
   box-sizing: border-box;
   height: 40px;
   padding: 0 0.75rem;
-  border: 1px solid #d6d6da;
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
   font-family: inherit;
-  font-size: 0.95rem;
-  color: #1a1a1a;
+  font-size: var(--text-base);
+  color: var(--label);
 }
 
 .exam-row-field input::placeholder {
-  color: #b6b9bf;
+  color: var(--label-4);
 }
 
 .exam-row-field input:focus {
@@ -730,8 +793,7 @@
 }
 
 .ep-label-empty {
-  color: #aaa;
-  font-style: italic;
+  color: var(--label-3);
 }
 
 .ep-label-input {
@@ -740,14 +802,14 @@
      wider when editing. */
   min-width: 0;
   box-sizing: border-box;
-  /* Match .ep-label-text exactly ג€” same font, padding, transparent bg ג€” so
+  /* Match .ep-label-text exactly - same font, padding, transparent bg - so
      only the border appears on edit; no font-size or layout jump. */
   padding: 0.2rem 0.3rem;
   font-family: inherit;
   background: transparent;
   border: 1px solid var(--color-accent);
-  border-radius: 5px;
-  color: #222;
+  border-radius: var(--radius-xs);
+  color: var(--label);
   outline: none;
 }
 
@@ -761,7 +823,7 @@
 .ep-cell:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: -2px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .ep-check {
@@ -771,21 +833,21 @@
   /* Anchor to the cell's middle so gaining the check glyph doesn't shift the
      box down (empty vs. filled inline baselines differ otherwise). */
   vertical-align: middle;
-  /* Lock to a square ג€” global button styles must not stretch it into a pill. */
+  /* Lock to a square - global button styles must not stretch it into a pill. */
   width: 17px;
   min-width: 17px;
   height: 17px;
   padding: 0;
   box-sizing: border-box;
-  background: #fff;
-  border: 1.5px solid #b4b7bb;
-  border-radius: 4px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xs);
   color: #fff;
   cursor: pointer;
   transition:
-    background-color 0.12s ease,
-    border-color 0.12s ease,
-    transform 0.08s ease;
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .ep-check svg {
@@ -802,31 +864,31 @@
 
 .ep-check-done {
   background: var(--color-accent);
-  border-color: #19a449;
+  border-color: var(--color-accent);
   box-shadow: 0 1px 3px rgba(25, 164, 73, 0.35);
 }
 
-/* The check glyph pops in when toggled on. */
+/* The check glyph grows in when toggled on (no overshoot). */
 .ep-check-done svg {
-  animation: ep-check-pop 0.18s ease;
+  animation: ep-check-pop var(--dur-2) var(--ease-out);
 }
 
 @keyframes ep-check-pop {
-  0% { transform: scale(0.4); opacity: 0; }
-  60% { transform: scale(1.15); }
-  100% { transform: scale(1); opacity: 1; }
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 /* Per-exam progress badge (done / total questions). */
 .ep-row-progress {
   flex-shrink: 0;
-  font-size: 0.72rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #8a9098;
-  background: #f1f1f3;
+  letter-spacing: var(--tracking-caption);
+  color: var(--label-3);
+  background: var(--fill-2);
   padding: 0.1rem 0.4rem;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   line-height: 1.4;
 }
 
@@ -839,32 +901,32 @@
 .ep-row-complete .ep-row-head,
 .ep-row-complete .ep-progress-cell,
 .ep-row-complete .ep-cell {
-  background: #f3fbf5;
+  background: var(--accent-tint);
 }
 
 .ep-table tbody tr.ep-row-complete:hover .ep-row-head,
 .ep-table tbody tr.ep-row-complete:hover .ep-progress-cell,
 .ep-table tbody tr.ep-row-complete:hover .ep-cell {
-  background: #eaf7ee;
+  background: var(--accent-tint);
 }
 
 .ep-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* Hug the icon ג€” no padding box. */
+  /* Hug the icon - no padding box. */
   width: auto;
   height: auto;
   padding: 0;
   flex-shrink: 0;
   background: transparent;
   border: none;
-  color: #999;
+  color: var(--label-4);
   cursor: pointer;
   opacity: 0;
   transition:
-    color 0.15s ease,
-    opacity 0.15s ease;
+    color var(--dur-1) var(--ease-out),
+    opacity var(--dur-1) var(--ease-out);
 }
 
 .ep-icon-btn svg {
@@ -880,18 +942,18 @@
 }
 
 .ep-icon-delete:hover {
-  color: #c0392b;
+  color: var(--danger-text);
 }
 
-/* Row hover highlight ג€” light blue across the whole exam row, like the
+/* Row hover highlight - light blue across the whole exam row, like the
    reference figure. */
 .ep-table tbody tr:hover .ep-row-head,
 .ep-table tbody tr:hover .ep-progress-cell,
 .ep-table tbody tr:hover .ep-cell {
-  background: #eaf2fd;
+  background: var(--info-tint);
 }
 
-/* Touch devices have no hover ג€” keep the delete buttons and the add "+"
+/* Touch devices have no hover - keep the delete buttons and the add "+"
    handles permanently visible (the :disabled rule still hides them at limit). */
 @media (hover: none) {
   .ep-icon-btn {
@@ -907,19 +969,19 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--scrim);
   display: flex;
   align-items: flex-end;
-  animation: ep-sheet-fade 0.15s ease;
+  animation: ep-sheet-fade var(--dur-2) var(--ease-out);
 }
 
 .ep-sheet {
   width: 100%;
-  background: #fff;
-  border-radius: 16px 16px 0 0;
+  background: var(--elevated);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   padding: 0.6rem 1.1rem calc(1.1rem + env(safe-area-inset-bottom));
-  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.18);
-  animation: ep-sheet-up 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: var(--shadow-lg);
+  animation: ep-sheet-up var(--dur-3) var(--ease-out);
 }
 
 @keyframes ep-sheet-fade {
@@ -934,19 +996,24 @@
 
 .ep-sheet-title {
   margin: 0.4rem 0 0.6rem;
-  font-size: 0.95rem;
+  font-size: var(--text-base);
   font-weight: 700;
-  color: #222;
+  letter-spacing: var(--tracking-title);
+  color: var(--label);
 }
 
 .ep-sheet-input {
   width: 100%;
   box-sizing: border-box;
+  min-height: 44px;
   padding: 0.6rem 0.7rem;
-  font-size: 1rem;
-  border: 1px solid #cdd0d4;
-  border-radius: 9px;
-  color: #222;
+  /* 16px keeps iOS Safari from zooming the page on focus. */
+  font-family: inherit;
+  font-size: var(--text-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--label);
   outline: none;
 }
 
@@ -962,26 +1029,57 @@
 
 .ep-sheet-btn {
   flex: 1;
+  min-height: 44px;
   padding: 0.65rem;
-  font-size: 0.9rem;
-  font-weight: 700;
-  border-radius: 9px;
+  font-family: inherit;
+  font-size: var(--text-base);
+  font-weight: 650;
+  border-radius: var(--radius-full);
   cursor: pointer;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
+}
+
+.ep-sheet-btn:active {
+  transform: scale(var(--press-scale));
 }
 
 .ep-sheet-cancel {
-  background: #f1f1f3;
-  border: 1px solid #e3e3e6;
-  color: #555;
+  background: var(--fill-2);
+  border: 1px solid transparent;
+  color: var(--label);
+}
+
+.ep-sheet-cancel:active {
+  background: var(--fill-3);
 }
 
 .ep-sheet-save {
   background: var(--color-accent);
-  border: 1px solid #19a449;
+  border: 1px solid var(--color-accent);
   color: #fff;
 }
 
-/* Mobile — don't freeze the exam-name / Done columns; a narrow viewport has no
+.ep-sheet-save:active {
+  background: var(--color-accent-active);
+}
+
+/* Touch targets: header actions and menu rows grow to ~40px on tablets
+   and phones. */
+@media (max-width: 1024px) {
+  .ep-add-exam-btn,
+  .ep-add-q-btn,
+  .ep-head-add {
+    min-height: 40px;
+  }
+
+  .ep-menu-item {
+    min-height: 40px;
+  }
+}
+
+/* Mobile - don't freeze the exam-name / Done columns; a narrow viewport has no
    room to spare, so the whole table scrolls together. Placed last so it wins
    the source-order tie against the sticky rules above. */
 @media (max-width: 768px) {

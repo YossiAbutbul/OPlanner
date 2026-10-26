@@ -1,7 +1,6 @@
 .rm-empty {
   margin: 0;
-  color: #888;
-  font-style: italic;
+  color: var(--label-3);
   text-align: center;
   padding: 0.5rem 0;
 }
@@ -24,24 +23,24 @@
   margin-top: 0.9rem;
 }
 
-/* Section header — small caps label + count badge + hairline rule. */
+/* Section header: small caps label + count badge + hairline rule. */
 .rm-head {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin: 0 0 0.5rem;
-  font-size: 0.72rem;
+  font-size: var(--text-2xs);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
-  color: #888;
+  color: var(--label-3);
 }
 
 .rm-head::after {
   content: "";
   flex: 1;
   height: 1px;
-  background: #ececef;
+  background: var(--separator);
 }
 
 .rm-head span {
@@ -53,27 +52,29 @@
   min-width: 20px;
   height: 18px;
   padding: 0 0.4rem;
-  border-radius: 999px;
-  background: #f1f2f4;
-  color: #5b6470;
-  font-size: 0.68rem;
+  border-radius: var(--radius-full);
+  background: var(--fill-2);
+  color: var(--label-3);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
   line-height: 1;
 }
 
 .rm-head-overdue {
-  color: #dc2626;
+  color: var(--danger-text);
 }
 .rm-head-overdue span {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--danger-tint);
+  color: var(--danger-text);
 }
 
 .rm-head-done {
-  color: #16a34a;
+  color: var(--success-text);
 }
 .rm-head-done span {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--success-tint);
+  color: var(--success-text);
 }
 
 .rm-list {
@@ -90,9 +91,9 @@
   align-items: flex-start;
   gap: 0.7rem;
   padding: 0.65rem 0.75rem;
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-md);
   flex-shrink: 0;
 }
 
@@ -102,7 +103,7 @@
 
 .rm-item.is-done .rm-name {
   text-decoration: line-through;
-  text-decoration-color: #9aa0a8;
+  text-decoration-color: var(--label-4);
 }
 
 .rm-dot {
@@ -119,9 +120,10 @@
 }
 
 .rm-name {
-  color: #1a1a1a;
+  color: var(--label);
   font-size: 0.95rem;
   font-weight: 500;
+  letter-spacing: var(--tracking-body);
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -133,7 +135,7 @@
   gap: 0.5rem;
   margin-top: 0.15rem;
   font-size: 0.78rem;
-  color: #888;
+  color: var(--label-3);
 }
 
 .rm-time {
@@ -143,13 +145,13 @@
 .rm-time::before {
   content: "·";
   margin-right: 0.5rem;
-  color: #c2c6cc;
+  color: var(--label-4);
 }
 
 .rm-notes {
   margin-top: 0.3rem;
   font-size: 0.8rem;
-  color: #9aa0a8;
+  color: var(--label-3);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -163,30 +165,43 @@
 }
 
 .rm-btn {
-  background: #fff;
-  color: #333;
-  border: 1px solid #d6d6da;
+  /* Raised one step above the row card in both appearances. */
+  background: var(--elevated);
+  color: var(--label-2);
+  border: 1px solid var(--border);
   padding: 0.35rem 0.7rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background-color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), transform var(--dur-press) var(--ease-out);
 }
 
 .rm-btn:hover {
-  background: #f0f0f1;
-  border-color: #b8bbc0;
-  color: #1a1a1a;
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+  color: var(--label);
+}
+
+.rm-btn:active {
+  transform: scale(var(--press-scale));
 }
 
 .rm-btn.danger {
-  color: #c53030;
-  border-color: #f5b7b7;
+  color: var(--danger-text);
+  border-color: var(--danger-tint);
 }
 
 .rm-btn.danger:hover {
-  background: #fde2e2;
-  border-color: #e53e3e;
-  color: #b91c1c;
+  background: var(--danger-tint);
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+
+/* Phones: action buttons sized for a thumb. */
+@media (max-width: 480px) {
+  .rm-btn {
+    min-height: 40px;
+    padding: 0.4rem 0.8rem;
+  }
 }

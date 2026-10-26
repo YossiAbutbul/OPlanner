@@ -10,33 +10,33 @@
   gap: 0.55rem;
   width: 100%;
   padding: 0.6rem 0.7rem;
-  border: 1px solid #d6d6da;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #1a1a1a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--label);
   cursor: pointer;
   font-family: inherit;
   font-size: 0.95rem;
   line-height: 1.2;
   text-align: left;
   box-sizing: border-box;
-  transition: border-color 0.15s ease;
+  transition: border-color var(--dur-1) var(--ease-out);
 }
 
-.cs-trigger:hover {
-  border-color: #d6d6da;
+.cs-trigger:hover:not(:disabled) {
+  border-color: var(--border-strong);
 }
 
 .cs-trigger:disabled {
   cursor: not-allowed;
-  background: #f3f3f4;
-  color: #9a9a9f;
+  background: var(--surface-2);
+  color: var(--label-3);
 }
 
 .cs-trigger:focus,
 .cs-trigger:focus-visible {
   outline: none;
-  border-color: #d6d6da;
+  border-color: var(--border);
 }
 
 .cs-value {
@@ -48,13 +48,13 @@
 }
 
 .cs-value-empty {
-  color: #999;
+  color: var(--label-4);
 }
 
 .cs-chevron {
-  color: #555;
+  color: var(--label-2);
   flex-shrink: 0;
-  transition: transform 0.18s ease;
+  transition: transform var(--dur-1) var(--ease-out);
 }
 
 .cs-chevron-open {
@@ -64,10 +64,10 @@
 .cs-popover {
   position: fixed;
   z-index: var(--z-popover);
-  background: #ffffff;
-  border: 1px solid #e3e3e6;
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+  background: var(--elevated);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   padding: 0.3rem;
   display: flex;
   flex-direction: column;
@@ -75,37 +75,65 @@
   max-height: 260px;
   overflow-y: auto;
   box-sizing: border-box;
+  /* Same width as the trigger, so it unfolds from the trigger edge. */
+  transform-origin: top center;
+  animation: csPopIn var(--dur-2) var(--ease-out);
+}
+
+@keyframes csPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .cs-option {
   background: transparent;
   border: none;
   padding: 0.5rem 0.65rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-family: inherit;
   font-size: 0.92rem;
   font-weight: 500;
-  color: #444;
+  color: var(--label-2);
   text-align: left;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: background 0.12s ease, color 0.12s ease;
+  flex-shrink: 0;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
 }
 
 .cs-option:hover {
-  background: #f0f0f2;
-  color: #111;
+  background: var(--fill);
+  color: var(--label);
 }
 
-.cs-option-active {
-  background: var(--color-accent);
-  color: #fff;
-  font-weight: 700;
+.cs-option:active {
+  background: var(--fill-2);
 }
 
+.cs-option-active,
 .cs-option-active:hover {
-  background: #19a449;
-  color: #fff;
+  background: var(--accent-tint);
+  color: var(--accent-text);
+  font-weight: 650;
+}
+
+.cs-option-active:active {
+  background: var(--accent-tint-strong);
+}
+
+/* Phones: comfortable thumb targets for each option. */
+@media (max-width: 480px) {
+  .cs-option {
+    min-height: 40px;
+  }
 }

@@ -14,7 +14,7 @@
   padding-bottom: 1rem;
 }
 
-/* Links + Notes sit flush on the page ג€” no card chrome. Assignments keeps
+/* Links + Notes sit flush on the page - no card chrome. Assignments keeps
    its own table container (see .cip-assignments below). */
 .cip-section {
   display: flex;
@@ -31,14 +31,17 @@
 
 .cip-section-head h3 {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--text-base);
   font-weight: 700;
-  color: #222;
+  letter-spacing: var(--tracking-title);
+  line-height: var(--leading-snug);
+  color: var(--label);
 }
 
 .cip-hint {
-  font-size: 0.78rem;
-  color: #999;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caption);
+  color: var(--label-3);
 }
 
 .cip-section-head-right {
@@ -50,31 +53,42 @@
 .cip-head-add {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.3rem;
-  padding: 0.3rem 0.65rem;
+  min-height: 32px;
+  padding: 0.3rem 0.85rem;
   background: var(--color-accent);
-  border: 1px solid #19a449;
-  border-radius: 7px;
-  font-size: 0.82rem;
-  font-weight: 600;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-full);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  letter-spacing: var(--tracking-body);
   color: #fff;
   cursor: pointer;
+  box-shadow: 0 1px 2px rgba(17, 120, 54, 0.25);
   transition:
-    background-color 0.15s ease,
-    transform 0.08s ease;
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .cip-head-add:hover:not(:disabled) {
   background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
 }
 
 .cip-head-add:active:not(:disabled) {
-  transform: scale(0.97);
+  background: var(--color-accent-active);
+  border-color: var(--color-accent-active);
+  transform: scale(var(--press-scale));
 }
 
 .cip-head-add:disabled {
-  background: #cfd2d6;
-  border-color: #c2c5c9;
+  background: var(--fill-3);
+  border-color: transparent;
+  color: var(--label-4);
+  box-shadow: none;
   cursor: default;
 }
 
@@ -100,22 +114,22 @@
   max-height: calc(var(--cip-row-h) * var(--cip-max-rows));
 }
 
-/* Bigger notes ג€” default editor is 88px; quadruple it for the dedicated
+/* Bigger notes - default editor is 88px; quadruple it for the dedicated
    Notes section so the user has real room to type. */
 .cip-notes .ne-collapsed {
   height: 260px;
   max-height: 50vh;
 }
 
-/* Links table ג€” matches the homework/assignments table chrome (white card,
-   #e3e3e6 border, gray header row). Flex rows so the actions column never
+/* Links table - matches the homework/assignments table chrome (surface card,
+   separator border, surface-2 header row). Flex rows so the actions column never
    gets clipped when the inputs widen. */
 .cip-table {
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -127,7 +141,7 @@
   overflow-y: auto;
   max-height: calc(var(--cip-row-h) * var(--cip-max-rows));
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+  scrollbar-color: var(--fill-3) transparent;
 }
 
 .cip-table-body::-webkit-scrollbar {
@@ -139,13 +153,13 @@
 }
 
 .cip-table-body::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.18);
-  border-radius: 999px;
-  border: 2px solid #fff;
+  background: var(--fill-3);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--surface);
 }
 
 .cip-table-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.32);
+  background: var(--label-4);
 }
 
 .cip-table-head,
@@ -157,11 +171,12 @@
 }
 
 .cip-table-head {
-  background: #f6f6f7;
-  font-size: 0.85rem;
+  background: var(--surface-2);
+  font-size: var(--text-sm);
   font-weight: 600;
-  color: #555;
-  border-bottom: 1px solid #e3e3e6;
+  letter-spacing: var(--tracking-caption);
+  color: var(--label-2);
+  border-bottom: 1px solid var(--separator);
 }
 
 .cip-table-head .cip-col-name {
@@ -178,12 +193,12 @@
 }
 
 .cip-table-row {
-  border-bottom: 1px solid #eef0f2;
+  border-bottom: 1px solid var(--separator);
   position: relative;
   flex-wrap: wrap;
-  /* Never let the capped body squash rows — it scrolls instead. */
+  /* Never let the capped body squash rows - it scrolls instead. */
   flex-shrink: 0;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--dur-1) var(--ease-out);
 }
 
 .cip-table-body > .cip-table-row:last-child {
@@ -191,7 +206,7 @@
 }
 
 .cip-table-row:hover {
-  background: #fafafb;
+  background: var(--fill);
 }
 
 .cip-table-row .cip-col-name {
@@ -221,7 +236,7 @@
 .cip-cell-label {
   font-size: 0.88rem;
   font-weight: 600;
-  color: #222;
+  color: var(--label);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -231,8 +246,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  font-size: 0.85rem;
-  color: #1a8a44;
+  font-size: var(--text-sm);
+  color: var(--accent-text);
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
@@ -245,28 +260,28 @@
 
 .cip-cell-url-icon {
   flex-shrink: 0;
-  color: #6aa;
+  color: currentColor;
   opacity: 0.7;
 }
 
 /* Highlight the row currently being edited. */
 .cip-row-editing {
-  background: #fbfffd;
+  background: var(--accent-tint);
 }
 
 .cip-row-save {
-  color: #157a3c;
+  color: var(--success-text);
 }
 
 .cip-row-save:hover:not(:disabled) {
-  color: #0e5e2c;
+  background: var(--accent-tint);
+  color: var(--accent-text);
 }
 
 .cip-table-empty {
   padding: 0.85rem;
-  font-size: 0.85rem;
-  color: #aaa;
-  font-style: italic;
+  font-size: var(--text-sm);
+  color: var(--label-3);
   text-align: center;
 }
 
@@ -288,13 +303,17 @@
   font-family: inherit;
   font-size: 0.88rem;
   background: transparent;
-  border: 1px solid #dcdce0;
-  border-radius: 6px;
-  color: #222;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--label);
   outline: none;
   transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
+    border-color var(--dur-1) var(--ease-out),
+    background-color var(--dur-1) var(--ease-out);
+}
+
+.cip-input::placeholder {
+  color: var(--label-4);
 }
 
 .cip-input:focus {
@@ -309,23 +328,30 @@
   height: 28px;
   background: transparent;
   border: none;
-  border-radius: 6px;
-  color: #555;
+  border-radius: var(--radius-sm);
+  color: var(--label-2);
   cursor: pointer;
   text-decoration: none;
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
-/* Keep the glyph at full size ג€” never let flexbox shrink the SVG to 0. */
+/* Keep the glyph at full size - never let flexbox shrink the SVG to 0. */
 .cip-row-btn svg {
   flex-shrink: 0;
   display: block;
 }
 
 .cip-row-btn:hover:not(:disabled) {
-  color: #111;
+  background: var(--fill-2);
+  color: var(--label);
+}
+
+.cip-row-btn:active:not(:disabled) {
+  background: var(--fill-3);
+  transform: scale(var(--press-scale));
 }
 
 .cip-row-btn:disabled {
@@ -334,18 +360,19 @@
 }
 
 .cip-row-delete {
-  color: #c0392b;
+  color: var(--danger-text);
 }
 
 .cip-row-delete:hover:not(:disabled) {
-  color: #962b1f;
+  background: var(--danger-tint);
+  color: var(--danger-text);
 }
 
 .cip-row-error {
   flex: 1 1 100%;
   order: 99;
-  font-size: 0.75rem;
-  color: #e74c3c;
+  font-size: var(--text-xs);
+  color: var(--danger-text);
   margin-top: 0.2rem;
 }
 
@@ -356,6 +383,21 @@
   .cip-assignments .homework-table-scroll,
   .cip-table-body {
     max-height: none;
+  }
+
+  /* Touch targets: ~40px on tablets and phones. */
+  .cip-head-add {
+    min-height: 40px;
+  }
+
+  .cip-row-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .cip-table-head .cip-col-actions,
+  .cip-table-row .cip-col-actions {
+    flex-basis: 128px;
   }
 }
 

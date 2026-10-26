@@ -8,7 +8,7 @@
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #555;
+  color: var(--label-2);
   margin: 0 0 0.3rem;
   letter-spacing: 0.02em;
 }
@@ -19,27 +19,27 @@
   gap: 0.55rem;
   width: 100%;
   padding: 0.6rem 0.7rem;
-  border: 1px solid #d6d6da;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #1a1a1a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--label);
   cursor: pointer;
   font-family: inherit;
   font-size: 0.95rem;
   line-height: 1.2;
   text-align: left;
   box-sizing: border-box;
-  transition: border-color 0.15s ease;
+  transition: border-color var(--dur-1) var(--ease-out);
 }
 
 .tp-trigger:hover {
-  border-color: #d6d6da;
+  border-color: var(--border-strong);
 }
 
 .tp-trigger:focus,
 .tp-trigger:focus-visible {
   outline: none;
-  border-color: #d6d6da;
+  border-color: var(--border);
   box-shadow: none;
 }
 
@@ -50,13 +50,13 @@
 
 .tp-trigger > svg {
   flex-shrink: 0;
-  color: #555;
+  color: var(--label-2);
 }
 
 .tp-trigger-chevron {
-  color: #555;
+  color: var(--label-2);
   flex-shrink: 0;
-  transition: transform 0.18s ease;
+  transition: transform var(--dur-1) var(--ease-out);
 }
 
 .tp-trigger-chevron-open {
@@ -67,13 +67,14 @@
   flex: 1;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1a1a1a;
-  letter-spacing: 0.02em;
+  color: var(--label);
+  letter-spacing: var(--tracking-body);
+  font-variant-numeric: tabular-nums;
   line-height: 1.2;
 }
 
 .tp-trigger-empty {
-  color: #999;
+  color: var(--label-4);
   font-weight: 400;
 }
 
@@ -81,15 +82,30 @@
 .tp-popover {
   position: fixed;
   z-index: var(--z-popover);
-  background: #ffffff;
-  border: 1px solid #e3e3e6;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+  background: var(--elevated);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
   box-sizing: border-box;
+  /* Fade + short drop instead of a scale: the list scrolls the selected
+     slot into view by measuring rect deltas on open, and a scale would
+     shrink those deltas mid-animation and land on the wrong slot. */
+  animation: tpPopIn var(--dur-2) var(--ease-out);
+}
+
+@keyframes tpPopIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tp-input-row {
@@ -103,14 +119,15 @@
   font-family: inherit;
   font-size: 0.95rem;
   padding: 0 0.6rem;
-  border: 1px solid #d6d6da;
-  border-radius: 6px;
-  background: #fafafb;
-  color: #1a1a1a;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--label);
   outline: none;
   font-weight: 600;
   text-align: left;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--tracking-body);
+  font-variant-numeric: tabular-nums;
   min-width: 0;
   height: 34px;
   line-height: 32px;
@@ -118,26 +135,29 @@
 }
 
 .tp-input:focus {
-  background: #fff;
-  border-color: #d6d6da;
+  background: var(--surface);
+  border-color: var(--border-strong);
   box-shadow: none;
 }
 
 .tp-input-invalid {
-  border-color: #e74c3c;
+  border-color: var(--danger);
 }
 
 .tp-input-ok {
   width: 34px;
   height: 34px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--color-accent);
-  color: #fff;
+  color: var(--on-accent);
   cursor: pointer;
   font-size: 0.95rem;
   font-weight: 700;
-  transition: background 0.15s ease;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -148,12 +168,19 @@
 }
 
 .tp-input-ok:disabled {
-  background: #c8e6d3;
+  background: var(--accent-tint);
+  color: var(--accent-text);
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .tp-input-ok:hover:not(:disabled) {
-  background: #159a43;
+  background: var(--color-accent-hover);
+}
+
+.tp-input-ok:active:not(:disabled) {
+  background: var(--color-accent-active);
+  transform: scale(var(--press-scale));
 }
 
 .tp-list {
@@ -167,34 +194,61 @@
 }
 
 .tp-list::-webkit-scrollbar { width: 6px; }
-.tp-list::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.18); border-radius: 999px; }
+.tp-list::-webkit-scrollbar-thumb { background: var(--fill-3); border-radius: var(--radius-full); }
 
 .tp-slot {
   background: transparent;
   border: none;
   padding: 0.45rem 0.7rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-family: inherit;
   font-size: 0.92rem;
   font-weight: 500;
-  color: #444;
+  font-variant-numeric: tabular-nums;
+  color: var(--label-2);
   text-align: left;
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
 }
 
 .tp-slot:hover {
-  background: #f0f0f2;
-  color: #111;
+  background: var(--fill);
+  color: var(--label);
 }
 
-.tp-slot-active {
-  background: var(--color-accent);
-  color: #fff;
-  font-weight: 700;
+.tp-slot:active {
+  background: var(--fill-2);
 }
 
+.tp-slot-active,
 .tp-slot-active:hover {
-  background: #159a43;
-  color: #fff;
+  background: var(--accent-tint);
+  color: var(--accent-text);
+  font-weight: 650;
+}
+
+.tp-slot-active:active {
+  background: var(--accent-tint-strong);
+}
+
+/* Phones: roomier rows so each slot is a comfortable thumb target. */
+@media (max-width: 480px) {
+  .tp-slot {
+    min-height: 40px;
+  }
+
+  .tp-input,
+  .tp-input-ok {
+    height: 40px;
+  }
+
+  .tp-input {
+    line-height: 38px;
+  }
+
+  .tp-input-ok {
+    width: 40px;
+  }
 }

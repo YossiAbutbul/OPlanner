@@ -127,7 +127,7 @@ const AuthModal: React.FC<Props> = ({ isOpen, initialMode = "signin", onClose })
         onClick={(e) => e.stopPropagation()}
         initial={reduceMotion ? false : { opacity: 0, scale: 0.92, y: 18 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 340, damping: 26 }}
+        transition={{ type: "spring", stiffness: 340, damping: 37 }}
       >
         {mode !== "reset" && (
           <div className="auth-tabs" role="tablist">
@@ -144,7 +144,7 @@ const AuthModal: React.FC<Props> = ({ isOpen, initialMode = "signin", onClose })
                   <motion.span
                     className="auth-tab-pill"
                     layoutId="auth-tab-pill"
-                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                    transition={{ type: "spring", stiffness: 420, damping: 41 }}
                   />
                 )}
                 <span className="auth-tab-label">

@@ -1,20 +1,28 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* System font first: it ships optical sizing and per-size tracking tables
+     (SF on Apple, Segoe UI Variable on Windows). Inter is a fallback only. */
+  font-family:
+    system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI Variable Text", "Segoe UI", Inter, Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  font-size: 100%;
   line-height: 1.5;
   font-weight: 400;
+  font-optical-sizing: auto;
 
-  color-scheme: light;
-  color: #213547;
-  background-color: #ffffff;
+  color-scheme: light dark;
+  color: var(--label);
+  background-color: var(--canvas);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 
   /* ===== Design tokens ===== */
 
-  /* Layout widths ג€” fluid by default, clamp to readable extremes. */
+  /* Layout widths: fluid by default, clamp to readable extremes. */
   --sidebar-w: clamp(220px, 17vw, 260px);
   --sidebar-w-collapsed: 76px;
   --rsidebar-w: clamp(260px, 22vw, 340px);
@@ -30,21 +38,120 @@
   --space-8: 2rem;
   --space-10: 2.5rem;
 
-  /* Brand / semantic colors — single source of truth for the app green.
+  /* Type scale. Hierarchy comes from size + weight + leading as a set;
+     tracking is size-specific (tight on display, neutral on body, a hair
+     open on small caps-ish labels). */
+  --text-2xs: 0.6875rem; /* 11px */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.8125rem;  /* 13px */
+  --text-base: 0.9375rem;/* 15px */
+  --text-md: 1rem;       /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.375rem;   /* 22px */
+  --text-2xl: 1.75rem;   /* 28px */
+  --text-3xl: 2.25rem;   /* 36px */
+  --tracking-display: -0.022em;
+  --tracking-title: -0.014em;
+  --tracking-body: -0.003em;
+  --tracking-caption: 0.01em;
+  --tracking-eyebrow: 0.06em;
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-body: 1.5;
+
+  /* Brand / semantic colors: single source of truth for the app green.
      Components reference these instead of hardcoding the hex. */
   --color-accent: #1db954;
   --color-accent-hover: #1ed760;
   --color-accent-active: #19a449;
+  --accent-text: #128a3d;            /* green that passes contrast as text */
+  --accent-tint: rgba(29, 185, 84, 0.12);
+  --accent-tint-strong: rgba(29, 185, 84, 0.2);
+  --on-accent: #ffffff;
 
-  /* Corner radii */
-  --radius-sm: 6px;
+  /* Surfaces (light). The main column is a warm grouped canvas with white
+     cards on top; modals/popovers sit one step higher. */
+  --canvas: #f7f7f5;
+  --canvas-2: #efefec;               /* year tab strip, recessed wells */
+  --surface: #ffffff;
+  --surface-2: #f6f6f7;              /* inset rows, secondary panels */
+  --surface-3: #eeeef0;              /* hover on surface-2, pressed */
+  --elevated: #ffffff;               /* modals, sheets, popovers */
+  /* Three-level tab strips (year > semester > course), each a step closer
+     to the canvas; an active tab takes the colour of the strip below it. */
+  --strip-1: #ebebe8;
+  --strip-2: #f1f1ef;
+  --strip-3: #f5f5f3;
+
+  /* Labels: four levels of emphasis. */
+  --label: #1a1a1c;
+  --label-2: #48484c;
+  --label-3: #737378;
+  --label-4: #a1a1a6;
+
+  /* Lines. Separators divide content; borders outline controls. */
+  --separator: #ececef;
+  --border: #dcdce0;
+  --border-strong: #c4c4c9;
+
+  /* Translucent fills for hover/pressed tints on any surface. */
+  --fill: rgba(0, 0, 0, 0.04);
+  --fill-2: rgba(0, 0, 0, 0.07);
+  --fill-3: rgba(0, 0, 0, 0.11);
+
+  /* Inverse (tooltips, dark chips on light). */
+  --inverse: #1d1d1f;
+  --on-inverse: #ffffff;
+
+  /* Status. */
+  --danger: #d93a35;
+  --danger-hover: #c1302b;
+  --danger-text: #c42f2a;
+  --danger-tint: rgba(217, 58, 53, 0.1);
+  --warning: #c27c0e;
+  --warning-text: #946100;
+  --warning-tint: rgba(234, 160, 30, 0.14);
+  --success-text: #15803d;
+  --success-tint: #dcfce7;
+  --info: #2f6fde;
+  --info-tint: rgba(47, 111, 222, 0.12);
+
+  /* Materials: translucent layers for floating chrome. */
+  --material-thin: rgba(255, 255, 255, 0.72);
+  --material-thick: rgba(250, 250, 249, 0.86);
+  --material-blur: saturate(180%) blur(20px);
+  --scrim: rgba(12, 13, 16, 0.42);
+
+  /* Depth. Bigger surfaces read as thicker: deeper, softer shadow. */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.05), 0 10px 28px rgba(0, 0, 0, 0.09);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.06), 0 24px 56px rgba(0, 0, 0, 0.18);
+  --ring: 0 0 0 1px var(--separator);
+
+  /* Corner radii. Continuous-looking: inner radius = outer - padding. */
+  --radius-xs: 4px;
+  --radius-sm: 7px;
   --radius-md: 10px;
-  --radius-lg: 16px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-full: 999px;
 
-  /* Z-index scale ג€” single source of truth. Layers stack predictably so
-     popovers always sit above modals, toasts always above popovers, etc.
-     Old code had 11000/10001/10000/9999/1100 fighting each other. */
+  /* Motion. CSS can't run a true spring, so these curves approximate a
+     critically damped spring (damping 1.0): fast start, no overshoot.
+     Bounce is reserved for momentum-driven gestures, which this app has
+     none of. Durations stand in for spring "response". */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --dur-press: 90ms;
+  --dur-1: 140ms;   /* hover, color */
+  --dur-2: 220ms;   /* popovers, small surfaces */
+  --dur-3: 340ms;   /* sheets, drawers, large surfaces */
+  --press-scale: 0.97;
+
+  /* Z-index scale: single source of truth. Layers stack predictably so
+     popovers always sit above modals, toasts always above popovers, etc. */
   --z-base: 1;
   --z-dropdown: 100;        /* in-flow menus, badges */
   --z-sticky: 200;          /* sticky calendar headers */
@@ -54,9 +161,9 @@
   --z-modal-overlay: 2000;  /* modal backdrops */
   --z-modal: 2100;          /* modal content */
   --z-popover: 3000;        /* date/time picker, custom select dropdowns */
-  --z-toast: 4000;          /* reserved for future toasts */
+  --z-toast: 4000;          /* toasts */
 
-  /* Breakpoints ג€” documented; use in media queries:
+  /* Breakpoints (documented; use in media queries):
      phone:        max-width 480px
      small tablet: 481-767
      tablet:       768-1023  (sidebar OK, right sidebar hidden)
@@ -64,7 +171,83 @@
      desktop:      1280+     (all 3 columns, right sidebar full) */
 }
 
+/* ===== Dark appearance =====
+   The sidebars are dark in both appearances; in dark mode the main column
+   follows them. Elevated surfaces get lighter, not darker, so depth still
+   reads without heavy shadows. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent-text: #3ddc78;
+    --accent-tint: rgba(29, 185, 84, 0.16);
+    --accent-tint-strong: rgba(29, 185, 84, 0.26);
 
+    --canvas: #121315;
+    --canvas-2: #0c0d0f;
+    --surface: #1a1b1e;
+    --surface-2: #202125;
+    --surface-3: #2a2b30;
+    --elevated: #222327;
+    --strip-1: #08090a;
+    --strip-2: #0c0d0f;
+    --strip-3: #0f1012;
+
+    --label: #f2f2f4;
+    --label-2: #c9cad0;
+    --label-3: #9a9ca3;
+    --label-4: #6d6f77;
+
+    --separator: rgba(255, 255, 255, 0.075);
+    --border: rgba(255, 255, 255, 0.13);
+    --border-strong: rgba(255, 255, 255, 0.22);
+
+    --fill: rgba(255, 255, 255, 0.05);
+    --fill-2: rgba(255, 255, 255, 0.085);
+    --fill-3: rgba(255, 255, 255, 0.12);
+
+    --inverse: #f2f2f4;
+    --on-inverse: #1a1b1e;
+
+    --danger: #e5484d;
+    --danger-hover: #f05a5f;
+    --danger-text: #ff7a7a;
+    --danger-tint: rgba(255, 105, 97, 0.14);
+    --warning: #f0b23f;
+    --warning-text: #f3c768;
+    --warning-tint: rgba(243, 199, 104, 0.14);
+    --success-text: #4cd980;
+    --success-tint: rgba(76, 217, 128, 0.14);
+    --info: #6ea0ff;
+    --info-tint: rgba(110, 160, 255, 0.16);
+
+    --material-thin: rgba(26, 27, 30, 0.7);
+    --material-thick: rgba(18, 19, 21, 0.82);
+    --scrim: rgba(0, 0, 0, 0.6);
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.35), 0 24px 56px rgba(0, 0, 0, 0.55);
+  }
+}
+
+/* Reduce transparency: frostier, solid materials, no blur. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --material-thin: var(--surface);
+    --material-thick: var(--canvas);
+    --material-blur: none;
+  }
+}
+
+/* Increase contrast: stronger lines and secondary text. */
+@media (prefers-contrast: more) {
+  :root {
+    --separator: var(--border-strong);
+    --border: var(--label-3);
+    --label-3: var(--label-2);
+    --label-4: var(--label-3);
+  }
+}
 
 html,
 body,
@@ -80,6 +263,7 @@ body,
 body {
   display: block;
   min-width: 320px;
+  background-color: var(--canvas);
 }
 
 h1 {
@@ -87,18 +271,31 @@ h1 {
   line-height: 1.1;
 }
 
+h1,
+h2,
+h3 {
+  letter-spacing: var(--tracking-title);
+}
+
 button {
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.25s;
+  background-color: var(--fill);
+  color: inherit;
+  transition: border-color var(--dur-1) var(--ease-out);
+  touch-action: manipulation;
 }
 
-/* Global keyboard-focus indicator ג€” visible ring on Tab/Shift-Tab focus, NOT
+a:hover {
+  color: var(--accent-text);
+}
+
+/* Global keyboard-focus indicator: visible ring on Tab/Shift-Tab focus, NOT
    on mouse click (where :focus-visible is suppressed by the UA). Applies to
    every interactive element so keyboard users always know where they are. */
 :focus {
@@ -107,7 +304,7 @@ button {
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
 /* Form fields: no focus indicator anywhere in the app (user preference).
@@ -122,23 +319,24 @@ select:focus-visible {
   box-shadow: none;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
+/* Touch devices: 16px minimum in text fields so iOS doesn't zoom the page
+   on focus (jarring in the installed PWA). */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
   }
 }
 
-/* App-wide scrollbars ג€” slim, transparent track, subtle gray thumb */
+::selection {
+  background: var(--accent-tint-strong);
+}
+
+/* App-wide scrollbars: slim, transparent track, subtle thumb */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+  scrollbar-color: var(--fill-3) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -151,19 +349,46 @@ select:focus-visible {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
+  background: var(--fill-3);
   border-radius: 999px;
   transition: background-color 0.15s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.24);
+  background: var(--label-4);
 }
 
 ::-webkit-scrollbar-thumb:active {
-  background: rgba(0, 0, 0, 0.36);
+  background: var(--label-3);
 }
 
 ::-webkit-scrollbar-corner {
   background: transparent;
+}
+
+/* Reduced motion: keep feedback, drop travel. Slides, scales and springs
+   collapse to short cross-fades; looping decoration stops. Components can
+   still opt into their own gentler variants on top of this. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Spinners are status, not decoration: keep them turning. */
+  [class*="spin"] {
+    animation-duration: 0.9s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  /* Opacity and color changes aid comprehension; keep them, just short. */
+  .app-modal-overlay,
+  .toast,
+  .pwa-update {
+    transition-duration: 160ms !important;
+  }
 }

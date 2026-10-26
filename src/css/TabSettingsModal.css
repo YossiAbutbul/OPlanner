@@ -32,7 +32,7 @@
 }
 
 .tab-settings-label {
-  color: #555;
+  color: var(--label-2);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -45,9 +45,10 @@
 }
 
 .tab-settings-value {
-  color: #1a1a1a;
+  color: var(--label);
   font-size: 0.95rem;
   font-weight: 600;
+  letter-spacing: var(--tracking-body);
 }
 
 .tab-settings-swatches {
@@ -70,15 +71,21 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transition: transform var(--dur-press) var(--ease-out), box-shadow var(--dur-press) var(--ease-out);
 }
 
 .tab-settings-swatch:hover {
   transform: scale(1.1);
 }
 
+.tab-settings-swatch:active {
+  transform: scale(var(--press-scale));
+}
+
+/* Inner white keeps the swatch colour framed; the outer ring follows the
+   label colour so it stays visible on light and dark modals. */
 .tab-settings-swatch.selected {
-  box-shadow: inset 0 0 0 2px #ffffff, 0 0 0 2px #1a1a1a;
+  box-shadow: inset 0 0 0 2px #ffffff, 0 0 0 2px var(--label);
 }
 
 .tab-settings-check {
@@ -103,23 +110,27 @@
   cursor: pointer;
   flex-shrink: 0;
   background: transparent;
-  border: 1.5px dashed #b8bbc0;
+  border: 1.5px dashed var(--border-strong);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  transition: transform 0.1s ease, border-color 0.1s ease, background-color 0.1s ease, box-shadow 0.1s ease;
+  transition: transform var(--dur-press) var(--ease-out), border-color var(--dur-press) var(--ease-out), background-color var(--dur-press) var(--ease-out), box-shadow var(--dur-press) var(--ease-out);
 }
 
 .tab-settings-custom:hover {
-  border-color: #555;
-  background: #f5f5f7;
+  border-color: var(--label-3);
+  background: var(--fill);
   transform: scale(1.1);
+}
+
+.tab-settings-custom:active {
+  transform: scale(var(--press-scale));
 }
 
 .tab-settings-custom.selected {
   border: none;
-  box-shadow: inset 0 0 0 2px #ffffff, 0 0 0 2px #1a1a1a;
+  box-shadow: inset 0 0 0 2px #ffffff, 0 0 0 2px var(--label);
 }
 
 .tab-settings-custom.selected::after {
@@ -133,7 +144,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #777;
+  color: var(--label-3);
   font-size: 14px;
   font-weight: 600;
   pointer-events: none;
@@ -156,18 +167,28 @@
 .tab-settings-clear {
   margin-left: auto;
   padding: 0.3rem 0.65rem;
-  border: 1px solid #d6d6da;
-  background: #fff;
-  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
+  font-weight: 500;
   cursor: pointer;
-  color: #555;
+  color: var(--label-2);
   flex-shrink: 0;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .tab-settings-clear:hover:not(:disabled) {
-  background: #f0f0f1;
-  color: #1a1a1a;
+  background: var(--surface-2);
+  color: var(--label);
+}
+
+.tab-settings-clear:active:not(:disabled) {
+  background: var(--surface-3);
+  transform: scale(var(--press-scale));
 }
 
 .tab-settings-clear:disabled {

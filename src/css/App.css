@@ -41,6 +41,11 @@
   animation: app-loading-spin 0.9s linear infinite;
 }
 
+@keyframes appBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes app-loading-spin {
   to { transform: rotate(360deg); }
 }
@@ -58,8 +63,10 @@
   height: 100vh;
   height: 100dvh;
   overflow: visible;
-  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.6);
-  transition: flex-basis 0.22s ease, width 0.22s ease;
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.04);
+  transition:
+    flex-basis var(--dur-3) var(--ease-out),
+    width var(--dur-3) var(--ease-out);
 }
 
 .sidebar.collapsed {
@@ -161,11 +168,14 @@
     height: 100dvh;
     z-index: var(--z-mobile-nav);
     transform: translateX(-100%);
-    transition: transform 0.22s ease;
+    /* Drawer exits the way it came in (left), critically damped. */
+    transition: transform var(--dur-3) var(--ease-out);
+    box-shadow: none;
   }
 
   .sidebar.mobile-open {
     transform: translateX(0);
+    box-shadow: 12px 0 40px rgba(0, 0, 0, 0.35);
   }
 
   :root {
@@ -182,12 +192,13 @@
     height: 100dvh;
     z-index: var(--z-mobile-nav);
     transform: translateX(100%);
-    transition: transform 0.22s ease;
+    transition: transform var(--dur-3) var(--ease-out);
     padding-top: calc(1.1rem + env(safe-area-inset-top, 0px));
   }
 
   .rs.mobile-open {
     transform: translateX(0);
+    box-shadow: -12px 0 40px rgba(0, 0, 0, 0.35);
   }
 
   .rs-mobile-close:hover {
@@ -200,22 +211,29 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    padding: 6px;
+    width: 40px;
+    height: 40px;
+    padding: 8px;
     background: transparent;
     color: #fff;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
+    transition: background-color var(--dur-1) var(--ease-out), transform var(--dur-press) var(--ease-out);
+  }
+
+  .mobile-right-toggle:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(var(--press-scale));
   }
 
   .mobile-nav-backdrop {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--scrim);
     z-index: var(--z-mobile-backdrop);
+    animation: appBackdropIn var(--dur-2) var(--ease-out);
   }
 
   .mobile-topbar {
@@ -228,10 +246,13 @@
     right: 0;
     height: 56px;
     padding: 0 0.85rem;
-    background: #0e0f12;
+    /* Dark translucent material, matching the sidebars it opens. */
+    background: rgba(14, 15, 18, 0.96);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
     color: #fff;
     z-index: var(--z-mobile-topbar);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .mobile-nav-toggle {
@@ -239,14 +260,20 @@
     flex-direction: column;
     justify-content: center;
     gap: 4px;
-    width: 36px;
-    height: 36px;
-    padding: 6px;
+    width: 40px;
+    height: 40px;
+    padding: 10px;
     background: transparent;
     color: #fff;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
+    transition: background-color var(--dur-1) var(--ease-out), transform var(--dur-press) var(--ease-out);
+  }
+
+  .mobile-nav-toggle:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(var(--press-scale));
   }
 
   .mobile-nav-toggle span {
@@ -263,9 +290,9 @@
   }
 
   .mobile-topbar-name {
-    font-size: 1.15rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-size: var(--text-lg);
+    font-weight: 750;
+    letter-spacing: var(--tracking-display);
   }
 
   .main-content {

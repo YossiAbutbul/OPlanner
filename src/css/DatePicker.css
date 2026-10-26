@@ -16,13 +16,27 @@
   position: fixed;
   z-index: var(--z-popover);
   width: 260px;
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  background: var(--elevated);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   padding: 0.65rem;
   user-select: none;
-  color: #1a1a1a;
+  color: var(--label);
+  /* Grows out of the trigger (left-aligned under the field). */
+  transform-origin: top left;
+  animation: dpPopIn var(--dur-2) var(--ease-out);
+}
+
+@keyframes dpPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .dp-head {
@@ -33,25 +47,30 @@
 }
 
 .dp-title {
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: #1a1a1a;
+  font-weight: 650;
+  font-size: var(--text-base);
+  letter-spacing: var(--tracking-title);
+  color: var(--label);
+  font-variant-numeric: tabular-nums;
 }
 
 .dp-nav {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   width: 30px;
   height: 30px;
   cursor: pointer;
-  color: #666;
+  color: var(--label-3);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
   padding: 0;
-  transition: background-color 0.12s ease, color 0.12s ease;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .dp-nav svg {
@@ -59,12 +78,13 @@
 }
 
 .dp-nav:hover {
-  background: #f0f0f1;
-  color: #111;
+  background: var(--fill);
+  color: var(--label);
 }
 
 .dp-nav:active {
-  background: #e7e7e9;
+  background: var(--fill-2);
+  transform: scale(var(--press-scale));
 }
 
 .dp-weekdays {
@@ -76,10 +96,10 @@
 
 .dp-weekday {
   text-align: center;
-  font-size: 0.7rem;
+  font-size: var(--text-2xs);
   font-weight: 600;
-  color: #999;
-  letter-spacing: 0.04em;
+  color: var(--label-4);
+  letter-spacing: var(--tracking-caption);
   padding: 0.2rem 0;
 }
 
@@ -98,46 +118,57 @@
   to { transform: translateX(0); opacity: 1; }
 }
 .dp-grid[data-slide="left"] {
-  animation: dp-slide-in-left 0.18s ease;
+  animation: dp-slide-in-left var(--dur-2) var(--ease-out);
 }
 .dp-grid[data-slide="right"] {
-  animation: dp-slide-in-right 0.18s ease;
+  animation: dp-slide-in-right var(--dur-2) var(--ease-out);
 }
 
 .dp-cell {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   height: 32px;
   padding: 0;
-  font-size: 0.82rem;
-  color: #1a1a1a;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--label);
   cursor: pointer;
   font-family: inherit;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .dp-cell:hover {
-  background: #e7f6ec;
+  background: var(--fill);
+}
+
+.dp-cell:active {
+  background: var(--fill-2);
+  transform: scale(var(--press-scale));
 }
 
 .dp-cell-out {
-  color: #c0c2c5;
+  color: var(--label-4);
 }
 
 .dp-cell-today {
   font-weight: 700;
-  color: var(--color-accent);
+  color: var(--accent-text);
 }
 
 .dp-cell-selected,
-.dp-cell-selected:hover {
+.dp-cell-selected:hover,
+.dp-cell-selected:active {
   background: var(--color-accent);
-  color: #fff;
+  color: var(--on-accent);
   border-color: var(--color-accent);
   font-weight: 700;
 }
@@ -147,23 +178,32 @@
   justify-content: space-between;
   margin-top: 0.55rem;
   padding-top: 0.55rem;
-  border-top: 1px solid #ececef;
+  border-top: 1px solid var(--separator);
 }
 
 .dp-foot-btn {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 0.3rem 0.6rem;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
-  color: #555;
+  color: var(--label-2);
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
 }
 
 .dp-foot-btn:hover:not(:disabled) {
-  background: #f0f0f1;
-  color: #111;
+  background: var(--fill);
+  color: var(--label);
+}
+
+.dp-foot-btn:active:not(:disabled) {
+  background: var(--fill-2);
+  transform: scale(var(--press-scale));
 }
 
 .dp-foot-btn:disabled {
@@ -172,10 +212,22 @@
 }
 
 .dp-foot-today {
-  color: var(--color-accent);
+  color: var(--accent-text);
 }
 
-.dp-foot-today:hover {
-  background: #e7f6ec;
-  color: #168f42;
+.dp-foot-today:hover:not(:disabled) {
+  background: var(--accent-tint);
+  color: var(--accent-text);
+}
+
+/* Phones: taller day cells so each date is an easy thumb target. */
+@media (max-width: 480px) {
+  .dp-cell {
+    height: 38px;
+  }
+
+  .dp-nav {
+    width: 36px;
+    height: 36px;
+  }
 }

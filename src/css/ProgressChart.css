@@ -8,9 +8,11 @@
 
 .progress-card-header {
   align-self: stretch;
-  font-size: 1rem;
+  font-size: var(--text-md);
   font-weight: 700;
-  color: #1a1a1a;
+  letter-spacing: var(--tracking-title);
+  line-height: var(--leading-snug);
+  color: var(--label);
   text-align: left;
   margin-bottom: 0.6rem;
 }
@@ -36,24 +38,23 @@
 .progress-pct {
   font-size: 2.6rem;
   font-weight: 700;
-  color: #1a1a1a;
-  letter-spacing: -0.02em;
+  color: var(--label);
+  letter-spacing: var(--tracking-display);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
 .progress-empty {
-  font-size: 0.85rem;
-  color: #999;
-  font-style: italic;
+  font-size: var(--text-sm);
+  color: var(--label-3);
 }
 
 .progress-subtitle {
   margin: 0.95rem 0 0;
   font-size: 0.95rem;
-  color: #888;
+  color: var(--label-3);
   font-weight: 500;
-  font-style: italic;
+  letter-spacing: var(--tracking-body);
   text-align: center;
 }
 

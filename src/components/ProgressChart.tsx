@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Doughnut } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import "../css/ProgressChart.css";
@@ -52,6 +52,16 @@ const useProgress = (target: number): number => {
   return value;
 };
 
+// Canvas can't read CSS tokens, so the track colour follows the system
+// appearance directly (matches --surface-3 in light and dark).
+const DARK_QUERY = "(prefers-color-scheme: dark)";
+const subscribeScheme = (cb: () => void) => {
+  const mq = window.matchMedia?.(DARK_QUERY);
+  mq?.addEventListener("change", cb);
+  return () => mq?.removeEventListener("change", cb);
+};
+const getIsDark = () => window.matchMedia?.(DARK_QUERY).matches ?? false;
+
 interface ProgressChartProps {
   completed?: number;
   pending?: number;
@@ -69,14 +79,17 @@ const ProgressChart: React.FC<ProgressChartProps> = ({
   // Green arc grows with the same value; gray fills the remainder so the ring
   // stays whole while the completed segment climbs alongside the number.
   const fillFrac = total > 0 ? progress / 100 : 0;
+  const isDark = useSyncExternalStore(subscribeScheme, getIsDark, () => false);
+  const track = isDark ? "#2a2b30" : "#e3e3e6";
+  const trackHover = isDark ? "#33343a" : "#d6d6d9";
 
   const data = {
     labels: ["Completed", "Pending"],
     datasets: [
       {
         data: hasData ? [fillFrac, 1 - fillFrac] : [1],
-        backgroundColor: hasData ? ["#1db954", "#e3e3e6"] : ["#e3e3e6"],
-        hoverBackgroundColor: hasData ? ["#1ed760", "#d6d6d9"] : ["#d6d6d9"],
+        backgroundColor: hasData ? ["#1db954", track] : [track],
+        hoverBackgroundColor: hasData ? ["#1ed760", trackHover] : [trackHover],
         borderWidth: 0,
       },
     ],
