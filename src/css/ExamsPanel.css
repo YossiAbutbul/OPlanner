@@ -31,7 +31,7 @@
   padding: 0.5rem 1rem;
   background: var(--color-accent);
   border: 1px solid var(--color-accent);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button);
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 650;
@@ -68,7 +68,7 @@
   padding: 0.5rem 1rem;
   background: var(--surface);
   border: 1px solid var(--accent-tint-strong);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button);
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 650;
@@ -311,7 +311,7 @@
   padding: 0.3rem 0.8rem;
   background: var(--color-accent);
   border: 1px solid var(--color-accent);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button-sm);
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 650;
@@ -1034,7 +1034,7 @@
   font-family: inherit;
   font-size: var(--text-base);
   font-weight: 650;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button);
   cursor: pointer;
   transition:
     background-color var(--dur-1) var(--ease-out),

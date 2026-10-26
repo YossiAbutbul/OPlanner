@@ -541,3 +541,12 @@
 /* Wide-screen tweaks moved to the component CSS files so they win the
    cascade (SemesterOverview.css, ProgressChart.css, CourseCalendar.css
    load after App.css). See each file's @media (min-width: 1440px) block. */
+
+/* Drawer under the finger (useEdgeSwipe): no transition while tracking, so
+   it moves 1:1; releasing removes the class and the transition settles it
+   from wherever it was let go. */
+.sidebar.drawer-dragging,
+.rs.drawer-dragging {
+  transition: none !important;
+  will-change: transform;
+}

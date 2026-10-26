@@ -34,7 +34,7 @@
 .overview-add-course {
   min-height: 38px;
   padding: 0.5rem 1rem;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button);
   font-size: var(--text-sm);
   font-weight: 650;
   letter-spacing: var(--tracking-body);
@@ -196,7 +196,6 @@
   margin: 0;
 }
 
-.course-stats,
 .upcoming-list {
   list-style: none;
   padding: 0;
@@ -206,93 +205,186 @@
   gap: 0.5rem;
 }
 
-.course-stats {
-  gap: 0;
-}
-
-.course-stat:last-child {
-  border-bottom: none;
+/* ===== Courses: inset grouped list =====
+   One rounded card, rows divided by hairlines inset past the ring (so the
+   rings line up as a column), a chevron for "this opens something", and
+   the whole row as the tap target. */
+.course-stats,
+.finals-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
 }
 
 .course-stat {
   position: relative;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--separator);
-  border-radius: var(--radius-md);
-  padding: 0.6rem 1.6rem 0.6rem 0.6rem;
-  cursor: pointer;
-  transition:
-    background-color var(--dur-1) var(--ease-out),
-    transform var(--dur-press) var(--ease-out);
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.35rem;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 60px;
+  box-sizing: border-box;
+  padding: 0.55rem 2rem 0.55rem 0.8rem;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background-color var(--dur-1) var(--ease-out);
+}
+
+.course-stat:first-child {
+  border-top-left-radius: calc(var(--radius-lg) - 1px);
+  border-top-right-radius: calc(var(--radius-lg) - 1px);
+}
+
+.course-stat:last-child {
+  border-bottom-left-radius: calc(var(--radius-lg) - 1px);
+  border-bottom-right-radius: calc(var(--radius-lg) - 1px);
+}
+
+/* Inset separator: starts at the text, not the card edge. */
+.course-stat + .course-stat::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(0.8rem + 36px + 0.75rem);
+  right: 0;
+  height: 1px;
+  background: var(--separator);
 }
 
 /* Chevron hints the row is pressable (navigates to the course page). */
 .course-stat::after {
   content: "";
   position: absolute;
-  right: 0.6rem;
+  right: 0.95rem;
   top: 50%;
   width: 7px;
   height: 7px;
-  border-right: 2px solid var(--border);
-  border-bottom: 2px solid var(--border);
+  border-right: 2px solid var(--label-4);
+  border-bottom: 2px solid var(--label-4);
+  opacity: 0.7;
   transform: translateY(-50%) rotate(-45deg);
   transition:
-    border-color var(--dur-1) var(--ease-out),
-    right var(--dur-1) var(--ease-out);
+    opacity var(--dur-1) var(--ease-out),
+    transform var(--dur-2) var(--ease-out);
 }
 
 .course-stat:hover {
-  background: var(--surface-2);
-  border-bottom-color: transparent;
+  background: var(--fill);
 }
 
+/* Chevron leans toward where the tap goes. */
 .course-stat:hover::after {
-  border-color: var(--color-accent);
-  right: 0.45rem;
+  opacity: 1;
+  transform: translate(2px, -50%) rotate(-45deg);
 }
 
+/* Highlight on press, instantly (no transition on the way in). */
 .course-stat:active {
-  transform: scale(0.99);
-  background: var(--surface-2);
+  background: var(--fill-2);
+  transition: none;
 }
 
-.course-stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.6rem;
+/* Activity-style ring in the course colour. */
+.course-ring {
+  position: relative;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+}
+
+.course-ring-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.course-ring-svg circle {
+  fill: none;
+  stroke-width: 4;
+}
+
+.course-ring-track {
+  stroke: var(--course-color);
+  opacity: 0.18;
+}
+
+.course-ring-fill {
+  stroke: var(--course-color);
+  stroke-linecap: round;
+  /* Sweeps from empty when the row appears, then glides on updates. */
+  transition: stroke-dasharray 600ms var(--ease-out);
+  animation: courseRingSweep 900ms var(--ease-out) both;
+}
+
+@keyframes courseRingSweep {
+  from { stroke-dasharray: 0 100; }
+}
+
+.course-ring-check {
+  color: var(--course-color);
+}
+
+.course-stat-text {
+  flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
 .course-stat-name {
   font-size: var(--text-base);
   letter-spacing: var(--tracking-body);
   font-weight: 600;
+  line-height: var(--leading-snug);
   color: var(--label);
   /* Truncate long course names instead of pushing the meta off the row. */
   min-width: 0;
-  flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .course-stat-meta {
-  flex-shrink: 0;
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   color: var(--label-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .course-stat-overdue {
   color: var(--danger-text);
   font-weight: 600;
+}
+
+.course-stat-pct {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--tracking-body);
+  color: var(--label-2);
+}
+
+.course-stat.is-done .course-stat-pct {
+  color: var(--course-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .course-ring-fill {
+    animation: none;
+  }
 }
 
 .upcoming-item {
@@ -387,8 +479,6 @@
   overflow-y: auto;
   flex: 1;
   min-height: 0;
-  margin-right: -0.25rem;
-  padding-right: 0.25rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -434,125 +524,173 @@
   }
 }
 
-/* Finals Countdown */
-.finals-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* Finals Countdown: same inset grouped card as Courses. */
+.finals-row {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.course-stat {
+  align-items: center;
+  gap: 0.75rem;
   min-height: 60px;
   box-sizing: border-box;
-}
-
-.finals-row {
-  min-height: 52px;
-  box-sizing: border-box;
+  padding: 0.55rem 0.8rem;
 }
 
 /* When a picker is open inside a row, lift the row above its siblings */
 .finals-row:has(.dp-popover) {
-  position: relative;
   z-index: 100;
 }
 
-.finals-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
-  gap: 0.6rem;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--separator);
-  border-radius: 0;
-  padding: 0.55rem 0.15rem;
+/* Inset separator, aligned with the course names (past the date tile). */
+.finals-row + .finals-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(0.8rem + 40px + 0.75rem);
+  right: 0;
+  height: 1px;
+  background: var(--separator);
 }
 
-.finals-row:last-child {
-  border-bottom: none;
+/* Calendar-page tile: month on a coloured band, day number below. Its
+   colour follows urgency, and it is the button that edits the date. */
+.finals-tile {
+  --tile-color: var(--color-accent);
+  flex-shrink: 0;
+  width: 40px;
+  height: 42px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-md);
+  background: var(--elevated);
+  color: var(--label);
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    box-shadow var(--dur-1) var(--ease-out);
+}
+
+.finals-tile:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.finals-tile:active {
+  transform: scale(0.94);
+}
+
+.finals-tile-month {
+  display: block;
+  padding: 2px 0 1px;
+  background: var(--tile-color);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+
+.finals-tile-day {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-md);
+  font-weight: 650;
+  letter-spacing: var(--tracking-title);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.finals-tile.is-empty {
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: transparent;
+  box-shadow: none;
+  color: var(--label-3);
+}
+
+.finals-tile.is-empty:hover {
+  color: var(--accent-text);
+  border-color: var(--color-accent);
+}
+
+.finals-row[data-urgency="soon"] .finals-tile { --tile-color: var(--danger); }
+.finals-row[data-urgency="near"] .finals-tile { --tile-color: var(--warning); }
+.finals-row[data-urgency="far"] .finals-tile { --tile-color: var(--color-accent); }
+.finals-row[data-urgency="past"] .finals-tile { --tile-color: var(--label-4); }
+
+.finals-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
 .finals-row-name {
   font-size: var(--text-base);
   letter-spacing: var(--tracking-body);
   font-weight: 600;
+  line-height: var(--leading-snug);
   color: var(--label);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Minimal badge: plain colored text, no pill background. */
-.finals-badge {
+.finals-sub {
   font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
   color: var(--label-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: start;
 }
 
-.finals-badge-empty {
-  visibility: hidden;
+/* Finished exams recede; what's still ahead keeps full contrast. */
+.finals-row[data-urgency="past"] .finals-row-name {
+  color: var(--label-2);
+}
+
+/* Countdown pill, tinted by how close the exam is. */
+.finals-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--label-3);
+  background: var(--fill-2);
 }
 
 .finals-badge-soon {
   color: var(--danger-text);
-  font-weight: 700;
+  background: var(--danger-tint);
 }
 .finals-badge-near {
   color: var(--warning-text);
+  background: var(--warning-tint);
 }
 .finals-badge-far {
-  color: var(--success-text);
+  color: var(--accent-text);
+  background: var(--accent-tint);
 }
 .finals-badge-past {
-  color: var(--label-4);
-}
-
-.finals-date {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.65rem;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  color: var(--label-2);
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition:
-    background-color var(--dur-1) var(--ease-out),
-    color var(--dur-1) var(--ease-out);
-  flex-shrink: 0;
-  background: transparent;
-  border: 1px solid transparent;
-  font-family: inherit;
-}
-
-.finals-date:hover {
-  background: var(--accent-tint);
-  color: var(--accent-text);
-}
-
-.finals-date-icon {
-  flex-shrink: 0;
-  color: inherit;
-}
-
-.finals-date-label {
-  white-space: nowrap;
-}
-
-.finals-date-label.empty {
   color: var(--label-3);
-  font-style: italic;
-  font-weight: 400;
+  background: var(--fill-2);
 }
 
 .finals-date-native {
@@ -745,4 +883,78 @@
   .overview-calendar-section .cal-grid {
     grid-auto-rows: minmax(6rem, 7.5rem);
   }
+}
+
+/* ===== Loading skeleton (switching years / semesters) =====
+   OverviewSkeleton reuses the real overview classes, so these rules only
+   add the shimmer. Fades in after a short delay so fast loads never flash a
+   placeholder. */
+.ov-skel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  animation: ovSkelIn var(--dur-2) var(--ease-out) 140ms forwards;
+}
+
+@keyframes ovSkelIn {
+  to { opacity: 1; }
+}
+
+/* The real cards run their own fade-up; inside the skeleton they should
+   just be there. */
+.ov-skel .stat-card,
+.ov-skel .course-stat,
+.ov-skel .finals-row,
+.ov-skel .overview-calendar-section {
+  animation: none;
+}
+
+.ov-skel-bar {
+  display: inline-block;
+  vertical-align: middle;
+  height: 0.7em;
+  max-width: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--fill-2) 0%, var(--fill-3) 50%, var(--fill-2) 100%);
+  background-size: 200% 100%;
+  animation: ovSkelShimmer 1.4s ease-in-out infinite;
+}
+
+.stat-value .ov-skel-bar {
+  height: 0.8em;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes ovSkelShimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.ov-skel-nav {
+  width: 9.5rem;
+}
+
+.ov-skel-cell {
+  cursor: default;
+}
+
+.ov-skel-row::after {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ov-skel-bar {
+    animation: none;
+  }
+}
+
+.ov-skel-tile {
+  background: linear-gradient(90deg, var(--fill-2) 0%, var(--fill-3) 50%, var(--fill-2) 100%);
+  background-size: 200% 100%;
+  border-color: transparent;
+  box-shadow: none;
+  animation: ovSkelShimmer 1.4s ease-in-out infinite;
 }

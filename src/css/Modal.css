@@ -12,7 +12,6 @@
   padding: var(--space-4);
   box-sizing: border-box;
   z-index: var(--z-modal-overlay);
-  animation: appModalFade var(--dur-2) var(--ease-out);
 }
 
 .app-modal {
@@ -29,8 +28,9 @@
   max-height: calc(100dvh - 2 * var(--space-4));
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* Materialize: scale + lift + fade together, critically damped. */
-  animation: appModalScaleIn var(--dur-3) var(--ease-out);
+  /* Enter/exit springs live in Modal.tsx: scale + lift + fade together,
+     critically damped. */
+  will-change: transform;
 }
 
 /* ===== Mobile: bottom-sheet pattern =====
@@ -61,21 +61,21 @@
     /* Internal scroll: the body scrolls, sticky header/footer pin. */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    /* Sheet rises from the bottom edge, critically damped: no overshoot,
-       since nothing was flicked. */
-    animation: appModalSheetIn var(--dur-3) var(--ease-out);
+    /* Rises from the bottom edge and leaves the same way (Modal.tsx). */
     box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
   }
 
-  /* Sticky header bar ג€” title + close stay locked at the top of the
-     sheet while the body scrolls. No more drag handle (it was purely
-     decorative and implied a swipe-to-dismiss that didn't exist). */
+  /* Sticky header bar: title + close stay locked at the top of the sheet
+     while the body scrolls. It is also the drag handle for swipe-to-dismiss,
+     so it claims vertical touch gestures. */
   .app-modal-header {
     position: sticky;
     top: 0;
     z-index: 1;
     margin: 0;
-    padding: 0.85rem var(--space-4, 1rem);
+    padding: 1.1rem var(--space-4, 1rem) 0.85rem;
+    touch-action: none;
+    cursor: grab;
     /* Floating chrome: translucent so the body scrolls visibly beneath. */
     background: var(--material-thin);
     -webkit-backdrop-filter: var(--material-blur);
@@ -134,6 +134,18 @@
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 0.85rem;
+}
+
+/* Grabber: tells you the sheet can be pulled down. */
+.app-modal-grabber {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 36px;
+  height: 5px;
+  margin-left: -18px;
+  border-radius: var(--radius-full);
+  background: var(--fill-3);
 }
 
 .app-modal-title {

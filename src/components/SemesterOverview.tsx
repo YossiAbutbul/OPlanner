@@ -13,6 +13,7 @@ import OverviewStats from "./SemesterOverview/OverviewStats";
 import CoursesPanel from "./SemesterOverview/CoursesPanel";
 import FinalsCountdown from "./SemesterOverview/FinalsCountdown";
 import AddCourseModal from "./SemesterOverview/AddCourseModal";
+import OverviewSkeleton from "./SemesterOverview/OverviewSkeleton";
 import { useSemesterStats } from "../hooks/useSemesterStats";
 import type { CourseInfo, HomeworkEntry } from "../types/models";
 import { BookPlus, CalendarClock, CalendarPlus, Download, ListChecks } from "lucide-react";
@@ -211,7 +212,9 @@ const SemesterOverview: React.FC<Props> = ({
             </li>
           </ul>
         </section>
-      ) : !loaded ? null : (
+      ) : !loaded ? (
+        <OverviewSkeleton courses={courses} />
+      ) : (
         <>
           <OverviewStats totals={totals} completionPct={completionPct} />
 

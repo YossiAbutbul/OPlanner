@@ -3,6 +3,8 @@ import ProgressChart from "./ProgressChart";
 import HomeworkTable from "./HomeworkTable";
 import SemesterOverview from "./SemesterOverview";
 import { ListPlus } from "lucide-react";
+import { motion } from "framer-motion";
+import { SPRING_SNAPPY } from "../utility/motion";
 
 // Lazy so the HomeworkModal + NotesEditor chunk only loads on first open.
 // Static imports here would cancel the lazy() in RightSidebar/SemesterOverview.
@@ -219,6 +221,16 @@ const MainContent: React.FC<MainContentProps> = ({
           >
             {y.color && <span className="tab-color-dot" style={{ background: y.color }} />}
             <span>{y.year}</span>
+            {selectedYear === y.year && (
+              // Shared layoutId: the underline slides to the new tab.
+              <motion.span
+                layoutId="year-tab-indicator"
+                className="tab-indicator"
+                initial={false}
+                animate={{ backgroundColor: y.color ?? "#1db954" }}
+                transition={SPRING_SNAPPY}
+              />
+            )}
             <button
               type="button"
               className="year-tab-delete"
@@ -277,6 +289,15 @@ const MainContent: React.FC<MainContentProps> = ({
             >
               {s.color && <span className="tab-color-dot" style={{ background: s.color }} />}
               {s.name}
+              {selectedSemester === s.name && (
+                <motion.span
+                  layoutId="semester-tab-indicator"
+                  className="tab-indicator"
+                  initial={false}
+                  animate={{ backgroundColor: s.color ?? "#1db954" }}
+                  transition={SPRING_SNAPPY}
+                />
+              )}
             </button>
           ))}
       </div>

@@ -59,7 +59,7 @@
   padding: 0.3rem 0.85rem;
   background: var(--color-accent);
   border: 1px solid var(--color-accent);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button-sm);
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 650;

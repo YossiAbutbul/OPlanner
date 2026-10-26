@@ -3,8 +3,12 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Check } from "lucide-react";
+import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Check, Sun, Moon } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useConfettiPref } from "../hooks/useConfettiPref";
+import { useThemePref } from "../hooks/useThemePref";
+import type { ThemePref } from "../utility/theme";
+import { SPRING_SNAPPY } from "../utility/motion";
 
 // Feature flag — the Focus / Pomodoro tab is temporarily hidden from the
 // sidebar. The page, context, hook, and styles are all still wired up so
@@ -66,6 +70,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { canInstall, installed, promptInstall } = useInstallPrompt();
   const [installHelpOpen, setInstallHelpOpen] = useState(false);
   const [confettiOn, setConfettiOn] = useConfettiPref();
+  const [themePref, setThemePref] = useThemePref();
+  const reduceMotion = useReducedMotion();
   const [reminderOpen, setReminderOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(
@@ -328,8 +334,15 @@ const Sidebar: React.FC<SidebarProps> = ({
         >
           <Settings size={18} />
         </button>
+        <AnimatePresence>
         {settingsOpen && (
-          <div className="settings-menu">
+          <motion.div
+            className="settings-menu"
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.94, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: 4 }}
+            transition={SPRING_SNAPPY}
+          >
             <button
               onClick={() => {
                 setSettingsOpen(false);
@@ -372,6 +385,35 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {confettiOn ? <Check size={14} strokeWidth={2.5} /> : null}
               </span>
             </button>
+            <div className="settings-appearance">
+              <span className="settings-appearance-label">Appearance</span>
+              <div className="settings-seg" role="radiogroup" aria-label="Appearance">
+                {([
+                  ["light", "Light", Sun],
+                  ["dark", "Dark", Moon],
+                ] as [ThemePref, string, typeof Sun][]).map(([value, label, Icon]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={themePref === value}
+                    className={`settings-seg-btn ${themePref === value ? "active" : ""}`}
+                    onClick={() => setThemePref(value)}
+                    title={label}
+                  >
+                    {themePref === value && (
+                      <motion.span
+                        layoutId="settings-seg-thumb"
+                        className="settings-seg-thumb"
+                        transition={SPRING_SNAPPY}
+                      />
+                    )}
+                    <Icon size={14} />
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
             {!installed && (
               <button
                 onClick={async () => {
@@ -404,8 +446,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               <LogOut size={16} />
               <span>Sign out</span>
             </button>
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
 
       {menuOpen && menuPos &&

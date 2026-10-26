@@ -1,6 +1,8 @@
 // Side-effect import first: registers the beforeinstallprompt listener at the
 // earliest point so the in-app install button can fire the real native prompt.
 import './utility/installPrompt';
+// Applies the saved appearance (Light / Dark) before first paint.
+import './utility/theme';
 import './css/index.css';
 import './css/Toast.css';
 import './css/InstallHelpModal.css';

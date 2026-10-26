@@ -37,9 +37,9 @@
   line-height: 1.35;
   color: #f3f3f5;
   overflow: hidden;
-  /* Materialize from the corner it lives in. */
+  /* Materialize from the corner it lives in (springs in ToastList.tsx). */
   transform-origin: bottom right;
-  animation: toast-in var(--dur-3) var(--ease-out);
+  touch-action: pan-y;
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -91,7 +91,7 @@
   background: var(--color-accent);
   color: #fff;
   border: none;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button);
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 650;

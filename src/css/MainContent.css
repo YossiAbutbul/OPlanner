@@ -145,21 +145,21 @@
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.04);
 }
 
-/* Active tab gets a rounded underline in its color. The ::after sits flush
-   on the bottom edge so it reads as the selected indicator. */
-.tab.active[style*="--tab-color"] {
+/* Active tab gets a rounded underline in its color, flush on the bottom
+   edge. It is one shared element per strip (layoutId in MainContent.tsx),
+   so it slides between tabs instead of blinking. */
+.tab {
   position: relative;
 }
 
-.tab.active[style*="--tab-color"]::after {
-  content: "";
+.tab-indicator {
   position: absolute;
   left: 0.55rem;
   right: 0.55rem;
   bottom: 0;
   height: 3px;
   border-radius: 3px 3px 0 0;
-  background: var(--tab-color);
+  pointer-events: none;
 }
 
 /* Semester level: light gray strip */
@@ -434,7 +434,7 @@
   background: var(--color-accent);
   color: #ffffff;
   border: 1px solid var(--color-accent);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button);
   font-size: var(--text-sm);
   font-weight: 650;
   cursor: pointer;
@@ -618,7 +618,7 @@
   padding: 0.25rem 0.7rem;
   background: transparent;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-button-sm);
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--label-2);

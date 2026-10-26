@@ -136,6 +136,10 @@
   --radius-lg: 14px;
   --radius-xl: 20px;
   --radius-full: 999px;
+  /* Buttons are rounded rectangles, not capsules: Apple's bordered and
+     filled button shapes at regular and small control sizes. */
+  --radius-button: 10px;
+  --radius-button-sm: 8px;
 
   /* Motion. CSS can't run a true spring, so these curves approximate a
      critically damped spring (damping 1.0): fast start, no overshoot.
@@ -176,7 +180,8 @@
    follows them. Elevated surfaces get lighter, not darker, so depth still
    reads without heavy shadows. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --accent-text: #3ddc78;
     --accent-tint: rgba(29, 185, 84, 0.16);
     --accent-tint-strong: rgba(29, 185, 84, 0.26);
@@ -230,9 +235,70 @@
   }
 }
 
+/* Choice from Settings > Appearance (see utility/theme.ts). Without one,
+   the media query above follows the system. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --accent-text: #3ddc78;
+  --accent-tint: rgba(29, 185, 84, 0.16);
+  --accent-tint-strong: rgba(29, 185, 84, 0.26);
+
+  --canvas: #121315;
+  --canvas-2: #0c0d0f;
+  --surface: #1a1b1e;
+  --surface-2: #202125;
+  --surface-3: #2a2b30;
+  --elevated: #222327;
+  --strip-1: #08090a;
+  --strip-2: #0c0d0f;
+  --strip-3: #0f1012;
+
+  --label: #f2f2f4;
+  --label-2: #c9cad0;
+  --label-3: #9a9ca3;
+  --label-4: #6d6f77;
+
+  --separator: rgba(255, 255, 255, 0.075);
+  --border: rgba(255, 255, 255, 0.13);
+  --border-strong: rgba(255, 255, 255, 0.22);
+
+  --fill: rgba(255, 255, 255, 0.05);
+  --fill-2: rgba(255, 255, 255, 0.085);
+  --fill-3: rgba(255, 255, 255, 0.12);
+
+  --inverse: #f2f2f4;
+  --on-inverse: #1a1b1e;
+
+  --danger: #e5484d;
+  --danger-hover: #f05a5f;
+  --danger-text: #ff7a7a;
+  --danger-tint: rgba(255, 105, 97, 0.14);
+  --warning: #f0b23f;
+  --warning-text: #f3c768;
+  --warning-tint: rgba(243, 199, 104, 0.14);
+  --success-text: #4cd980;
+  --success-tint: rgba(76, 217, 128, 0.14);
+  --info: #6ea0ff;
+  --info-tint: rgba(110, 160, 255, 0.16);
+
+  --material-thin: rgba(26, 27, 30, 0.7);
+  --material-thick: rgba(18, 19, 21, 0.82);
+  --scrim: rgba(0, 0, 0, 0.6);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.35), 0 24px 56px rgba(0, 0, 0, 0.55);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
 /* Reduce transparency: frostier, solid materials, no blur. */
 @media (prefers-reduced-transparency: reduce) {
-  :root {
+  /* Doubled to outrank the appearance blocks above. */
+  :root:root {
     --material-thin: var(--surface);
     --material-thick: var(--canvas);
     --material-blur: none;
@@ -241,7 +307,8 @@
 
 /* Increase contrast: stronger lines and secondary text. */
 @media (prefers-contrast: more) {
-  :root {
+  /* Doubled to outrank the appearance blocks above. */
+  :root:root {
     --separator: var(--border-strong);
     --border: var(--label-3);
     --label-3: var(--label-2);
@@ -327,6 +394,14 @@ select:focus-visible {
   select {
     font-size: max(16px, 1em) !important;
   }
+}
+
+/* Appearance switches cross-fade (View Transitions) instead of cutting
+   from light to dark in one frame. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 360ms;
+  animation-timing-function: var(--ease-out);
 }
 
 ::selection {

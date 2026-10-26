@@ -198,7 +198,7 @@
   background: var(--pp-accent);
   color: #fff;
   border: none;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button);
   font-family: inherit;
   font-size: var(--text-md);
   font-weight: 700;
@@ -220,7 +220,7 @@
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--label-2);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button);
   font-family: inherit;
   font-size: var(--text-md);
   font-weight: 600;

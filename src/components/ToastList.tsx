@@ -1,7 +1,9 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "framer-motion";
 import { useToast } from "../context/ToastContext";
+import { SPRING_DEFAULT, project } from "../utility/motion";
 
 const ICONS = {
   success: CheckCircle2,
@@ -16,18 +18,35 @@ const ttlFor = (kind: keyof typeof ICONS) =>
 
 const ToastList: React.FC = () => {
   const { toasts, dismiss } = useToast();
-  if (toasts.length === 0) return null;
+  const reduceMotion = useReducedMotion();
+
+  // Flick sideways to dismiss: judged on where the flick would land.
+  const onDragEnd = (id: string) => (e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const width = (e.target as HTMLElement | null)?.closest?.(".toast")?.clientWidth ?? 320;
+    if (Math.abs(info.offset.x + project(info.velocity.x)) > width / 2) dismiss(id);
+  };
 
   return createPortal(
     <div className="toast-stack" role="region" aria-label="Notifications">
+      <AnimatePresence initial={false}>
       {toasts.map((t) => {
         const Icon = ICONS[t.kind];
         return (
-          <div
+          <motion.div
             key={t.id}
+            layout={!reduceMotion}
             className={`toast toast-${t.kind}${t.sticky ? " toast-sticky" : ""}`}
             role={t.kind === "error" ? "alert" : "status"}
             style={{ ["--toast-ttl" as string]: `${ttlFor(t.kind)}ms` }}
+            // Rises in from the corner and leaves the way it came.
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.96 }}
+            transition={SPRING_DEFAULT}
+            drag={reduceMotion ? false : "x"}
+            dragSnapToOrigin
+            dragElastic={0.6}
+            onDragEnd={onDragEnd(t.id)}
           >
             <span className="toast-icon">
               <Icon size={18} strokeWidth={2.4} />
@@ -53,9 +72,10 @@ const ToastList: React.FC = () => {
             >
               <X size={14} strokeWidth={2.5} />
             </button>
-          </div>
+          </motion.div>
         );
       })}
+      </AnimatePresence>
     </div>,
     document.body
   );

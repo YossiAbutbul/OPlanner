@@ -1,4 +1,5 @@
 import React from "react";
+import { CalendarPlus, Check } from "lucide-react";
 import type { CourseInfo } from "../../types/models";
 import DatePicker from "../DatePicker";
 import { capitalizeWords } from "../../utility/dayCalendar";
@@ -55,54 +56,53 @@ const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate }) => {
             urgency = "far";
           }
         }
-        let formatted: string | null = null;
-        if (c.finalDate) {
-          const d = new Date(c.finalDate + "T00:00:00");
-          const dd = String(d.getDate()).padStart(2, "0");
-          const mm = String(d.getMonth() + 1).padStart(2, "0");
-          const yyyy = d.getFullYear();
-          formatted = `${dd}/${mm}/${yyyy}`;
-        }
+        const date = c.finalDate ? new Date(c.finalDate + "T00:00:00") : null;
+        const sub = date
+          ? date.toLocaleDateString("en-GB", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+          : "Tap the calendar to set a date";
         return (
           <li key={c.name} className="finals-row" data-urgency={urgency}>
-            <span className="finals-row-name">{capitalizeWords(c.name)}</span>
-            <span className={`finals-badge${badge ? ` ${badgeClass}` : " finals-badge-empty"}`}>
-              {badge}
-            </span>
             <DatePicker
               value={c.finalDate ?? null}
               onChange={(v) => onChangeFinalDate(c.name, v ?? "")}
             >
               {(open) => (
+                // Calendar-page tile: the date at a glance, and the control
+                // that changes it.
                 <button
                   type="button"
-                  className="finals-date"
+                  className={`finals-tile${date ? "" : " is-empty"}`}
                   onClick={open}
+                  aria-label={date ? `Change final date for ${c.name}` : `Set final date for ${c.name}`}
                 >
-                  <svg
-                    className="finals-date-icon"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <path d="M16 2v4M8 2v4M3 10h18" />
-                  </svg>
-                  <span
-                    className={`finals-date-label ${formatted ? "" : "empty"}`}
-                    dir="ltr"
-                  >
-                    {formatted ?? "Set date"}
-                  </span>
+                  {date ? (
+                    <>
+                      <span className="finals-tile-month">
+                        {date.toLocaleDateString("en-US", { month: "short" })}
+                      </span>
+                      <span className="finals-tile-day">{date.getDate()}</span>
+                    </>
+                  ) : (
+                    <CalendarPlus size={18} strokeWidth={2} />
+                  )}
                 </button>
               )}
             </DatePicker>
+            <span className="finals-text">
+              <span className="finals-row-name">{capitalizeWords(c.name)}</span>
+              <span className="finals-sub" dir="ltr">{sub}</span>
+            </span>
+            {badge && (
+              <span className={`finals-badge ${badgeClass}`}>
+                {urgency === "past" && <Check size={12} strokeWidth={3} />}
+                {badge}
+              </span>
+            )}
           </li>
         );
       })}

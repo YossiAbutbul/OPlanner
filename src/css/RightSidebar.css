@@ -499,7 +499,7 @@
 .rs-day-add {
   min-height: 36px;
   padding: 0.45rem 1rem;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button);
   font-size: var(--text-sm);
   font-weight: 650;
   cursor: pointer;
