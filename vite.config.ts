@@ -40,16 +40,14 @@ export default defineConfig(({ mode }) => {
         // the plugin's auto-injected registration to avoid double-register.
         injectRegister: null,
 
-        // Don't precache the giant boxicons font file leftovers (already
-        // dropped, but the glob is defensive).
-        workbox: {
+        // Our own SW (src/sw.ts) so it can handle Web Push. It keeps the
+        // generated SW's precache, navigation fallback and outdated-cache
+        // cleanup; the plugin only injects the precache manifest.
+        strategies: 'injectManifest',
+        srcDir: 'src',
+        filename: 'sw.ts',
+        injectManifest: {
           globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-          // Drop caches from superseded SW versions so an old shell can't
-          // linger and reference evicted/renamed chunks.
-          cleanupOutdatedCaches: true,
-          // Firestore + Auth must hit the network — don't try to cache
-          // their POST channels.
-          navigateFallbackDenylist: [/^\/__\/auth\//, /firestore\.googleapis\.com/],
         },
 
         includeAssets: ['Logo.svg', 'pwa-icon.svg', 'og-image.png'],

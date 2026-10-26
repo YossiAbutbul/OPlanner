@@ -20,17 +20,40 @@ const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ isOpen, o
     requestPermission,
     supported,
     isDesktop,
+    installed,
+    pushAvailable,
+    pushSubscribed,
+    pushError,
   } = useNotifications();
+
+  // Installed app: Web Push, works while closed. Browser tab: desktop-only
+  // in-app popups while the tab is open.
+  const usable = pushAvailable || (supported && isDesktop);
 
   const status: { label: string; tone: "ok" | "warn" | "off" } = !supported
     ? { label: "Not supported in this browser", tone: "off" }
-    : !isDesktop
-      ? { label: "Desktop only — reminders are off on this device", tone: "off" }
-      : permission === "granted"
-        ? { label: "Notifications allowed", tone: "ok" }
+    : installed && !pushAvailable
+      ? { label: "This device can't receive background reminders", tone: "off" }
+      : !usable
+        ? { label: "Install OPlanner to your home screen to get reminders", tone: "off" }
         : permission === "denied"
-          ? { label: "Blocked — enable notifications in your browser settings", tone: "warn" }
-          : { label: "Your browser will ask you to allow this once", tone: "warn" };
+          ? { label: "Blocked — enable notifications in your settings", tone: "warn" }
+          : permission === "default"
+            ? { label: "Allow notifications to get reminders", tone: "warn" }
+            : !pushAvailable
+              ? { label: "Notifications allowed", tone: "ok" }
+              : pushError
+                ? { label: "Couldn't register this device — reopen the app to retry", tone: "warn" }
+                : settings.enabled && pushSubscribed
+                  ? { label: "On — reminders arrive even when OPlanner is closed", tone: "ok" }
+                  : { label: "Notifications allowed", tone: "ok" };
+
+  // Turning reminders on is a user gesture — the only moment iOS lets us ask
+  // for notification permission.
+  const handleToggle = (enabled: boolean) => {
+    setEnabled(enabled);
+    if (enabled && usable && permission === "default") void requestPermission();
+  };
 
   // Lead-time picker is meaningless when reminders are switched off — dim it.
   const leadDisabled = !settings.enabled;
@@ -77,7 +100,9 @@ const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ isOpen, o
             </svg>
           </span>
           <p className="rsx-hero-text">
-            Popup notifications for upcoming exams and tasks while OPlanner is open.
+            {pushAvailable
+              ? "Notifications for upcoming exams and tasks, even when OPlanner is closed."
+              : "Popup notifications for upcoming exams and tasks while OPlanner is open."}
           </p>
         </div>
 
@@ -85,14 +110,16 @@ const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ isOpen, o
         <div className="rsx-card">
           <label className="rsx-row rsx-switch-row">
             <span className="rsx-row-text">
-              <span className="rsx-row-title">Enable desktop reminders</span>
+              <span className="rsx-row-title">
+                {pushAvailable ? "Enable reminders" : "Enable desktop reminders"}
+              </span>
               <span className="rsx-row-sub">Show a popup when something is coming up.</span>
             </span>
             <span className="rsx-switch">
               <input
                 type="checkbox"
                 checked={settings.enabled}
-                onChange={(e) => setEnabled(e.target.checked)}
+                onChange={(e) => handleToggle(e.target.checked)}
               />
               <span className="rsx-switch-track" aria-hidden="true">
                 <span className="rsx-switch-thumb" />
@@ -121,7 +148,7 @@ const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ isOpen, o
         <div className={`rsx-status rsx-status-${status.tone}`}>
           <span className="rsx-status-icon" aria-hidden="true">{statusIcon}</span>
           <span className="rsx-status-label">{status.label}</span>
-          {supported && isDesktop && permission === "default" && (
+          {usable && permission === "default" && (
             <button type="button" className="rsx-allow" onClick={() => void requestPermission()}>
               Allow…
             </button>
@@ -129,8 +156,9 @@ const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ isOpen, o
         </div>
 
         <p className="rsx-note">
-          Exams and tasks remind you the day before they're due, and tasks remind you again
-          shortly before they start.
+          {pushAvailable
+            ? "Exams and tasks remind you the evening before they're due, and tasks remind you again shortly before they start."
+            : "Exams and tasks remind you the day before they're due, and tasks remind you again shortly before they start. Install the app to get them while it's closed."}
         </p>
       </div>
     </Modal>

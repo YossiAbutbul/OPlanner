@@ -15,8 +15,9 @@ import type { HomeworkEntry, YearTreeData } from "../types/models";
 const SCAN_INTERVAL_MS = 60_000;
 
 // Reminder engine: scans the currently-selected semester's tasks + exams and
-// fires desktop OS notifications. In-app only (no background push), so it runs
-// on every relevant change plus a 1-minute interval while the app is open.
+// fires desktop OS notifications while a browser tab is open. Installed PWAs
+// use Web Push instead (utility/push.ts), so this stays off there. Runs on
+// every relevant change plus a 1-minute interval.
 export const useReminders = ({
   years,
   selectedYear,
@@ -27,11 +28,22 @@ export const useReminders = ({
   selectedSemester: string | null;
 }): void => {
   const { getCourseTasks, homework } = useHomework();
-  const { settings, permission, supported, isDesktop, requestPermission } = useNotifications();
+  const {
+    settings,
+    permission,
+    supported,
+    isDesktop,
+    requestPermission,
+    pushAvailable,
+    pushSubscribed,
+  } = useNotifications();
 
   const [tasks, setTasks] = useState<HomeworkEntry[]>([]);
 
-  const active = settings.enabled && supported && isDesktop;
+  // Push (installed PWA) delivers reminders from the server; scanning here
+  // too would double every popup.
+  const active =
+    settings.enabled && supported && isDesktop && !pushAvailable && !pushSubscribed;
 
   // Current semester's courses (name + optional finalDate).
   const courses = useMemo(() => {
@@ -70,10 +82,11 @@ export const useReminders = ({
   // settings modal offers a manual button as a fallback.
   const askedRef = useRef(false);
   useEffect(() => {
-    if (!active || permission !== "default" || askedRef.current) return;
+    const wants = active || (pushAvailable && settings.enabled);
+    if (!wants || permission !== "default" || askedRef.current) return;
     askedRef.current = true;
     void requestPermission();
-  }, [active, permission, requestPermission]);
+  }, [active, pushAvailable, settings.enabled, permission, requestPermission]);
 
   const runScan = useCallback(async () => {
     if (!active || permission !== "granted") return;

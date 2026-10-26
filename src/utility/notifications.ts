@@ -1,5 +1,7 @@
 // In-app reminder engine helpers — desktop-only OS notifications fired while
-// the app is open. No backend / push: the service worker is not involved.
+// a browser tab is open. The installed PWA gets the same reminders as Web Push
+// from api/send-reminders.ts (server/reminders.ts mirrors the rules below;
+// keep them in step).
 //
 // Two reminder families:
 //   - "dated": exam countdown (7 days → exam day, once per calendar day) and

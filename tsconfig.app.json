@@ -24,5 +24,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Worker scope, typed by tsconfig.sw.json.
+  "exclude": ["src/sw.ts"]
 }

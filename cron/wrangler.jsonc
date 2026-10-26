@@ -1,0 +1,17 @@
+{
+  // Deploy: npx wrangler deploy --config cron/wrangler.jsonc
+  // Secret: npx wrangler secret put CRON_SECRET --config cron/wrangler.jsonc
+  "name": "oplanner-reminders-cron",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+  "vars": {
+    "TARGET_URL": "https://oplanner-one.vercel.app/api/send-reminders"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
