@@ -252,6 +252,9 @@ const SemesterOverview: React.FC<Props> = ({
               <FinalsCountdown
                 courses={courses}
                 onChangeFinalDate={handleFinalDateChange}
+                finalStatusOf={(course) =>
+                  allTasks.find((t) => t.course === course && t.id === FINAL_TASK_ID)?.status
+                }
                 onOpenFinal={(course) => {
                   const final = allTasks.find(
                     (t) => t.course === course && t.id === FINAL_TASK_ID

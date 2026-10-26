@@ -17,9 +17,11 @@ interface Props {
   onChangeFinalDate: (course: string, value: string) => void;
   // Opens the course's final-exam task; omitted where there is none.
   onOpenFinal?: (course: string) => void;
+  // Status of each course's final-exam task ("COMPLETED" / "PENDING").
+  finalStatusOf?: (course: string) => string | undefined;
 }
 
-const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate, onOpenFinal }) => {
+const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate, onOpenFinal, finalStatusOf }) => {
   // Soonest finals first; courses without a date sink to the bottom.
   // Copy so the sidebar order (the `courses` prop) is left untouched.
   const sorted = [...courses].sort((a, b) => {
@@ -36,11 +38,18 @@ const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate, onOpenFi
         let badge = "";
         let badgeClass = "";
         let urgency = "none";
+        // "Done" follows the Final Exam task's status, not the calendar: an
+        // exam whose date has passed but is still pending says so.
+        const completed = finalStatusOf?.(c.name) === "COMPLETED";
         if (days !== null) {
-          if (days < 0) {
+          if (completed) {
             badge = "Done";
             badgeClass = "finals-badge-past";
             urgency = "past";
+          } else if (days < 0) {
+            badge = "Pending";
+            badgeClass = "finals-badge-near";
+            urgency = "overdue";
           } else if (days === 0) {
             badge = "Today";
             badgeClass = "finals-badge-soon";
