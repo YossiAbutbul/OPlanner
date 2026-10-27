@@ -1040,8 +1040,11 @@
   align-self: flex-end;
 }
 
+/* Replies read as plain text across the full width; only the user's own
+   messages get a bubble. Green stays on actions (Confirm, send). */
 .rs-agent-assistant {
-  align-self: flex-start;
+  align-self: stretch;
+  max-width: 100%;
 }
 
 .rs-agent-text {
@@ -1055,22 +1058,19 @@
 }
 
 .rs-agent-user .rs-agent-text {
-  background: var(--rs-accent);
-  color: #fff;
-  font-weight: 500;
+  background: #26292f;
+  color: var(--rs-text);
   border-bottom-right-radius: 5px;
 }
 
 .rs-agent-assistant .rs-agent-text {
-  background: var(--rs-elev);
-  color: var(--rs-text);
-  border: 1px solid var(--rs-border);
-  border-bottom-left-radius: 5px;
+  padding: 0.15rem 0.25rem;
+  border-radius: 0;
+  color: var(--rs-text-soft);
 }
 
 .rs-agent-error .rs-agent-text {
   color: var(--rs-danger);
-  border-color: rgba(255, 107, 107, 0.3);
 }
 
 /* Cards stay left-to-right like the rest of the UI; Hebrew names sit in
@@ -1135,6 +1135,51 @@
   margin-right: 0.35rem;
 }
 
+.rs-agent-card-changes {
+  margin: 0.15rem 0 0.1rem;
+  padding: 0.4rem 0.5rem;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--rs-text) 5%, transparent);
+}
+
+.rs-agent-card-changes li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem;
+  overflow-wrap: anywhere;
+}
+
+.rs-agent-card-change-label {
+  min-width: 3.5rem;
+  font-weight: 600;
+  color: var(--rs-text-muted);
+}
+
+.rs-agent-card-changes del {
+  color: var(--rs-text-muted);
+}
+
+.rs-agent-card-changes ins {
+  text-decoration: none;
+  font-weight: 600;
+  color: var(--rs-text);
+}
+
+.rs-agent-card-move {
+  color: var(--rs-warn);
+}
+
+.rs-agent-card-move .rs-agent-card-change-label,
+.rs-agent-card-move ins {
+  color: inherit;
+}
+
 .rs-agent-card-done {
   margin-top: 0.2rem;
   font-size: 0.78rem;
@@ -1189,10 +1234,7 @@
 .rs-agent-typing {
   flex-direction: row;
   gap: 0.3rem;
-  padding: 0.7rem 0.8rem;
-  border-radius: 14px;
-  background: var(--rs-elev);
-  border: 1px solid var(--rs-border);
+  padding: 0.5rem 0.25rem;
 }
 
 .rs-agent-typing span {
