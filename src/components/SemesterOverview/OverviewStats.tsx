@@ -26,6 +26,9 @@ const MIN_PCT = 3;
 // Rows an opened Up next list shows before it scrolls.
 const MAX_EXPANDED = 6;
 
+// Up next looks this far ahead; later dates live on the calendar.
+const HORIZON_DAYS = 14;
+
 const dueMoment = (t: HomeworkEntry) => t.dueDate + (t.endTime ?? t.startTime ?? "99:99");
 
 interface Segment {
@@ -66,7 +69,8 @@ const OverviewStats: React.FC<Props> = ({
         (t) =>
           t.course !== "reminders" &&
           t.status === "PENDING" &&
-          !isOverdue(t.dueDate, t.endTime ?? t.startTime, now)
+          !isOverdue(t.dueDate, t.endTime ?? t.startTime, now) &&
+          timeLeft(t.dueDate).days < HORIZON_DAYS
       )
       .sort((a, b) => dueMoment(a).localeCompare(dueMoment(b)));
   }, [tasks]);
@@ -146,7 +150,7 @@ const OverviewStats: React.FC<Props> = ({
           </span>
         </div>
         {upcoming.length === 0 ? (
-          <p className="ovs-upnext-empty">All clear. Nothing left to hand in.</p>
+          <p className="ovs-upnext-empty">All clear for the next 2 weeks.</p>
         ) : (
           <ul className={`ovs-upnext-list${open && upcoming.length > MAX_EXPANDED ? " is-scroll" : ""}`}>
             {upcoming.slice(0, open ? upcoming.length : upNextCount).map((t) => {
