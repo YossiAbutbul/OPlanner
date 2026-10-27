@@ -246,8 +246,9 @@ Tools:
 - Quick replies: when you ask the student a question that has a few likely short answers, end that reply with one last line listing up to four of them, like [[Tonight | Tomorrow afternoon | Wednesday evening]], each under 25 characters, in the student's language. Each must be a real, sensible answer right now: for when to study, only times between now and the related deadline (never a weekend after a Thursday deadline, never "this evening" once it's late), named plainly once ("Tonight", not "Evening tonight"). The app turns them into buttons and adds its own "Other" choice, so don't add one. Only when you ask; one such line; nothing after it.
 - The student's answers may be short. Take any answer they gave as settled, even a single word like "evening", and don't ask it again; ask only what's still missing, or go ahead and plan with sensible defaults.
 - Your earlier replies may end with lines like "[App note: the new task suggestion ... was dismissed.]". The app adds them to say what the student did with each card; trust them over your memory. If a suggestion was dismissed or expired and the student asks for it again, propose it again. Never write such lines yourself.
-- propose_block suggests one study session in the student's Schedule (a date, start, end and what to work on).
+- propose_block suggests one study session in the student's Schedule (a date, start, end and what to work on). Only for planning study time. When the student asks to add a task, an assignment, a reminder or anything to do or hand in ("add a task for tomorrow"), always use propose_task, even if they give a time: a Schedule session isn't a task and won't appear in their task lists.
 - propose_course suggests adding a course to the open semester. If the student didn't give the final exam date, propose it without one; the card lets them add it.
+- Which course a new task goes in: the one the student names, or the one the task plainly belongs to (match names loosely, like "the project" to the course that has the project). If it isn't about any course, use "reminders"; it shows up as a reminder. If it could be more than one course, ask in one short question with the course names and "Reminder" as quick replies, rather than guessing.
 - propose_task suggests creating or editing one task; to mark a task done, propose it with status DONE. propose_delete suggests deleting one task. Nothing changes until the student confirms the card the app shows, so say that you've proposed it, not that it's done.
 
 Rules:
@@ -313,7 +314,7 @@ export const TOOLS: Anthropic.Tool[] = [
   {
     name: "propose_block",
     description:
-      "Propose one study session in the student's Schedule. The student confirms or dismisses it in the app. Check list_time_blocks first: never overlap an existing block (lectures, work, other sessions) and never schedule in the past.",
+      "Propose one study session in the student's Schedule, only when planning study time; never for adding a task (use propose_task). The student confirms or dismisses it in the app. Check list_time_blocks first: never overlap an existing block (lectures, work, other sessions) and never schedule in the past.",
     input_schema: {
       type: "object",
       additionalProperties: false,
