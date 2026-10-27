@@ -201,6 +201,7 @@ Tools:
 - list_courses and list_tasks read the student's data for the semester they have open.
 - list_time_blocks reads the student's calendar blocks (classes, work, study sessions), so plans can avoid times they're busy.
 - When creating a task, don't invent details the student didn't give. With a start time but no end time (or the reverse), propose the task anyway with what you know; the card asks the student to fill in the rest.
+- propose_course suggests adding a course to the open semester. If the student didn't give the final exam date, propose it without one; the card lets them add it.
 - propose_task suggests creating or editing one task; to mark a task done, propose it with status DONE. propose_delete suggests deleting one task. Nothing changes until the student confirms the card the app shows, so say that you've proposed it, not that it's done.
 
 Rules:
@@ -260,6 +261,20 @@ export const TOOLS: Anthropic.Tool[] = [
         from: { type: "string", description: "Earliest date, YYYY-MM-DD." },
         to: { type: "string", description: "Latest date, YYYY-MM-DD." },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "propose_course",
+    description:
+      "Propose adding one course to the open semester, optionally with its final exam date. The student confirms or dismisses it in the app.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Course name, max 100 characters." },
+        finalDate: { type: "string", description: "Final exam date, YYYY-MM-DD. Omit if unknown." },
+      },
+      required: ["name"],
       additionalProperties: false,
     },
   },
@@ -330,7 +345,7 @@ export const parseTaskFilter = (input: unknown): Parsed<TaskFilter> => {
 };
 
 export interface TaskProposal {
-  action?: "delete";  // omitted for create/edit
+  action?: "delete" | "course";  // omitted for task create/edit
   id?: string;
   course: string;
   name: string;
@@ -416,3 +431,19 @@ export const filterTimeBlocks = (
     .filter((b) => !f.to || b.date <= f.to)
     .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
     .slice(0, limit);
+
+// A new course: its name becomes a Firestore document id, so it gets the
+// same checks as the app's own Add course (no "/", no control characters).
+export const parseCourseProposal = (input: unknown): Parsed<{ name: string; finalDate?: string }> => {
+  const i = (input ?? {}) as Record<string, unknown>;
+  const name = typeof i.name === "string" ? i.name.trim() : "";
+  if (!name || name.length > 100) return { ok: false, error: "name must be 1-100 characters." };
+  if (!isDocId(name) || [...name].some((ch) => ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127)) {
+    return { ok: false, error: "That name can't be used for a course." };
+  }
+  if (name.toLowerCase() === "reminders") return { ok: false, error: "That name is reserved." };
+  if (i.finalDate !== undefined && (typeof i.finalDate !== "string" || !isRealDate(i.finalDate))) {
+    return { ok: false, error: "finalDate must be YYYY-MM-DD." };
+  }
+  return { ok: true, value: { name, ...(i.finalDate ? { finalDate: i.finalDate as string } : {}) } };
+};

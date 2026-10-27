@@ -37,8 +37,16 @@ const withEdits = (c: { proposal: AgentProposal; edits?: TaskDetails }): AgentPr
 // the rest instead of the agent guessing.
 const missingDetails = (p: AgentProposal) => !!p.startTime !== !!p.endTime;
 
+// A course's final exam date is optional, but the card opens its field when
+// it's missing so it's easy to add.
+const needsInput = (kind: CardKind, p: AgentProposal) => (kind === "course" ? !p.dueDate : missingDetails(p));
+
 const detailsProblem = (p: AgentProposal): string | null => {
   if (!p.name.trim()) return "Add a name.";
+  if (p.action === "course") {
+    if (/[/]/.test(p.name)) return "A course name can't contain /.";
+    return p.dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(p.dueDate) ? "Pick a valid date." : null;
+  }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(p.dueDate)) return "Pick a date.";
   if (missingDetails(p)) return p.startTime ? "Pick an end time." : "Pick a start time.";
   if (p.startTime && p.endTime && p.endTime <= p.startTime) return "End time must be after the start.";
@@ -137,11 +145,12 @@ const editChanges = (p: AgentProposal): { label: string; from: string; to: strin
   return rows.filter((r) => r.from !== r.to);
 };
 
-type CardKind = "new" | "edit" | "done" | "delete";
+type CardKind = "new" | "edit" | "done" | "delete" | "course";
 
 // A status-only change to Done gets its own card: it's the most common edit.
 const cardKind = (p: AgentProposal): CardKind => {
   if (p.action === "delete") return "delete";
+  if (p.action === "course") return "course";
   if (!p.id) return "new";
   const changes = editChanges(p);
   return changes.length === 1 && changes[0].label === "Status" && p.status === "DONE" ? "done" : "edit";
@@ -164,6 +173,10 @@ const KIND: Record<CardKind, { label: string; action: string; working: string; d
   done: {
     label: "Mark as done", action: "Mark done", working: "Saving…", doneText: "Marked as done",
     icon: <svg {...ICON_PROPS}><circle cx="12" cy="12" r="8.5" /><path d="M8.5 12.3l2.4 2.4 4.6-5" /></svg>,
+  },
+  course: {
+    label: "New course", action: "Add course", working: "Adding…", doneText: "Course added",
+    icon: <svg {...ICON_PROPS}><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z" /><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3" /><path d="M9 7h6" /></svg>,
   },
   delete: {
     label: "Delete task", action: "Delete", working: "Deleting…", doneText: "Deleted",
@@ -367,7 +380,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
   const confirmAll = async (msgId: number, cards: Card[]) => {
     for (const [i, c] of cards.entries()) {
       const k = cardKind(c.proposal);
-      const blocked = (k === "new" || k === "edit") && detailsProblem(withEdits(c));
+      const blocked = (k === "new" || k === "edit" || k === "course") && detailsProblem(withEdits(c));
       if (c.state === "pending" && !isGone(c) && !blocked) await confirm(msgId, i, c);
     }
   };
@@ -444,7 +457,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                 const { live, gone } = track(c);
                 const proposed = withEdits(c);
                 const shown = c.state === "saved" && live ? { ...proposed, ...live } : proposed;
-                const editable = kind === "new" || kind === "edit";
+                const editable = kind === "new" || kind === "edit" || kind === "course";
                 const problem = editable ? detailsProblem(proposed) : null;
                 const actionable = (c.state === "pending" || c.state === "saving") && !gone;
                 return (
@@ -455,14 +468,22 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                       <span className="rs-agent-card-kind">{k.label}</span>
                       {/* <bdi> keeps Hebrew names from reordering the English around them. */}
                       <span className="rs-agent-card-name"><bdi>{shown.name}</bdi></span>
-                      <span className="rs-agent-card-meta">
-                        <bdi>{capitalizeWords(shown.course)}</bdi>
-                      </span>
-                      <span className="rs-agent-card-meta">
-                        {formatDate(shown.dueDate)}
-                        {formatTime(shown) && <span className="rs-agent-card-time">{formatTime(shown)}</span>}
-                        {shown.status === "DONE" && <span className="rs-agent-card-time">Done</span>}
-                      </span>
+                      {kind === "course" ? (
+                        <span className="rs-agent-card-meta">
+                          {shown.dueDate ? `Final exam ${formatDate(shown.dueDate)}` : "No final exam date"}
+                        </span>
+                      ) : (
+                        <>
+                          <span className="rs-agent-card-meta">
+                            <bdi>{capitalizeWords(shown.course)}</bdi>
+                          </span>
+                          <span className="rs-agent-card-meta">
+                            {formatDate(shown.dueDate)}
+                            {formatTime(shown) && <span className="rs-agent-card-time">{formatTime(shown)}</span>}
+                            {shown.status === "DONE" && <span className="rs-agent-card-time">Done</span>}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                   {kind === "edit" && !gone && c.state !== "saved" && (
@@ -493,7 +514,30 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                   {c.state === "expired" && (
                     <span className="rs-agent-card-status">Expired. Ask again for a fresh suggestion.</span>
                   )}
-                  {actionable && editable && (c.editing || missingDetails(proposed) || problem) && (
+                  {actionable && kind === "course" && (c.editing || needsInput(kind, proposed) || problem) && (
+                    <div className="rs-agent-fields">
+                      <label className="rs-agent-field rs-agent-field-wide">
+                        <span>Name</span>
+                        <input
+                          type="text"
+                          dir="auto"
+                          maxLength={100}
+                          value={proposed.name}
+                          onChange={(e) => setCardEdits(m.id, i, { name: e.target.value })}
+                        />
+                      </label>
+                      <label className="rs-agent-field rs-agent-field-wide">
+                        <span>Final exam (optional)</span>
+                        <input
+                          type="date"
+                          value={proposed.dueDate}
+                          onChange={(e) => setCardEdits(m.id, i, { dueDate: e.target.value })}
+                        />
+                      </label>
+                      {problem && <p className="rs-agent-fields-hint">{problem}</p>}
+                    </div>
+                  )}
+                  {actionable && editable && kind !== "course" && (c.editing || missingDetails(proposed) || problem) && (
                     <div className="rs-agent-fields">
                       <label className="rs-agent-field rs-agent-field-wide">
                         <span>Name</span>
@@ -542,7 +586,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                       >
                         Dismiss
                       </button>
-                      {editable && !c.editing && !missingDetails(proposed) && !problem && (
+                      {editable && !c.editing && !needsInput(kind, proposed) && !problem && (
                         <button
                           type="button"
                           className="rs-agent-btn"
@@ -568,7 +612,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
               {(() => {
                 const pending = m.cards?.filter((c) => c.state === "pending" && !isGone(c)) ?? [];
                 if (pending.length < 2) return null;
-                const allNew = pending.every((c) => cardKind(c.proposal) === "new");
+                const allNew = pending.every((c) => ["new", "course"].includes(cardKind(c.proposal)));
                 return (
                   <button
                     type="button"

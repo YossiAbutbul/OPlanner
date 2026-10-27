@@ -16,6 +16,7 @@ import { useEdgeSwipe } from "./hooks/useEdgeSwipe";
 import { usePwaMobile } from "./hooks/usePwaMobile";
 import { useReminders } from "./hooks/useReminders";
 import type { CourseInfo } from "./types/models";
+import { addCourse } from "./utility/initializeDatabase";
 
 // Re-export so existing consumers (Sidebar, MainContent, SemesterOverview,
 // RightSidebar) keep importing these from "../App".
@@ -196,6 +197,13 @@ const App: React.FC = () => {
         selectedSemester={sel.selectedSemester}
         selectedCourse={sel.selectedCourse}
         mobileOpen={mobileRightOpen}
+        onAddCourse={async (year, semesterKey, name, finalDate) => {
+          if (!(await addCourse(year, semesterKey, name))) throw new Error("Couldn't add the course");
+          await tree.refreshYears();
+          // Same path as setting the date in the app, so the Final Exam task
+          // and the finals countdown follow.
+          if (finalDate) await tree.handleUpdateCourseFinalDate(year, semesterKey, name, finalDate);
+        }}
       />
     </div>
   );

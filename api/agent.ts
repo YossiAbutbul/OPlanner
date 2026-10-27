@@ -28,6 +28,7 @@ import {
   parseProposal,
   parseTaskFilter,
   parseDeleteProposal,
+  parseCourseProposal,
   filterTimeBlocks,
   takeRequest,
   type TaskProposal,
@@ -142,6 +143,23 @@ const runTool = async (
       const f = parseTaskFilter(input);
       if (!f.ok) return { content: f.error, isError: true };
       return { content: JSON.stringify(filterTimeBlocks(await data.loadTimeBlocks(), f.value)) };
+    }
+
+    case "propose_course": {
+      const p = parseCourseProposal(input);
+      if (!p.ok) return { content: p.error, isError: true };
+      const taken = (await data.loadCourses()).some((c) => c.name.toLowerCase() === p.value.name.toLowerCase());
+      if (taken) return { content: `A course named "${p.value.name}" already exists.`, isError: true };
+      return {
+        content: "Proposal shown to the student. The course is added only if they confirm.",
+        proposal: {
+          action: "course",
+          course: p.value.name,
+          name: p.value.name,
+          dueDate: p.value.finalDate ?? "",
+          status: "PENDING",
+        },
+      };
     }
 
     case "propose_delete": {
@@ -306,6 +324,7 @@ const TOOL_STATUS: Record<string, string> = {
   list_time_blocks: "Checking your schedule…",
   propose_task: "Preparing a suggestion…",
   propose_delete: "Preparing a suggestion…",
+  propose_course: "Preparing a suggestion…",
 };
 
 const describeError = (err: unknown): string => {

@@ -308,6 +308,25 @@ describe("AgentPanel", () => {
     expect(onConfirm.mock.calls[0][0]).not.toHaveProperty("startTime");
   });
 
+  it("proposes a course and asks for the final date if it's missing", async () => {
+    send.mockResolvedValue({
+      reply: "Proposed.",
+      proposals: [{ action: "course", course: "Linear Algebra", name: "Linear Algebra", dueDate: "", status: "PENDING" }],
+    });
+    const onConfirm = vi.fn().mockResolvedValue(undefined);
+    render(<AgentPanel year={2026} semester="A" onConfirm={onConfirm} />);
+    fireEvent.click(screen.getByRole("button", { name: "מה פספסתי?" }));
+
+    expect(await screen.findByText("New course")).toBeInTheDocument();
+    expect(screen.getByText("No final exam date")).toBeInTheDocument();
+    // Optional, so adding isn't blocked; the field is there to fill.
+    expect(screen.getByRole("button", { name: "Add course" })).toBeEnabled();
+    fireEvent.change(screen.getByLabelText("Final exam (optional)"), { target: { value: "2027-02-10" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add course" }));
+    await screen.findByText("Course added");
+    expect(onConfirm.mock.calls[0][0]).toMatchObject({ action: "course", name: "Linear Algebra", dueDate: "2027-02-10" });
+  });
+
   it("renders replies as text, not HTML", async () => {
     send.mockResolvedValue({ reply: '<img src=x onerror="alert(1)">', proposals: [] });
     const { container } = render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);

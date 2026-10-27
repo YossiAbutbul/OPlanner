@@ -10,6 +10,7 @@ import {
   filterTasks,
   filterTimeBlocks,
   parseDeleteProposal,
+  parseCourseProposal,
   isAllowed,
   parseAgentRequest,
   parseAllowlist,
@@ -219,5 +220,24 @@ describe("delete proposals and time blocks", () => {
       "Lab",
     ]);
     expect(filterTimeBlocks(blocks, {}, 1)).toHaveLength(1);
+  });
+});
+
+describe("course proposals", () => {
+  it("accepts a name and an optional final date", () => {
+    expect(parseCourseProposal({ name: " Linear Algebra " })).toEqual({ ok: true, value: { name: "Linear Algebra" } });
+    expect(parseCourseProposal({ name: "Calc", finalDate: "2027-02-10" })).toEqual({
+      ok: true,
+      value: { name: "Calc", finalDate: "2027-02-10" },
+    });
+  });
+
+  it("rejects names that would break the Firestore path or are reserved", () => {
+    expect(parseCourseProposal({ name: "a/b" }).ok).toBe(false);
+    expect(parseCourseProposal({ name: ".." }).ok).toBe(false);
+    expect(parseCourseProposal({ name: "Reminders" }).ok).toBe(false);
+    expect(parseCourseProposal({ name: "x".repeat(101) }).ok).toBe(false);
+    expect(parseCourseProposal({ name: "a\u0007b" }).ok).toBe(false);
+    expect(parseCourseProposal({ name: "Calc", finalDate: "soon" }).ok).toBe(false);
   });
 });
