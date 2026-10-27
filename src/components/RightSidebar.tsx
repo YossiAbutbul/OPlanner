@@ -312,7 +312,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             className={`rs-tab ${tab === "agent" ? "rs-tab-active" : ""}`}
             onClick={() => setTab("agent")}
           >
-            Assistant
+            AI Assistant
           </button>
           <span className="rs-tab-indicator" aria-hidden />
         </div>

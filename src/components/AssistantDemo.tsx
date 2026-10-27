@@ -147,7 +147,7 @@ const AssistantDemo: React.FC = () => {
           <span className="lp-chat-icon">
             <Sparkles size={14} />
           </span>
-          Assistant
+          AI Assistant
           <span className="lp-chat-live">
             <span className="lp-chat-live-dot" /> live
           </span>
