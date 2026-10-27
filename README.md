@@ -8,7 +8,9 @@ Your courses, assignments, and finals — one place. Drop your university calend
 
 ---
 
-![Landing page](docs/screenshots/landing.png)
+![A one-minute tour of OPlanner: importing a calendar, a course's links and notes, tasks, the exam tracker, the schedule and the study assistant](demo/oplanner-demo.webp)
+
+<sub>One-minute tour. [Watch it in full quality (WebM)](demo/oplanner-demo.webm).</sub>
 
 ## Why OPlanner?
 
