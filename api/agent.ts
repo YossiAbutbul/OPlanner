@@ -335,6 +335,10 @@ const runAgent = async (
       model: MODEL,
       max_tokens: MAX_TOKENS,
       system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+      // Second breakpoint on the last block: each tool round, and the next
+      // message, reads the conversation so far from cache instead of paying
+      // for it again.
+      cache_control: { type: "ephemeral" },
       tools: TOOLS,
       output_config: { effort: "low" },
       messages,

@@ -3,6 +3,8 @@ import { useHomework } from "../context/HomeworkContext";
 import { useTimeBlocks } from "../context/TimeBlockContext";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
+import { requireUid } from "../firebase";
+import { createTaskRef } from "../services/homework";
 import { fetchAgentAccess, type AgentAccess, type AgentProposal } from "../services/agent";
 import { lsCache } from "../hooks/useLocalStorageCache";
 
@@ -72,6 +74,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   // Shared semester-wide task pool (Day filters it by date).
   // Fetched from Firestore; optimistic edits are layered on below.
   const [fetchedSemesterTasks, setAllSemesterTasks] = useState<HomeworkEntry[]>([]);
+  // Which semester the pool above holds, once loaded ("year|semester").
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
 
   // Modal state.
   const [editTask, setEditTask] = useState<HomeworkEntry | null>(null);
@@ -138,6 +142,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       ]);
       if (cancelled) return;
       setAllSemesterTasks([...lists.flat(), ...reminders]);
+      setLoadedFor(`${selectedYear}|${selectedSemester}`);
     };
     (async () => {
       await load(false);
@@ -208,7 +213,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
 
   // Saves a change the agent proposed, once the user confirms it. Edits keep
   // the fields the agent can't see (notes, color, ignoreOverdue).
-  const confirmProposal = async (p: AgentProposal, year: number, semester: string) => {
+  // Resolves with the saved task's id, so the card can follow the task.
+  const confirmProposal = async (p: AgentProposal, year: number, semester: string): Promise<string | void> => {
     const fromCourse = p.prevCourse ?? p.course;
     const existing = p.id
       ? allSemesterTasks.find((t) => t.id === p.id && t.course === fromCourse && t.year === year)
@@ -229,9 +235,12 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       toast.success(`Deleted “${p.name}”`);
       return;
     }
+    let taskId: string;
     try {
+      // A new task gets its id up front so the card can track it.
+      taskId = p.id ?? createTaskRef(requireUid(), year, semester, p.course).id;
       await addHomework(
-        p.id ?? null,
+        taskId,
         p.name,
         p.dueDate,
         p.status,
@@ -250,6 +259,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       throw e;
     }
     toast.success(p.id ? `Task “${p.name}” updated` : `Task “${p.name}” added`);
+    return taskId;
   };
 
   const handleSlotDblClick = ({ date, start, end }: { date: string; start: string; end: string }) => {
@@ -297,6 +307,11 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
               year={selectedYear}
               semester={selectedSemester}
               onConfirm={confirmProposal}
+              liveTasks={
+                selectedYear !== null && selectedSemester && loadedFor === `${selectedYear}|${selectedSemester}`
+                  ? { year: selectedYear, semester: selectedSemester, tasks: allSemesterTasks }
+                  : undefined
+              }
               storageKey={`oplanner.agentChat.${user.uid}`}
               onCleared={(undo) => toast.info("Chat cleared", { action: { label: "Undo", onClick: undo } })}
             />

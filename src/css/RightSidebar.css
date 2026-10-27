@@ -1025,6 +1025,12 @@
   align-self: flex-end;
 }
 
+/* Each question starts a new group: a question sits close to its answer,
+   and clear space separates one exchange from the next. */
+.rs-agent-msg + .rs-agent-user {
+  margin-top: 1.1rem;
+}
+
 /* Replies read as plain text across the full width; only the user's own
    messages get a bubble. Green stays on actions (Confirm, send). */
 .rs-agent-assistant {

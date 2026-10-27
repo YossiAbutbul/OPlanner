@@ -181,6 +181,58 @@ describe("AgentPanel", () => {
     expect(onConfirm.mock.calls.map((c) => c[0].name)).toEqual(["A", "C"]);
   });
 
+  it("keeps a saved card in step with the task in the planner", async () => {
+    send.mockResolvedValue({
+      reply: "Proposed.",
+      proposals: [{ course: "x", name: "Doctor", dueDate: "2026-10-29", status: "PENDING" }],
+    });
+    const onConfirm = vi.fn().mockResolvedValue("new-id");
+    const live = (tasks: { id: string; name: string }[]) => ({
+      year: 2026,
+      semester: "A",
+      tasks: tasks.map((t) => ({ ...t, course: "x", dueDate: "2026-10-30", status: "PENDING" })),
+    });
+    // The planner shows a saved task at once (optimistic save).
+    const { rerender } = render(
+      <AgentPanel year={2026} semester="A" onConfirm={onConfirm} liveTasks={live([{ id: "new-id", name: "Doctor" }])} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "What's overdue?" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Add task" }));
+    await screen.findByText("Added to your planner");
+
+    // Renamed and moved in the planner: the card shows it.
+    rerender(<AgentPanel year={2026} semester="A" onConfirm={onConfirm} liveTasks={live([{ id: "new-id", name: "Dentist" }])} />);
+    expect(screen.getByText("Dentist")).toBeInTheDocument();
+    expect(screen.getByText(/Fri, Oct 30/)).toBeInTheDocument();
+
+    // Deleted in the planner: the card says so.
+    rerender(<AgentPanel year={2026} semester="A" onConfirm={onConfirm} liveTasks={live([])} />);
+    expect(screen.getByText("No longer in your planner")).toBeInTheDocument();
+  });
+
+  it("can't confirm a suggestion for a task that was deleted meanwhile", async () => {
+    send.mockResolvedValue({
+      reply: "Proposed.",
+      proposals: [{ action: "delete", id: "t1", course: "x", name: "Gone", dueDate: "2026-11-03", status: "PENDING" }],
+    });
+    render(
+      <AgentPanel year={2026} semester="A" onConfirm={vi.fn()} liveTasks={{ year: 2026, semester: "A", tasks: [] }} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "What's overdue?" }));
+    expect(await screen.findByText("No longer in your planner")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete" })).toBeNull();
+  });
+
+  it("doesn't mark cards gone while tasks are still loading", async () => {
+    send.mockResolvedValue({
+      reply: "Proposed.",
+      proposals: [{ action: "delete", id: "t1", course: "x", name: "T", dueDate: "2026-11-03", status: "PENDING" }],
+    });
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "What's overdue?" }));
+    expect(await screen.findByRole("button", { name: "Delete" })).toBeInTheDocument();
+  });
+
   it("renders replies as text, not HTML", async () => {
     send.mockResolvedValue({ reply: '<img src=x onerror="alert(1)">', proposals: [] });
     const { container } = render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);

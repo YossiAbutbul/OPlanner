@@ -14,6 +14,20 @@ interface Card {
   year: number;
   semester: string;
   state: ProposalState;
+  // The planner task this card is about: the proposal's id, or the id a new
+  // task got when it was added. Lets the card follow later changes.
+  taskId?: string;
+}
+
+// A task as the planner has it now, for keeping cards current.
+export interface LiveTask {
+  id: string;
+  name: string;
+  course: string;
+  dueDate: string;
+  startTime?: string;
+  endTime?: string;
+  status: string;
 }
 
 interface Message {
@@ -28,7 +42,11 @@ interface Message {
 interface Props {
   year: number | null;
   semester: string | null;
-  onConfirm: (p: AgentProposal, year: number, semester: string) => Promise<void>;
+  // Resolves with the id of the task it saved.
+  onConfirm: (p: AgentProposal, year: number, semester: string) => Promise<string | void>;
+  // The open semester's tasks once loaded; undefined while loading, so cards
+  // don't flash "no longer in your planner".
+  liveTasks?: { year: number; semester: string; tasks: LiveTask[] };
   // localStorage key for the last conversation, per user. Sign-out clears
   // every oplanner.* key. Omit to keep the chat in memory only.
   storageKey?: string;
@@ -71,7 +89,7 @@ const SUGGESTIONS = [
 const formatDate = (iso: string) =>
   new Date(iso + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 
-const formatTime = (p: AgentProposal) =>
+const formatTime = (p: { startTime?: string; endTime?: string }) =>
   p.startTime ? (p.endTime ? `${p.startTime}–${p.endTime}` : p.startTime) : "";
 
 // Fields an edit changes, old against new, so the student sees exactly what
@@ -134,7 +152,7 @@ const reserveIds = (list: Message[]) => {
 
 // Chat with the study agent. Replies render through AgentText, which only
 // builds React elements, so a reply can't inject markup, links or images.
-const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, storageKey, onCleared }) => {
+const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, storageKey, onCleared }) => {
   const [messages, setMessages] = useState<Message[]>(() => reserveIds(loadChat(storageKey)));
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -221,11 +239,14 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, storageKey, on
     void send(text, messages.slice(0, prior));
   };
 
-  const setCardState = (msgId: number, index: number, state: ProposalState) =>
+  const setCardState = (msgId: number, index: number, state: ProposalState, taskId?: string) =>
     setMessages((prev) =>
       prev.map((m) =>
         m.id === msgId && m.cards
-          ? { ...m, cards: m.cards.map((c, i) => (i === index ? { ...c, state } : c)) }
+          ? {
+              ...m,
+              cards: m.cards.map((c, i) => (i === index ? { ...c, state, ...(taskId ? { taskId } : {}) } : c)),
+            }
           : m
       )
     );
@@ -233,17 +254,28 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, storageKey, on
   const confirm = async (msgId: number, index: number, card: Card) => {
     setCardState(msgId, index, "saving");
     try {
-      await onConfirm(card.proposal, card.year, card.semester);
-      setCardState(msgId, index, "saved");
+      const savedId = await onConfirm(card.proposal, card.year, card.semester);
+      setCardState(msgId, index, "saved", savedId || card.proposal.id);
     } catch {
       setCardState(msgId, index, "pending");
     }
   };
 
+  // Follow a card's task in the planner when its semester is the one loaded.
+  // A deleted task makes the card read as gone (except a delete that was
+  // confirmed); a saved card shows the task as it is now.
+  const track = (c: Card): { live?: LiveTask; gone: boolean } => {
+    const id = c.taskId ?? c.proposal.id;
+    if (!id || !liveTasks || liveTasks.year !== c.year || liveTasks.semester !== c.semester) return { gone: false };
+    const live = liveTasks.tasks.find((t) => t.id === id);
+    return { live, gone: !live && !(cardKind(c.proposal) === "delete" && c.state === "saved") };
+  };
+  const isGone = (c: Card) => track(c).gone;
+
   // One at a time, so each card shows its own result.
   const confirmAll = async (msgId: number, cards: Card[]) => {
     for (const [i, c] of cards.entries()) {
-      if (c.state === "pending") await confirm(msgId, i, c);
+      if (c.state === "pending" && !isGone(c)) await confirm(msgId, i, c);
     }
   };
 
@@ -306,6 +338,9 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, storageKey, on
                 const changes = editChanges(c.proposal);
                 const kind = cardKind(c.proposal);
                 const k = KIND[kind];
+                const { live, gone } = track(c);
+                const shown = c.state === "saved" && live ? { ...c.proposal, ...live } : c.proposal;
+                const actionable = (c.state === "pending" || c.state === "saving") && !gone;
                 return (
                 <div key={i} className={`rs-agent-card rs-agent-card-${c.state} rs-agent-card-${kind}`}>
                   <div className="rs-agent-card-head">
@@ -313,18 +348,18 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, storageKey, on
                     <div className="rs-agent-card-body">
                       <span className="rs-agent-card-kind">{k.label}</span>
                       {/* <bdi> keeps Hebrew names from reordering the English around them. */}
-                      <span className="rs-agent-card-name"><bdi>{c.proposal.name}</bdi></span>
+                      <span className="rs-agent-card-name"><bdi>{shown.name}</bdi></span>
                       <span className="rs-agent-card-meta">
-                        <bdi>{capitalizeWords(c.proposal.course)}</bdi>
+                        <bdi>{capitalizeWords(shown.course)}</bdi>
                       </span>
                       <span className="rs-agent-card-meta">
-                        {formatDate(c.proposal.dueDate)}
-                        {formatTime(c.proposal) && <span className="rs-agent-card-time">{formatTime(c.proposal)}</span>}
-                        {c.proposal.status === "DONE" && <span className="rs-agent-card-time">Done</span>}
+                        {formatDate(shown.dueDate)}
+                        {formatTime(shown) && <span className="rs-agent-card-time">{formatTime(shown)}</span>}
+                        {shown.status === "DONE" && <span className="rs-agent-card-time">Done</span>}
                       </span>
                     </div>
                   </div>
-                  {kind === "edit" && (
+                  {kind === "edit" && !gone && c.state !== "saved" && (
                     <ul className="rs-agent-card-changes">
                       {changes.length === 0 && <li>No changes</li>}
                       {changes.map((ch) => (
@@ -337,7 +372,10 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, storageKey, on
                       ))}
                     </ul>
                   )}
-                  {c.state === "saved" && (
+                  {gone && (
+                    <span className="rs-agent-card-status">No longer in your planner</span>
+                  )}
+                  {c.state === "saved" && !gone && (
                     <span className="rs-agent-card-status rs-agent-card-status-ok">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M5 12.5l4.5 4.5L19 7.5" />
@@ -349,7 +387,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, storageKey, on
                   {c.state === "expired" && (
                     <span className="rs-agent-card-status">Expired. Ask again for a fresh suggestion.</span>
                   )}
-                  {(c.state === "pending" || c.state === "saving") && (
+                  {actionable && (
                     <div className="rs-agent-card-actions">
                       <button
                         type="button"
@@ -373,7 +411,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, storageKey, on
                 );
               })}
               {(() => {
-                const pending = m.cards?.filter((c) => c.state === "pending") ?? [];
+                const pending = m.cards?.filter((c) => c.state === "pending" && !isGone(c)) ?? [];
                 if (pending.length < 2) return null;
                 const allNew = pending.every((c) => cardKind(c.proposal) === "new");
                 return (
