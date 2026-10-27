@@ -73,6 +73,7 @@
     "workbox-routing": "^7.4.0"
   },
   "overrides": {
-    "@grpc/grpc-js": "^1.14.6"
+    "@grpc/grpc-js": "^1.14.6",
+    "jwks-rsa": "^3.2.2"
   }
 }
