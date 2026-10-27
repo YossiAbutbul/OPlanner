@@ -353,6 +353,54 @@ describe("AgentPanel", () => {
     expect(screen.getByText("New task · A 2026")).toBeInTheDocument();
   });
 
+  it("closes Edit with Done and keeps the changes", async () => {
+    send.mockResolvedValue({ reply: "Proposed.", proposals: [{ course: "x", name: "Read", dueDate: "2026-10-29", status: "PENDING" }] });
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "מה פספסתי?" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Read ch. 3" } });
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    expect(screen.queryByLabelText("Name")).toBeNull();
+    expect(screen.getByText("Read ch. 3")).toBeInTheDocument();
+  });
+
+  it("brings a dismissed card back with Undo", async () => {
+    send.mockResolvedValue({ reply: "Proposed.", proposals: [{ course: "x", name: "HW", dueDate: "2026-10-29", status: "PENDING" }] });
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "מה פספסתי?" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Dismiss" }));
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    expect(screen.getByRole("button", { name: "Add task" })).toBeEnabled();
+  });
+
+  it("tells the agent what happened to each card", async () => {
+    send.mockResolvedValueOnce({
+      reply: "Proposed.",
+      proposals: [{ course: "x", name: "HW 1", dueDate: "2026-10-29", status: "PENDING" }],
+    });
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "מה פספסתי?" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Dismiss" }));
+
+    send.mockResolvedValueOnce({ reply: "ok", proposals: [] });
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "again" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByText("ok");
+    const history = send.mock.lastCall![0].history;
+    expect(history[1].text).toContain('[App note: the new task suggestion "HW 1" (2026-10-29) was dismissed.]');
+  });
+
+  it("asks for a missing date on the card", async () => {
+    send.mockResolvedValue({ reply: "Proposed.", proposals: [{ course: "x", name: "HW", dueDate: "", status: "PENDING" }] });
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "מה פספסתי?" }));
+    expect(await screen.findByText("No date yet")).toBeInTheDocument();
+    expect(screen.getByText("Pick a date.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add task" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-10-29" } });
+    expect(screen.getByRole("button", { name: "Add task" })).toBeEnabled();
+  });
+
   it("renders replies as text, not HTML", async () => {
     send.mockResolvedValue({ reply: '<img src=x onerror="alert(1)">', proposals: [] });
     const { container } = render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);

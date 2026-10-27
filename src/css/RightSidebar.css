@@ -1195,6 +1195,11 @@
   opacity: 0.5;
 }
 
+.rs-agent-card-dismissed:hover,
+.rs-agent-card-dismissed:focus-within {
+  opacity: 0.85;
+}
+
 .rs-agent-card-delete .rs-agent-card-icon {
   color: var(--rs-danger);
   background: color-mix(in srgb, var(--rs-danger) 16%, transparent);
@@ -1307,6 +1312,22 @@
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--rs-text-muted);
+}
+
+.rs-agent-card-undo {
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--rs-text);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rs-agent-card-undo:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .rs-agent-card-status-ok {

@@ -39,7 +39,8 @@ const missingDetails = (p: AgentProposal) => !!p.startTime !== !!p.endTime;
 
 // A course's final exam date is optional, but the card opens its field when
 // it's missing so it's easy to add.
-const needsInput = (kind: CardKind, p: AgentProposal) => (kind === "course" ? !p.dueDate : missingDetails(p));
+const needsInput = (kind: CardKind, p: AgentProposal) =>
+  kind === "course" ? !p.dueDate : !p.dueDate || missingDetails(p);
 
 const detailsProblem = (p: AgentProposal): string | null => {
   if (!p.name.trim()) return "Add a name.";
@@ -184,6 +185,27 @@ const KIND: Record<CardKind, { label: string; action: string; working: string; d
   },
 };
 
+// What the student did with each card, appended to that reply in the
+// history the agent gets. Without it the agent only sees its own text and
+// can't tell a dismissed suggestion from one still waiting.
+const OUTCOME: Record<ProposalState, string> = {
+  pending: "not answered yet",
+  saving: "being saved",
+  saved: "accepted and saved",
+  dismissed: "dismissed",
+  expired: "expired, not saved",
+};
+
+const cardNotes = (cards: Card[]): string =>
+  cards
+    .map((c) => {
+      const p = withEdits(c);
+      const what = KIND[cardKind(c.proposal)].label.toLowerCase();
+      const when = p.dueDate ? ` (${p.dueDate}${p.startTime ? ` ${formatTime(p)}` : ""})` : "";
+      return `[App note: the ${what} suggestion "${p.name}"${when} was ${OUTCOME[c.state]}.]`;
+    })
+    .join("\n");
+
 let nextId = 1;
 const reserveIds = (list: Message[]) => {
   for (const m of list) nextId = Math.max(nextId, m.id + 1);
@@ -288,7 +310,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
     // Error notices are local only; the model never sees them.
     const history = base
       .filter((m) => !m.error)
-      .map((m) => ({ role: m.role, text: m.text }));
+      .map((m) => ({ role: m.role, text: m.cards?.length ? `${m.text}\n\n${cardNotes(m.cards)}` : m.text }));
     setMessages([...base, { id: nextId++, role: "user", text: message }]);
     setInput("");
     setRecall(null);
@@ -358,7 +380,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
           ? {
               ...m,
               cards: m.cards.map((c, i) =>
-                i === index ? { ...c, edits: { ...c.edits, ...patch }, ...(editing ? { editing } : {}) } : c
+                i === index ? { ...c, edits: { ...c.edits, ...patch }, ...(editing !== undefined ? { editing } : {}) } : c
               ),
             }
           : m
@@ -485,7 +507,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                             <bdi>{capitalizeWords(shown.course)}</bdi>
                           </span>
                           <span className="rs-agent-card-meta">
-                            {formatDate(shown.dueDate)}
+                            {shown.dueDate ? formatDate(shown.dueDate) : "No date yet"}
                             {formatTime(shown) && <span className="rs-agent-card-time">{formatTime(shown)}</span>}
                             {shown.status === "DONE" && <span className="rs-agent-card-time">Done</span>}
                           </span>
@@ -517,7 +539,20 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                       {k.doneText}
                     </span>
                   )}
-                  {c.state === "dismissed" && <span className="rs-agent-card-status">Dismissed</span>}
+                  {c.state === "dismissed" && (
+                    <span className="rs-agent-card-status">
+                      Dismissed
+                      {!gone && (
+                        <button
+                          type="button"
+                          className="rs-agent-card-undo"
+                          onClick={() => setCardState(m.id, i, "pending")}
+                        >
+                          Undo
+                        </button>
+                      )}
+                    </span>
+                  )}
                   {c.state === "expired" && (
                     <span className="rs-agent-card-status">Expired. Ask again for a fresh suggestion.</span>
                   )}
@@ -544,7 +579,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                       {problem && <p className="rs-agent-fields-hint">{problem}</p>}
                     </div>
                   )}
-                  {actionable && editable && kind !== "course" && (c.editing || missingDetails(proposed) || problem) && (
+                  {actionable && editable && kind !== "course" && (c.editing || needsInput(kind, proposed) || problem) && (
                     <div className="rs-agent-fields">
                       <label className="rs-agent-field rs-agent-field-wide">
                         <span>Name</span>
@@ -556,7 +591,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                           onChange={(e) => setCardEdits(m.id, i, { name: e.target.value })}
                         />
                       </label>
-                      <label className="rs-agent-field rs-agent-field-wide">
+                      <label className={`rs-agent-field rs-agent-field-wide${!proposed.dueDate ? " rs-agent-field-missing" : ""}`}>
                         <span>Date</span>
                         <input
                           type="date"
@@ -601,6 +636,18 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                           disabled={c.state === "saving"}
                         >
                           Edit
+                        </button>
+                      )}
+                      {/* Closes the fields and keeps the changes. Shown once
+                          the details are complete; until then they stay open. */}
+                      {editable && c.editing && !needsInput(kind, proposed) && !problem && (
+                        <button
+                          type="button"
+                          className="rs-agent-btn"
+                          onClick={() => setCardEdits(m.id, i, {}, false)}
+                          disabled={c.state === "saving"}
+                        >
+                          Done
                         </button>
                       )}
                       <button
