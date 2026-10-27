@@ -17,7 +17,33 @@ interface Card {
   // The planner task this card is about: the proposal's id, or the id a new
   // task got when it was added. Lets the card follow later changes.
   taskId?: string;
+  // The user's own changes to the suggestion, made on the card before saving.
+  edits?: TaskDetails;
+  editing?: boolean;
 }
+
+type TaskDetails = { name?: string; dueDate?: string; startTime?: string; endTime?: string };
+
+// The suggestion with the user's edits applied. An emptied time field
+// removes that time.
+const withEdits = (c: { proposal: AgentProposal; edits?: TaskDetails }): AgentProposal => {
+  const p = { ...c.proposal, ...c.edits };
+  if (!p.startTime) delete p.startTime;
+  if (!p.endTime) delete p.endTime;
+  return p;
+};
+
+// A start without an end (or the reverse) is incomplete: the card asks for
+// the rest instead of the agent guessing.
+const missingDetails = (p: AgentProposal) => !!p.startTime !== !!p.endTime;
+
+const detailsProblem = (p: AgentProposal): string | null => {
+  if (!p.name.trim()) return "Add a name.";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(p.dueDate)) return "Pick a date.";
+  if (missingDetails(p)) return p.startTime ? "Pick an end time." : "Pick a start time.";
+  if (p.startTime && p.endTime && p.endTime <= p.startTime) return "End time must be after the start.";
+  return null;
+};
 
 // A task as the planner has it now, for keeping cards current.
 export interface LiveTask {
@@ -303,12 +329,26 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
   const confirm = async (msgId: number, index: number, card: Card) => {
     setCardState(msgId, index, "saving");
     try {
-      const savedId = await onConfirm(card.proposal, card.year, card.semester);
+      const savedId = await onConfirm(withEdits(card), card.year, card.semester);
       setCardState(msgId, index, "saved", savedId || card.proposal.id);
     } catch {
       setCardState(msgId, index, "pending");
     }
   };
+
+  const setCardEdits = (msgId: number, index: number, patch: TaskDetails, editing?: boolean) =>
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === msgId && m.cards
+          ? {
+              ...m,
+              cards: m.cards.map((c, i) =>
+                i === index ? { ...c, edits: { ...c.edits, ...patch }, ...(editing ? { editing } : {}) } : c
+              ),
+            }
+          : m
+      )
+    );
 
   // Follow a card's task in the planner when its semester is the one loaded.
   // A deleted task makes the card read as gone (except a delete that was
@@ -324,7 +364,9 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
   // One at a time, so each card shows its own result.
   const confirmAll = async (msgId: number, cards: Card[]) => {
     for (const [i, c] of cards.entries()) {
-      if (c.state === "pending" && !isGone(c)) await confirm(msgId, i, c);
+      const k = cardKind(c.proposal);
+      const blocked = (k === "new" || k === "edit") && detailsProblem(withEdits(c));
+      if (c.state === "pending" && !isGone(c) && !blocked) await confirm(msgId, i, c);
     }
   };
 
@@ -388,7 +430,10 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                 const kind = cardKind(c.proposal);
                 const k = KIND[kind];
                 const { live, gone } = track(c);
-                const shown = c.state === "saved" && live ? { ...c.proposal, ...live } : c.proposal;
+                const proposed = withEdits(c);
+                const shown = c.state === "saved" && live ? { ...proposed, ...live } : proposed;
+                const editable = kind === "new" || kind === "edit";
+                const problem = editable ? detailsProblem(proposed) : null;
                 const actionable = (c.state === "pending" || c.state === "saving") && !gone;
                 return (
                 <div key={i} className={`rs-agent-card rs-agent-card-${c.state} rs-agent-card-${kind}`}>
@@ -436,6 +481,45 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                   {c.state === "expired" && (
                     <span className="rs-agent-card-status">Expired. Ask again for a fresh suggestion.</span>
                   )}
+                  {actionable && editable && (c.editing || missingDetails(proposed) || problem) && (
+                    <div className="rs-agent-fields">
+                      <label className="rs-agent-field rs-agent-field-wide">
+                        <span>Name</span>
+                        <input
+                          type="text"
+                          dir="auto"
+                          maxLength={120}
+                          value={proposed.name}
+                          onChange={(e) => setCardEdits(m.id, i, { name: e.target.value })}
+                        />
+                      </label>
+                      <label className="rs-agent-field rs-agent-field-wide">
+                        <span>Date</span>
+                        <input
+                          type="date"
+                          value={proposed.dueDate}
+                          onChange={(e) => setCardEdits(m.id, i, { dueDate: e.target.value })}
+                        />
+                      </label>
+                      <label className={`rs-agent-field${!proposed.startTime && proposed.endTime ? " rs-agent-field-missing" : ""}`}>
+                        <span>Start</span>
+                        <input
+                          type="time"
+                          value={proposed.startTime ?? ""}
+                          onChange={(e) => setCardEdits(m.id, i, { startTime: e.target.value })}
+                        />
+                      </label>
+                      <label className={`rs-agent-field${proposed.startTime && !proposed.endTime ? " rs-agent-field-missing" : ""}`}>
+                        <span>End</span>
+                        <input
+                          type="time"
+                          value={proposed.endTime ?? ""}
+                          onChange={(e) => setCardEdits(m.id, i, { endTime: e.target.value })}
+                        />
+                      </label>
+                      {problem && <p className="rs-agent-fields-hint">{problem}</p>}
+                    </div>
+                  )}
                   {actionable && (
                     <div className="rs-agent-card-actions">
                       <button
@@ -446,11 +530,21 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                       >
                         Dismiss
                       </button>
+                      {editable && !c.editing && !missingDetails(proposed) && !problem && (
+                        <button
+                          type="button"
+                          className="rs-agent-btn"
+                          onClick={() => setCardEdits(m.id, i, {}, true)}
+                          disabled={c.state === "saving"}
+                        >
+                          Edit
+                        </button>
+                      )}
                       <button
                         type="button"
                         className={`rs-agent-btn ${kind === "delete" ? "rs-agent-btn-danger" : "rs-agent-btn-primary"}`}
                         onClick={() => void confirm(m.id, i, c)}
-                        disabled={c.state === "saving"}
+                        disabled={c.state === "saving" || !!problem}
                       >
                         {c.state === "saving" ? k.working : k.action}
                       </button>

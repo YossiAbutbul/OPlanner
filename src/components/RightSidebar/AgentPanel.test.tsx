@@ -267,6 +267,47 @@ describe("AgentPanel", () => {
     expect(screen.queryByText(/^\d+\/\d+$/)).toBeNull();
   });
 
+  it("asks for a missing end time on the card before adding", async () => {
+    send.mockResolvedValue({
+      reply: "Proposed.",
+      proposals: [{ course: "x", name: "Doctor", dueDate: "2026-10-29", startTime: "18:00", status: "PENDING" }],
+    });
+    const onConfirm = vi.fn().mockResolvedValue("id1");
+    render(<AgentPanel year={2026} semester="A" onConfirm={onConfirm} />);
+    fireEvent.click(screen.getByRole("button", { name: "מה פספסתי?" }));
+
+    expect(await screen.findByText("Pick an end time.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add task" })).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("End"), { target: { value: "17:00" } });
+    expect(screen.getByText("End time must be after the start.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("End"), { target: { value: "18:30" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add task" }));
+    await screen.findByText("Added to your planner");
+    expect(onConfirm.mock.calls[0][0]).toMatchObject({ name: "Doctor", startTime: "18:00", endTime: "18:30" });
+  });
+
+  it("lets the user edit a complete suggestion before adding", async () => {
+    send.mockResolvedValue({
+      reply: "Proposed.",
+      proposals: [{ course: "x", name: "Read", dueDate: "2026-10-29", status: "PENDING" }],
+    });
+    const onConfirm = vi.fn().mockResolvedValue("id1");
+    render(<AgentPanel year={2026} semester="A" onConfirm={onConfirm} />);
+    fireEvent.click(screen.getByRole("button", { name: "מה פספסתי?" }));
+
+    expect(await screen.findByRole("button", { name: "Edit" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Name")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Read chapter 3" } });
+    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-10-30" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add task" }));
+    await screen.findByText("Added to your planner");
+    expect(onConfirm.mock.calls[0][0]).toMatchObject({ name: "Read chapter 3", dueDate: "2026-10-30" });
+    expect(onConfirm.mock.calls[0][0]).not.toHaveProperty("startTime");
+  });
+
   it("renders replies as text, not HTML", async () => {
     send.mockResolvedValue({ reply: '<img src=x onerror="alert(1)">', proposals: [] });
     const { container } = render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);

@@ -1557,3 +1557,58 @@
   font-size: 0.78rem;
   color: var(--rs-danger);
 }
+
+/* Task details the user fills or edits on a card before saving: name and
+   date full width, start and end side by side. A missing time is outlined
+   so it's clear what's left to pick. */
+.rs-agent-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.rs-agent-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--rs-text-muted);
+}
+
+.rs-agent-field-wide {
+  grid-column: 1 / -1;
+}
+
+.rs-agent-field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--rs-text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color-scheme: dark;
+}
+
+.rs-agent-field input:focus {
+  outline: none;
+  border-color: var(--rs-accent);
+}
+
+.rs-agent-field-missing input {
+  border-color: color-mix(in srgb, var(--rs-warn) 70%, transparent);
+}
+
+.rs-agent-fields-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--rs-warn);
+}
