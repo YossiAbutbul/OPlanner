@@ -2,16 +2,18 @@ import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "rea
 import { useHomework } from "../context/HomeworkContext";
 import { useTimeBlocks } from "../context/TimeBlockContext";
 import { useToast } from "../context/ToastContext";
+import { useAuth } from "../context/AuthContext";
+import { fetchAgentEnabled, type AgentProposal } from "../services/agent";
 
 // Heavy form modals — only mounted when the user actually opens them, so
 // their chunks fetch on first interaction instead of in the initial bundle.
 const HomeworkModal = lazy(() => import("./HomeworkModal"));
 const TimeBlockModal = lazy(() => import("./TimeBlockModal"));
-import UpcomingPanel from "./RightSidebar/UpcomingPanel";
+import AgentPanel from "./RightSidebar/AgentPanel";
 import DayPanel from "./RightSidebar/DayPanel";
 import RemindersModal from "./RemindersModal";
 import { courseColor } from "../utility/courseColor";
-import { isOverdue, startOfDay, toIso } from "../utility/dayCalendar";
+import { toIso } from "../utility/dayCalendar";
 import type { HomeworkEntry, TimeBlock, YearTreeData } from "../types/models";
 import "../css/RightSidebar.css";
 
@@ -33,11 +35,26 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   const { getCourseTasks, addHomework, removeHomework, homework, applyEdits } = useHomework();
   const { blocks, saveBlock, removeBlock } = useTimeBlocks();
   const toast = useToast();
+  const { user } = useAuth();
 
   // Day opens first: today's schedule is the most-used view.
-  const [tab, setTab] = useState<"upcoming" | "day">("day");
+  const [tab, setTab] = useState<"day" | "agent">("day");
 
-  // Shared semester-wide task pool (Upcoming filters it; Day filters by date).
+  // The Agent tab shows only for accounts the server allows (api/agent.ts).
+  // The dev server has no /api, so show it there to work on the UI.
+  const [agentEnabled, setAgentEnabled] = useState(import.meta.env.DEV);
+  useEffect(() => {
+    if (!user || import.meta.env.DEV) return;
+    let cancelled = false;
+    void fetchAgentEnabled().then((ok) => {
+      if (!cancelled) setAgentEnabled(ok);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  // Shared semester-wide task pool (Day filters it by date).
   // Fetched from Firestore; optimistic edits are layered on below.
   const [fetchedSemesterTasks, setAllSemesterTasks] = useState<HomeworkEntry[]>([]);
 
@@ -116,22 +133,6 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     };
   }, [sources, getCourseTasks, homework, selectedYear, selectedSemester]);
 
-  // Upcoming items derived from the shared pool.
-  const upcomingItems = useMemo(() => {
-    const now = startOfDay(new Date());
-    const horizon = new Date(now.getTime() + 14 * 86400000);
-    return allSemesterTasks
-      .filter((t) => t.status === "PENDING")
-      // Drop tasks whose due moment has already passed — they belong in overdue,
-      // not upcoming.
-      .filter((t) => !isOverdue(t.dueDate, t.endTime ?? t.startTime))
-      .filter((t) => {
-        const d = startOfDay(new Date(t.dueDate));
-        return d >= now && d <= horizon;
-      })
-      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-  }, [allSemesterTasks]);
-
   // Listen for "open this day in sidebar" requests from calendar widgets.
   useEffect(() => {
     const onPick = (e: Event) => {
@@ -190,6 +191,41 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     setTbModalOpen(true);
   };
 
+  // Saves a change the agent proposed, once the user confirms it. Edits keep
+  // the fields the agent can't see (notes, color, ignoreOverdue).
+  const confirmProposal = async (p: AgentProposal, year: number, semester: string) => {
+    const fromCourse = p.prevCourse ?? p.course;
+    const existing = p.id
+      ? allSemesterTasks.find((t) => t.id === p.id && t.course === fromCourse && t.year === year)
+      : undefined;
+    // Never let a proposal create a task under an id the user doesn't have.
+    if (p.id && !existing) {
+      toast.error(`“${p.name}” no longer exists`);
+      throw new Error("Proposed task not found");
+    }
+    try {
+      await addHomework(
+        p.id ?? null,
+        p.name,
+        p.dueDate,
+        p.status,
+        year,
+        semester,
+        p.course,
+        existing?.ignoreOverdue,
+        p.id ? { year, semester, course: fromCourse } : undefined,
+        p.startTime,
+        p.endTime,
+        existing?.notes,
+        existing?.color
+      );
+    } catch (e) {
+      toast.error(`Couldn't save “${p.name}”`);
+      throw e;
+    }
+    toast.success(p.id ? `Task “${p.name}” updated` : `Task “${p.name}” added`);
+  };
+
   const handleSlotDblClick = ({ date, start, end }: { date: string; start: string; end: string }) => {
     setHwPrefillDate(date);
     setHwPrefillStart(start);
@@ -202,28 +238,40 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     <aside className={`rs ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="rs-glow" aria-hidden />
 
-      <div className="rs-tabs" role="tablist" data-active={tab}>
-        <button
-          role="tab"
-          aria-selected={tab === "day"}
-          className={`rs-tab ${tab === "day" ? "rs-tab-active" : ""}`}
-          onClick={() => setTab("day")}
-        >
-          Day
-        </button>
-        <button
-          role="tab"
-          aria-selected={tab === "upcoming"}
-          className={`rs-tab ${tab === "upcoming" ? "rs-tab-active" : ""}`}
-          onClick={() => setTab("upcoming")}
-        >
-          Upcoming
-        </button>
-        <span className="rs-tab-indicator" aria-hidden />
-      </div>
+      {agentEnabled && (
+        <div className="rs-tabs" role="tablist" data-active={tab}>
+          <button
+            role="tab"
+            aria-selected={tab === "day"}
+            className={`rs-tab ${tab === "day" ? "rs-tab-active" : ""}`}
+            onClick={() => setTab("day")}
+          >
+            Schedule
+          </button>
+          <button
+            role="tab"
+            aria-selected={tab === "agent"}
+            className={`rs-tab ${tab === "agent" ? "rs-tab-active" : ""}`}
+            onClick={() => setTab("agent")}
+          >
+            Assistant
+          </button>
+          <span className="rs-tab-indicator" aria-hidden />
+        </div>
+      )}
 
-      {tab === "upcoming" && (
-        <UpcomingPanel items={upcomingItems} onItemClick={handleTaskClick} colorOf={colorForTask} />
+      {/* Stays mounted while hidden so the conversation survives tab switches. */}
+      {agentEnabled && (
+        <div className="rs-agent-wrap" hidden={tab !== "agent"}>
+          <AgentPanel
+            key={user?.uid ?? "signed-out"}
+            year={selectedYear}
+            semester={selectedSemester}
+            onConfirm={confirmProposal}
+            storageKey={user ? `oplanner.agentChat.${user.uid}` : undefined}
+            onCleared={(undo) => toast.info("Chat cleared", { action: { label: "Undo", onClick: undo } })}
+          />
+        </div>
       )}
 
       {tab === "day" && (

@@ -6,7 +6,7 @@ const colPath = (uid: string) => `users/${uid}/timeBlocks`;
 
 export const fetchTimeBlocks = async (uid: string): Promise<TimeBlock[]> => {
   const snap = await getDocs(collection(db, colPath(uid)));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as TimeBlock[];
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id })) as TimeBlock[];
 };
 
 export const generateTimeBlockId = (uid: string): string =>

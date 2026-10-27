@@ -86,6 +86,32 @@ describe("sanitize", () => {
     const clean = sanitize('<a href="data:text/html,<b>">x</a>');
     expect(clean).not.toContain("data:");
   });
+
+  it("keeps color and highlight styles", () => {
+    const clean = sanitize('<mark style="background-color:#ff0;color:red">hi</mark>');
+    expect(clean).toContain("background-color:rgb(255, 255, 0)");
+    expect(clean).toContain("color:red");
+  });
+
+  it("drops layout styles that could cover the app", () => {
+    const clean = sanitize(
+      '<div style="position:fixed;inset:0;z-index:9999;font-size:9999px;color:red">x</div>'
+    );
+    expect(clean).not.toContain("position");
+    expect(clean).not.toContain("z-index");
+    expect(clean).not.toContain("9999px");
+    expect(clean).toContain("color:red");
+  });
+
+  it("removes style entirely when nothing allowed is left", () => {
+    expect(sanitize('<span style="position:fixed">x</span>')).toBe("<span>x</span>");
+  });
+
+  it("keeps only editor-owned classes", () => {
+    const clean = sanitize('<a class="ne-link modal-backdrop" href="https://x.y">x</a>');
+    expect(clean).toContain('class="ne-link"');
+    expect(clean).not.toContain("modal-backdrop");
+  });
 });
 
 describe("autoLinkAtCaret", () => {
