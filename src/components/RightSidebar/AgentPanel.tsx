@@ -120,8 +120,6 @@ const SUGGESTIONS: { text: string; icon: React.ReactNode }[] = [
   { text: "תיצור לי קורס חדש בשם...", icon: <path d="M12 5v14M5 12h14" /> },
   { text: "מה פספסתי?", icon: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5M12 16h.01" /></> },
   { text: "תבנה לי תוכנית למידה למבחנים", icon: <path d="M4 6.5C6.5 5 9.5 5 12 6.5v12.5c-2.5-1.5-5.5-1.5-8 0zM12 6.5c2.5-1.5 5.5-1.5 8 0v12.5c-2.5-1.5-5.5-1.5-8 0" /> },
-  { text: "על איזה קורס כדאי להתמקד?", icon: <><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="0.8" /></> },
-  { text: "כמה זמן נשאר לכל מבחן?", icon: <><circle cx="12" cy="13" r="7.5" /><path d="M12 9.5V13l2.5 1.5M10 3h4" /></> },
 ];
 
 const formatDate = (iso: string) =>
@@ -448,36 +446,36 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
       <div className="rs-agent-log" ref={listRef} aria-live="polite">
         {messages.length === 0 ? (
           <div className="rs-agent-intro">
-            <span className="rs-waitlist-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4z" />
-                <path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" />
-              </svg>
-            </span>
-            <p className="rs-empty-title">Ask about your semester</p>
-            <p className="rs-empty-text">
-              {ready
-                ? "Reads your tasks. Saves only what you approve."
-                : "Open a semester first."}
-            </p>
-            <div className="rs-agent-chips" dir="rtl">
-              {SUGGESTIONS.map(({ text, icon }, i) => (
-                <button
-                  key={text}
-                  type="button"
-                  className="rs-agent-chip"
-                  style={{ animationDelay: `${120 + i * 40}ms` }}
-                  onClick={() => pickSuggestion(text)}
-                  disabled={!ready || busy}
-                >
-                  <span className={`rs-agent-chip-icon${i % 2 ? " rs-agent-chip-icon-alt" : ""}`} aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                      {icon}
-                    </svg>
-                  </span>
-                  <span className="rs-agent-chip-text">{text}</span>
-                </button>
-              ))}
+            <div className="rs-agent-hello">
+              <span className="rs-agent-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4z" />
+                  <path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" />
+                </svg>
+              </span>
+              <p className="rs-agent-title">{ready ? "Ask about your semester" : "Open a semester first"}</p>
+            </div>
+
+            <div className="rs-agent-starters">
+              <div className="rs-agent-chips" dir="rtl">
+                {SUGGESTIONS.map(({ text, icon }, i) => (
+                  <button
+                    key={text}
+                    type="button"
+                    className="rs-agent-chip"
+                    style={{ animationDelay: `${60 + i * 40}ms` }}
+                    onClick={() => pickSuggestion(text)}
+                    disabled={!ready || busy}
+                  >
+                    <span className={`rs-agent-chip-icon${i % 2 ? " rs-agent-chip-icon-alt" : ""}`} aria-hidden="true">
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        {icon}
+                      </svg>
+                    </span>
+                    <span className="rs-agent-chip-text">{text}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         ) : (

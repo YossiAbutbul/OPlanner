@@ -13,6 +13,10 @@ import {
 } from "firebase/auth";
 import { waitForPendingWrites } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
+import { SELECTION_KEY_PREFIXES } from "../hooks/useSelection";
+
+// Per-account keys that survive sign-out.
+const KEEP_ON_SIGN_OUT = ["oplanner.bootstrapped.", ...SELECTION_KEY_PREFIXES];
 
 // Firebase Auth SDK persists the session in IndexedDB (browserLocalPersistence)
 // by default. Don't duplicate user PII into localStorage — it widens the XSS
@@ -146,10 +150,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     await signOut(auth);
     // Wipe app data on logout but keep per-uid one-shot flags (bootstrap done)
-    // so re-signing in doesn't replay onboarding.
+    // so re-signing in doesn't replay onboarding, and the last opened year
+    // and semester so the planner reopens where it was.
     Object.keys(localStorage)
       .filter((k) => k.startsWith("oplanner."))
-      .filter((k) => !k.startsWith("oplanner.bootstrapped."))
+      .filter((k) => !KEEP_ON_SIGN_OUT.some((prefix) => k.startsWith(prefix)))
       .forEach((k) => localStorage.removeItem(k));
   }, []);
 

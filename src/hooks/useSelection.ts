@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 import { lsCache } from "./useLocalStorageCache";
 import type { YearTreeData } from "../types/models";
@@ -34,62 +34,93 @@ export function pickSemesterForYear(
   return yearTree.semesters[0]?.name ?? null;
 }
 
+// Saved per account; kept across sign-out (see AuthContext), since they
+// hold only a year number and a semester name.
+export const SELECTION_KEY_PREFIXES = ["oplanner.lastSelection.", "oplanner.lastSemesterByYear."];
+
 // Owns selectedYear / selectedSemester / selectedCourse + persistence.
+//
+// Restoring: until the user picks something, the selection keeps moving to
+// the saved year and semester as the tree updates. The first tree can be a
+// cache that's missing them; when the fresh one has them, it switches.
+// Saving: only the user's own picks are written, never a fallback guess, so
+// a stale first load can't overwrite what they chose.
 export function useSelection(user: User | null, years: YearTreeData[]) {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedSemester, setSelectedSemester] = useState<string | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+  const [selectedCourse, setSelectedCourseState] = useState<string | null>(null);
+  // Set once the user picks a year, semester or course themselves.
+  const touched = useRef(false);
 
-  // First-time selection when years load.
   useEffect(() => {
-    if (selectedYear !== null || years.length === 0 || !user) return;
-    let yearToOpen: YearTreeData | null = null;
+    touched.current = false;
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || years.length === 0 || touched.current) return;
     const last = lsCache.read<{ year?: number }>(lastSelectionKey(user.uid));
-    if (last?.year !== undefined) {
-      const match = years.find((y) => y.year === last.year);
-      if (match) yearToOpen = match;
-    }
-    if (!yearToOpen) {
-      const guess = new Date().getFullYear();
-      yearToOpen = years.find((y) => y.year === guess) || years[years.length - 1];
-    }
-    if (!yearToOpen) return;
-    setSelectedYear(yearToOpen.year);
-    setSelectedSemester(pickSemesterForYear(user.uid, yearToOpen));
-  }, [years, selectedYear, user]);
+    const target =
+      years.find((y) => y.year === last?.year) ??
+      years.find((y) => y.year === selectedYear) ??
+      years.find((y) => y.year === new Date().getFullYear()) ??
+      years[years.length - 1];
+    const semester = pickSemesterForYear(user.uid, target);
+    if (target.year !== selectedYear) setSelectedYear(target.year);
+    if (semester !== selectedSemester) setSelectedSemester(semester);
+  }, [years, user, selectedYear, selectedSemester]);
 
-  // Persist last selection.
-  useEffect(() => {
-    if (!user || selectedYear === null) return;
-    lsCache.write(lastSelectionKey(user.uid), { year: selectedYear });
-    if (selectedSemester) {
+  const saveYear = useCallback(
+    (y: number) => {
+      if (user) lsCache.write(lastSelectionKey(user.uid), { year: y });
+    },
+    [user]
+  );
+
+  const saveSemester = useCallback(
+    (y: number, s: string) => {
+      if (!user) return;
       const key = lastSemesterByYearKey(user.uid);
       const map = lsCache.read<Record<string, string>>(key) ?? {};
-      map[String(selectedYear)] = selectedSemester;
+      map[String(y)] = s;
       lsCache.write(key, map);
-    }
-  }, [user, selectedYear, selectedSemester]);
+    },
+    [user]
+  );
 
   // Selecting a year auto-picks its preferred semester and clears the course.
   const selectYear = useCallback(
     (y: number) => {
+      touched.current = true;
       if (y === selectedYear) return;
       setSelectedYear(y);
+      saveYear(y);
       const yearTree = years.find((yy) => yy.year === y);
       setSelectedSemester(yearTree ? pickSemesterForYear(user?.uid ?? null, yearTree) : null);
-      setSelectedCourse(null);
+      setSelectedCourseState(null);
     },
-    [selectedYear, years, user]
+    [selectedYear, years, user, saveYear]
   );
 
   const selectSemester = useCallback(
     (s: string) => {
+      touched.current = true;
+      if (selectedYear !== null) {
+        saveYear(selectedYear);
+        saveSemester(selectedYear, s);
+      }
       if (s === selectedSemester) return;
       setSelectedSemester(s);
-      setSelectedCourse(null);
+      setSelectedCourseState(null);
     },
-    [selectedSemester]
+    [selectedSemester, selectedYear, saveYear, saveSemester]
   );
+
+  // Opening a course counts as the user's choice too: the selection stops
+  // following the saved one, so it can't jump away from what they opened.
+  const setSelectedCourse = useCallback((c: string | null) => {
+    if (c !== null) touched.current = true;
+    setSelectedCourseState(c);
+  }, []);
 
   return {
     selectedYear,

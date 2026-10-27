@@ -1,4 +1,4 @@
-/* 404: a torn-off calendar sheet for a day that doesn't exist, on the same
+/* 404 and the error page (ErrorBoundary): a calendar sheet for a day that doesn't exist, on the same
    paper background and planner grid as the landing page. */
 
 .nf {
@@ -224,6 +224,32 @@
   font-size: 0.95rem;
   text-decoration: none;
   transition: transform 120ms var(--ease-out), background-color var(--dur-1) var(--ease-out);
+}
+
+.nf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+button.nf-btn {
+  border: none;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+/* Secondary action: same shape, quieter. */
+.nf-btn.nf-btn-ghost {
+  background: #faf9f6;
+  color: #16181d;
+  box-shadow: inset 0 0 0 1px rgba(22, 24, 29, 0.14);
+}
+
+.nf-btn.nf-btn-ghost:hover {
+  background: #fff;
 }
 
 .nf-btn:hover {

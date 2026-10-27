@@ -990,7 +990,6 @@
 }
 
 /* The icon tile picks up both colors of the glow. */
-.rs-agent-intro .rs-waitlist-icon,
 .rs-agent-wrap .rs-waitlist-icon {
   color: #fff;
   background: linear-gradient(135deg, var(--rs-accent), #7c6cf2);
@@ -1007,7 +1006,11 @@
 /* The glow stays (it's light, not a see-through surface); only the frosted
    list turns solid. */
 @media (prefers-reduced-transparency: reduce) {
-  .rs-agent-form,
+  .rs-agent-form {
+    background: #20232a;
+    backdrop-filter: none;
+  }
+
   .rs-agent-chip {
     background: color-mix(in srgb, var(--rs-elev) 65%, transparent);
     backdrop-filter: none;
@@ -1074,49 +1077,79 @@
   scrollbar-width: thin;
 }
 
+/* Empty chat: a quiet mark and title in the open space, and starter cards
+   anchored just above the input, where the hand already is. Fills the log
+   so the two can sit apart. */
 .rs-agent-intro {
-  margin: auto 0;
-  padding-bottom: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-height: 100%;
+}
+
+/* The open space stays quiet: a small mark and one line, centered. */
+.rs-agent-hello {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
   text-align: center;
-  gap: 0.45rem;
   animation: rs-empty-in 0.5s var(--ease-out) both;
 }
 
-.rs-agent-intro .rs-empty-text {
-  max-width: 28ch;
+.rs-agent-mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--rs-accent), #7c6cf2);
+  box-shadow: 0 8px 22px -8px color-mix(in srgb, #7c6cf2 70%, transparent);
 }
 
-/* Suggestions as separate frosted cards over the glow, each led by a
-   tinted icon that says what it does. Full-width rows read in a line,
-   unlike wrapped pills of uneven length. */
-.rs-agent-chips {
-  align-self: stretch;
+.rs-agent-title {
+  margin: 0;
+  color: var(--rs-text-soft);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.rs-agent-starters {
   display: flex;
   flex-direction: column;
+  gap: 0.7rem;
+}
+
+/* Starters: every prompt visible at once as pills that wrap, centered,
+   just above the input. */
+.rs-agent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.4rem;
-  margin-top: 1.1rem;
 }
 
 .rs-agent-chip {
-  display: flex;
+  flex: none;
+  display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
-  width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.035);
-  backdrop-filter: blur(14px) saturate(140%);
+  gap: 0.45rem;
+  height: 36px;
+  padding: 0 0.85rem 0 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: color-mix(in srgb, #20232a 85%, transparent);
   color: var(--rs-text-soft);
   font-size: 0.82rem;
   font-weight: 500;
-  line-height: 1.3;
-  padding: 0.45rem 0.55rem;
+  white-space: nowrap;
   cursor: pointer;
-  text-align: start;
-  animation: rs-empty-in 0.45s var(--ease-out) both;
+  animation: rs-chip-in 0.45s var(--ease-out) both;
   transition:
     background-color var(--dur-1) var(--ease-out),
     border-color var(--dur-1) var(--ease-out),
@@ -1124,30 +1157,37 @@
     transform 100ms var(--ease-out);
 }
 
-.rs-agent-chip-text {
-  flex: 1;
-  min-width: 0;
+/* In RTL the icon leads on the right, so the padding flips. */
+.rs-agent-chips[dir="rtl"] .rs-agent-chip {
+  padding: 0 0.4rem 0 0.85rem;
+}
+
+@keyframes rs-chip-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
 }
 
 .rs-agent-chip-icon {
   flex: none;
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   color: var(--rs-accent);
-  background: color-mix(in srgb, var(--rs-accent) 14%, transparent);
+  background: color-mix(in srgb, var(--rs-accent) 15%, transparent);
 }
 
 .rs-agent-chip-icon-alt {
   color: #a99cff;
-  background: color-mix(in srgb, #8b7bff 16%, transparent);
+  background: color-mix(in srgb, #8b7bff 17%, transparent);
 }
 
 .rs-agent-chip:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: #2a2e37;
+  border-color: rgba(255, 255, 255, 0.18);
   color: var(--rs-text);
 }
 
@@ -1588,10 +1628,11 @@
   column-gap: 0.25rem;
   padding: 4px;
   border-radius: 18px;
-  /* Frosted, so the glow behind shows through. */
-  background: color-mix(in srgb, var(--rs-elev) 45%, transparent);
+  /* Lifted a step above the panel with a clear edge, so the field reads
+     at a glance over the glow; just enough translucency to sit in it. */
+  background: color-mix(in srgb, #20232a 92%, transparent);
   backdrop-filter: blur(18px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   /* Reads as a layer above the conversation, not part of it. */
   box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
 }
@@ -1623,7 +1664,8 @@
 }
 
 .rs-agent-input::placeholder {
-  color: var(--rs-text-muted);
+  color: var(--rs-text-soft);
+  opacity: 0.75;
 }
 
 .rs-agent-send {
@@ -1722,7 +1764,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rs-agent-intro,
+  .rs-agent-hello,
   .rs-agent-chip,
   .rs-agent-msg,
   .rs-agent-dots span,

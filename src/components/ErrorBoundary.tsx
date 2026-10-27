@@ -1,5 +1,5 @@
 import React from "react";
-import AuroraBackground from "./AuroraBackground";
+import "../css/NotFound.css";
 
 interface Props {
   children: React.ReactNode;
@@ -13,9 +13,11 @@ interface State {
 }
 
 // Top-level safety net. A React render error anywhere in the tree shows a
-// recovery card instead of a blank white screen. The reset button drops the
-// error and re-renders children — most useful for transient failures
-// (network blip rendered into state). A full refresh button covers the rest.
+// recovery page instead of a blank white screen, in the same style as the
+// 404: warm paper and a calendar sheet for a day that didn't go to plan.
+// The reset button drops the error and re-renders children — most useful
+// for transient failures (network blip rendered into state). A full
+// refresh button covers the rest.
 class ErrorBoundary extends React.Component<Props, State> {
   state: State = { error: null };
 
@@ -37,43 +39,45 @@ class ErrorBoundary extends React.Component<Props, State> {
     if (this.props.fallback) return this.props.fallback(error, this.reset);
 
     return (
-      <div className="eb-screen">
-        <AuroraBackground />
+      <div className="nf" role="alert">
+        <div className="nf-bg" aria-hidden />
 
-        <div className="eb-card">
-          <div className="eb-badge" aria-hidden="true">
-            <span className="eb-badge-orbit" />
-            <span className="eb-badge-ring" />
-            <span className="eb-badge-ring eb-badge-ring-2" />
-            <div className="eb-badge-core">
-              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2.5" />
-                <path d="M3 10h18M8 2v4M16 2v4" />
-                <path d="m10 14.5 4 4M14 14.5l-4 4" />
-              </svg>
+        <div className="nf-stage">
+          <div className="nf-float">
+            <div className="nf-pad" aria-hidden>
+              <span className="nf-sheet nf-sheet-back" />
+              <div className="nf-sheet nf-sheet-top">
+                <div className="nf-sheet-rings">
+                  <span />
+                  <span />
+                </div>
+                <div className="nf-sheet-month">Oops</div>
+                <div className="nf-sheet-day">!</div>
+                <div className="nf-sheet-weekday">Unplanned</div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <h1 className="eb-title">Well, this wasn't on the schedule</h1>
-          <p className="eb-text">
-            OPlanner tripped over an unexpected snag. Your courses, tasks and notes
-            are safely saved - let's get you back on track.
+        <div className="nf-copy">
+          <span className="nf-code">Something went wrong</span>
+          <h1>Well, this wasn't on the schedule</h1>
+          <p>
+            OPlanner hit an unexpected snag. Your courses, tasks and notes are saved, so nothing is
+            lost. Try again, or reload the app.
           </p>
-
-          <div className="eb-actions">
-            <button onClick={this.reset} className="eb-btn eb-btn-primary">
+          <div className="nf-actions">
+            <button type="button" onClick={this.reset} className="nf-btn">
               Try again
             </button>
-            <button onClick={() => window.location.reload()} className="eb-btn eb-btn-ghost">
+            <button type="button" onClick={() => window.location.reload()} className="nf-btn nf-btn-ghost">
               Reload app
             </button>
           </div>
-
           {error.message && (
-            <p className="eb-error" title={error.message}>
-              <span className="eb-error-dot" aria-hidden="true" />
+            <code className="nf-path" title={error.message}>
               {error.message}
-            </p>
+            </code>
           )}
         </div>
       </div>
