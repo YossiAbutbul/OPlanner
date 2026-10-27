@@ -18,6 +18,7 @@ import { useInstallPrompt } from "../hooks/useInstallPrompt";
 import InstallHelpModal from "./InstallHelpModal";
 import ReminderSettingsModal from "./ReminderSettingsModal";
 import DeleteAccountModal from "./DeleteAccountModal";
+import { hasPendingDeletion } from "../services/account";
 import { deleteCourse, renameCourse } from "../utility/initializeDatabase";
 import { CourseInfo } from "../App";
 import { courseColor } from "../utility/courseColor";
@@ -89,6 +90,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+  // Back from the sign-in a deletion asked for: reopen it to finish.
+  const [resumeDelete, setResumeDelete] = useState(false);
+  useEffect(() => {
+    if (user && hasPendingDeletion(user.uid)) {
+      setResumeDelete(true);
+      setDeleteAccountOpen(true);
+    }
+  }, [user]);
   const settingsRef = useRef<HTMLDivElement>(null);
 
   // DeleteModal tracks its own isLoading; we just await the delete promise.
@@ -590,7 +599,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         <DeleteAccountModal
           isOpen={deleteAccountOpen}
           email={user.email}
-          onClose={() => setDeleteAccountOpen(false)}
+          onClose={() => {
+            setDeleteAccountOpen(false);
+            setResumeDelete(false);
+          }}
+          resume={resumeDelete}
         />
       )}
 
