@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import Modal from "./Modal";
-import DeleteModal from "./DeleteModal";
+import EditorModal from "./EditorModal";
+import { useHomework } from "../context/HomeworkContext";
+import { useToast } from "../context/ToastContext";
 import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
 import NotesEditor from "./NotesEditor";
@@ -49,6 +50,8 @@ interface HomeworkModalProps {
   prefilledEndTime?: string | null;
   isLoading: boolean;
   availableCourses?: string[];
+  // Replaces the built-in delete, for callers that also keep their own list
+  // of tasks in step. Every edited task can be deleted either way.
   onDelete?: () => void | Promise<void>;
 }
 
@@ -83,7 +86,22 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   const [allDay, setAllDay] = useState(false);
   const [notes, setNotes] = useState("");
   const [color, setColor] = useState<string>("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const { removeHomework } = useHomework();
+  const toast = useToast();
+
+  const deleteTask = editHomework
+    ? onDelete ??
+      (async () => {
+        const t = editHomework;
+        try {
+          await removeHomework(t.id, t.year, t.semester, t.course);
+        } catch (e) {
+          toast.error(`Couldn't delete “${t.name}”`);
+          throw e;
+        }
+        toast.success(`Deleted “${t.name}”`);
+      })
+    : undefined;
 
   useEffect(() => {
     if (editHomework) {
@@ -206,41 +224,16 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   const { meta: courseMeta } = useCourseMeta(courseTab);
 
   return (
-    <>
-    <Modal
+    <EditorModal
       isOpen={isOpen}
       onClose={onClose}
-      title={editHomework ? "Edit Task" : "New Task"}
-      footer={
-        <>
-          {editHomework && onDelete && (
-            <button
-              type="button"
-              className="app-modal-btn-danger-text"
-              onClick={() => setConfirmDelete(true)}
-              disabled={isLoading}
-            >
-              Delete
-            </button>
-          )}
-          <button
-            type="button"
-            className="app-modal-btn-cancel"
-            onClick={onClose}
-            disabled={isLoading}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="app-modal-btn-primary"
-            onClick={handleSave}
-            disabled={!canSave}
-          >
-            {isLoading ? "Saving…" : "Save"}
-          </button>
-        </>
-      }
+      noun="task"
+      isEdit={!!editHomework}
+      itemName={name}
+      canSave={canSave}
+      saving={isLoading}
+      onSave={handleSave}
+      onDelete={deleteTask}
     >
       <label htmlFor="homework-name">Name</label>
       <input
@@ -393,21 +386,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       </div>
       <label>Notes</label>
       <NotesEditor value={notes} onChange={setNotes} placeholder="Optional" links={courseMeta.links} onSave={() => handleSaveRef.current()} />
-    </Modal>
-    {editHomework && onDelete && (
-      <DeleteModal
-        isOpen={confirmDelete}
-        onClose={() => setConfirmDelete(false)}
-        onConfirm={async () => {
-          await onDelete();
-          setConfirmDelete(false);
-          onClose();
-        }}
-        title="Delete task"
-        message={`Delete “${name || "this task"}”? This can't be undone.`}
-      />
-    )}
-    </>
+    </EditorModal>
   );
 };
 

@@ -143,10 +143,12 @@
 }
 
 /* --- Progress: figure, segmented bar, counts --- */
+/* Top-aligned, in line with "Up next": on a course page the card is
+   taller (more Up next rows) and centering left the figures floating. */
 .ovs-summary {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.55rem;
   padding: 0.9rem 1.25rem;
   border-right: 1px solid var(--separator);

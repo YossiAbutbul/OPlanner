@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Modal from "./Modal";
+import EditorModal from "./EditorModal";
 import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
 import NotesEditor from "./NotesEditor";
@@ -89,38 +89,18 @@ const TimeBlockModal: React.FC<Props> = ({
     onClose();
   };
 
-  const handleDelete = async () => {
-    if (initial?.id && onDelete) {
-      await onDelete(initial.id);
-      onClose();
-    }
-  };
+  const id = initial?.id;
 
   return (
-    <Modal
+    <EditorModal
       isOpen={isOpen}
       onClose={onClose}
-      title={initial?.id ? "Edit time block" : "Add time block"}
-      footer={
-        <>
-          {initial?.id && onDelete && (
-            <button type="button" className="app-modal-btn-cancel" onClick={handleDelete}>
-              Delete
-            </button>
-          )}
-          <button type="button" className="app-modal-btn-cancel" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="app-modal-btn-primary"
-            onClick={handleSave}
-            disabled={!canSave}
-          >
-            Save
-          </button>
-        </>
-      }
+      noun="time block"
+      isEdit={!!id}
+      itemName={title}
+      canSave={canSave}
+      onSave={() => void handleSave()}
+      onDelete={id && onDelete ? () => onDelete(id) : undefined}
     >
       <label htmlFor="tb-title">Title</label>
       <input
@@ -237,7 +217,7 @@ const TimeBlockModal: React.FC<Props> = ({
       </div>
       <label>Notes</label>
       <NotesEditor value={notes} onChange={setNotes} placeholder="Optional" />
-    </Modal>
+    </EditorModal>
   );
 };
 
