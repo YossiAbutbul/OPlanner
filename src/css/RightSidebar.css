@@ -1489,11 +1489,18 @@
     transform 100ms var(--ease-out);
 }
 
-/* Position in the sent-message history while browsing it with the arrows. */
+/* "History 2/5" while browsing sent messages with the arrows: its own line
+   at the top of the field, above the text (as in Claude). */
+.rs-agent-form {
+  flex-wrap: wrap;
+}
+
 .rs-agent-recall {
-  flex: 0 0 auto;
-  align-self: center;
-  padding: 0 0.15rem;
+  order: -1;
+  flex: 1 0 100%;
+  padding: 3px 10px 0;
+  direction: ltr;
+  text-align: left;
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--rs-text-muted);

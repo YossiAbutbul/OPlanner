@@ -256,15 +256,15 @@ describe("AgentPanel", () => {
     box().setSelectionRange(0, 0);
     fireEvent.keyDown(box(), { key: "ArrowUp" });
     expect(box().value).toBe("second");
-    expect(screen.getByText("2/2")).toBeInTheDocument();
+    expect(screen.getByText("History 2/2")).toBeInTheDocument();
     fireEvent.keyDown(box(), { key: "ArrowUp" });
     expect(box().value).toBe("first");
-    expect(screen.getByText("1/2")).toBeInTheDocument();
+    expect(screen.getByText("History 1/2")).toBeInTheDocument();
     fireEvent.keyDown(box(), { key: "ArrowDown" });
     expect(box().value).toBe("second");
     fireEvent.keyDown(box(), { key: "ArrowDown" });
     expect(box().value).toBe("draft");
-    expect(screen.queryByText(/^\d+\/\d+$/)).toBeNull();
+    expect(screen.queryByText(/^History \d+\/\d+$/)).toBeNull();
   });
 
   it("asks for a missing end time on the card before adding", async () => {

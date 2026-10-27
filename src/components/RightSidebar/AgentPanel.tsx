@@ -625,7 +625,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
         />
         {recall !== null && (
           <span className="rs-agent-recall" aria-live="polite" aria-label={`Message ${recall + 1} of ${sent.length}`}>
-            {recall + 1}/{sent.length}
+            History {recall + 1}/{sent.length}
           </span>
         )}
         <button type="submit" className="rs-agent-send" disabled={!ready || busy || !input.trim()} aria-label="Send">
