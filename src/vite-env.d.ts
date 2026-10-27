@@ -24,3 +24,6 @@ declare module "virtual:pwa-register/react" {
     updateServiceWorker: (reloadPage?: boolean) => Promise<void>;
   };
 }
+
+// package.json version, injected by vite.config.ts.
+declare const __APP_VERSION__: string;
