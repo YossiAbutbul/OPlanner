@@ -82,10 +82,10 @@
 .tp-popover {
   position: fixed;
   z-index: var(--z-popover);
-  background: var(--elevated);
-  border: 1px solid var(--separator);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  border-radius: var(--popover-radius);
+  box-shadow: var(--popover-shadow);
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
@@ -95,6 +95,8 @@
      slot into view by measuring rect deltas on open, and a scale would
      shrink those deltas mid-animation and land on the wrong slot. */
   animation: tpPopIn var(--dur-2) var(--ease-out);
+  -webkit-backdrop-filter: var(--popover-blur);
+  backdrop-filter: var(--popover-blur);
 }
 
 @keyframes tpPopIn {

@@ -16,16 +16,19 @@
   position: fixed;
   z-index: var(--z-popover);
   width: 260px;
-  background: var(--elevated);
-  border: 1px solid var(--separator);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 0.65rem;
+  box-sizing: border-box;
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  border-radius: var(--popover-radius);
+  box-shadow: var(--popover-shadow);
+  padding: 0.75rem 0.7rem 0.6rem;
   user-select: none;
   color: var(--label);
   /* Grows out of the trigger (left-aligned under the field). */
   transform-origin: top left;
   animation: dpPopIn var(--dur-2) var(--ease-out);
+  -webkit-backdrop-filter: var(--popover-blur);
+  backdrop-filter: var(--popover-blur);
 }
 
 @keyframes dpPopIn {
@@ -46,12 +49,26 @@
   margin-bottom: 0.5rem;
 }
 
+.dp-head {
+  padding-left: 0.3rem;
+}
+
 .dp-title {
-  font-weight: 650;
+  order: -1;
+  margin-right: auto;
   font-size: var(--text-base);
   letter-spacing: var(--tracking-title);
-  color: var(--label);
   font-variant-numeric: tabular-nums;
+}
+
+.dp-title-month {
+  font-weight: 650;
+  color: var(--label);
+}
+
+.dp-title-year {
+  font-weight: 500;
+  color: var(--label-3);
 }
 
 .dp-nav {
@@ -94,12 +111,14 @@
   margin-bottom: 4px;
 }
 
+/* Weekday initials as quiet small caps, like the month calendar. */
 .dp-weekday {
   text-align: center;
   font-size: var(--text-2xs);
   font-weight: 600;
-  color: var(--label-4);
-  letter-spacing: var(--tracking-caption);
+  color: var(--label-3);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
   padding: 0.2rem 0;
 }
 
@@ -124,11 +143,12 @@
   animation: dp-slide-in-right var(--dur-2) var(--ease-out);
 }
 
+/* Each day is a full-width hit target; the visible state is a circle. */
 .dp-cell {
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  height: 32px;
+  border: none;
+  border-radius: 0;
+  height: 34px;
   padding: 0;
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
@@ -139,45 +159,52 @@
   align-items: center;
   justify-content: center;
   line-height: 1;
+}
+
+.dp-cell-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   transition:
     background-color var(--dur-1) var(--ease-out),
     color var(--dur-1) var(--ease-out),
-    border-color var(--dur-1) var(--ease-out),
     transform var(--dur-press) var(--ease-out);
 }
 
-.dp-cell:hover {
-  background: var(--fill);
+.dp-cell:hover .dp-cell-num {
+  background: var(--fill-2);
 }
 
-.dp-cell:active {
-  background: var(--fill-2);
-  transform: scale(var(--press-scale));
+.dp-cell:active .dp-cell-num {
+  transform: scale(0.9);
 }
 
 .dp-cell-out {
   color: var(--label-4);
 }
 
+/* Today: green numeral, like the calendar's today marker. */
 .dp-cell-today {
   font-weight: 700;
   color: var(--accent-text);
 }
 
-.dp-cell-selected,
-.dp-cell-selected:hover,
-.dp-cell-selected:active {
+.dp-cell-selected .dp-cell-num,
+.dp-cell-selected:hover .dp-cell-num {
   background: var(--color-accent);
   color: var(--on-accent);
-  border-color: var(--color-accent);
   font-weight: 700;
 }
 
 .dp-foot {
   display: flex;
   justify-content: space-between;
-  margin-top: 0.55rem;
-  padding-top: 0.55rem;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
   border-top: 1px solid var(--separator);
 }
 
@@ -211,19 +238,48 @@
   cursor: default;
 }
 
+/* Today: a soft tinted pill, the one action in the footer. */
 .dp-foot-today {
+  border-radius: var(--radius-full);
+  padding: 0.3rem 0.8rem;
   color: var(--accent-text);
+  background: var(--accent-tint);
 }
 
 .dp-foot-today:hover:not(:disabled) {
-  background: var(--accent-tint);
+  background: var(--accent-tint-strong);
   color: var(--accent-text);
+}
+
+/* Dark material for pickers opened from the dark right sidebar. */
+.dp-popover-dark {
+  color-scheme: dark;
+  --popover-bg: rgba(34, 36, 41, 0.92);
+  --popover-border: rgba(255, 255, 255, 0.1);
+  --popover-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3),
+    0 14px 36px rgba(0, 0, 0, 0.5);
+  --label: #f2f2f4;
+  --label-2: #c9cad0;
+  --label-3: #9a9ca3;
+  --label-4: #6d6f77;
+  --separator: rgba(255, 255, 255, 0.075);
+  --fill: rgba(255, 255, 255, 0.05);
+  --fill-2: rgba(255, 255, 255, 0.085);
+  --fill-3: rgba(255, 255, 255, 0.12);
+  --accent-text: #3ddc78;
+  --accent-tint: rgba(29, 185, 84, 0.16);
+  --accent-tint-strong: rgba(29, 185, 84, 0.26);
 }
 
 /* Phones: taller day cells so each date is an easy thumb target. */
 @media (max-width: 480px) {
   .dp-cell {
-    height: 38px;
+    height: 40px;
+  }
+
+  .dp-cell-num {
+    width: 36px;
+    height: 36px;
   }
 
   .dp-nav {

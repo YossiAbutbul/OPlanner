@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { HomeworkEntry } from "../context/HomeworkContext";
 import { isOverdue } from "../utility/dayCalendar";
 import "../css/CourseCalendar.css";
@@ -155,7 +155,7 @@ const CourseCalendar: React.FC<Props> = ({
     }
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     setHoverIso(iso);
-    const popWidth = 240;
+    const popWidth = 280;
     const margin = 8;
     const gap = 2;
     let left = rect.left;
@@ -211,7 +211,14 @@ const CourseCalendar: React.FC<Props> = ({
     <div className={`cal ${isPastMonth ? "cal-past" : ""} ${selectedDate ? "cal-has-selection" : ""}`}>
       <div className="cal-header">
         <div className="cal-title">
-          {MONTHS[cursor.month]} {cursor.year}
+          <span className="cal-title-month">{MONTHS[cursor.month]}</span>{" "}
+          <span className="cal-title-year">{cursor.year}</span>
+          {/* The tip lives behind an info glyph so the header stays one row. */}
+          {hint && (
+            <span className="cal-hint-icon" tabIndex={0} role="note" aria-label={hint} data-tip={hint}>
+              <Info size={14} strokeWidth={2.2} aria-hidden="true" />
+            </span>
+          )}
         </div>
         <div className="cal-nav">
           <button className="cal-nav-btn" onClick={() => { setSlideDir("right"); goPrev(); }} aria-label="Previous month"><ChevronLeft size={18} strokeWidth={2.5} /></button>
@@ -219,7 +226,6 @@ const CourseCalendar: React.FC<Props> = ({
           <button className="cal-nav-btn" onClick={() => { setSlideDir("left"); goNext(); }} aria-label="Next month"><ChevronRight size={18} strokeWidth={2.5} /></button>
         </div>
       </div>
-      {hint && <div className="cal-hint">{hint}</div>}
       <div className="cal-weekdays">
         {WEEKDAYS.map((w) => (
           <div key={w} className="cal-weekday">{w}</div>
@@ -258,24 +264,23 @@ const CourseCalendar: React.FC<Props> = ({
                 <span className="cal-tasks">
                   {visible.map((t) => {
                     const c = colorOf?.(t);
+                    const done = t.status === "COMPLETED";
                     return (
                       <span
-                        key={t.id}
-                        className={`cal-task ${c ? "cal-task-custom" : `cal-task-${taskBucket(t, today)}`}`}
-                        style={
-                          c
-                            ? ({
-                                background: c,
-                                color: "#fff",
-                              } as React.CSSProperties)
-                            : undefined
-                        }
+                        key={`${t.course}|${t.id}`}
+                        className={`cal-task ${c ? "cal-task-custom" : `cal-task-${taskBucket(t, today)}`}${done ? " cal-task-done" : ""}`}
+                        // The chip tints itself from --c (see CourseCalendar.css).
+                        style={c ? ({ "--c": c } as React.CSSProperties) : undefined}
                       >
                         {t.name}
                       </span>
                     );
                   })}
-                  {more > 0 && <span className="cal-task-more">+{more} more</span>}
+                  {more > 0 && (
+                    <span className="cal-task-more">
+                      +{more}<span className="cal-more-word"> more</span>
+                    </span>
+                  )}
                 </span>
               )}
             </button>
@@ -302,21 +307,30 @@ const CourseCalendar: React.FC<Props> = ({
               const overdue = !done && isOverdue(t.dueDate, t.endTime ?? t.startTime);
               const status = done ? "Done" : overdue ? "Overdue" : "Pending";
               const statusClass = done ? "is-done" : overdue ? "is-overdue" : "is-pending";
+              const time = t.endTime ?? t.startTime;
               return (
-                <li key={t.id}>
+                <li
+                  key={`${t.course}|${t.id}`}
+                  className={done ? "is-done" : undefined}
+                  style={c ? ({ "--c": c } as React.CSSProperties) : undefined}
+                >
+                  {/* Course colour as a slim event bar, like Calendar. */}
                   <span
-                    className={`cal-dot ${c ? "" : `cal-task-${taskBucket(t, today)}`}`}
-                    style={c ? { background: c } : undefined}
+                    className={`cal-popover-bar ${c ? "" : `cal-task-${taskBucket(t, today)}`}`}
+                    aria-hidden="true"
                   />
-                  <span className="cal-popover-name">{t.name}</span>
-                  <span className={`cal-popover-status ${statusClass}`}>
-                    {status}
+                  <span className="cal-popover-text">
+                    <span className="cal-popover-name">{t.name}</span>
+                    <span className="cal-popover-meta">
+                      {t.course === "reminders" ? "Reminder" : t.course}
+                      {time ? ` · ${time}` : ""}
+                    </span>
                   </span>
+                  <span className={`cal-popover-status ${statusClass}`}>{status}</span>
                 </li>
               );
             })}
           </ul>
-          <div className="cal-popover-hint">Double-click a day to add a task</div>
         </div>,
         document.body
       )}

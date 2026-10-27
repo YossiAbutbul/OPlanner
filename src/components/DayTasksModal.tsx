@@ -79,7 +79,7 @@ const DayTasksModal: React.FC<Props> = ({
 
           const renderItem = (t: HomeworkEntry) => (
             <li
-              key={t.id}
+              key={`${t.course}|${t.id}`}
               className={`day-task${t.status === "COMPLETED" ? " is-done" : ""}`}
             >
               <div className={`day-task-main${showCourse && t.course ? " has-course" : ""}`}>

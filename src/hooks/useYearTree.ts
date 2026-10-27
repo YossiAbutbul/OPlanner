@@ -13,6 +13,7 @@ import {
 } from "../utility/initializeDatabase";
 import { lsCache } from "./useLocalStorageCache";
 import type { YearTreeData } from "../types/models";
+import { FINAL_DATE_EVENT, type FinalDateDetail } from "../services/homework";
 
 const yearsCacheKey = (uid: string) => `oplanner.years.${uid}`;
 const bootstrappedKey = (uid: string) => `oplanner.bootstrapped.${uid}`;
@@ -186,6 +187,38 @@ export function useYearTree(
     },
     [persistYears]
   );
+
+  // The Final Exam task was edited somewhere (task dialog, table, sidebar):
+  // mirror its date here so the Finals widget and reminders follow. The
+  // homework context already writes the course document.
+  useEffect(() => {
+    const onFinal = (e: Event) => {
+      const { year, semester, course, date } = (e as CustomEvent<FinalDateDetail>).detail;
+      setYears((curr) => {
+        const next = curr.map((y) =>
+          y.year !== year
+            ? y
+            : {
+                ...y,
+                semesters: y.semesters.map((s) =>
+                  s.key !== semester && s.name !== semester
+                    ? s
+                    : {
+                        ...s,
+                        courses: s.courses.map((c) =>
+                          c.name === course ? { ...c, finalDate: date ?? undefined } : c
+                        ),
+                      }
+                ),
+              }
+        );
+        persistYears(next);
+        return next;
+      });
+    };
+    window.addEventListener(FINAL_DATE_EVENT, onFinal);
+    return () => window.removeEventListener(FINAL_DATE_EVENT, onFinal);
+  }, [persistYears]);
 
   const handleUpdateCourseFinalDate = useCallback(
     async (year: number, semesterKey: string, course: string, date: string | null) => {

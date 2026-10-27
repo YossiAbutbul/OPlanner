@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ExternalLink, FilePlus2, Lightbulb, ListChecks, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import DeleteModal from "./DeleteModal";
+import Modal from "./Modal";
 import ExamSetupModal from "./ExamSetupModal";
 import ExamRowModal from "./ExamRowModal";
 import { useCourseMeta } from "../hooks/useCourseMeta";
@@ -17,7 +18,6 @@ interface Props {
 // Column widths (px). The question columns hold a usable minimum so a wide
 // table overflows into a horizontal scroll instead of squeezing to nothing.
 const NAME_COL_W = 180;
-const DONE_COL_W = 56;
 const Q_COL_MIN = 80;
 
 // Empty placeholder before the user runs setup — nothing is rendered/persisted
@@ -103,14 +103,15 @@ const EditableLabel: React.FC<{
   );
 };
 
-// Bottom-sheet rename editor for touch devices. Slides up from the bottom;
-// tap the backdrop or Cancel to dismiss, Save commits the trimmed value.
+// Touch rename editor: the shared Modal (a bottom sheet on phones), with
+// an optional Delete for the phone question strip.
 const RenameSheet: React.FC<{
   title: string;
   initialValue: string;
   onSave: (next: string) => void;
   onClose: () => void;
-}> = ({ title, initialValue, onSave, onClose }) => {
+  onDelete?: () => void;
+}> = ({ title, initialValue, onSave, onClose, onDelete }) => {
   const [draft, setDraft] = useState(initialValue);
 
   const save = () => {
@@ -119,27 +120,36 @@ const RenameSheet: React.FC<{
     onClose();
   };
 
-  return createPortal(
-    <div className="ep-sheet-backdrop" onClick={onClose}>
-      <div className="ep-sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
-        <h4 className="ep-sheet-title">{title}</h4>
-        <input
-          className="ep-sheet-input"
-          type="text"
-          autoFocus
-          maxLength={MAX_EXAM_LABEL_LEN}
-          value={draft}
-          onFocus={(e) => e.currentTarget.select()}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") save(); }}
-        />
-        <div className="ep-sheet-actions">
-          <button type="button" className="ep-sheet-btn ep-sheet-cancel" onClick={onClose}>Cancel</button>
-          <button type="button" className="ep-sheet-btn ep-sheet-save" onClick={save}>Save</button>
-        </div>
-      </div>
-    </div>,
-    document.body
+  return (
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={title}
+      footer={
+        <>
+          {onDelete && (
+            <button
+              type="button"
+              className="app-modal-btn-danger-text"
+              onClick={() => { onClose(); onDelete(); }}
+            >
+              Delete
+            </button>
+          )}
+          <button type="button" className="app-modal-btn-cancel" onClick={onClose}>Cancel</button>
+          <button type="button" className="app-modal-btn-primary" onClick={save}>Save</button>
+        </>
+      }
+    >
+      <input
+        type="text"
+        maxLength={MAX_EXAM_LABEL_LEN}
+        value={draft}
+        onFocus={(e) => e.currentTarget.select()}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") save(); }}
+      />
+    </Modal>
   );
 };
 
@@ -162,7 +172,22 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
   const [tableW, setTableW] = useState(0);
   const [headH, setHeadH] = useState(0);
   // Touch rename target (bottom sheet). null = closed.
-  const [sheet, setSheet] = useState<{ title: string; value: string; onSave: (v: string) => void } | null>(null);
+  const [sheet, setSheet] = useState<{
+    title: string;
+    value: string;
+    onSave: (v: string) => void;
+    onDelete?: () => void;
+  } | null>(null);
+  // Phone: the grid becomes one card per exam (no sideways scrolling).
+  const [isPhone, setIsPhone] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(max-width: 600px)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 600px)");
+    const onChange = (e: MediaQueryListEvent) => setIsPhone(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
   const [pendingDelete, setPendingDelete] = useState<
     | { kind: "row"; id: string; label: string }
     | { kind: "column"; id: string; label: string }
@@ -244,7 +269,7 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
   // Rendered width of one question column — used to place the insert handles on
   // each inter-column border (fixed layout splits the space evenly).
   const qWidth = table.columns.length
-    ? (tableW - NAME_COL_W - DONE_COL_W) / table.columns.length
+    ? (tableW - NAME_COL_W) / table.columns.length
     : 0;
 
   // Build the initial grid from the setup modal: N exams × M questions.
@@ -350,6 +375,18 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
       }),
     });
 
+  const sortedRows = [...table.rows].sort((a, b) =>
+    a.label.localeCompare(b.label, undefined, { numeric: true })
+  );
+
+  // Kebab: open the row menu just below it, left edge on it, clamped so the
+  // 180px menu stays on screen.
+  const openRowMenu = (row: ExamRow, e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - 192));
+    setRowMenu({ row, top: rect.bottom + 10, left });
+  };
+
   const confirmDelete = () => {
     if (!pendingDelete) return;
     if (pendingDelete.kind === "row") removeRow(pendingDelete.id);
@@ -405,18 +442,105 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
               </button>
             </div>
           )
+        ) : isPhone ? (
+          <div className="ep-cards">
+            {/* Questions strip: tap one to rename or delete it. */}
+            <div className="ep-qbar">
+              <span className="ep-qbar-label">Questions</span>
+              <div className="ep-qbar-chips">
+                {table.columns.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className="ep-qchip"
+                    onClick={() =>
+                      setSheet({
+                        title: "Question",
+                        value: c.label,
+                        onSave: (v) => renameColumn(c.id, v),
+                        onDelete: () => setPendingDelete({ kind: "column", id: c.id, label: c.label }),
+                      })
+                    }
+                  >
+                    {c.label}
+                  </button>
+                ))}
+                {/* Adding a question lives with the questions. */}
+                <button
+                  type="button"
+                  className="ep-qchip ep-qchip-add"
+                  onClick={addColumn}
+                  disabled={atColumnLimit}
+                  aria-label="Add question"
+                  title={atColumnLimit ? `Limit of ${MAX_EXAM_COLUMNS} questions` : "Add question"}
+                >
+                  <Plus size={15} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+
+            {sortedRows.map((r) => {
+              const total = table.columns.length;
+              const doneCount = table.columns.filter((c) => r.checks[c.id]).length;
+              const complete = total > 0 && doneCount === total;
+              return (
+                <div key={r.id} className={`ep-card ${complete ? "ep-card-complete" : ""}`}>
+                  <div className="ep-card-head">
+                    <button
+                      type="button"
+                      className="ep-card-title"
+                      title="Edit exam"
+                      onClick={() => setEditRow(r)}
+                    >
+                      <span className="ep-card-name">{r.label}</span>
+                      <span className="ep-card-sub">
+                        {complete ? "All done" : `${doneCount} of ${total} done`}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="ep-icon-btn ep-kebab"
+                      aria-label={`Actions for ${r.label}`}
+                      title="Actions"
+                      onClick={(e) => openRowMenu(r, e)}
+                    >
+                      <MoreVertical size={17} />
+                    </button>
+                  </div>
+                  <div className="ep-card-grid">
+                    {table.columns.map((c) => {
+                      const done = !!r.checks[c.id];
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          role="checkbox"
+                          aria-checked={done}
+                          aria-label={`${r.label}: ${c.label}`}
+                          className={`ep-qcell ${done ? "ep-qcell-done" : ""}`}
+                          onClick={() => toggleCheck(r.id, c.id)}
+                        >
+                          {done && <Check size={12} strokeWidth={3} className="ep-qcell-check" />}
+                          <span className="ep-qcell-label">{c.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <div className="ep-grid">
             <div className="ep-table-scroll">
             <div
               className="ep-table-inner"
-              style={{ minWidth: NAME_COL_W + DONE_COL_W + table.columns.length * Q_COL_MIN }}
+              style={{ minWidth: NAME_COL_W + table.columns.length * Q_COL_MIN }}
             >
             <table ref={tableRef} className="ep-table">
               <thead>
                 <tr>
                   <th className="ep-corner">Exam</th>
-                  <th className="ep-progress-head">Done</th>
                   {table.columns.map((c) => (
                     <th key={c.id} className="ep-col-head">
                       <div className="ep-col-head-inner">
@@ -442,14 +566,9 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                 </tr>
               </thead>
               <tbody>
-                {[...table.rows]
-                  .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }))
-                  .map((r) => {
-                  const total = table.columns.length;
-                  const doneCount = table.columns.filter((c) => r.checks[c.id]).length;
-                  const complete = total > 0 && doneCount === total;
+                {sortedRows.map((r) => {
                   return (
-                  <tr key={r.id} className={complete ? "ep-row-complete" : ""}>
+                  <tr key={r.id}>
                     <th scope="row" className="ep-row-head">
                       <div className="ep-row-head-inner">
                         <button
@@ -465,28 +584,12 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                           className="ep-icon-btn ep-kebab"
                           aria-label={`Actions for ${r.label}`}
                           title="Actions"
-                          onClick={(e) => {
-                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                            // Open to the right of the kebab (left edge at it),
-                            // clamped so the 180px menu stays on screen.
-                            const left = Math.max(8, Math.min(rect.left, window.innerWidth - 192));
-                            setRowMenu({ row: r, top: rect.bottom + 10, left });
-                          }}
+                          onClick={(e) => openRowMenu(r, e)}
                         >
                           <MoreVertical size={15} />
                         </button>
                       </div>
                     </th>
-                    <td className="ep-progress-cell">
-                      {total > 0 && (
-                        <span
-                          className={`ep-row-progress ${complete ? "ep-row-progress-done" : ""}`}
-                          title={`${doneCount} of ${total} questions done`}
-                        >
-                          {doneCount}/{total}
-                        </span>
-                      )}
-                    </td>
                     {table.columns.map((c) => {
                       const done = !!r.checks[c.id];
                       return (
@@ -527,7 +630,7 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
                     key={`ins-${c.id}`}
                     type="button"
                     className="ep-col-insert"
-                    style={{ left: NAME_COL_W + DONE_COL_W + (i + 1) * qWidth }}
+                    style={{ left: NAME_COL_W + (i + 1) * qWidth }}
                     onClick={() => insertColumnAt(i)}
                     aria-label="Insert question here"
                     title="Insert question here"
@@ -622,6 +725,7 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
           title={sheet.title}
           initialValue={sheet.value}
           onSave={sheet.onSave}
+          onDelete={sheet.onDelete}
           onClose={() => setSheet(null)}
         />
       )}

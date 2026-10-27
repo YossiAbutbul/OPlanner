@@ -467,69 +467,78 @@
   color: var(--label-3);
 }
 
-/* Inner tab strip inside a course view: Overview vs Course info.
-   Content-width tabs, left-aligned, with a per-tab underline on the
-   active one. */
+/* Inner tabs of a course (Overview / Course info / Exams): a segmented
+   control. Recessed track, the selected segment is a raised thumb that
+   slides between options (layoutId in MainContent.tsx). */
 .course-inner-tabs {
   display: inline-flex;
   align-self: flex-start;
-  gap: 0.3rem;
-  /* Sit directly on top of the panel, overlapping its top border so the
-     active tab merges into it (folder look). First tab aligns with the
-     panel's left border. */
-  margin: 0 0 -1px 0;
-  background: transparent;
+  gap: 2px;
+  padding: 3px;
+  margin: 0 0 0.85rem;
+  background: var(--fill-2);
+  border-radius: var(--radius-md);
   flex-shrink: 0;
-  position: relative;
-  z-index: 1;
 }
 
 .course-inner-tab {
   position: relative;
-  background: var(--surface-2);
-  border: 1px solid var(--separator);
-  border-bottom: none;
-  color: var(--label-3);
+  min-height: 32px;
+  padding: 0.35rem 1.1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--label-2);
+  font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 600;
-  padding: 0.5rem 1.2rem 0.55rem;
   cursor: pointer;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  transition:
-    background-color var(--dur-1) var(--ease-out),
-    color var(--dur-1) var(--ease-out);
+  isolation: isolate;
+  transition: color var(--dur-1) var(--ease-out);
 }
 
 .course-inner-tab:hover {
-  background: var(--surface-3);
-  color: var(--label-2);
+  color: var(--label);
 }
 
-/* Active tab shares the panel's white bg and paints over the panel's top
-   border to look like one continuous folder surface. */
-.course-inner-tab-active,
-.course-inner-tab-active:hover {
-  background: var(--surface);
-  color: var(--accent-text);
-  padding-bottom: 0.65rem;
+.course-inner-tab-active {
+  color: var(--label);
 }
 
+.course-inner-thumb {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--radius-sm);
+  background: var(--elevated);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1), 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+
+.course-inner-label {
+  position: relative;
+}
+
+/* Content sits directly on the page (cards inside are the chrome), like
+   the semester overview; it scrolls inside so the tabs stay put. */
 .course-tab-panel {
-  background: var(--surface);
-  border: 1px solid var(--separator);
-  border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
-  padding: 1rem;
-  box-shadow: var(--shadow-xs);
   display: flex;
   flex-direction: column;
-  /* Fixed to the remaining viewport height; content scrolls INSIDE the
-     panel so the tabs above stay put and the folder border never moves. */
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* Room for card shadows at the edges of the scroll area; the bottom gap
+     lives inside the scroll so content runs to the window edge. */
+  margin: 0 -4px;
+  padding: 0 4px 1.5rem;
   /* Scroll works; bar hidden. */
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+/* The tab panel scrolls on its own, so the page's bottom padding would
+   just leave a dead band under it. */
+.main-content:has(> .course-tab-panel) {
+  padding-bottom: 0;
 }
 
 .course-tab-panel::-webkit-scrollbar {
@@ -592,12 +601,71 @@
   min-width: 0;
 }
 
+/* Course Overview tab: the same summary card as the semester overview
+   (scoped to this course), with the month calendar full width beneath. */
+.course-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 0;
+}
+
+.course-overview .overview-stats {
+  margin-bottom: 0;
+}
+
 .course-calendar {
   display: flex;
 }
 
 .course-calendar > .cal {
   flex: 1;
+}
+
+/* Wide course page: calendar on the left at a natural width, the summary
+   and Up next stacked in a column on the right (like the semester
+   overview's side column), so the month grid isn't stretched into strips.
+   Container query: the split depends on the page's own width, not the
+   window, since both sidebars take space. */
+.course-tab-panel {
+  container-type: inline-size;
+}
+
+@container (min-width: 820px) {
+  .course-overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(270px, 320px);
+    grid-template-areas: "cal side";
+    align-items: start;
+  }
+
+  .course-overview .course-calendar {
+    grid-area: cal;
+  }
+
+  .course-overview .overview-stats {
+    grid-area: side;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .course-overview .ovs-summary {
+    border-right: none;
+    border-bottom: 1px solid var(--separator);
+  }
+
+  /* Narrow column: compact count tiles so the labels fit in full. */
+  .course-overview .ovs-counts {
+    gap: 0.35rem;
+  }
+
+  .course-overview .ovs-count {
+    padding: 0.45rem 0.5rem;
+  }
+
+  .course-overview .ovs-count dt {
+    font-size: var(--text-2xs);
+    overflow: visible;
+  }
 }
 
 .course-filter-bar {

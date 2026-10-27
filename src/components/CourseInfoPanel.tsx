@@ -21,6 +21,26 @@ interface Props {
 
 const NOTES_DEBOUNCE_MS = 800;
 
+// "moodle.example.ac.il" from a full link, for the row's second line.
+const hostOf = (url: string): string => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+};
+
+// "/drive/folders/abc" after the host; empty for a bare domain.
+const pathOf = (url: string): string => {
+  try {
+    const u = new URL(url);
+    const rest = u.pathname + u.search;
+    return rest === "/" ? "" : rest;
+  } catch {
+    return "";
+  }
+};
+
 // A row being edited (existing link or a brand-new one). `isNew` rows are
 // discarded on cancel; existing rows revert to their saved values.
 interface Draft {
@@ -205,10 +225,9 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
         <div className="cip-table" role="table">
           <div className="cip-table-head" role="row">
             <span role="columnheader" className="cip-col-name">Name</span>
-            <span role="columnheader" className="cip-col-url">URL</span>
-            <span role="columnheader" className="cip-col-actions">Actions</span>
+            <span role="columnheader" className="cip-col-url">Link</span>
+            <span role="columnheader" className="cip-col-actions" aria-label="Actions" />
           </div>
-
           <div className="cip-table-body">
             {links.length === 0 && !draft && (
               <div className="cip-table-empty">
@@ -220,18 +239,35 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
               draft && !draft.isNew && draft.id === l.id ? (
                 <React.Fragment key={l.id}>{renderEditRow()}</React.Fragment>
               ) : (
-                <div key={l.id} className="cip-table-row" role="row">
-                  <span role="cell" className="cip-col-name cip-cell-label">{l.label}</span>
+                <div key={l.id} className="cip-table-row cip-link-row" role="row">
                   <a
                     role="cell"
-                    className="cip-col-url cip-cell-url"
+                    className="cip-col-name cip-link-name"
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span className="cip-link-icon" aria-hidden="true">
+                      <Link2 size={14} />
+                    </span>
+                    <span className="cip-link-text">
+                      <span className="cip-cell-label" dir="auto">{l.label}</span>
+                      {/* Phone: the URL column folds in under the name. */}
+                      <span className="cip-link-host">{hostOf(l.url)}</span>
+                    </span>
+                  </a>
+                  <a
+                    role="cell"
+                    className="cip-col-url cip-link-url"
                     href={l.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     title={l.url}
+                    tabIndex={-1}
                   >
-                    {l.url}
-                    <ExternalLink size={12} className="cip-cell-url-icon" />
+                    <span className="cip-url-host">{hostOf(l.url)}</span>
+                    <span className="cip-url-path">{pathOf(l.url)}</span>
+                    <ExternalLink size={12} className="cip-link-open" />
                   </a>
                   <span role="cell" className="cip-col-actions">
                     <button

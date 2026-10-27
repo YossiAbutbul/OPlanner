@@ -308,7 +308,17 @@ const ColorPicker: React.FC<Props> = ({ value, onChange, disabled }) => {
         </div>
       </div>
 
-      <div className="cp-presets-label">Site colors</div>
+      <div className="cp-presets-head">
+        <span className="cp-presets-label">Site colors</span>
+        <button
+          type="button"
+          className="cp-reset"
+          onClick={() => onChange(null)}
+          disabled={disabled || !value}
+        >
+          Reset
+        </button>
+      </div>
       <div className="cp-presets">
         {SITE_COLORS.map((c) => {
           const selected = value?.toLowerCase() === c.toLowerCase();
@@ -324,14 +334,6 @@ const ColorPicker: React.FC<Props> = ({ value, onChange, disabled }) => {
             />
           );
         })}
-        <button
-          type="button"
-          className="cp-reset"
-          onClick={() => onChange(null)}
-          disabled={disabled || !value}
-        >
-          Reset
-        </button>
       </div>
     </div>
   );

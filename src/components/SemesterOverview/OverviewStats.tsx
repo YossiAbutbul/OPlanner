@@ -1,69 +1,172 @@
-import React from "react";
+import React, { useMemo } from "react";
 import type { SemesterTotals } from "../../hooks/useSemesterStats";
+import type { HomeworkEntry } from "../../types/models";
 import RollingNumber from "../RollingNumber";
+import { capitalizeWords, isOverdue, timeLeft } from "../../utility/dayCalendar";
 
 interface Props {
   totals: SemesterTotals;
   completionPct: number;
+  // Every task in the semester (reminders are filtered out here).
+  tasks: HomeworkEntry[];
+  // Course colour for a task, same as the calendar uses.
+  colorOf: (t: HomeworkEntry) => string;
+  onOpenTask: (t: HomeworkEntry) => void;
+  // Off on a course page, where every row is the same course.
+  showCourse?: boolean;
+  // How many upcoming deadlines to list (fixed slots, so the card height
+  // never changes). The course page's side column has room for more.
+  upNextCount?: number;
 }
 
-// Summary card: an Activity-style completion ring next to the four counts,
-// divided by hairlines rather than split into separate boxes.
-const OverviewStats: React.FC<Props> = ({ totals, completionPct }) => (
-  <section className="overview-stats" aria-label="Semester summary">
-    <div className="ovs-ring-block">
-      <div
-        className="ovs-ring"
-        role="progressbar"
-        aria-label="Completion"
-        aria-valuenow={completionPct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-      >
-        <svg viewBox="0 0 64 64" aria-hidden="true">
-          <circle className="ovs-ring-track" cx="32" cy="32" r="27" />
-          <circle
-            className="ovs-ring-fill"
-            cx="32"
-            cy="32"
-            r="27"
-            pathLength={100}
-            style={{ strokeDasharray: `${completionPct} 100` }}
-          />
-        </svg>
-        <span className="ovs-ring-pct">
-          <RollingNumber value={completionPct} suffix="%" />
-        </span>
-      </div>
-      <div className="ovs-ring-text">
-        <span className="ovs-label">Completion</span>
-        <span className="ovs-caption">
-          {totals.total === 0
-            ? "No tasks yet"
-            : `${totals.completed} of ${totals.total} tasks done`}
-        </span>
-      </div>
-    </div>
+// A non-zero count always gets a visible slice of the bar, however small
+// next to the rest; the other segments give up the difference.
+const MIN_PCT = 3;
 
-    <dl className="ovs-metrics">
-      <div className="ovs-metric">
-        <dt className="ovs-label">Tasks</dt>
-        <dd className="ovs-value"><RollingNumber value={totals.total} /></dd>
+const dueMoment = (t: HomeworkEntry) => t.dueDate + (t.endTime ?? t.startTime ?? "99:99");
+
+interface Segment {
+  key: string;
+  pct: number;
+}
+
+// One bar, three segments: completed, pending, overdue, sized by count.
+function statusSegments(totals: SemesterTotals): Segment[] {
+  const parts = [
+    { key: "done", value: totals.completed },
+    { key: "open", value: totals.pending },
+    { key: "late", value: totals.overdue },
+  ].filter((p) => p.value > 0);
+  const total = parts.reduce((n, p) => n + p.value, 0);
+  if (total === 0) return [];
+  const raw = parts.map((p) => Math.max(MIN_PCT, (p.value / total) * 100));
+  const sum = raw.reduce((n, v) => n + v, 0);
+  return parts.map((p, i) => ({ key: p.key, pct: (raw[i] / sum) * 100 }));
+}
+
+// Summary: the completion figure over a segmented status bar (battery
+// style, reads well in a short, wide space), the counts as its legend, and
+// the next few deadlines as an Up Next list.
+const OverviewStats: React.FC<Props> = ({
+  totals,
+  completionPct,
+  tasks,
+  colorOf,
+  onOpenTask,
+  showCourse = true,
+  upNextCount = 2,
+}) => {
+  const upcoming = useMemo(() => {
+    const now = new Date();
+    return tasks
+      .filter(
+        (t) =>
+          t.course !== "reminders" &&
+          t.status === "PENDING" &&
+          !isOverdue(t.dueDate, t.endTime ?? t.startTime, now)
+      )
+      .sort((a, b) => dueMoment(a).localeCompare(dueMoment(b)));
+  }, [tasks]);
+
+  const dueThisWeek = useMemo(
+    () => upcoming.filter((t) => timeLeft(t.dueDate).days < 7).length,
+    [upcoming]
+  );
+
+  const segments = statusSegments(totals);
+  const counts = [
+    { key: "done", label: "Completed", value: totals.completed },
+    { key: "open", label: "Pending", value: totals.pending },
+    { key: "late", label: "Overdue", value: totals.overdue },
+  ];
+
+  return (
+    <section className="overview-stats" aria-label="Semester summary">
+      <div className="ovs-summary">
+        <div className="ovs-progress">
+          <span className="ovs-value">
+            <RollingNumber value={completionPct} suffix="%" />
+          </span>
+          <span className="ovs-progress-label">complete</span>
+        </div>
+        <div
+          className="ovs-bar"
+          role="img"
+          aria-label={`${completionPct}% complete. ${counts.map((c) => `${c.label} ${c.value}`).join(", ")}`}
+        >
+          {segments.map((seg) => (
+            <span
+              key={seg.key}
+              className={`ovs-bar-seg ovs-bar-${seg.key}`}
+              style={{ flexGrow: seg.pct }}
+            />
+          ))}
+        </div>
+        <div className="ovs-side">
+          <dl className="ovs-counts">
+            {counts.map((c) => (
+              <div
+                key={c.key}
+                className={`ovs-count ovs-count-${c.key}`}
+                data-zero={c.value === 0 || undefined}
+              >
+                <dd><RollingNumber value={c.value} /></dd>
+                <dt>{c.label}</dt>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
-      <div className="ovs-metric" data-tone="good">
-        <dt className="ovs-label">Completed</dt>
-        <dd className="ovs-value"><RollingNumber value={totals.completed} /></dd>
+
+      <div className="ovs-upnext" style={{ "--upnext-rows": upNextCount } as React.CSSProperties}>
+        <div className="ovs-block-head">
+          <span className="ovs-label">Up next</span>
+          <span className="ovs-caption">
+            {dueThisWeek === 0 ? "Nothing this week" : `${dueThisWeek} this week`}
+          </span>
+        </div>
+        {upcoming.length === 0 ? (
+          <p className="ovs-upnext-empty">All clear. Nothing left to hand in.</p>
+        ) : (
+          <ul className="ovs-upnext-list">
+            {upcoming.slice(0, upNextCount).map((t) => {
+              const left = timeLeft(t.dueDate, t.endTime ?? t.startTime);
+              const tone = left.days <= 1 ? "soon" : left.days <= 3 ? "near" : "far";
+              const d = new Date(t.dueDate + "T00:00:00");
+              const time = t.endTime ?? t.startTime;
+              return (
+                <li key={`${t.course}|${t.id}`}>
+                  <button
+                    type="button"
+                    className="ovs-upnext-item"
+                    style={{ "--item-color": colorOf(t) } as React.CSSProperties}
+                    onClick={() => onOpenTask(t)}
+                  >
+                    {/* Calendar-style date: weekday over day number. */}
+                    <span className="ovs-upnext-date" aria-hidden="true">
+                      <span className="ovs-upnext-wd">
+                        {d.toLocaleDateString("en-US", { weekday: "short" })}
+                      </span>
+                      <span className="ovs-upnext-day">{d.getDate()}</span>
+                    </span>
+                    <span className="ovs-upnext-text">
+                      <span className="ovs-upnext-name">{capitalizeWords(t.name)}</span>
+                      <span className="ovs-upnext-meta">
+                        {[showCourse ? capitalizeWords(t.course) : null, time]
+                          .filter(Boolean)
+                          .join(" · ") || "All day"}
+                      </span>
+                    </span>
+                    <span className={`ovs-when ovs-when-${tone}`}>{left.short}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
-      <div className="ovs-metric" data-tone="warn">
-        <dt className="ovs-label">Pending</dt>
-        <dd className="ovs-value"><RollingNumber value={totals.pending} /></dd>
-      </div>
-      <div className="ovs-metric" data-tone={totals.overdue > 0 ? "bad" : "none"}>
-        <dt className="ovs-label">Overdue</dt>
-        <dd className="ovs-value"><RollingNumber value={totals.overdue} /></dd>
-      </div>
-    </dl>
-  </section>
-);
+    </section>
+  );
+};
 
 export default OverviewStats;

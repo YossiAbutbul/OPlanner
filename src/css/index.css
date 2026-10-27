@@ -111,6 +111,9 @@
   --warning: #c27c0e;
   --warning-text: #946100;
   --warning-tint: rgba(234, 160, 30, 0.14);
+  /* Pending ("still to do"): a light, soft amber. */
+  --pending: #f7c75a;
+  --pending-text: #e6ab2e;
   --success-text: #15803d;
   --success-tint: #dcfce7;
   --info: #2f6fde;
@@ -121,6 +124,16 @@
   --material-thick: rgba(250, 250, 249, 0.86);
   --material-blur: saturate(180%) blur(20px);
   --scrim: rgba(12, 13, 16, 0.42);
+
+  /* Popover material: every floating panel (calendar day preview, date and
+     time pickers, dropdowns, editor pickers, row menus) uses this one
+     recipe, so they read as the same kind of object. */
+  --popover-bg: rgba(255, 255, 255, 0.86);
+  --popover-blur: saturate(180%) blur(24px);
+  --popover-border: rgba(0, 0, 0, 0.08);
+  --popover-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.06),
+    0 14px 36px rgba(0, 0, 0, 0.14);
+  --popover-radius: 14px;
 
   /* Depth. Bigger surfaces read as thicker: deeper, softer shadow. */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -219,6 +232,8 @@
     --warning: #f0b23f;
     --warning-text: #f3c768;
     --warning-tint: rgba(243, 199, 104, 0.14);
+    --pending: #f5c869;
+    --pending-text: #f5c869;
     --success-text: #4cd980;
     --success-tint: rgba(76, 217, 128, 0.14);
     --info: #6ea0ff;
@@ -227,6 +242,10 @@
     --material-thin: rgba(26, 27, 30, 0.7);
     --material-thick: rgba(18, 19, 21, 0.82);
     --scrim: rgba(0, 0, 0, 0.6);
+    --popover-bg: rgba(40, 41, 46, 0.86);
+    --popover-border: rgba(255, 255, 255, 0.1);
+    --popover-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3),
+      0 14px 36px rgba(0, 0, 0, 0.5);
 
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
@@ -276,6 +295,8 @@
   --warning: #f0b23f;
   --warning-text: #f3c768;
   --warning-tint: rgba(243, 199, 104, 0.14);
+  --pending: #f5c869;
+  --pending-text: #f5c869;
   --success-text: #4cd980;
   --success-tint: rgba(76, 217, 128, 0.14);
   --info: #6ea0ff;
@@ -284,6 +305,10 @@
   --material-thin: rgba(26, 27, 30, 0.7);
   --material-thick: rgba(18, 19, 21, 0.82);
   --scrim: rgba(0, 0, 0, 0.6);
+  --popover-bg: rgba(40, 41, 46, 0.86);
+  --popover-border: rgba(255, 255, 255, 0.1);
+  --popover-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3),
+    0 14px 36px rgba(0, 0, 0, 0.5);
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
@@ -302,6 +327,8 @@
     --material-thin: var(--surface);
     --material-thick: var(--canvas);
     --material-blur: none;
+    --popover-bg: var(--elevated);
+    --popover-blur: none;
   }
 }
 

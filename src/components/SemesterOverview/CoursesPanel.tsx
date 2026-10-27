@@ -5,6 +5,7 @@ import type { CourseStats } from "../../hooks/useSemesterStats";
 import { courseColor } from "../../utility/courseColor";
 import { capitalizeWords } from "../../utility/dayCalendar";
 import RollingNumber from "../RollingNumber";
+import { ringDash } from "../../utility/ring";
 
 interface Props {
   byCourse: CourseStats[];
@@ -54,7 +55,7 @@ export const CourseRing: React.FC<{ pct: number; done: boolean }> = ({ pct, done
         cy="18"
         r="15"
         pathLength={100}
-        style={{ strokeDasharray: `${pct} 100` }}
+        style={{ strokeDasharray: ringDash(pct, 4, 15) }}
       />
     </svg>
     <AnimatePresence initial={true}>{done && <RingCheck key="check" />}</AnimatePresence>

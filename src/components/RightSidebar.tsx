@@ -34,7 +34,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   const { blocks, saveBlock, removeBlock } = useTimeBlocks();
   const toast = useToast();
 
-  const [tab, setTab] = useState<"upcoming" | "day">("upcoming");
+  // Day opens first: today's schedule is the most-used view.
+  const [tab, setTab] = useState<"upcoming" | "day">("day");
 
   // Shared semester-wide task pool (Upcoming filters it; Day filters by date).
   // Fetched from Firestore; optimistic edits are layered on below.
@@ -95,15 +96,20 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       return;
     }
     let cancelled = false;
-    (async () => {
+    // Saved copy first (instant on reload), then the server.
+    const load = async (force: boolean) => {
       const [lists, reminders] = await Promise.all([
-        Promise.all(sources.map((s) => getCourseTasks(s.year, s.semester, s.course))),
+        Promise.all(sources.map((s) => getCourseTasks(s.year, s.semester, s.course, force))),
         selectedYear !== null && selectedSemester
-          ? getCourseTasks(selectedYear, selectedSemester, "reminders")
+          ? getCourseTasks(selectedYear, selectedSemester, "reminders", force)
           : Promise.resolve([] as HomeworkEntry[]),
       ]);
       if (cancelled) return;
       setAllSemesterTasks([...lists.flat(), ...reminders]);
+    };
+    (async () => {
+      await load(false);
+      await load(true);
     })();
     return () => {
       cancelled = true;
@@ -199,25 +205,25 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       <div className="rs-tabs" role="tablist" data-active={tab}>
         <button
           role="tab"
-          aria-selected={tab === "upcoming"}
-          className={`rs-tab ${tab === "upcoming" ? "rs-tab-active" : ""}`}
-          onClick={() => setTab("upcoming")}
-        >
-          Upcoming
-        </button>
-        <button
-          role="tab"
           aria-selected={tab === "day"}
           className={`rs-tab ${tab === "day" ? "rs-tab-active" : ""}`}
           onClick={() => setTab("day")}
         >
           Day
         </button>
+        <button
+          role="tab"
+          aria-selected={tab === "upcoming"}
+          className={`rs-tab ${tab === "upcoming" ? "rs-tab-active" : ""}`}
+          onClick={() => setTab("upcoming")}
+        >
+          Upcoming
+        </button>
         <span className="rs-tab-indicator" aria-hidden />
       </div>
 
       {tab === "upcoming" && (
-        <UpcomingPanel items={upcomingItems} onItemClick={handleTaskClick} />
+        <UpcomingPanel items={upcomingItems} onItemClick={handleTaskClick} colorOf={colorForTask} />
       )}
 
       {tab === "day" && (

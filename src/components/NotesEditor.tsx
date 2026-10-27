@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { EditorContent, useEditor } from "@tiptap/react";
 import type { Extensions } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -38,6 +39,13 @@ interface Props {
 const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional", inlineToolbar = false, links, onSave }) => {
   const [expanded, setExpanded] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  // Height the editor took in the page, held by a placeholder while the
+  // expanded editor is portaled out (so the form below doesn't jump).
+  const [placeholderH, setPlaceholderH] = useState(0);
+  const expand = () => {
+    setPlaceholderH(wrapRef.current?.offsetHeight ?? 0);
+    setExpanded(true);
+  };
   // Tracks the last sanitized HTML we emitted, so an external `value` echoing
   // our own change back doesn't trigger a setContent (which would reset caret).
   const lastEmittedRef = useRef<string | null>(null);
@@ -175,7 +183,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
     return () => document.removeEventListener("keydown", onKey);
   }, [expanded]);
 
-  return (
+  const body = (
     <div ref={wrapRef} className={`ne-wrap ${inlineToolbar ? "ne-wrap-toolbar" : ""} ${expanded ? "ne-wrap-expanded" : ""}`}>
       {expanded && <div className="ne-backdrop" onMouseDown={saveNotes} />}
 
@@ -192,7 +200,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
               <button
                 type="button"
                 className="ne-bar-expand"
-                onClick={() => setExpanded(true)}
+                onClick={expand}
                 title="Expand"
                 aria-label="Expand notes"
               >
@@ -217,7 +225,7 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
             <button
               type="button"
               className="ne-expand-btn"
-              onClick={() => setExpanded(true)}
+              onClick={expand}
               title="Expand"
               aria-label="Expand notes"
             >
@@ -228,6 +236,19 @@ const NotesEditor: React.FC<Props> = ({ value, onChange, placeholder = "Optional
       </div>
     </div>
   );
+
+  // Expanded: render at the page root. Inside a modal, the modal's
+  // transform makes it the containing block for position:fixed and its
+  // overflow clips, which trapped the full-screen editor inside it.
+  if (expanded) {
+    return (
+      <>
+        <div className="ne-placeholder" style={{ height: placeholderH }} aria-hidden />
+        {createPortal(body, document.body)}
+      </>
+    );
+  }
+  return body;
 };
 
 export default NotesEditor;

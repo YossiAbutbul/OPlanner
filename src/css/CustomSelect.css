@@ -64,10 +64,10 @@
 .cs-popover {
   position: fixed;
   z-index: var(--z-popover);
-  background: var(--elevated);
-  border: 1px solid var(--separator);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  border-radius: var(--popover-radius);
+  box-shadow: var(--popover-shadow);
   padding: 0.3rem;
   display: flex;
   flex-direction: column;
@@ -78,6 +78,8 @@
   /* Same width as the trigger, so it unfolds from the trigger edge. */
   transform-origin: top center;
   animation: csPopIn var(--dur-2) var(--ease-out);
+  -webkit-backdrop-filter: var(--popover-blur);
+  backdrop-filter: var(--popover-blur);
 }
 
 @keyframes csPopIn {

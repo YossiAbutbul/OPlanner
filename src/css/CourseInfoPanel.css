@@ -5,9 +5,9 @@
   flex-direction: column;
   gap: 1.1rem;
   /* Links + Assignments cap out at this many rows and scroll internally, so
-     neither list can push Notes (and each other) far off-screen. Row height is
-     padding (0.7rem x 2) + the 28px action buttons. */
-  --cip-row-h: 50px;
+     neither list can push Notes (and each other) far off-screen. Each row is
+     exactly --cip-row-h, so the cap lands on a row edge. */
+  --cip-row-h: 52px;
   --cip-max-rows: 5;
   /* Breathing room below the last section so it doesn't butt against the
      panel's bottom border (scroll-container padding can't be relied on). */
@@ -29,13 +29,14 @@
   gap: 0.5rem;
 }
 
+/* Same section heading as the semester overview ("Courses", "Finals"). */
 .cip-section-head h3 {
   margin: 0;
-  font-size: var(--text-base);
-  font-weight: 700;
+  font-size: var(--text-md);
+  font-weight: 650;
   letter-spacing: var(--tracking-title);
   line-height: var(--leading-snug);
-  color: var(--label);
+  color: var(--label-2);
 }
 
 .cip-hint {
@@ -111,7 +112,12 @@
 .cip-assignments .homework-table-scroll {
   flex: 0 0 auto;
   overflow-y: auto;
-  max-height: calc(var(--cip-row-h) * var(--cip-max-rows));
+  /* Whole two-line rows only (see .hw-row height below). */
+  max-height: calc(58px * var(--cip-max-rows));
+}
+
+.cip-assignments .hw-row {
+  height: 58px;
 }
 
 /* Bigger notes - default editor is 88px; quadruple it for the dedicated
@@ -119,6 +125,32 @@
 .cip-notes .ne-collapsed {
   height: 260px;
   max-height: 50vh;
+}
+
+/* Notes as one card: toolbar and editor share the card chrome, the
+   toolbar separated by a hairline rather than a shaded bar. */
+.cip-notes .ne-inline-toolbar {
+  background: var(--surface);
+  border-color: var(--separator);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: 0.4rem 0.5rem;
+  box-shadow: var(--shadow-xs);
+}
+
+.cip-notes .ne-wrap-toolbar .ne-collapsed {
+  border-color: var(--separator);
+  border-top-color: var(--separator);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+.cip-notes .ne-collapsed .ProseMirror {
+  padding: 0.85rem 1rem;
+}
+
+/* Assignments card: matches the links card. */
+.cip-assignments .homework-table-container {
+  box-shadow: var(--shadow-xs);
 }
 
 /* Links table - matches the homework/assignments table chrome (surface card,
@@ -130,6 +162,7 @@
   background: var(--surface);
   border: 1px solid var(--separator);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
   overflow: hidden;
 }
 
@@ -162,38 +195,35 @@
   background: var(--label-4);
 }
 
+/* Links table: Name | Link | actions. Same columns in the head, saved
+   rows and the edit row, so everything lines up. */
 .cip-table-head,
 .cip-table-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.7rem 1rem;
+  gap: 1rem;
+  padding: 0 0.75rem 0 1rem;
 }
 
+/* Column labels as quiet small caps on a faint band. */
 .cip-table-head {
+  min-height: 32px;
   background: var(--surface-2);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: var(--tracking-caption);
-  color: var(--label-2);
   border-bottom: 1px solid var(--separator);
-}
-
-.cip-table-head .cip-col-name {
-  flex: 1 1 0;
-  min-width: 0;
-}
-.cip-table-head .cip-col-url {
-  flex: 1.5 1 0;
-  min-width: 0;
-}
-.cip-table-head .cip-col-actions {
-  flex: 0 0 90px;
-  justify-content: flex-start;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--label-3);
 }
 
 .cip-table-row {
-  border-bottom: 1px solid var(--separator);
+  /* Exactly --cip-row-h (hairline included) so the capped body ends on a
+     row edge, never mid-row. */
+  min-height: var(--cip-row-h);
+  box-sizing: border-box;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
   position: relative;
   flex-wrap: wrap;
   /* Never let the capped body squash rows - it scrolls instead. */
@@ -201,24 +231,31 @@
   transition: background-color var(--dur-1) var(--ease-out);
 }
 
-.cip-table-body > .cip-table-row:last-child {
-  border-bottom: none;
+.cip-table-row + .cip-table-row {
+  border-top: 1px solid var(--separator);
 }
 
 .cip-table-row:hover {
   background: var(--fill);
 }
 
-.cip-table-row .cip-col-name {
+.cip-col-name {
   flex: 1 1 0;
   min-width: 0;
 }
-.cip-table-row .cip-col-url {
+
+.cip-col-url {
   flex: 1.5 1 0;
   min-width: 0;
 }
-/* Match the header/row column ratio exactly (basis 0, same 1 : 1.5 grow) so
-   the edit inputs line up with the Name / URL columns above. */
+
+.cip-table-head .cip-col-actions,
+.cip-table-row .cip-col-actions {
+  flex: 0 0 64px;
+  justify-content: flex-end;
+}
+
+/* Edit inputs take the Name / Link columns. */
 .cip-table-row .cip-input:nth-of-type(1) {
   flex: 1 1 0;
   min-width: 0;
@@ -227,41 +264,122 @@
   flex: 1.5 1 0;
   min-width: 0;
 }
-.cip-table-row .cip-col-actions {
-  flex: 0 0 90px;
-  justify-content: flex-start;
+
+/* Name cell: icon tile + label. */
+.cip-link-name {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: inherit;
+  text-decoration: none;
 }
 
-/* View-mode cells (saved link, not being edited). */
+.cip-link-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--accent-text);
+  background: var(--accent-tint);
+}
+
+.cip-link-icon svg {
+  display: block;
+}
+
+.cip-link-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .cip-cell-label {
-  font-size: 0.88rem;
+  max-width: 100%;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--label);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color var(--dur-1) var(--ease-out);
 }
 
-.cip-cell-url {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: var(--text-sm);
-  color: var(--accent-text);
-  text-decoration: none;
+/* Host under the name: phone only, where the Link column folds away. */
+.cip-link-host {
+  display: none;
+  max-width: 100%;
+  font-size: var(--text-xs);
+  color: var(--label-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.cip-cell-url:hover {
-  text-decoration: underline;
+/* Link cell: host in full, the path dimmed and truncated. */
+.cip-link-url {
+  display: flex;
+  align-items: center;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  color: inherit;
+  text-decoration: none;
 }
 
-.cip-cell-url-icon {
+.cip-url-host {
   flex-shrink: 0;
-  color: currentColor;
-  opacity: 0.7;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--label-2);
+}
+
+.cip-url-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--label-4);
+}
+
+.cip-link-open {
+  flex-shrink: 0;
+  margin-left: 0.4rem;
+  color: var(--label-4);
+  opacity: 0;
+  transition:
+    opacity var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    transform var(--dur-1) var(--ease-out);
+}
+
+.cip-link-row:hover .cip-link-open {
+  opacity: 1;
+}
+
+.cip-link-name:hover .cip-cell-label,
+.cip-link-url:hover .cip-url-host,
+.cip-link-url:hover .cip-link-open {
+  color: var(--accent-text);
+}
+
+.cip-link-url:hover .cip-link-open {
+  transform: translate(1px, -1px);
+}
+
+/* Pointer devices: actions appear with the row. */
+@media (hover: hover) {
+  .cip-link-row .cip-col-actions {
+    opacity: 0;
+    transition: opacity var(--dur-1) var(--ease-out);
+  }
+  .cip-link-row:hover .cip-col-actions,
+  .cip-link-row:focus-within .cip-col-actions {
+    opacity: 1;
+  }
 }
 
 /* Highlight the row currently being edited. */
@@ -279,7 +397,7 @@
 }
 
 .cip-table-empty {
-  padding: 0.85rem;
+  padding: 1.1rem;
   font-size: var(--text-sm);
   color: var(--label-3);
   text-align: center;
@@ -324,12 +442,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
-  color: var(--label-2);
+  color: var(--label-3);
   cursor: pointer;
   text-decoration: none;
   transition:
@@ -397,15 +515,31 @@
 
   .cip-table-head .cip-col-actions,
   .cip-table-row .cip-col-actions {
-    flex-basis: 128px;
+    flex-basis: 84px;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Two columns: the host folds in under the name. */
+  .cip-table-head .cip-col-url,
+  .cip-link-url {
+    display: none;
+  }
+  .cip-link-host {
+    display: block;
+  }
+  .cip-link-row .cip-row-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .cip-table-head .cip-col-actions,
+  .cip-link-row .cip-col-actions {
+    flex-basis: auto;
   }
 }
 
 @media (max-width: 900px) {
   /* URL input wraps to its own row below name + actions. */
-  .cip-table-head .cip-col-url {
-    display: none;
-  }
   .cip-table-row .cip-input:nth-of-type(2) {
     flex: 1 1 100%;
     order: 5;

@@ -72,7 +72,8 @@
   position: fixed;
   inset: 0;
   background: var(--scrim);
-  z-index: var(--z-modal-overlay);
+  /* Above any open modal (the editor can be expanded from one). */
+  z-index: calc(var(--z-modal) + 1);
   animation: ne-fade-in var(--dur-2) var(--ease-out);
 }
 
@@ -83,7 +84,7 @@
   transform: translate(-50%, -50%);
   width: min(800px, calc(100vw - 4rem));
   height: min(600px, calc(100vh - 4rem));
-  z-index: var(--z-modal);
+  z-index: calc(var(--z-modal) + 2);
   background: var(--elevated);
   border-radius: var(--radius-xl);
   display: flex;
@@ -510,14 +511,16 @@
   gap: 1px;
   min-width: 100%;
   box-sizing: border-box;
-  background: var(--elevated);
-  border: 1px solid var(--separator);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  border-radius: var(--popover-radius);
+  box-shadow: var(--popover-shadow);
   /* Inline transform: translateX(-100%) right-aligns it to the trigger, so
      the entrance uses the standalone `scale` property from that corner. */
   transform-origin: top right;
   animation: ne-pop-in var(--dur-2) var(--ease-out);
+  -webkit-backdrop-filter: var(--popover-blur);
+  backdrop-filter: var(--popover-blur);
 }
 
 .ne-fs-item {
@@ -552,16 +555,18 @@
 
 .ne-hl-pop {
   position: fixed;
-  background: var(--elevated);
-  border: 1px solid var(--separator);
-  border-radius: var(--radius-md);
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  border-radius: var(--popover-radius);
   padding: 0.4rem;
   display: flex;
   gap: 0.3rem;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--popover-shadow);
   z-index: var(--z-popover);
   transform-origin: top left;
   animation: ne-pop-in var(--dur-2) var(--ease-out);
+  -webkit-backdrop-filter: var(--popover-blur);
+  backdrop-filter: var(--popover-blur);
 }
 
 .ne-hl-swatch {
@@ -603,14 +608,16 @@
   position: fixed;
   width: 208px;
   box-sizing: border-box;
-  background: var(--elevated);
-  border: 1px solid var(--separator);
-  border-radius: var(--radius-xl);
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  border-radius: var(--popover-radius);
   padding: 0.85rem;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--popover-shadow);
   z-index: var(--z-popover);
   transform-origin: top left;
   animation: ne-pop-in var(--dur-2) var(--ease-out);
+  -webkit-backdrop-filter: var(--popover-blur);
+  backdrop-filter: var(--popover-blur);
 }
 
 .ne-tc-label {
@@ -783,12 +790,14 @@
   max-width: 280px;
   max-height: 220px;
   overflow-y: auto;
-  background: var(--elevated);
-  border: 1px solid var(--separator);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  border-radius: var(--popover-radius);
+  box-shadow: var(--popover-shadow);
   transform-origin: top left;
   animation: ne-pop-in var(--dur-2) var(--ease-out);
+  -webkit-backdrop-filter: var(--popover-blur);
+  backdrop-filter: var(--popover-blur);
 }
 
 .ne-mention-item {

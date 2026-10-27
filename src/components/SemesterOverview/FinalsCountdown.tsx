@@ -19,9 +19,22 @@ interface Props {
   onOpenFinal?: (course: string) => void;
   // Status of each course's final-exam task ("COMPLETED" / "PENDING").
   finalStatusOf?: (course: string) => string | undefined;
+  // The Final Exam task's date: the source of truth when the task exists,
+  // so edits made to the task anywhere show here at once.
+  finalDateOf?: (course: string) => string | undefined;
 }
 
-const FinalsCountdown: React.FC<Props> = ({ courses, onChangeFinalDate, onOpenFinal, finalStatusOf }) => {
+const FinalsCountdown: React.FC<Props> = ({
+  courses: rawCourses,
+  onChangeFinalDate,
+  onOpenFinal,
+  finalStatusOf,
+  finalDateOf,
+}) => {
+  const courses = rawCourses.map((c) => {
+    const d = finalDateOf?.(c.name);
+    return d && d !== c.finalDate ? { ...c, finalDate: d } : c;
+  });
   // Soonest finals first; courses without a date sink to the bottom.
   // Copy so the sidebar order (the `courses` prop) is left untouched.
   const sorted = [...courses].sort((a, b) => {

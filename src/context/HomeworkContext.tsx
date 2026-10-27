@@ -5,7 +5,11 @@ import {
   createTaskRef,
   deleteTask,
   fetchCourseTasks,
+  FINAL_DATE_EVENT,
+  FINAL_TASK_ID,
+  saveCourseFinalDate,
   saveTask,
+  type FinalDateDetail,
 } from "../services/homework";
 import { isOverdue, timeLeft } from "../utility/dayCalendar";
 import { useToast } from "./ToastContext";
@@ -55,6 +59,12 @@ interface Edit {
   seq: number;
 }
 
+// Task ids are only unique within a course (every course's Final Exam task
+// is "final-exam"), so edits are keyed by year + course + id. The semester
+// is left out because views address it by key or by display name.
+const editKey = (t: { id: string; year: number; course: string }) =>
+  `${t.year}|${t.course}|${t.id}`;
+
 const HomeworkContext = createContext<HomeworkContextProps | undefined>(undefined);
 
 const cacheKey = (year: number, semester: string, course: string) => {
@@ -80,30 +90,30 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [edits, setEdits] = useState<Record<string, Edit>>({});
   const seqRef = useRef(0);
 
-  const recordEdit = useCallback((id: string, entry: HomeworkEntry | null) => {
+  const recordEdit = useCallback((key: string, entry: HomeworkEntry | null) => {
     const seq = ++seqRef.current;
-    setEdits((prev) => ({ ...prev, [id]: { entry, seq } }));
+    setEdits((prev) => ({ ...prev, [key]: { entry, seq } }));
     return seq;
   }, []);
 
   // Undo one edit, unless a newer edit of the same task has replaced it.
-  const dropEdit = useCallback((id: string, seq: number) => {
+  const dropEdit = useCallback((key: string, seq: number) => {
     setEdits((prev) => {
-      if (prev[id]?.seq !== seq) return prev;
+      if (prev[key]?.seq !== seq) return prev;
       const next = { ...prev };
-      delete next[id];
+      delete next[key];
       return next;
     });
   }, []);
 
   const applyEdits = useCallback(
     (list: HomeworkEntry[], inScope: (t: HomeworkEntry) => boolean) => {
-      const ids = Object.keys(edits);
-      if (ids.length === 0) return list;
-      const touched = new Set(ids);
-      const out = list.filter((t) => !touched.has(t.id));
-      for (const id of ids) {
-        const e = edits[id].entry;
+      const keys = Object.keys(edits);
+      if (keys.length === 0) return list;
+      const touched = new Set(keys);
+      const out = list.filter((t) => !touched.has(editKey(t)));
+      for (const key of keys) {
+        const e = edits[key].entry;
         if (e && inScope(e)) out.push(e);
       }
       return out;
@@ -216,6 +226,11 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     [writeCache]
   );
 
+  // Tell the year tree a course's final date changed (optimistically).
+  const announceFinalDate = useCallback((detail: FinalDateDetail) => {
+    window.dispatchEvent(new CustomEvent<FinalDateDetail>(FINAL_DATE_EVENT, { detail }));
+  }, []);
+
   const failToast = useCallback(
     (what: string) => toast.error(`Couldn't save ${what}. Your change was undone.`),
     [toast]
@@ -256,20 +271,34 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ...(notes !== undefined ? { notes } : {}),
       ...(color !== undefined ? { color } : {}),
     };
-    const previous = id ? homework.find((h) => h.id === id) : undefined;
+    const isSame = (h: HomeworkEntry) =>
+      h.id === id && (!prevLocation || (h.course === prevLocation.course && h.year === prevLocation.year));
+    const previous = id ? homework.find(isSame) : undefined;
     const prevLoc: { year: number; semester: string; course: string } | undefined =
       id ? prevLocation ?? previous : undefined;
     const moved =
       !!prevLoc &&
       (prevLoc.course !== course || prevLoc.year !== year || prevLoc.semester !== semester);
     const locs = moved && prevLoc ? [prevLoc, { year, semester, course }] : [{ year, semester, course }];
+    // The Final Exam task and the course's final date are one value: moving
+    // the task's date moves the date in the Finals widget too.
+    const finalDateChanged =
+      taskId === FINAL_TASK_ID && (!previous || previous.dueDate !== dueDate);
+    if (finalDateChanged) announceFinalDate({ year, semester, course, date: dueDate });
 
-    // 1. Show it now.
-    const seq = recordEdit(taskId, task);
+    // 1. Show it now. A move also blanks the old location.
+    const key = editKey(task);
+    const oldKey = moved && prevLoc ? editKey({ id: taskId, ...prevLoc }) : null;
+    const seq = recordEdit(key, task);
+    const oldSeq = oldKey ? recordEdit(oldKey, null) : 0;
+    const matches = (entry: HomeworkEntry) =>
+      entry.id === taskId &&
+      entry.course === (prevLoc?.course ?? course) &&
+      entry.year === (prevLoc?.year ?? year);
     setHomework((prev) => {
-      const exists = prev.some((entry) => entry.id === taskId);
+      const exists = prev.some(matches);
       const next = exists
-        ? prev.map((entry) => (entry.id === taskId ? { ...entry, ...task, startTime, endTime, notes, color } : entry))
+        ? prev.map((entry) => (matches(entry) ? { ...entry, ...task, startTime, endTime, notes, color } : entry))
         : [...prev, task];
       syncCache(next, locs);
       return next;
@@ -286,20 +315,27 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
         }
         await saveTask(uid, task);
+        if (finalDateChanged) await saveCourseFinalDate(uid, year, semester, course, dueDate);
       } catch (error) {
         console.error("Error adding/updating homework:", error);
-        dropEdit(taskId, seq);
+        dropEdit(key, seq);
+        if (oldKey) dropEdit(oldKey, oldSeq);
+        if (finalDateChanged) {
+          announceFinalDate({ year, semester, course, date: previous?.dueDate ?? null });
+        }
         setHomework((prev) => {
+          const isNew = (entry: HomeworkEntry) =>
+            entry.id === taskId && entry.course === course && entry.year === year;
           const next = previous
-            ? prev.map((entry) => (entry.id === taskId ? previous : entry))
-            : prev.filter((entry) => entry.id !== taskId);
+            ? prev.map((entry) => (isNew(entry) ? previous : entry))
+            : prev.filter((entry) => !isNew(entry));
           syncCache(next, locs);
           return next;
         });
         failToast(`“${name}”`);
       }
     })();
-  }, [homework, recordEdit, dropEdit, syncCache, failToast]);
+  }, [homework, recordEdit, dropEdit, syncCache, failToast, announceFinalDate]);
 
   const removeHomework = useCallback(async (
     id: string,
@@ -307,11 +343,16 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     semester: string,
     course: string
   ) => {
-    const previous = homework.find((h) => h.id === id);
+    const matches = (h: HomeworkEntry) => h.id === id && h.course === course && h.year === year;
+    const previous = homework.find(matches);
     const locs = [{ year, semester, course }];
-    const seq = recordEdit(id, null);
+    const isFinal = id === FINAL_TASK_ID;
+    const key = editKey({ id, year, course });
+    const seq = recordEdit(key, null);
+    // Deleting the Final Exam task clears the course's final date.
+    if (isFinal) announceFinalDate({ year, semester, course, date: null });
     setHomework((prev) => {
-      const next = prev.filter((entry) => entry.id !== id);
+      const next = prev.filter((entry) => !matches(entry));
       syncCache(next, locs);
       return next;
     });
@@ -319,12 +360,16 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     void (async () => {
       try {
         await deleteTask(requireUid(), year, semester, course, id);
+        if (isFinal) await saveCourseFinalDate(requireUid(), year, semester, course, null);
       } catch (error) {
         console.error("Error removing homework:", error);
-        dropEdit(id, seq);
+        dropEdit(key, seq);
+        if (isFinal && previous) {
+          announceFinalDate({ year, semester, course, date: previous.dueDate });
+        }
         if (previous) {
           setHomework((prev) => {
-            const next = prev.some((h) => h.id === id) ? prev : [...prev, previous];
+            const next = prev.some(matches) ? prev : [...prev, previous];
             syncCache(next, locs);
             return next;
           });
@@ -332,7 +377,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         toast.error(`Couldn't delete ${previous ? `“${previous.name}”` : "the task"}. It was restored.`);
       }
     })();
-  }, [homework, recordEdit, dropEdit, syncCache, toast]);
+  }, [homework, recordEdit, dropEdit, syncCache, toast, announceFinalDate]);
 
   const value = useMemo<HomeworkContextProps>(
     () => ({ homework, notifications, fetchHomework, getCourseTasks, addHomework, removeHomework, applyEdits }),

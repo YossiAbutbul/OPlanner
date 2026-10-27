@@ -37,7 +37,7 @@ const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ isOpen, o
       : !usable
         ? { label: "Install OPlanner to your home screen to get reminders", tone: "off" }
         : permission === "denied"
-          ? { label: "Blocked — enable notifications in your settings", tone: "warn" }
+          ? { label: "Blocked - enable notifications in your settings", tone: "warn" }
           : permission === "default"
             ? { label: "Allow notifications to get reminders", tone: "warn" }
             : !pushAvailable
@@ -45,7 +45,7 @@ const ReminderSettingsModal: React.FC<ReminderSettingsModalProps> = ({ isOpen, o
               : pushError
                 ? { label: "Couldn't register this device — reopen the app to retry", tone: "warn" }
                 : settings.enabled && pushSubscribed
-                  ? { label: "On — reminders arrive even when OPlanner is closed", tone: "ok" }
+                  ? { label: "On - reminders arrive even when OPlanner is closed", tone: "ok" }
                   : { label: "Notifications allowed", tone: "ok" };
 
   // Turning reminders on is a user gesture — the only moment iOS lets us ask

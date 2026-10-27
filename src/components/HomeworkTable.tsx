@@ -1,23 +1,15 @@
-import React, { Suspense, lazy, useState, useEffect } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { useHomework } from "../context/HomeworkContext";
 import { useToast } from "../context/ToastContext";
 import DeleteModal from "./DeleteModal";
 import "../css/HomeworkTable.css";
-import { Pencil, Trash2, Check, Clock } from "lucide-react";
+import { Pencil, Trash2, Check, Clock, AlertCircle } from "lucide-react";
+import { isOverdue, timeLeft } from "../utility/dayCalendar";
+import type { HomeworkEntry } from "../types/models";
 
 // Lazy so HomeworkModal stays in its own chunk (would be cancelled by a
 // static import here — see vite "INEFFECTIVE_DYNAMIC_IMPORT" warning).
 const HomeworkModal = lazy(() => import("./HomeworkModal"));
-
-interface HomeworkEntry {
-  id: string;
-  name: string;
-  dueDate: string;
-  status: string;
-  year: number;
-  semester: string;
-  course: string;
-}
 
 interface HomeworkTableProps {
   tasks: HomeworkEntry[]; // Accept tasks from parent
@@ -61,31 +53,8 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask, loading
     return text.charAt(0).toUpperCase() + text.slice(1);
   };
 
-  const statusClass = (status: string) =>
-    status === "COMPLETED" ? "status-pill status-completed" : "status-pill status-pending";
   const statusLabel = (status: string) =>
     status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== "undefined" && window.matchMedia("(max-width: 1024px)").matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 1024px)");
-    const handle = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener("change", handle);
-    return () => mq.removeEventListener("change", handle);
-  }, []);
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isMobile) {
-      const dd = String(date.getDate()).padStart(2, "0");
-      const mm = String(date.getMonth() + 1).padStart(2, "0");
-      return `${dd}/${mm}`;
-    }
-    return date.toLocaleDateString("en-GB");
-  };
 
   // Sort: non-completed first (by due date asc), completed at bottom (by due date asc)
   const sortedHomework = [...tasks].sort((a, b) => {
@@ -94,6 +63,54 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask, loading
     if (aDone !== bDone) return aDone ? 1 : -1;
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
   });
+  const openCount = sortedHomework.filter((t) => t.status !== "COMPLETED").length;
+
+  // One list row: status glyph, name over date, time-left pill, actions.
+  const renderRow = (entry: HomeworkEntry) => {
+    const done = entry.status === "COMPLETED";
+    const time = entry.endTime ?? entry.startTime;
+    const overdue = !done && !entry.ignoreOverdue && isOverdue(entry.dueDate, time);
+    const tone = done ? "done" : overdue ? "overdue" : "open";
+    const left = done ? null : timeLeft(entry.dueDate, time);
+    const urgency = !left ? "" : left.days <= 1 ? "soon" : left.days <= 3 ? "near" : "far";
+    const d = new Date(entry.dueDate + "T00:00:00");
+    const date = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+    const label = overdue ? "Overdue" : statusLabel(entry.status);
+    return (
+      <li key={`${entry.id}-${entry.dueDate}`} className={`hw-row hw-row-${tone}`}>
+        <span className={`hw-glyph hw-glyph-${tone}`} title={label} aria-label={label}>
+          {done ? <Check size={14} strokeWidth={2.6} /> : overdue ? <AlertCircle size={14} strokeWidth={2.4} /> : <Clock size={14} strokeWidth={2.4} />}
+        </span>
+        <button type="button" className="hw-main" onClick={() => handleEditClick(entry)} title="Edit">
+          <span className="hw-name" dir="auto">{capitalizeFirstLetter(entry.name)}</span>
+          <span className="hw-meta">{time ? `${date} · ${time}` : date}</span>
+        </button>
+        <div className="row-actions">
+          <button
+            className="row-btn"
+            onClick={() => handleEditClick(entry)}
+            aria-label="Edit"
+            title="Edit"
+          >
+            <Pencil size={14} />
+          </button>
+          <button
+            className="row-btn danger"
+            onClick={() => handleDelete(entry)}
+            aria-label="Delete"
+            title="Delete"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+        {left && (
+          <span className={`hw-when hw-when-${overdue ? "overdue" : urgency}`}>
+            {overdue ? "Overdue" : left.short}
+          </span>
+        )}
+      </li>
+    );
+  };
 
   void onAddTask;
   return (
@@ -102,95 +119,29 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask, loading
         <div className="homework-skeleton" aria-busy="true" aria-label="Loading tasks">
           {Array.from({ length: 4 }).map((_, i) => (
             <div className="hw-skel-row" key={i}>
-              <span className="hw-skel-bar hw-skel-name" />
-              <span className="hw-skel-bar hw-skel-date" />
+              <span className="hw-skel-bar hw-skel-glyph" />
+              <span className="hw-skel-text">
+                <span className="hw-skel-bar hw-skel-name" />
+                <span className="hw-skel-bar hw-skel-date" />
+              </span>
               <span className="hw-skel-bar hw-skel-status" />
-              <span className="hw-skel-bar hw-skel-actions" />
             </div>
           ))}
         </div>
       ) : sortedHomework.length === 0 ? (
         <p className="homework-empty">No tasks yet. Click "New task" above to get started.</p>
       ) : (
-        <>
-        {!isMobile && (
-        <table className="homework-table homework-table-head">
-          <colgroup>
-            <col />
-            <col style={{ width: "140px" }} />
-            <col style={{ width: "130px" }} />
-            <col style={{ width: "122px" }} />
-          </colgroup>
-          <thead>
-            <tr>
-              <th>Assignment</th>
-              <th>Due Date</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-        </table>
-        )}
         <div className="homework-table-scroll">
-        <table className="homework-table homework-table-body">
-          {!isMobile && (
-          <colgroup>
-            <col />
-            <col style={{ width: "140px" }} />
-            <col style={{ width: "130px" }} />
-            <col style={{ width: "122px" }} />
-          </colgroup>
-          )}
-          {isMobile && (
-          <thead>
-            <tr>
-              <th>Task</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          )}
-          <tbody>
-            {sortedHomework.map((entry) => (
-              <tr key={`${entry.id}-${entry.dueDate}`}>
-                <td>{capitalizeFirstLetter(entry.name)}</td>
-                <td>{formatDate(entry.dueDate)}</td>
-                <td>
-                  <span className={statusClass(entry.status)} title={statusLabel(entry.status)} aria-label={statusLabel(entry.status)}>
-                    {isMobile ? (
-                      entry.status === "COMPLETED" ? <Check size={14} /> : <Clock size={14} />
-                    ) : (
-                      statusLabel(entry.status)
-                    )}
-                  </span>
-                </td>
-                <td>
-                  <div className="row-actions">
-                    <button
-                      className="row-btn"
-                      onClick={() => handleEditClick(entry)}
-                      aria-label="Edit"
-                      title="Edit"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      className="row-btn danger"
-                      onClick={() => handleDelete(entry)}
-                      aria-label="Delete"
-                      title="Delete"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          <ul className="hw-list">
+            {sortedHomework.slice(0, openCount).map(renderRow)}
+            {openCount > 0 && openCount < sortedHomework.length && (
+              <li className="hw-group" aria-hidden="true">
+                Completed · {sortedHomework.length - openCount}
+              </li>
+            )}
+            {sortedHomework.slice(openCount).map(renderRow)}
+          </ul>
         </div>
-        </>
       )}
       {confirmDelete && (
         <DeleteModal

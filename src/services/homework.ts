@@ -4,9 +4,37 @@ import {
   doc,
   getDocs,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import type { HomeworkEntry } from "../types/models";
+
+// The Final Exam task's id inside each course (see setCourseFinalDate).
+export const FINAL_TASK_ID = "final-exam";
+
+// Window event carrying a course's new final date, so the year tree (which
+// the Finals widget and reminders read) can follow edits made to the Final
+// Exam task anywhere in the app.
+export const FINAL_DATE_EVENT = "oplanner:final-date";
+export interface FinalDateDetail {
+  year: number;
+  semester: string;
+  course: string;
+  date: string | null;
+}
+
+// Keep the course document's finalDate in step with its Final Exam task.
+export const saveCourseFinalDate = async (
+  uid: string,
+  year: number,
+  semester: string,
+  course: string,
+  date: string | null
+): Promise<void> => {
+  await updateDoc(doc(db, `users/${uid}/years/${year}/semesters/${semester}/courses/${course}`), {
+    finalDate: date,
+  });
+};
 
 // Firestore collection path for a course's tasks subcollection.
 const tasksPath = (uid: string, year: number, semester: string, course: string) =>

@@ -7,6 +7,7 @@ import {
   useReducedMotion,
   type PanInfo,
 } from "framer-motion";
+import { X } from "lucide-react";
 import { SPRING_DEFAULT, SPRING_SHEET, project } from "../utility/motion";
 import "../css/Modal.css";
 
@@ -191,7 +192,7 @@ const Modal: React.FC<ModalProps> = ({
             aria-label="Close"
             type="button"
           >
-            ×
+            <X size={14} strokeWidth={2.6} />
           </button>
         </div>
         <div className="app-modal-body">{children}</div>

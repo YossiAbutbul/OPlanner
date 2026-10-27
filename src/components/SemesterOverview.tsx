@@ -3,7 +3,7 @@ import { useHomework } from "../context/HomeworkContext";
 import { useToast } from "../context/ToastContext";
 import { parseIcs, IcsEvent } from "../utility/parseIcs";
 import { courseColor } from "../utility/courseColor";
-import { FINAL_TASK_ID } from "../utility/initializeDatabase";
+import { FINAL_TASK_ID } from "../services/homework";
 import CourseCalendar from "./CourseCalendar";
 import DayTasksModal from "./DayTasksModal";
 import DeleteModal from "./DeleteModal";
@@ -104,8 +104,27 @@ const SemesterOverview: React.FC<Props> = ({
     }
   };
 
+  const finalTaskOf = (course: string) =>
+    allTasks.find((t) => t.course === course && t.id === FINAL_TASK_ID);
+
   const handleFinalDateChange = (course: string, value: string) => {
     const next = value ? value : null;
+    const final = finalTaskOf(course);
+    // An existing Final Exam task is edited in place (optimistic, keeps its
+    // status); the homework context carries the date to the course.
+    if (final) {
+      if (next) {
+        void addHomework(
+          final.id, final.name, next, final.status, final.year, final.semester, final.course,
+          final.ignoreOverdue, undefined, final.startTime, final.endTime, final.notes, final.color
+        );
+        toast.success("Final exam date saved");
+      } else {
+        void removeHomework(final.id, final.year, final.semester, final.course);
+        toast.success("Final exam date cleared");
+      }
+      return;
+    }
     onUpdateCourseFinalDate(course, next)
       .then(() => {
         toast.success(next ? "Final exam date saved" : "Final exam date cleared");
@@ -218,7 +237,20 @@ const SemesterOverview: React.FC<Props> = ({
         <OverviewSkeleton courses={courses} />
       ) : (
         <>
-          <OverviewStats totals={totals} completionPct={completionPct} />
+          <OverviewStats
+            totals={totals}
+            completionPct={completionPct}
+            tasks={allTasks}
+            colorOf={(t) => {
+              if (t.color) return t.color;
+              const c = courses.find((co) => co.name === t.course);
+              return courseColor(t.course, c?.color);
+            }}
+            onOpenTask={(t) => {
+              setTaskEditTask(t);
+              setTaskModalOpen(true);
+            }}
+          />
 
           <div className="overview-grid">
             <section className="overview-section overview-calendar-section">
@@ -253,9 +285,8 @@ const SemesterOverview: React.FC<Props> = ({
               <FinalsCountdown
                 courses={courses}
                 onChangeFinalDate={handleFinalDateChange}
-                finalStatusOf={(course) =>
-                  allTasks.find((t) => t.course === course && t.id === FINAL_TASK_ID)?.status
-                }
+                finalStatusOf={(course) => finalTaskOf(course)?.status}
+                finalDateOf={(course) => finalTaskOf(course)?.dueDate}
                 onOpenFinal={(course) => {
                   const final = allTasks.find(
                     (t) => t.course === course && t.id === FINAL_TASK_ID

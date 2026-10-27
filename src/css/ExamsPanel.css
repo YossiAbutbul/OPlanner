@@ -280,13 +280,14 @@
   cursor: default;
 }
 
+/* Same section heading as the semester overview and Course info. */
 .ep-section-head h3 {
   margin: 0;
-  font-size: var(--text-base);
-  font-weight: 700;
+  font-size: var(--text-md);
+  font-weight: 650;
   letter-spacing: var(--tracking-title);
   line-height: var(--leading-snug);
-  color: var(--label);
+  color: var(--label-2);
 }
 
 .ep-hint {
@@ -375,6 +376,7 @@
   background: var(--surface);
   border: 1px solid var(--separator);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
 }
 
 .ep-table {
@@ -383,7 +385,7 @@
      keeps the frozen columns rock-solid. */
   border-collapse: separate;
   border-spacing: 0;
-  /* Fixed layout: exam-name + Done columns hold their set widths; the rest is
+  /* Fixed layout: the exam-name column holds its set width; the rest is
      split evenly among question columns. Widths are authoritative, so editing
      a header never resizes its column. */
   width: 100%;
@@ -392,10 +394,15 @@
 
 .ep-table th,
 .ep-table td {
-  /* border-box so the set column widths (150 / 46) are exact - the frozen
-     Done column then pins precisely at left:150 with no seam. */
+  /* border-box so the set column widths are exact. */
   box-sizing: border-box;
   border-bottom: 1px solid var(--separator);
+}
+
+/* One vertical rule, after the frozen Exam column; the question grid
+   reads by rows, like a list. */
+.ep-table .ep-corner,
+.ep-table .ep-row-head {
   border-right: 1px solid var(--separator);
 }
 
@@ -410,14 +417,16 @@
 }
 
 /* Header row (questions). Nothing is frozen - the whole table scrolls as one. */
+/* Column labels as quiet small caps on the card surface. */
 .ep-table thead th {
-  background: var(--surface-2);
-  font-size: var(--text-sm);
+  background: var(--surface);
+  font-size: var(--text-2xs);
   font-weight: 600;
-  letter-spacing: var(--tracking-caption);
-  color: var(--label-2);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--label-3);
   border-bottom: 1px solid var(--separator);
-  padding: 0.7rem 1rem;
+  padding: 0.55rem 1rem 0.45rem;
   vertical-align: middle;
 }
 
@@ -428,7 +437,7 @@
   position: sticky;
   left: 0;
   z-index: 2;
-  background: var(--surface-2);
+  background: var(--surface);
   /* Inset the "Exam" label like the Links table header (1rem). */
   padding-left: 1rem;
   /* Fixed first column for exam names; question columns split the rest
@@ -521,33 +530,6 @@
   transform: scale(var(--press-scale));
 }
 
-/* Narrow progress column right after the exam name - frozen left, just past
-   the 150px name column, so both stay visible while scrolling questions. */
-/* Qualified so it beats `.ep-table thead th`'s padding - otherwise the header
-   inset (1rem) wouldn't match the cell's (0.3rem) and "Done" sits off-centre. */
-.ep-table thead th.ep-progress-head {
-  width: 56px;
-  padding-left: 0.3rem;
-  padding-right: 0.3rem;
-  text-align: center;
-  position: sticky;
-  left: 180px;
-  z-index: 2;
-  background: var(--surface-2);
-}
-
-.ep-progress-cell {
-  width: 56px;
-  padding-left: 0.3rem;
-  padding-right: 0.3rem;
-  text-align: center;
-  vertical-align: middle;
-  position: sticky;
-  left: 180px;
-  z-index: 1;
-  background: var(--surface);
-}
-
 .ep-col-head-inner,
 .ep-row-head-inner {
   display: inline-flex;
@@ -577,7 +559,7 @@
   z-index: 1;
   background: var(--surface);
   /* left 0.7rem + the label button's own 0.3rem = 1rem, matching .ep-corner. */
-  padding: 0.3rem 0.5rem 0.3rem 0.7rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.7rem;
   width: 180px;
 }
 
@@ -599,6 +581,8 @@
   /* font-family only - let .ep-row-label/.ep-col-label own the size/weight so
      text and edit-input render identically. */
   font-family: inherit;
+  /* Same line box as the edit input, so the header never changes height. */
+  line-height: 1.4;
   color: var(--label);
   cursor: text;
   border-radius: var(--radius-xs);
@@ -615,6 +599,18 @@
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   text-align: center;
+}
+
+/* Question label input hugs its text like the label it replaces, instead
+   of stretching across the whole column. */
+.ep-col-head-inner input.ep-col-label {
+  width: auto;
+  field-sizing: content;
+  /* Breathing room around the text; height stays the label's. */
+  min-width: 8ch;
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+  max-width: 100%;
 }
 
 .ep-row-label {
@@ -644,8 +640,10 @@
 }
 
 /* Hover matches the row-hover tint so the button blends into the row. */
-.ep-row-name:hover {
-  background: var(--info-tint);
+@media (hover: hover) {
+  .ep-row-name:hover {
+    background: var(--fill-2);
+  }
 }
 
 .ep-row-name:active {
@@ -678,13 +676,15 @@
   display: flex;
   flex-direction: column;
   padding: 0.3rem;
-  background: var(--elevated);
-  border: 1px solid var(--separator);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  background: var(--popover-bg);
+  border: 1px solid var(--popover-border);
+  border-radius: var(--popover-radius);
+  box-shadow: var(--popover-shadow);
   /* Opens just below the kebab with its left edge on it: grow from there. */
   transform-origin: top left;
   animation: ep-menu-in var(--dur-2) var(--ease-out);
+  -webkit-backdrop-filter: var(--popover-blur);
+  backdrop-filter: var(--popover-blur);
 }
 
 @keyframes ep-menu-in {
@@ -805,7 +805,12 @@
   /* Match .ep-label-text exactly - same font, padding, transparent bg - so
      only the border appears on edit; no font-size or layout jump. */
   padding: 0.2rem 0.3rem;
-  font-family: inherit;
+  /* Inputs don't inherit type by default (13.3px, normal leading), which
+     made the header taller in edit mode. Take the cell's text exactly. */
+  font: inherit;
+  line-height: 1.4;
+  letter-spacing: inherit;
+  text-transform: inherit;
   background: transparent;
   border: 1px solid var(--color-accent);
   border-radius: var(--radius-xs);
@@ -834,14 +839,14 @@
      box down (empty vs. filled inline baselines differ otherwise). */
   vertical-align: middle;
   /* Lock to a square - global button styles must not stretch it into a pill. */
-  width: 17px;
-  min-width: 17px;
-  height: 17px;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
   padding: 0;
   box-sizing: border-box;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-xs);
+  background: transparent;
+  border: 1.5px solid var(--label-4);
+  border-radius: 6px;
   color: #fff;
   cursor: pointer;
   transition:
@@ -865,7 +870,6 @@
 .ep-check-done {
   background: var(--color-accent);
   border-color: var(--color-accent);
-  box-shadow: 0 1px 3px rgba(25, 164, 73, 0.35);
 }
 
 /* The check glyph grows in when toggled on (no overshoot). */
@@ -876,38 +880,6 @@
 @keyframes ep-check-pop {
   from { transform: scale(0.5); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
-}
-
-/* Per-exam progress badge (done / total questions). */
-.ep-row-progress {
-  flex-shrink: 0;
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--tracking-caption);
-  color: var(--label-3);
-  background: var(--fill-2);
-  padding: 0.1rem 0.4rem;
-  border-radius: var(--radius-full);
-  line-height: 1.4;
-}
-
-.ep-row-progress-done {
-  color: #fff;
-  background: var(--color-accent);
-}
-
-/* Whole row tints faint green once every question is checked. */
-.ep-row-complete .ep-row-head,
-.ep-row-complete .ep-progress-cell,
-.ep-row-complete .ep-cell {
-  background: var(--accent-tint);
-}
-
-.ep-table tbody tr.ep-row-complete:hover .ep-row-head,
-.ep-table tbody tr.ep-row-complete:hover .ep-progress-cell,
-.ep-table tbody tr.ep-row-complete:hover .ep-cell {
-  background: var(--accent-tint);
 }
 
 .ep-icon-btn {
@@ -945,12 +917,11 @@
   color: var(--danger-text);
 }
 
-/* Row hover highlight - light blue across the whole exam row, like the
-   reference figure. */
+/* Row hover: a neutral wash across the whole exam row. Opaque so the
+   frozen cells still hide the questions scrolling under them. */
 .ep-table tbody tr:hover .ep-row-head,
-.ep-table tbody tr:hover .ep-progress-cell,
 .ep-table tbody tr:hover .ep-cell {
-  background: var(--info-tint);
+  background: var(--surface-2);
 }
 
 /* Touch devices have no hover - keep the delete buttons and the add "+"
@@ -964,129 +935,219 @@
   }
 }
 
-/* Touch rename bottom sheet ------------------------------------------------ */
-.ep-sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: var(--scrim);
+/* ===== Phone: one card per exam ===== */
+.ep-cards {
   display: flex;
-  align-items: flex-end;
-  animation: ep-sheet-fade var(--dur-2) var(--ease-out);
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.ep-sheet {
-  width: 100%;
-  background: var(--elevated);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  padding: 0.6rem 1.1rem calc(1.1rem + env(safe-area-inset-bottom));
-  box-shadow: var(--shadow-lg);
-  animation: ep-sheet-up var(--dur-3) var(--ease-out);
-}
-
-@keyframes ep-sheet-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes ep-sheet-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-.ep-sheet-title {
-  margin: 0.4rem 0 0.6rem;
-  font-size: var(--text-base);
-  font-weight: 700;
-  letter-spacing: var(--tracking-title);
-  color: var(--label);
-}
-
-.ep-sheet-input {
-  width: 100%;
-  box-sizing: border-box;
-  min-height: 44px;
-  padding: 0.6rem 0.7rem;
-  /* 16px keeps iOS Safari from zooming the page on focus. */
-  font-family: inherit;
-  font-size: var(--text-md);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  color: var(--label);
-  outline: none;
-}
-
-.ep-sheet-input:focus {
-  outline: none;
-}
-
-.ep-sheet-actions {
+/* Questions strip: the column labels, tap to rename or delete. */
+.ep-qbar {
   display: flex;
+  align-items: flex-start;
   gap: 0.6rem;
-  margin-top: 0.9rem;
+  min-width: 0;
 }
 
-.ep-sheet-btn {
-  flex: 1;
-  min-height: 44px;
-  padding: 0.65rem;
+.ep-qbar-label {
+  flex-shrink: 0;
+  /* Centered on the first row of chips. */
+  line-height: 32px;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--label-3);
+}
+
+/* Wraps rather than scrolls, so every question and the "+" stay in view. */
+.ep-qbar-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.ep-qchip {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 0 0.75rem;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--fill-2);
   font-family: inherit;
-  font-size: var(--text-base);
-  font-weight: 650;
-  border-radius: var(--radius-button);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--label-2);
   cursor: pointer;
-  transition:
-    background-color var(--dur-1) var(--ease-out),
-    transform var(--dur-press) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease-out), transform var(--dur-press) var(--ease-out);
 }
 
-.ep-sheet-btn:active {
+.ep-qchip-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  padding: 0;
+  background: transparent;
+  border: 1.5px dashed var(--border-strong);
+  color: var(--label-3);
+}
+
+.ep-qchip-add svg {
+  display: block;
+}
+
+.ep-qchip-add:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ep-qchip:active {
+  background: var(--fill-3);
   transform: scale(var(--press-scale));
 }
 
-.ep-sheet-cancel {
-  background: var(--fill-2);
-  border: 1px solid transparent;
+.ep-card {
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  padding: 0.85rem 0.85rem 0.9rem;
+}
+
+.ep-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  margin-bottom: 0.7rem;
+}
+
+/* Name over progress text; the whole block opens the exam. */
+.ep-card-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ep-card-name {
+  max-width: 100%;
+  font-size: var(--text-md);
+  font-weight: 650;
+  letter-spacing: var(--tracking-title);
   color: var(--label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.ep-sheet-cancel:active {
-  background: var(--fill-3);
+.ep-card-sub {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--label-3);
 }
 
-.ep-sheet-save {
+.ep-card-complete .ep-card-sub {
+  color: var(--success-text);
+  font-weight: 600;
+}
+
+.ep-card-head .ep-kebab {
+  width: 32px;
+  height: 32px;
+  margin: -4px -6px 0 0;
+  border-radius: var(--radius-sm);
+  opacity: 1;
+}
+
+/* Question tiles wrap; each is a full-size tap target. */
+.ep-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 0.35rem;
+}
+
+/* A question is a toggle tile: quiet when open, solid green when done. */
+.ep-qcell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 34px;
+  padding: 0 0.4rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--fill-2);
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-2) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
+}
+
+.ep-qcell:active {
+  transform: scale(0.94);
+}
+
+.ep-qcell:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.ep-qcell-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--label-2);
+  transition: color var(--dur-2) var(--ease-out);
+}
+
+.ep-qcell-done {
   background: var(--color-accent);
-  border: 1px solid var(--color-accent);
+}
+
+.ep-qcell-done .ep-qcell-label {
   color: #fff;
 }
 
-.ep-sheet-save:active {
-  background: var(--color-accent-active);
+.ep-qcell-check {
+  flex-shrink: 0;
+  color: #fff;
+  animation: ep-check-pop var(--dur-2) var(--ease-out);
 }
 
-/* Touch targets: header actions and menu rows grow to ~40px on tablets
-   and phones. */
-@media (max-width: 1024px) {
-  .ep-add-exam-btn,
-  .ep-add-q-btn,
-  .ep-head-add {
-    min-height: 40px;
+/* Phone hierarchy: "New task" above stays the one filled button. Add
+   question moves into the questions strip; Add exam becomes a quiet
+   tinted pill beside the heading. */
+@media (max-width: 600px) {
+  .ep-add-q-btn {
+    display: none;
   }
-
-  .ep-menu-item {
-    min-height: 40px;
+  .ep-section-head .ep-add-exam-btn {
+    min-height: 32px;
+    padding: 0.3rem 0.8rem;
+    background: var(--accent-tint);
+    border-color: transparent;
+    border-radius: var(--radius-full);
+    color: var(--accent-text);
+    box-shadow: none;
   }
-}
-
-/* Mobile - don't freeze the exam-name / Done columns; a narrow viewport has no
-   room to spare, so the whole table scrolls together. Placed last so it wins
-   the source-order tie against the sticky rules above. */
-@media (max-width: 768px) {
-  .ep-corner,
-  .ep-row-head,
-  .ep-table thead th.ep-progress-head,
-  .ep-progress-cell {
-    position: static;
+  .ep-section-head .ep-add-exam-btn:hover:not(:disabled),
+  .ep-section-head .ep-add-exam-btn:active:not(:disabled) {
+    background: var(--accent-tint-strong);
+    border-color: transparent;
   }
 }

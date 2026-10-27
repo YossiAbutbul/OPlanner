@@ -1,5 +1,5 @@
-import React, { Suspense, lazy, useState, useEffect } from "react";
-import ProgressChart from "./ProgressChart";
+import React, { Suspense, lazy, useState, useEffect, useMemo } from "react";
+import OverviewStats from "./SemesterOverview/OverviewStats";
 import HomeworkTable from "./HomeworkTable";
 import SemesterOverview from "./SemesterOverview";
 import { ListPlus } from "lucide-react";
@@ -22,6 +22,7 @@ import { useToast } from "../context/ToastContext";
 import { CourseTab, YearTreeData } from "../App";
 import { IcsEvent } from "../utility/parseIcs";
 import { courseColor } from "../utility/courseColor";
+import { isOverdue } from "../utility/dayCalendar";
 
 interface MainContentProps {
   years: YearTreeData[];
@@ -91,6 +92,19 @@ const MainContent: React.FC<MainContentProps> = ({
   const [prefillDate, setPrefillDate] = useState<string | null>(null);
   const [dayModalDate, setDayModalDate] = useState<string | null>(null);
   const [editTask, setEditTask] = useState<HomeworkEntry | null>(null);
+
+  // Course summary for the Overview tab: the same figures the semester
+  // overview shows, scoped to this course.
+  const courseTotals = useMemo(() => {
+    const completed = filteredHomework.filter((t) => t.status === "COMPLETED").length;
+    const overdue = filteredHomework.filter(
+      (t) => t.status === "PENDING" && isOverdue(t.dueDate, t.endTime ?? t.startTime)
+    ).length;
+    const pending = filteredHomework.filter((t) => t.status === "PENDING").length - overdue;
+    return { total: filteredHomework.length, completed, pending, overdue };
+  }, [filteredHomework]);
+  const courseCompletionPct =
+    courseTotals.total > 0 ? Math.round((courseTotals.completed / courseTotals.total) * 100) : 0;
   const [confirmDelete, setConfirmDelete] = useState<HomeworkEntry | null>(null);
   const [confirmDeleteYear, setConfirmDeleteYear] = useState<number | null>(null);
   const [tabSettings, setTabSettings] = useState<
@@ -319,48 +333,56 @@ const MainContent: React.FC<MainContentProps> = ({
                 <span>New task</span>
               </button>
             </header>
+            {/* Segmented control; the highlight slides between segments. */}
             <div className="course-inner-tabs" role="tablist" data-active={courseInnerTab}>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={courseInnerTab === "overview"}
-                className={`course-inner-tab ${courseInnerTab === "overview" ? "course-inner-tab-active" : ""}`}
-                onClick={() => setCourseInnerTab("overview")}
-              >
-                Overview
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={courseInnerTab === "info"}
-                className={`course-inner-tab ${courseInnerTab === "info" ? "course-inner-tab-active" : ""}`}
-                onClick={() => setCourseInnerTab("info")}
-              >
-                Course info
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={courseInnerTab === "exams"}
-                className={`course-inner-tab ${courseInnerTab === "exams" ? "course-inner-tab-active" : ""}`}
-                onClick={() => setCourseInnerTab("exams")}
-              >
-                Exams
-              </button>
+              {([
+                ["overview", "Overview"],
+                ["info", "Course info"],
+                ["exams", "Exams"],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={courseInnerTab === key}
+                  className={`course-inner-tab ${courseInnerTab === key ? "course-inner-tab-active" : ""}`}
+                  onClick={() => setCourseInnerTab(key)}
+                >
+                  {courseInnerTab === key && (
+                    <motion.span
+                      layoutId="course-inner-thumb"
+                      className="course-inner-thumb"
+                      transition={SPRING_SNAPPY}
+                    />
+                  )}
+                  <span className="course-inner-label">{label}</span>
+                </button>
+              ))}
             </div>
             <div className="course-tab-panel">
             <div className="course-tab-anim" key={courseInnerTab}>
             {courseInnerTab === "overview" ? (
-              <div className="course-row">
-                <div className="course-progress">
-                  <ProgressChart
-                    completed={filteredHomework.filter((hw) => hw.status === "COMPLETED").length}
-                    pending={filteredHomework.filter((hw) => hw.status === "PENDING").length}
-                  />
-                </div>
+              <div className="course-overview">
+                <OverviewStats
+                  totals={courseTotals}
+                  completionPct={courseCompletionPct}
+                  tasks={filteredHomework}
+                  colorOf={(t) => {
+                    if (t.color) return t.color;
+                    const c = currentSemester?.courses.find((co) => co.name === t.course);
+                    return courseColor(t.course, c?.color);
+                  }}
+                  onOpenTask={(t) => {
+                    setEditTask(t);
+                    setHomeworkModalOpen(true);
+                  }}
+                  showCourse={false}
+                  upNextCount={5}
+                />
                 <div className="course-calendar">
                   <CourseCalendar
                     hint="Tip: double-click a day to add a task."
+                    maxVisibleTasks={3}
                     tasks={filteredHomework}
                     colorOf={(t) => {
                       if (t.color) return t.color; // reminder/task picked color

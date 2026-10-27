@@ -32,7 +32,9 @@ const POPOVER_WIDTH = 260;
 
 const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  // `dark`: opened from the always-dark right sidebar, so the popover uses
+  // the dark material and reads as part of that surface.
+  const [pos, setPos] = useState<{ top: number; left: number; dark: boolean } | null>(null);
   const [view, setView] = useState<Date>(() => (value ? parseIso(value) : new Date()));
   const wrapRef = useRef<HTMLDivElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
@@ -60,7 +62,7 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
       const left = overflowsRight
         ? Math.max(8, rect.right - POPOVER_WIDTH)
         : rect.left;
-      setPos({ top, left });
+      setPos({ top, left, dark: !!wrapRef.current?.closest(".rs") });
     };
     updatePos();
     // Re-measure after the popover renders for the first time.
@@ -161,7 +163,7 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
       {open && pos && createPortal(
         <div
           ref={popRef}
-          className="dp-popover"
+          className={`dp-popover ${pos.dark ? "dp-popover-dark" : ""}`}
           role="dialog"
           aria-label="Pick date"
           style={{ top: pos.top, left: pos.left }}
@@ -170,8 +172,10 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
             <button type="button" className="dp-nav" onClick={() => { setSlideDir("right"); goPrev(); }} aria-label="Previous month">
               <ChevronLeft size={18} strokeWidth={2.5} />
             </button>
+            {/* Same title treatment as the month calendar: bold month, quiet year. */}
             <div className="dp-title">
-              {MONTHS[view.getMonth()]} {view.getFullYear()}
+              <span className="dp-title-month">{MONTHS[view.getMonth()]}</span>{" "}
+              <span className="dp-title-year">{view.getFullYear()}</span>
             </div>
             <button type="button" className="dp-nav" onClick={() => { setSlideDir("left"); goNext(); }} aria-label="Next month">
               <ChevronRight size={18} strokeWidth={2.5} />
@@ -205,7 +209,7 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
                     setOpen(false);
                   }}
                 >
-                  {date.getDate()}
+                  <span className="dp-cell-num">{date.getDate()}</span>
                 </button>
               );
             })}

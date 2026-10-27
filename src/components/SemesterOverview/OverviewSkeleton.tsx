@@ -24,25 +24,41 @@ const OverviewSkeleton: React.FC<{ courses: CourseInfo[] }> = ({ courses }) => {
   return (
     <div className="ov-skel" aria-busy="true" aria-label="Loading semester">
       <section className="overview-stats">
-        <div className="ovs-ring-block">
-          <div className="ovs-ring">
-            <svg viewBox="0 0 64 64" aria-hidden="true">
-              <circle className="ovs-ring-track" cx="32" cy="32" r="27" />
-            </svg>
+        <div className="ovs-summary">
+          <div className="ovs-progress">
+            <span className="ovs-value"><Bar w="3.5rem" /></span>
+            <span className="ovs-progress-label">complete</span>
           </div>
-          <div className="ovs-ring-text">
-            <span className="ovs-label">Completion</span>
-            <span className="ovs-caption"><Bar w="9rem" /></span>
+          <div className="ovs-bar" />
+          <div className="ovs-side">
+            <dl className="ovs-counts">
+              {["Completed", "Pending", "Overdue"].map((label) => (
+                <div key={label} className="ovs-count">
+                  <dd><Bar w="1.6rem" /></dd>
+                  <dt>{label}</dt>
+                </div>
+              ))}
+            </dl>
           </div>
         </div>
-        <dl className="ovs-metrics">
-          {["Tasks", "Completed", "Pending", "Overdue"].map((label) => (
-            <div key={label} className="ovs-metric">
-              <dt className="ovs-label">{label}</dt>
-              <dd className="ovs-value"><Bar w="2.2rem" /></dd>
-            </div>
-          ))}
-        </dl>
+        <div className="ovs-upnext">
+          <div className="ovs-block-head">
+            <span className="ovs-label">Up next</span>
+            <span className="ovs-caption"><Bar w="5rem" /></span>
+          </div>
+          <ul className="ovs-upnext-list">
+            {[0, 1].map((i) => (
+              <li key={i}>
+                <span className="ovs-upnext-item">
+                  <span className="ovs-upnext-text">
+                    <span className="ovs-upnext-name"><Bar w="60%" /></span>
+                    <span className="ovs-upnext-meta"><Bar w="40%" /></span>
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       <div className="overview-grid">
@@ -52,7 +68,6 @@ const OverviewSkeleton: React.FC<{ courses: CourseInfo[] }> = ({ courses }) => {
               <div className="cal-title">{month}</div>
               <div className="cal-nav ov-skel-nav" />
             </div>
-            <div className="cal-hint">Tip: double-click a day to add a task.</div>
             <div className="cal-weekdays">
               {WEEKDAYS.map((w) => (
                 <div key={w} className="cal-weekday">{w}</div>

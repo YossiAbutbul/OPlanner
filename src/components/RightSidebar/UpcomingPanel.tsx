@@ -1,19 +1,16 @@
 import React from "react";
 import type { HomeworkEntry } from "../../types/models";
-import {
-  capitalizeWords,
-  dayName,
-  fmtDate,
-  timeLeft,
-  urgencyClass,
-} from "../../utility/dayCalendar";
+import { capitalizeWords, timeLeft, urgencyClass } from "../../utility/dayCalendar";
 
 interface Props {
   items: HomeworkEntry[];
   onItemClick: (t: HomeworkEntry) => void;
+  colorOf: (t: HomeworkEntry) => string;
 }
 
-const UpcomingPanel: React.FC<Props> = ({ items, onItemClick }) => (
+// Same row language as the overview's "Up next": calendar-style date,
+// name over course and time, a days-left pill.
+const UpcomingPanel: React.FC<Props> = ({ items, onItemClick, colorOf }) => (
   <>
     <header className="rs-head">
       <div className="rs-scope-row">
@@ -37,30 +34,36 @@ const UpcomingPanel: React.FC<Props> = ({ items, onItemClick }) => (
         </p>
       </div>
     ) : (
-      <ol className="rs-rail">
+      <ol className="rs-ag-list">
         {items.map((t, i) => {
-          const tl = timeLeft(t.dueDate, t.endTime ?? t.startTime);
-          const cls = urgencyClass(tl.days);
-          const labelTop = tl.unit ? `${tl.num}` : tl.short; // "today"/"now" carry their own word
-          const labelBot = tl.unit;
+          const time = t.endTime ?? t.startTime;
+          const tl = timeLeft(t.dueDate, time);
+          const tone = urgencyClass(tl.days);
+          const d = new Date(t.dueDate + "T00:00:00");
           return (
-            <li
-              key={`${t.course}-${t.id}`}
-              className={`rs-row rs-${cls}`}
-              style={{ animationDelay: `${i * 60}ms` }}
-              onClick={() => onItemClick(t)}
-            >
-              <div className={`rs-pip rs-pip-${cls}`}>
-                <span className="rs-pip-num">{labelTop}</span>
-                {labelBot && <span className="rs-pip-unit">{labelBot}</span>}
-              </div>
-              <div className="rs-card">
-                <div className="rs-name">{t.name}</div>
-                <div className="rs-course">{capitalizeWords(t.course)}</div>
-                <div className="rs-date">
-                  {dayName(t.dueDate)} {fmtDate(t.dueDate)}
-                </div>
-              </div>
+            <li key={`${t.course}-${t.id}`} style={{ animationDelay: `${i * 40}ms` }}>
+              <button
+                type="button"
+                className="rs-item"
+                style={{ "--item-color": colorOf(t) } as React.CSSProperties}
+                onClick={() => onItemClick(t)}
+              >
+                <span className="rs-item-date" aria-hidden="true">
+                  <span className="rs-item-wd">
+                    {d.toLocaleDateString("en-US", { weekday: "short" })}
+                  </span>
+                  <span className="rs-item-day">{d.getDate()}</span>
+                </span>
+                <span className="rs-item-text">
+                  <span className="rs-name" dir="auto">{t.name}</span>
+                  <span className="rs-course">
+                    <span className="rs-item-dot" aria-hidden="true" />
+                    <span className="rs-course-name" dir="auto">{capitalizeWords(t.course)}</span>
+                    {time && <span className="rs-item-time">{time}</span>}
+                  </span>
+                </span>
+                <span className={`rs-ag-when rs-ag-when-${tone}`}>{tl.short}</span>
+              </button>
             </li>
           );
         })}

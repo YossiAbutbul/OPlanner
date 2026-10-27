@@ -15,10 +15,11 @@
   gap: 1rem;
 }
 
+/* Name shown as a read-only field under its label, like other modals. */
 .tab-settings-name {
   display: flex;
-  align-items: center;
-  gap: 0.85rem;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
 .tab-settings-color {
@@ -33,22 +34,24 @@
 
 .tab-settings-label {
   color: var(--label-2);
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   text-transform: none;
 }
 
-.tab-settings-name .tab-settings-label {
-  min-width: 60px;
-  flex-shrink: 0;
-}
-
 .tab-settings-value {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 0.8rem;
+  border-radius: var(--radius-md);
+  background: var(--fill);
   color: var(--label);
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: var(--tracking-body);
+  box-sizing: border-box;
 }
 
 .tab-settings-swatches {

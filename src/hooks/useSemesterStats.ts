@@ -31,7 +31,7 @@ export function useSemesterStats(
   semesterKey: string,
   courses: CourseInfo[],
   homeworkSnapshot: HomeworkEntry[],
-  getCourseTasks: (year: number, sem: string, course: string) => Promise<HomeworkEntry[]>,
+  getCourseTasks: (year: number, sem: string, course: string, force?: boolean) => Promise<HomeworkEntry[]>,
   applyEdits: (list: HomeworkEntry[], inScope: (t: HomeworkEntry) => boolean) => HomeworkEntry[]
 ) {
   const [fetched, setFetched] = useState<HomeworkEntry[]>([]);
@@ -50,14 +50,21 @@ export function useSemesterStats(
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    // force=false: the locally saved copy (instant on reload); force=true:
+    // the server. Show the saved copy first, then swap in fresh data, so a
+    // reload doesn't sit on the skeleton for the network round trip.
+    const load = async (force: boolean) => {
       const [lists, reminders] = await Promise.all([
-        Promise.all(courses.map((c) => getCourseTasks(year, semesterKey, c.name))),
-        getCourseTasks(year, semesterKey, REMINDERS_COURSE),
+        Promise.all(courses.map((c) => getCourseTasks(year, semesterKey, c.name, force))),
+        getCourseTasks(year, semesterKey, REMINDERS_COURSE, force),
       ]);
       if (cancelled) return;
       setFetched([...lists.flat(), ...reminders]);
       setLoaded(true);
+    };
+    (async () => {
+      await load(false);
+      await load(true);
     })();
     return () => {
       cancelled = true;

@@ -15,12 +15,12 @@
 }
 
 .app-modal {
-  width: min(90%, 420px);
+  width: min(92%, 420px);
   max-width: 420px;
   background: var(--elevated);
   border: 1px solid var(--separator);
   border-radius: var(--radius-xl);
-  padding: var(--space-5) var(--space-6) var(--space-6);
+  padding: 1.15rem 1.35rem 1.25rem;
   color: var(--label);
   box-shadow: var(--shadow-lg);
   position: relative;
@@ -133,7 +133,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: 1rem;
 }
 
 /* Grabber: tells you the sheet can be pulled down. */
@@ -150,7 +150,7 @@
 
 .app-modal-title {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: 1.0625rem;
   font-weight: 650;
   line-height: var(--leading-snug);
   letter-spacing: var(--tracking-title);
@@ -162,28 +162,38 @@
   white-space: nowrap;
 }
 
+/* Close: a small filled circle with an x, as on iOS sheets. */
 .app-modal-close {
-  width: 32px;
-  height: 32px;
-  font-size: 1.5rem;
+  width: 28px;
+  height: 28px;
   padding: 0;
   line-height: 1;
-  background: none;
+  background: var(--fill-2);
   border: none;
   cursor: pointer;
-  color: var(--label-3);
-  border-radius: var(--radius-sm);
+  color: var(--label-2);
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   transition:
     color var(--dur-1) var(--ease-out),
-    background-color var(--dur-1) var(--ease-out);
+    background-color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
+}
+
+.app-modal-close svg {
+  display: block;
 }
 
 .app-modal-close:hover {
   color: var(--label);
+  background: var(--fill-3);
+}
+
+.app-modal-close:active {
+  transform: scale(0.92);
 }
 
 .app-modal-body {
@@ -197,8 +207,8 @@
 .app-modal-body p {
   margin: 0 0 0.75rem;
   color: var(--label-2);
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: var(--text-sm);
+  line-height: 1.45;
 }
 
 .app-modal-body input[type="text"],
@@ -208,9 +218,10 @@
 .app-modal-body textarea,
 .app-modal-body select {
   width: 100%;
-  padding: 0.6rem 0.7rem;
+  min-height: 40px;
+  padding: 0.55rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface);
   color: var(--label);
   font-size: 0.95rem;
@@ -219,6 +230,13 @@
   outline: none;
   box-sizing: border-box;
   font-family: inherit;
+  transition: border-color var(--dur-1) var(--ease-out);
+}
+
+.app-modal-body input[type="text"]:hover,
+.app-modal-body input[type="password"]:hover,
+.app-modal-body textarea:hover {
+  border-color: var(--border-strong);
 }
 
 .app-modal-body input::placeholder {
@@ -307,13 +325,16 @@
   }
 }
 
-.app-modal-body label {
+/* Field labels: one style for every modal (also used by the colour
+   picker and tab settings). */
+.app-modal-body label,
+.app-modal-field-label {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--label-2);
-  margin: 0.6rem 0 0.3rem;
-  letter-spacing: 0.02em;
+  margin: 1rem 0 0.4rem;
+  letter-spacing: 0;
 }
 
 .app-modal-body label:first-child {
@@ -324,7 +345,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-top: 1.35rem;
 }
 
 .app-modal-actions button {
@@ -332,10 +353,13 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: 0.5rem 1rem;
+  min-height: 38px;
+  min-width: 84px;
+  padding: 0 1.1rem;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-button);
   cursor: pointer;
+  font-family: inherit;
   font-size: 0.9rem;
   font-weight: 600;
   box-sizing: border-box;
@@ -345,29 +369,48 @@
     transform var(--dur-press) var(--ease-out);
 }
 
+.app-modal-actions button:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+}
+
 .app-modal-actions button:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
+/* Secondary: a quiet fill, no outline. */
 .app-modal-btn-cancel {
-  background: var(--surface-3);
-  color: var(--label-2);
-  border: 1px solid var(--border);
+  background: var(--fill-2);
+  color: var(--label);
 }
 
 .app-modal-btn-cancel:hover:not(:disabled) {
-  background: var(--surface-3);
+  background: var(--fill-3);
   color: var(--label);
 }
 
 .app-modal-btn-primary {
   background: var(--color-accent);
   color: #ffffff;
+  box-shadow: 0 1px 2px rgba(17, 120, 54, 0.25);
 }
 
 .app-modal-btn-primary:hover:not(:disabled) {
   background: var(--color-accent-hover);
+}
+
+/* Destructive secondary action in a footer: plain red text, pushed to the
+   left so it sits apart from Cancel / Save. */
+.app-modal-actions .app-modal-btn-danger-text {
+  margin-right: auto;
+  min-width: 0;
+  padding: 0 0.6rem;
+  background: transparent;
+  color: var(--danger-text);
+}
+
+.app-modal-actions .app-modal-btn-danger-text:hover:not(:disabled) {
+  background: var(--danger-tint);
 }
 
 .app-modal-btn-danger {
@@ -425,9 +468,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.6rem 0.7rem;
+  min-height: 40px;
+  padding: 0.55rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface);
   cursor: pointer;
   font-size: 0.95rem;
@@ -544,4 +588,134 @@
   background-repeat: no-repeat;
   background-position: center;
   background-size: 14px 14px;
+}
+
+/* ===== Shared form fields inside every modal =====
+   One look for text fields, the date button, time pickers, dropdowns and
+   the notes box: a soft filled field (no outline), 42px tall, rounded. The
+   fill deepens on hover; scoped to modals so page layouts are unchanged. */
+.app-modal-body input[type="text"],
+.app-modal-body input[type="password"],
+.app-modal-body input[type="date"],
+.app-modal-body input[type="time"],
+.app-modal-body textarea,
+.app-modal-body select,
+.app-modal-body .hw-date-trigger,
+.app-modal-body .tp-trigger,
+.app-modal-body .cs-trigger,
+.app-modal-body .ne-collapsed,
+.app-modal-body .cp-hex {
+  min-height: 42px;
+  border-color: transparent;
+  border-radius: var(--radius-md);
+  background-color: var(--fill);
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out);
+}
+
+.app-modal-body input[type="text"]:hover,
+.app-modal-body input[type="password"]:hover,
+.app-modal-body textarea:hover,
+.app-modal-body select:hover,
+.app-modal-body .hw-date-trigger:hover,
+.app-modal-body .tp-trigger:hover,
+.app-modal-body .cs-trigger:hover:not(:disabled),
+.app-modal-body .cp-hex:hover {
+  border-color: transparent;
+  background-color: var(--fill-2);
+}
+
+/* Typing: the field lifts to the surface with a hairline, so you can see
+   which one is active without a focus ring. */
+.app-modal-body input[type="text"]:focus,
+.app-modal-body input[type="password"]:focus,
+.app-modal-body textarea:focus,
+.app-modal-body .cp-hex:focus {
+  background-color: var(--surface);
+  border-color: var(--border);
+}
+
+.app-modal-body .ne-collapsed {
+  min-height: 0;
+}
+
+/* Time-picker labels read like every other field label. */
+.app-modal-body .tp-external-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--label-2);
+  margin: 0 0 0.4rem;
+}
+
+/* "All day": a full-width settings row with an iOS-style switch. */
+.app-modal .app-modal-body label.tb-allday {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.75rem 0 0;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-md);
+  background: var(--fill);
+  font-size: 0.95rem;
+  font-weight: 500;
+  box-sizing: border-box;
+}
+
+.app-modal .app-modal-body label.tb-allday > span {
+  order: -1;
+}
+
+.app-modal .app-modal-body .tb-allday input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border-radius: var(--radius-full);
+  background: var(--fill-3);
+  cursor: pointer;
+  transition: background-color var(--dur-2) var(--ease-out);
+}
+
+.app-modal .app-modal-body .tb-allday input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.app-modal .app-modal-body .tb-allday input[type="checkbox"]:checked {
+  background: var(--color-accent);
+}
+
+.app-modal .app-modal-body .tb-allday input[type="checkbox"]:checked::after {
+  transform: translateX(16px);
+}
+
+/* Colour choice: an evenly spaced grid, selected swatch ringed. */
+.app-modal .app-modal-body .tb-color-row {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  justify-items: center;
+  gap: 0.5rem 0;
+}
+
+.app-modal .app-modal-body .tb-color-swatch {
+  width: 24px;
+  height: 24px;
+  border: none;
+}
+
+.app-modal .app-modal-body .tb-color-swatch-active {
+  box-shadow: 0 0 0 2px var(--elevated), 0 0 0 4px var(--label-3);
 }

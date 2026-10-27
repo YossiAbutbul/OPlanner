@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Check, Sun, Moon } from "lucide-react";
+import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Sun, Moon, LayoutGrid, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useConfettiPref } from "../hooks/useConfettiPref";
 import { useThemePref } from "../hooks/useThemePref";
@@ -204,16 +204,16 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className="open-list-section">
-        <div className="open-list-header">
-          <span>Courses</span>
-        </div>
-
         <ul className="open-list">
           {canManage && (
             <li
               className={`open-item overview-item ${selectedCourse === null ? "selected" : ""}`}
+              title={!isMobile && collapsed ? "Overview" : undefined}
               onClick={() => { onSelectCourse(null); onCloseMobile(); }}
             >
+              <span className="open-item-icon" aria-hidden="true">
+                <LayoutGrid size={17} strokeWidth={2.2} />
+              </span>
               <span className="open-item-label">Overview</span>
             </li>
           )}
@@ -235,6 +235,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <li
                 key={name}
                 className={`open-item ${isActive ? "selected" : ""} ${isDragging ? "dragging" : ""} ${showBefore ? "drop-before" : ""} ${showAfter ? "drop-after" : ""}`}
+                title={!isMobile && collapsed ? capitalizeWords(name) : undefined}
                 onClick={() => { onSelectCourse(name); onCloseMobile(); }}
                 draggable
                 onDragStart={(e) => {
@@ -268,7 +269,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                   setDragOver(null);
                 }}
               >
-                <span className="open-item-label">{capitalizeWords(name)}</span>
+                {/* Course tile: its initial on a tint of the course color, the
+                    same tile shape as the Overview icon. */}
+                <span
+                  className="open-item-icon open-item-course"
+                  style={{ "--c": courseColor(name, c.color) } as React.CSSProperties}
+                  aria-hidden="true"
+                >
+                  {name.trim().charAt(0).toUpperCase()}
+                </span>
+                <span className="open-item-label" dir="auto">{capitalizeWords(name)}</span>
                 <button
                   className="open-item-menu-btn"
                   onClick={(e) => {
@@ -285,7 +295,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   title="More"
                   aria-label="More"
                 >
-                  ⋮
+                  <MoreVertical size={16} />
                 </button>
               </li>
             );
@@ -351,9 +361,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               }}
               disabled={addingYear}
             >
-              <CalendarPlus size={16} />
+              <CalendarPlus size={15} />
               <span>Add year</span>
             </button>
+            <div className="settings-menu-divider" role="separator" />
             <button
               onClick={() => {
                 setSettingsOpen(false);
@@ -361,7 +372,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 window.dispatchEvent(new CustomEvent("oplanner:open-reminders"));
               }}
             >
-              <BellRing size={16} />
+              <BellRing size={15} />
               <span>All reminders</span>
             </button>
             <button
@@ -370,20 +381,20 @@ const Sidebar: React.FC<SidebarProps> = ({
                 setReminderOpen(true);
               }}
             >
-              <Bell size={16} />
+              <Bell size={15} />
               <span>Reminder settings</span>
             </button>
+            <div className="settings-menu-divider" role="separator" />
             <button
               role="menuitemcheckbox"
               aria-checked={confettiOn}
               onClick={() => setConfettiOn(!confettiOn)}
               title={confettiOn ? "Disable confetti on task complete" : "Enable confetti on task complete"}
             >
-              <PartyPopper size={16} />
+              <PartyPopper size={15} />
               <span>Confetti</span>
-              <span className="settings-menu-check" aria-hidden>
-                {confettiOn ? <Check size={14} strokeWidth={2.5} /> : null}
-              </span>
+              {/* A switch reads as on/off at a glance, like iOS settings. */}
+              <span className={`settings-switch ${confettiOn ? "on" : ""}`} aria-hidden />
             </button>
             <div className="settings-appearance">
               <span className="settings-appearance-label">Appearance</span>
@@ -408,7 +419,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         transition={SPRING_SNAPPY}
                       />
                     )}
-                    <Icon size={14} />
+                    <Icon size={13} />
                     <span>{label}</span>
                   </button>
                 ))}
@@ -430,7 +441,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   }
                 }}
               >
-                <Download size={16} />
+                <Download size={15} />
                 <span>Install OPlanner</span>
               </button>
             )}
@@ -443,7 +454,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               }}
               className="danger"
             >
-              <LogOut size={16} />
+              <LogOut size={15} />
               <span>Sign out</span>
             </button>
           </motion.div>
@@ -468,8 +479,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onCloseMobile();
               }}
             >
+              <Pencil size={14} />
               Edit
             </button>
+            <div className="open-item-menu-sep" role="separator" />
             <button
               className="danger"
               onClick={() => {
@@ -480,6 +493,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onCloseMobile();
               }}
             >
+              <Trash2 size={14} />
               Delete
             </button>
           </div>,

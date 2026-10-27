@@ -279,7 +279,7 @@ export const deleteCourse = async (year: number, semester: string, course: strin
   }
 };
 
-export const FINAL_TASK_ID = "final-exam";
+import { FINAL_TASK_ID } from "../services/homework";
 
 export const setCourseFinalDate = async (
   year: number,
@@ -298,19 +298,21 @@ export const setCourseFinalDate = async (
     await updateDoc(courseRef, { finalDate: date ?? null });
 
     if (date) {
-      const courseTitle = course.replace(/\b\w/g, (c) => c.toUpperCase());
-      await setDoc(
-        finalTaskRef,
-        {
+      const existing = await getDoc(finalTaskRef);
+      if (existing.exists()) {
+        // Only move the date: keep the task's status, name and times.
+        await updateDoc(finalTaskRef, { dueDate: date });
+      } else {
+        const courseTitle = course.replace(/\b\w/g, (c) => c.toUpperCase());
+        await setDoc(finalTaskRef, {
           name: `Final Exam – ${courseTitle}`,
           dueDate: date,
           status: "PENDING",
           isFinal: true,
           startTime: "07:00",
           endTime: "23:00",
-        },
-        { merge: true }
-      );
+        });
+      }
     } else {
       const snap = await getDoc(finalTaskRef);
       if (snap.exists()) {

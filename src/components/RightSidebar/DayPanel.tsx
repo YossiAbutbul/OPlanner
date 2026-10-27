@@ -344,28 +344,43 @@ const DayPanel: React.FC<Props> = ({
   return (
     <>
       <header className="rs-day-head">
+        {/* Same header as the month calendar: bold title with the date
+            stepping back (opens the picker), chevrons around Today. */}
         <div className="rs-day-row">
-          <div className="rs-day-seg">
+          <DatePicker value={dayDate} onChange={(v) => v && onChangeDayDate(v)}>
+            {(open) => (
+              <button type="button" className="rs-day-date" onClick={open} title={longDay(dayDate)}>
+                <span className="rs-day-date-wd">
+                  {new Date(dayDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" })}
+                </span>
+                <span className="rs-day-date-md">
+                  {new Date(dayDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </span>
+              </button>
+            )}
+          </DatePicker>
+          <div className="rs-day-nav">
             <button className="rs-day-nav-btn" onClick={() => shiftDay(-1)} aria-label="Previous day"><ChevronLeft size={18} strokeWidth={2.5} /></button>
-            <DatePicker value={dayDate} onChange={(v) => v && onChangeDayDate(v)} block>
-              {(open) => (
-                <button type="button" className="rs-day-date" onClick={open}>
-                  {longDay(dayDate)}
-                </button>
-              )}
-            </DatePicker>
+            <button
+              className="rs-day-today"
+              onClick={() => {
+                const t = toIso(new Date());
+                onChangeDayDate(t);
+                window.dispatchEvent(new CustomEvent("oplanner:select-day", { detail: { date: t } }));
+              }}
+            >Today</button>
             <button className="rs-day-nav-btn" onClick={() => shiftDay(1)} aria-label="Next day"><ChevronRight size={18} strokeWidth={2.5} /></button>
           </div>
-          <button
-            className="rs-day-today"
-            onClick={() => {
-              const t = toIso(new Date());
-              onChangeDayDate(t);
-              window.dispatchEvent(new CustomEvent("oplanner:select-day", { detail: { date: t } }));
-            }}
-          >Today</button>
         </div>
-        <div className="rs-day-hint">Tip: double-click a slot to add a block</div>
+        {/* Same scope row as the Upcoming tab. */}
+        <div className="rs-scope-row">
+          <span className="rs-eyebrow">
+            {dayTasks.length + dayBlocks.length === 0
+              ? "Nothing scheduled"
+              : `${dayTasks.length + dayBlocks.length} ${dayTasks.length + dayBlocks.length === 1 ? "item" : "items"}`}
+          </span>
+          <span className="rs-count">Double-click to add</span>
+        </div>
       </header>
 
       <div className="rs-day-scroll" ref={gridRef}>
@@ -438,7 +453,7 @@ const DayPanel: React.FC<Props> = ({
               const accent = colorForTask(t);
               return (
                 <div
-                  key={`task-${t.id}`}
+                  key={`task-${t.course}-${t.id}`}
                   dir={hasHebrew(t.name) || hasHebrew(t.course) ? "rtl" : "ltr"}
                   className={`rs-day-event rs-day-event-task ${isDragging ? "rs-day-event-dragging" : ""} ${compact ? "rs-day-event-compact" : ""}`}
                   style={{

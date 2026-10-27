@@ -98,77 +98,25 @@
 }
 
 /* ===== Summary card =====
-   One card: completion ring + caption on the leading side, then the four
-   counts in columns divided by hairlines (iOS Health / Fitness summary). */
+   Left: one status ring (completed / pending / overdue arcs) with the
+   completion figure and the three counts beside it. Right: Up next, the
+   nearest deadlines. Series colours are the same everywhere: green done,
+   blue open, red overdue. */
 .overview-stats {
-  display: flex;
-  align-items: stretch;
+  --ovs-done: var(--color-accent);
+  --ovs-done-text: var(--accent-text);
+  /* Still to do: amber, between done (green) and overdue (red). */
+  --ovs-open: var(--pending);
+  --ovs-open-text: var(--pending-text);
+  --ovs-late: var(--danger);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
   margin-bottom: 1rem;
   background: var(--surface);
   border: 1px solid var(--separator);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xs);
   animation: overviewFadeUp var(--dur-3) var(--ease-out) both;
-}
-
-.ovs-ring-block {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  padding: 0.85rem 1.4rem 0.85rem 1rem;
-  border-right: 1px solid var(--separator);
-}
-
-.ovs-ring {
-  position: relative;
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-}
-
-.ovs-ring svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.ovs-ring circle {
-  fill: none;
-  stroke-width: 7;
-}
-
-.ovs-ring-track {
-  stroke: var(--color-accent);
-  opacity: 0.16;
-}
-
-.ovs-ring-fill {
-  stroke: var(--color-accent);
-  stroke-linecap: round;
-  transition: stroke-dasharray 700ms var(--ease-out);
-  animation: courseRingSweep 1s var(--ease-out) both;
-}
-
-.ovs-ring-pct {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: var(--text-sm);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: var(--tracking-body);
-  color: var(--label);
-}
-
-.ovs-ring-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-width: 0;
 }
 
 .ovs-label {
@@ -179,108 +127,334 @@
 }
 
 .ovs-caption {
-  font-size: var(--text-base);
-  font-weight: 600;
-  letter-spacing: var(--tracking-body);
-  color: var(--label);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--label-3);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
-.ovs-metrics {
-  flex: 1;
+.ovs-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* --- Progress: figure, segmented bar, counts --- */
+.ovs-summary {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.9rem 1.25rem;
+  border-right: 1px solid var(--separator);
+}
+
+.ovs-progress {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.ovs-value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  color: var(--label);
+}
+
+.ovs-progress-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--label-3);
+}
+
+/* Battery-style bar: thick capsule split into the three series with a
+   hairline gap; a non-zero count always keeps a visible sliver. */
+.ovs-bar {
+  display: flex;
+  gap: 3px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--fill-2);
+}
+
+.ovs-bar-seg {
+  flex-basis: 0;
+  min-width: 6px;
+  transition: flex-grow 700ms var(--ease-out);
+  animation: ovsBarGrow 900ms var(--ease-out) both;
+  transform-origin: left center;
+}
+
+.ovs-bar-done { background: var(--ovs-done); }
+.ovs-bar-open { background: var(--ovs-open); }
+.ovs-bar-late { background: var(--ovs-late); }
+
+@keyframes ovsBarGrow {
+  from { transform: scaleX(0); }
+}
+
+.ovs-side {
+  min-width: 0;
+}
+
+/* Counts as three neutral tiles: label in the series colour (matching its
+   arc in the ring) with a large number right under it; a zero goes grey. */
+.ovs-counts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
   margin: 0;
 }
 
-.ovs-metric {
-  position: relative;
+.ovs-count {
+  --tile-ink: var(--label-3);
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 0.15rem;
-  padding: 0.85rem 1.1rem;
-  min-width: 0;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
 }
 
-.ovs-metric + .ovs-metric::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 22%;
-  bottom: 22%;
-  width: 1px;
-  background: var(--separator);
+.ovs-count-done { --tile-ink: var(--ovs-done-text); }
+.ovs-count-open { --tile-ink: var(--ovs-open-text); }
+.ovs-count-late { --tile-ink: var(--danger-text); }
+.ovs-count[data-zero] { --tile-ink: var(--label-4); }
+
+.ovs-count dt {
+  order: -1;
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: var(--tracking-caption);
+  color: var(--tile-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.ovs-metric .ovs-label {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-/* Tone dot before the label: green done, amber pending, red overdue. */
-.ovs-metric[data-tone] .ovs-label::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--label-4);
-  transition: background-color var(--dur-2) var(--ease-out);
-}
-
-.ovs-metric[data-tone="good"] .ovs-label::before { background: var(--color-accent); }
-.ovs-metric[data-tone="warn"] .ovs-label::before { background: var(--warning); }
-.ovs-metric[data-tone="bad"] .ovs-label::before { background: var(--danger); }
-
-.ovs-value {
+.ovs-count dd {
   margin: 0;
-  font-size: var(--text-2xl);
+  font-size: var(--text-xl);
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1;
   letter-spacing: var(--tracking-display);
   font-variant-numeric: tabular-nums;
-  color: var(--label);
+  color: var(--tile-ink);
   transition: color var(--dur-2) var(--ease-out);
 }
 
-.ovs-metric[data-tone="bad"] .ovs-value {
-  color: var(--danger-text);
+/* --- Up next --- */
+.ovs-upnext {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.9rem 1.1rem 0.5rem;
 }
 
-/* Narrow: ring block on top, the counts as a row beneath it. */
-@media (max-width: 1024px) {
+/* Fixed row slots (--upnext-rows, set by OverviewStats: 2 on the semester
+   overview, more on a course page): the card keeps one height however many
+   deadlines are listed, so the page below never shifts. */
+.ovs-upnext {
+  --row-h: 50px;
+}
+
+.ovs-upnext-list {
+  list-style: none;
+  margin: 0 -0.5rem;
+  padding: 0;
+  height: calc(var(--upnext-rows, 2) * var(--row-h));
+}
+
+.ovs-upnext-list li + li .ovs-upnext-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(0.5rem + 34px + 0.75rem);
+  right: 0.5rem;
+  height: 1px;
+  background: var(--separator);
+}
+
+.ovs-upnext-item {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: var(--row-h);
+  box-sizing: border-box;
+  padding: 0 0.5rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-out);
+}
+
+.ovs-upnext-item:hover {
+  background: var(--fill);
+}
+
+.ovs-upnext-item:active {
+  background: var(--fill-2);
+  transition: none;
+}
+
+/* Hide the hairline next to a highlighted row, like a grouped list. */
+.ovs-upnext-item:hover::before,
+.ovs-upnext-list li:hover + li .ovs-upnext-item::before {
+  opacity: 0;
+}
+
+.ovs-upnext-date {
+  flex: 0 0 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.ovs-upnext-wd {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--item-color);
+}
+
+.ovs-upnext-day {
+  margin-top: 2px;
+  font-size: var(--text-xl);
+  font-weight: 650;
+  letter-spacing: var(--tracking-title);
+  font-variant-numeric: tabular-nums;
+  color: var(--label);
+}
+
+.ovs-upnext-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.ovs-upnext-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-body);
+  color: var(--label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ovs-upnext-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--text-xs);
+  color: var(--label-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Course colour dot before the course name. */
+.ovs-upnext-meta::before {
+  content: "";
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--item-color);
+}
+
+/* Countdown pill: calm far out, warmer as it closes in. */
+.ovs-when {
+  flex-shrink: 0;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ovs-when-far { color: var(--label-2); background: var(--fill-2); }
+.ovs-when-near { color: var(--warning-text); background: var(--warning-tint); }
+.ovs-when-soon { color: var(--danger-text); background: var(--danger-tint); }
+
+.ovs-upnext-empty {
+  height: calc(var(--upnext-rows, 2) * var(--row-h));
+  margin: 0;
+  display: flex;
+  align-items: center;
+  font-size: var(--text-sm);
+  color: var(--label-3);
+}
+
+/* Medium: summary on top, Up next below. */
+@media (max-width: 1100px) {
   .overview-stats {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .ovs-ring-block {
+  .ovs-summary {
     border-right: none;
     border-bottom: 1px solid var(--separator);
+  }
+}
+
+/* Phones: tighter padding, slightly smaller type. */
+@media (max-width: 600px) {
+  .ovs-summary {
     padding: 0.85rem 1rem;
   }
 
-  .ovs-metric {
-    padding: 0.75rem 0.85rem;
-  }
-
   .ovs-value {
-    font-size: var(--text-xl);
-  }
-}
-
-@media (max-width: 380px) {
-  .ovs-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    font-size: var(--text-2xl);
   }
 
-  .ovs-metric:nth-child(3)::before {
-    display: none;
+  .ovs-counts {
+    gap: 0.35rem;
+  }
+
+  .ovs-count {
+    padding: 0.4rem 0.55rem;
+  }
+
+  .ovs-count dt {
+    font-size: var(--text-2xs);
+    overflow: visible;
+  }
+
+  .ovs-count dd {
+    font-size: var(--text-lg);
+  }
+
+  .ovs-upnext {
+    padding: 0.75rem 0.85rem 0.4rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ovs-ring-fill {
+  .ovs-bar-seg {
     animation: none;
   }
 }
@@ -682,22 +856,7 @@
 }
 
 .overview-calendar-section .cal-grid {
-  grid-auto-rows: minmax(3.7rem, 4.7rem);
   flex: 0 0 auto;
-  gap: 1px;
-}
-
-.overview-calendar-section .cal-cell {
-  padding: 2px 4px 3px;
-}
-
-.overview-calendar-section .cal-day-num {
-  font-size: 0.78rem;
-}
-
-.overview-calendar-section .cal-task {
-  font-size: 0.7rem;
-  padding: 1px 4px;
 }
 
 @media (max-width: 1100px) {
