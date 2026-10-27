@@ -55,6 +55,7 @@ interface Props {
 }
 
 const MAX_STORED = 40;
+const MAX_SENT = 50;
 
 const isMessage = (m: unknown): m is Message => {
   const x = m as Message;
@@ -79,11 +80,11 @@ const loadChat = (key: string | undefined): Message[] => {
 
 // Shown on the empty chat only; tapping one sends it as is.
 const SUGGESTIONS = [
-  "What's due this week?",
-  "What's overdue?",
-  "Plan my study days until finals",
-  "Which course needs the most attention?",
-  "How long until each final?",
+  "מה יש לי השבוע?",
+  "מה פספסתי?",
+  "תבנה לי תוכנית למידה למבחנים",
+  "על איזה קורס כדאי להתמקד?",
+  "כמה זמן נשאר לכל מבחן?",
 ];
 
 const formatDate = (iso: string) =>
@@ -155,6 +156,52 @@ const reserveIds = (list: Message[]) => {
 const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, storageKey, onCleared }) => {
   const [messages, setMessages] = useState<Message[]>(() => reserveIds(loadChat(storageKey)));
   const [input, setInput] = useState("");
+
+  // Messages you sent, newest last, for ↑/↓ recall like a terminal. Kept in
+  // this browser only (never Firestore) and across New chat; sign-out
+  // clears it with the other oplanner.* keys.
+  const sentKey = storageKey ? `${storageKey}.sent` : undefined;
+  const [sent, setSent] = useState<string[]>(() => {
+    const saved = sentKey ? lsCache.read<unknown>(sentKey) : null;
+    return Array.isArray(saved) ? saved.filter((x): x is string => typeof x === "string") : [];
+  });
+  // Position while browsing history (null = editing a fresh message) and
+  // the unsent text to come back to.
+  const [recall, setRecall] = useState<number | null>(null);
+  const [draft, setDraft] = useState("");
+
+  const remember = (message: string) =>
+    setSent((prev) => {
+      const next = [...prev.filter((m) => m !== message), message].slice(-MAX_SENT);
+      if (sentKey) lsCache.write(sentKey, next);
+      return next;
+    });
+
+  // ↑ on the first line goes back, ↓ on the last line goes forward and
+  // finally returns to the draft. Elsewhere the arrows move the caret.
+  const recallKey = (e: React.KeyboardEvent<HTMLTextAreaElement>): boolean => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || !sent.length) return false;
+    const el = e.currentTarget;
+    if (e.key === "ArrowUp" && !el.value.slice(0, el.selectionStart).includes("\n")) {
+      const at = recall === null ? sent.length - 1 : Math.max(0, recall - 1);
+      if (recall === null) setDraft(input);
+      setRecall(at);
+      setInput(sent[at]);
+      return true;
+    }
+    if (e.key === "ArrowDown" && recall !== null && !el.value.slice(el.selectionEnd).includes("\n")) {
+      const at = recall + 1;
+      if (at >= sent.length) {
+        setRecall(null);
+        setInput(draft);
+      } else {
+        setRecall(at);
+        setInput(sent[at]);
+      }
+      return true;
+    }
+    return false;
+  };
   const [busy, setBusy] = useState(false);
   // What the agent is doing right now, streamed from the server.
   const [status, setStatus] = useState("Thinking…");
@@ -203,6 +250,8 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
       .map((m) => ({ role: m.role, text: m.text }));
     setMessages([...base, { id: nextId++, role: "user", text: message }]);
     setInput("");
+    setRecall(null);
+    remember(message);
     setBusy(true);
     setStatus("Thinking…");
     try {
@@ -295,10 +344,10 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
             <p className="rs-empty-title">Ask about your semester</p>
             <p className="rs-empty-text">
               {ready
-                ? "It reads your courses and tasks. Changes it suggests are saved only when you confirm."
+                ? "Reads your tasks. Saves only what you approve."
                 : "Open a semester first."}
             </p>
-            <div className="rs-agent-chips">
+            <div className="rs-agent-chips" dir="rtl">
               {SUGGESTIONS.map((s) => (
                 <button key={s} type="button" className="rs-agent-chip" onClick={() => void send(s)} disabled={!ready || busy}>
                   {s}
@@ -455,14 +504,26 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
           placeholder={ready ? "Ask anything about your semester…" : "Open a semester first"}
           value={input}
           disabled={!ready}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+            setRecall(null);
+          }}
           onKeyDown={(e) => {
+            if (recallKey(e)) {
+              e.preventDefault();
+              return;
+            }
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
               void send(input);
             }
           }}
         />
+        {recall !== null && (
+          <span className="rs-agent-recall" aria-live="polite" aria-label={`Message ${recall + 1} of ${sent.length}`}>
+            {recall + 1}/{sent.length}
+          </span>
+        )}
         <button type="submit" className="rs-agent-send" disabled={!ready || busy || !input.trim()} aria-label="Send">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 19V5M5 12l7-7 7 7" />

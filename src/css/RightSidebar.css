@@ -1475,6 +1475,17 @@
     transform 100ms var(--ease-out);
 }
 
+/* Position in the sent-message history while browsing it with the arrows. */
+.rs-agent-recall {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 0 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--rs-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Disabled reads as neutral, not as a faded accent. */
 .rs-agent-send:disabled {
   background: var(--rs-hover);
