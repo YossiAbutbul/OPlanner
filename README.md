@@ -28,23 +28,17 @@ Export the `.ics` from your university portal, drag it in. Every course, every a
 ### 📊 See the whole semester at a glance
 Tasks done. Tasks left. What's overdue. How close you are to crushing it. One screen.
 
-![Semester overview](docs/screenshots/overview.png)
-
 ### ⏰ Finals countdown
 Set the date. Watch the clock. Stop "wait, when's the exam again?"
 
 ### 🎯 One course at a time
 Click into any course. Get its calendar, its progress, its task list. No clutter from other classes.
 
-![Course view](docs/screenshots/course.png)
-
 ### 🎨 Make it yours
 Color-code years, semesters, courses. Make the screen actually feel like your year, not a generic spreadsheet.
 
 ### 📱 Built for your phone
 Full mobile layout. Drawer sidebar. Sticky topbar. Tap-to-add tasks on the calendar. Works exactly like a real app.
-
-<img src="docs/screenshots/mobile.png" alt="Mobile" width="280" />
 
 ### 🔁 Re-import without fear
 Updated `.ics` from school? Drop it again. Tasks update in place. Nothing duplicates. Nothing breaks.
