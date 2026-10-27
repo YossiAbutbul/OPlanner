@@ -2,12 +2,11 @@
 // Applied as <html data-theme="light|dark">, which index.css keys its dark
 // token block on. Stored in localStorage so the choice survives reloads, and
 // applied at import time from main.tsx so the first paint already has the
-// right colors. Until someone picks, the system appearance decides.
+// right colors. Until someone picks, the app is Light (not the system's).
 
 export type ThemePref = "light" | "dark";
 
 const KEY = "oplanner:theme";
-const DARK_QUERY = "(prefers-color-scheme: dark)";
 const EVENT = "oplanner:theme-change";
 
 function storedPref(): ThemePref | null {
@@ -15,14 +14,14 @@ function storedPref(): ThemePref | null {
     const v = localStorage.getItem(KEY);
     if (v === "light" || v === "dark") return v;
   } catch {
-    // Storage blocked (private mode): fall back to the system appearance.
+    // Storage blocked (private mode): fall back to the default (Light).
   }
   return null;
 }
 
-/** The appearance in effect: the saved choice, else the system's. */
+/** The appearance in effect: the saved choice, else Light. */
 export function getThemePref(): ThemePref {
-  return storedPref() ?? (window.matchMedia?.(DARK_QUERY).matches ? "dark" : "light");
+  return storedPref() ?? "light";
 }
 
 export function setThemePref(pref: ThemePref) {
@@ -51,16 +50,14 @@ export function isDarkActive(): boolean {
 
 /** Subscribe to anything that can change the effective appearance. */
 export function subscribeTheme(cb: () => void): () => void {
-  const mq = window.matchMedia?.(DARK_QUERY);
-  mq?.addEventListener("change", cb);
   window.addEventListener(EVENT, cb);
   return () => {
-    mq?.removeEventListener("change", cb);
     window.removeEventListener(EVENT, cb);
   };
 }
 
+// Always set data-theme, so a dark system setting can't switch the app to
+// dark (index.css's system-dark block only applies without data-theme="light").
 if (typeof document !== "undefined") {
-  const saved = storedPref();
-  if (saved) document.documentElement.dataset.theme = saved;
+  document.documentElement.dataset.theme = getThemePref();
 }

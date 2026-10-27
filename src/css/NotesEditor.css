@@ -841,12 +841,24 @@
     gap: 0.5rem 0.6rem;
   }
 
+  /* One swipeable row of tools under the title, never wrapping; the edge
+     fades so it's clear more tools scroll in from the side. */
   .ne-head .ne-toolbar {
     order: 3;
+    display: flex;
     flex-basis: 100%;
+    flex-wrap: nowrap;
+    gap: 0.15rem;
     overflow-x: auto;
     scrollbar-width: none;
-    padding-bottom: 2px;
+    margin: 0 -0.85rem;
+    padding: 0 0.85rem 2px;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 0.85rem, #000 calc(100% - 1.5rem), transparent);
+    mask-image: linear-gradient(to right, transparent 0, #000 0.85rem, #000 calc(100% - 1.5rem), transparent);
+  }
+
+  .ne-head .ne-toolbar > * {
+    flex-shrink: 0;
   }
 
   .ne-head .ne-toolbar::-webkit-scrollbar {
@@ -857,7 +869,8 @@
     position: sticky;
     bottom: 0;
     z-index: 1;
-    padding: 0.7rem 0.85rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.6rem 0.85rem calc(0.6rem + env(safe-area-inset-bottom, 0px));
+    background: var(--elevated);
   }
 
   .ne-save-btn {
@@ -866,15 +879,19 @@
     font-size: var(--text-base);
   }
 
-  /* Touch targets: toolbar glyphs grow to ~40px in the sheet. */
-  .ne-btn,
+  /* Touch targets: 36px tools (one row fits most of them), 32px close. */
+  .ne-btn {
+    width: 36px;
+    height: 36px;
+  }
+
   .ne-close {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
   }
 
   .ne-fs-trigger {
-    height: 40px;
+    height: 36px;
   }
 }
 
