@@ -527,19 +527,26 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
       <button type="button" className="rs-agent-nudge-btn" onClick={() => hide(key, "forever")}>
         לא להזכיר
       </button>
-      <button type="button" className="rs-agent-snooze-back" onClick={() => setAsking(null)}>
-        ביטול
-      </button>
     </div>
   );
 
-  const closeButton = (key: string, className: string) => (
-    <button type="button" className={className} onClick={() => setAsking(key)} aria-label="Close" title="Close">
-      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
-        <path d="M6 6l12 12M18 6L6 18" />
-      </svg>
-    </button>
-  );
+  // The card's top-left corner: close, which then turns into "back" while
+  // it asks when to bring the card back.
+  const cornerButton = (key: string) =>
+    asking === key ? (
+      <button type="button" className="rs-agent-corner" onClick={() => setAsking(null)} aria-label="ביטול" title="ביטול">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M9 14l-5-5 5-5" />
+          <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+        </svg>
+      </button>
+    ) : (
+      <button type="button" className="rs-agent-corner" onClick={() => setAsking(key)} aria-label="Close" title="Close">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    );
 
   return (
     <div className="rs-agent">
@@ -648,9 +655,9 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                                 </svg>
                               </span>
                             </button>
-                            {closeButton(a.key, "rs-agent-risk-close")}
                           </>
                         )}
+                        {cornerButton(a.key)}
                       </div>
                     ))}
                   </div>
@@ -993,7 +1000,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
             </div>
           </div>
           )}
-          {asking !== nudge.key && closeButton(nudge.key, "rs-agent-nudge-close")}
+          {cornerButton(nudge.key)}
         </div>
       )}
 

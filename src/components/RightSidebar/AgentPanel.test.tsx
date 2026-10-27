@@ -126,7 +126,7 @@ describe("AgentPanel", () => {
     const { unmount } = render(<AgentPanel {...props} liveTasks={{ year: 2026, semester: "A", tasks }} />);
     const label = "בעוד 2 ימים · אין זמן לימוד ביומן";
 
-    fireEvent.click(screen.getByText(label).closest(".rs-agent-risk")!.querySelector(".rs-agent-risk-close")!);
+    fireEvent.click(screen.getByText(label).closest(".rs-agent-risk")!.querySelector(".rs-agent-corner")!);
     fireEvent.click(screen.getByRole("button", { name: "מחר" }));
     expect(screen.queryByText(label)).not.toBeInTheDocument();
 

@@ -1200,8 +1200,7 @@
   cursor: default;
 }
 
-.rs-agent-risk-close,
-.rs-agent-nudge-close {
+.rs-agent-corner {
   position: absolute;
   top: 0.35rem;
   left: 0.35rem;
@@ -1219,8 +1218,7 @@
   transition: opacity var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out);
 }
 
-.rs-agent-risk-close:hover,
-.rs-agent-nudge-close:hover {
+.rs-agent-corner:hover {
   opacity: 1;
   background: rgba(255, 255, 255, 0.08);
 }
@@ -1232,7 +1230,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.55rem 0.7rem;
+  padding: 0.55rem 0.7rem 0.6rem 1.9rem;
   animation: rs-empty-in 0.25s var(--ease-out) both;
 }
 
@@ -1240,25 +1238,13 @@
   padding: 0;
 }
 
+/* The question on its own line, the answers under it. */
 .rs-agent-snooze-q {
-  margin-inline-end: auto;
+  flex-basis: 100%;
+  margin-bottom: 0.1rem;
   color: var(--rs-text);
   font-size: 0.8rem;
   font-weight: 600;
-}
-
-.rs-agent-snooze-back {
-  padding: 0 0.3rem;
-  border: none;
-  background: none;
-  color: var(--rs-text-soft);
-  font: inherit;
-  font-size: 0.74rem;
-  cursor: pointer;
-}
-
-.rs-agent-snooze-back:hover {
-  color: var(--rs-text);
 }
 
 .rs-agent-risk-icon {
