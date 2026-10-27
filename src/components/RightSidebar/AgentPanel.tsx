@@ -74,6 +74,7 @@ export interface LiveTask {
   startTime?: string;
   endTime?: string;
   status: string;
+  study?: boolean;
 }
 
 interface Message {

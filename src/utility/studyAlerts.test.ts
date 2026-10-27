@@ -32,6 +32,12 @@ describe("studyAlerts", () => {
     expect(studyAlerts([task({})], blocks, now)).toHaveLength(1);
   });
 
+  it("counts a planned study session as study time, and never warns about the session itself", () => {
+    const session = task({ name: "מטלה 11: חלק א", dueDate: "2026-10-28", study: true });
+    expect(studyAlerts([task({}), session], [], now)).toEqual([]);
+    expect(studyAlerts([session], [], now)).toEqual([]);
+  });
+
   it("ignores done, far-off and past tasks", () => {
     const tasks = [
       task({ status: "DONE" }),

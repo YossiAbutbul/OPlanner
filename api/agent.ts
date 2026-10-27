@@ -94,6 +94,7 @@ const semesterData = (uid: string, year: number, semester: string) => {
             dueDate: typeof t.dueDate === "string" ? t.dueDate : "",
             ...(typeof t.startTime === "string" ? { startTime: t.startTime } : {}),
             ...(typeof t.endTime === "string" ? { endTime: t.endTime } : {}),
+            ...(t.study === true ? { study: true } : {}),
             // Stored as COMPLETED; the model's tools speak DONE/PENDING.
             status: t.status === "COMPLETED" || t.status === "DONE" ? "DONE" : "PENDING",
           };

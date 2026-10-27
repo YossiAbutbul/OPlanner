@@ -6,6 +6,7 @@
 
 export interface AlertTask {
   id?: string;
+  study?: boolean; // a planned study session, not work to plan for
   name: string;
   course: string;
   dueDate: string; // YYYY-MM-DD
@@ -64,7 +65,15 @@ const isLecture = (b: AlertBlock) => b.title.trim().startsWith("מפגש");
 // Blocks link to a course by name, or "year|semester|course" when imported.
 const blockCourse = (b: AlertBlock) => (b.courseId ?? "").split("|").pop()!.toLowerCase();
 
-const plannedFor = (t: AlertTask, blocks: AlertBlock[], today: string) =>
+// Study time for a task: a Schedule block, or a study session the Assistant
+// planned (saved as a task), for its course or by its name, before it's due.
+const plannedFor = (t: AlertTask, blocks: AlertBlock[], sessions: AlertTask[], today: string) =>
+  sessions.some(
+    (s) =>
+      s.dueDate >= today &&
+      s.dueDate <= t.dueDate &&
+      (s.course.toLowerCase() === t.course.toLowerCase() || s.name.toLowerCase().includes(t.name.toLowerCase()))
+  ) ||
   blocks.some((b) => {
     if (b.date < today || b.date > t.dueDate || isLecture(b)) return false;
     const title = b.title.toLowerCase();
@@ -79,11 +88,14 @@ export const studyAlerts = (
   limit = 2
 ): StudyAlert[] => {
   const today = ymd(now);
-  const open = tasks.filter((t) => !isDone(t) && t.dueDate && t.dueDate >= today);
+  const upcoming = tasks.filter((t) => !isDone(t) && t.dueDate && t.dueDate >= today);
+  // Study sessions are the plan, not work: never warned about themselves.
+  const sessions = upcoming.filter((t) => t.study);
+  const open = upcoming.filter((t) => !t.study);
 
   const unplanned = open
     .map((t) => ({ t, days: daysBetween(today, t.dueDate) }))
-    .filter(({ t, days }) => days <= 5 && !plannedFor(t, blocks, today))
+    .filter(({ t, days }) => days <= 5 && !plannedFor(t, blocks, sessions, today))
     .sort((a, b) => a.days - b.days)
     .map(
       ({ t, days }): StudyAlert => ({

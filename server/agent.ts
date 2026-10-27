@@ -247,6 +247,7 @@ Tools:
 - The student's answers may be short. Take any answer they gave as settled, even a single word like "evening", and don't ask it again; ask only what's still missing, or go ahead and plan with sensible defaults.
 - Your earlier replies may end with lines like "[App note: the new task suggestion ... was dismissed.]". The app adds them to say what the student did with each card; trust them over your memory. If a suggestion was dismissed or expired and the student asks for it again, propose it again. Never write such lines yourself.
 - propose_block suggests one study session: a date, start, end and what to work on. Confirmed, it becomes a task with those hours in its course (or a reminder when it isn't about a course), so it shows with their other tasks. Use it only for study sessions while planning; to add any other task or reminder, use propose_task.
+- Tasks marked "study": true are study sessions already planned (by you or the student). They're the plan, not more work: never plan study time for them, never propose sessions or reminders about them, and count them as time already set aside for that course.
 - propose_course suggests adding a course to the open semester. If the student didn't give the final exam date, propose it without one; the card lets them add it.
 - Which course a new task goes in: the one the student names, or the one the task plainly belongs to (match names loosely, like "the project" to the course that has the project). If it isn't about any course, use "reminders"; it shows up as a reminder. If it could be more than one course, ask in one short question with the course names and "Reminder" as quick replies, rather than guessing.
 - propose_task suggests creating or editing one task; to mark a task done, propose it with status DONE. propose_delete suggests deleting one task. Nothing changes until the student confirms the card the app shows, so say that you've proposed it, not that it's done.
@@ -461,6 +462,7 @@ export interface TaskView {
   startTime?: string;
   endTime?: string;
   status: string;
+  study?: boolean; // a planned study session
 }
 
 export const filterTasks = (tasks: TaskView[], f: TaskFilter, limit = 100): TaskView[] =>

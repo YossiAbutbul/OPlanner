@@ -36,7 +36,8 @@ interface HomeworkContextProps {
     startTime?: string,
     endTime?: string,
     notes?: string,
-    color?: string
+    color?: string,
+    study?: boolean
   ) => Promise<void>;
   removeHomework: (
     id: string,
@@ -253,7 +254,8 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     startTime?: string,
     endTime?: string,
     notes?: string,
-    color?: string
+    color?: string,
+    study?: boolean
   ) => {
     let uid: string;
     try {
@@ -274,6 +276,8 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const isSame = (h: HomeworkEntry) =>
       h.id === id && (!prevLocation || (h.course === prevLocation.course && h.year === prevLocation.year));
     const previous = id ? homework.find(isSame) : undefined;
+    // Once a planned study session, always one (edits don't pass the flag).
+    if (study || previous?.study) task.study = true;
     const prevLoc: { year: number; semester: string; course: string } | undefined =
       id ? prevLocation ?? previous : undefined;
     const moved =

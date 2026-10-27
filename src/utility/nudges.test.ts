@@ -47,6 +47,12 @@ describe("pickNudge", () => {
     expect(pickNudge(mixed, now, new Set())?.text).toBe("שבוע חדש: משימה אחת ומבחן השבוע, הקרוב ביום חמישי. נתכנן?");
   });
 
+  it("leaves the Assistant's own study sessions alone", () => {
+    const past = task({ id: "s1", name: "מטלה 11: חלק א", dueDate: "2026-10-26", study: true });
+    const soon = task({ id: "s2", name: "מטלה 11: חלק ב", dueDate: "2026-10-29", study: true });
+    expect(pickNudge([past, soon], now, new Set())).toBeNull();
+  });
+
   it("says nothing about an empty week", () => {
     expect(pickNudge([task({ dueDate: "2026-11-20" })], now, new Set())).toBeNull();
   });

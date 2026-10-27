@@ -30,7 +30,8 @@ const LOOKBACK_DAYS = 14;
 
 export const pickNudge = (tasks: NudgeTask[], now: Date, seen: ReadonlySet<string>): Nudge | null => {
   const today = ymd(now);
-  const open = tasks.filter((t) => !isDone(t) && t.dueDate);
+  // The Assistant's study sessions aren't work to finish or plan.
+  const open = tasks.filter((t) => !isDone(t) && !t.study && t.dueDate);
 
   // The most recent miss first: it's the one most likely still fixable.
   const missed = open

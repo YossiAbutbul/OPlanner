@@ -15,6 +15,9 @@ export interface HomeworkEntry {
   endTime?: string;       // HH:mm
   notes?: string;         // sanitized HTML
   color?: string;         // accent override
+  // A study session the AI Assistant planned. Not shown anywhere; it keeps
+  // the Assistant from treating its own plan as new work to plan for.
+  study?: boolean;
 }
 
 // Generic time-blocked calendar event, not tied to a course.

@@ -228,7 +228,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       const course = p.course || "reminders";
       const id = createTaskRef(requireUid(), year, semester, course).id;
       try {
-        await addHomework(id, p.name, p.dueDate, "PENDING", year, semester, course, false, undefined, p.startTime, p.endTime);
+        // Flagged as the Assistant's own plan, so it doesn't plan for it again.
+        await addHomework(id, p.name, p.dueDate, "PENDING", year, semester, course, false, undefined, p.startTime, p.endTime, undefined, undefined, true);
       } catch (e) {
         toast.error(`Couldn't add “${p.name}”`);
         throw e;
