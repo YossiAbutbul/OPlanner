@@ -3,6 +3,8 @@ import { sendAgentMessage, type AgentProposal } from "../../services/agent";
 import { capitalizeWords } from "../../utility/dayCalendar";
 import { lsCache } from "../../hooks/useLocalStorageCache";
 import AgentText from "./AgentText";
+import DatePicker from "../DatePicker";
+import TimePicker from "../TimePicker";
 import { studyAlerts, type AlertBlock } from "../../utility/studyAlerts";
 import { pickNudge, splitQuickReplies } from "../../utility/nudges";
 
@@ -105,6 +107,39 @@ const MAX_STORED = 40;
 const MAX_SENT = 50;
 const MAX_NUDGES = 100;
 
+// "HH:MM" plus minutes, kept within the day.
+const addMinutes = (hhmm: string, mins: number) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  const total = Math.min(23 * 60 + 59, Math.max(0, h * 60 + m + mins));
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+};
+
+const minutesOf = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+};
+
+// The app's own date picker, with a trigger that sits in the card's fields.
+const DateField: React.FC<{ value: string; onChange: (v: string) => void; placeholder?: string }> = ({
+  value,
+  onChange,
+  placeholder = "Pick a date",
+}) => (
+  <DatePicker value={value || null} onChange={(v) => onChange(v ?? "")} block>
+    {(open) => (
+      <button type="button" className="rs-agent-date" onClick={open}>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <path d="M16 2v4M8 2v4M3 10h18" />
+        </svg>
+        <span className={value ? "" : "rs-agent-date-empty"}>
+          {value ? new Date(`${value}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) : placeholder}
+        </span>
+      </button>
+    )}
+  </DatePicker>
+);
+
 const ymd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
@@ -197,7 +232,7 @@ const KIND: Record<CardKind, { label: string; action: string; working: string; d
     icon: <svg {...ICON_PROPS}><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z" /><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3" /><path d="M9 7h6" /></svg>,
   },
   block: {
-    label: "Study session", action: "Add to Schedule", working: "Adding…", doneText: "Added to your Schedule",
+    label: "Study session", action: "Add", working: "Adding…", doneText: "Added to your Schedule",
     icon: <svg {...ICON_PROPS}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>,
   },
   delete: {
@@ -813,14 +848,14 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                           onChange={(e) => setCardEdits(m.id, i, { name: e.target.value })}
                         />
                       </label>
-                      <label className="rs-agent-field rs-agent-field-wide">
+                      <div className="rs-agent-field rs-agent-field-wide">
                         <span>Final exam (optional)</span>
-                        <input
-                          type="date"
+                        <DateField
                           value={proposed.dueDate}
-                          onChange={(e) => setCardEdits(m.id, i, { dueDate: e.target.value })}
+                          onChange={(v) => setCardEdits(m.id, i, { dueDate: v })}
+                          placeholder="No date"
                         />
-                      </label>
+                      </div>
                       {problem && <p className="rs-agent-fields-hint">{problem}</p>}
                     </div>
                   )}
@@ -836,30 +871,39 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                           onChange={(e) => setCardEdits(m.id, i, { name: e.target.value })}
                         />
                       </label>
-                      <label className={`rs-agent-field rs-agent-field-wide${!proposed.dueDate ? " rs-agent-field-missing" : ""}`}>
+                      <div className={`rs-agent-field rs-agent-field-wide${!proposed.dueDate ? " rs-agent-field-missing" : ""}`}>
                         <span>Date</span>
-                        <input
-                          type="date"
-                          value={proposed.dueDate}
-                          onChange={(e) => setCardEdits(m.id, i, { dueDate: e.target.value })}
-                        />
-                      </label>
-                      <label className={`rs-agent-field${!proposed.startTime && proposed.endTime ? " rs-agent-field-missing" : ""}`}>
-                        <span>Start</span>
-                        <input
-                          type="time"
+                        <DateField value={proposed.dueDate} onChange={(v) => setCardEdits(m.id, i, { dueDate: v })} />
+                      </div>
+                      <div className={`rs-agent-field${!proposed.startTime && proposed.endTime ? " rs-agent-field-missing" : ""}`}>
+                        <label htmlFor={`rs-start-${m.id}-${i}`}>Start</label>
+                        <TimePicker
+                          id={`rs-start-${m.id}-${i}`}
                           value={proposed.startTime ?? ""}
-                          onChange={(e) => setCardEdits(m.id, i, { startTime: e.target.value })}
+                          placeholder="--:--"
+                          step={15}
+                          onChange={(v) => {
+                            // Moving the start keeps the length (or 30 minutes
+                            // when there's no sensible end yet).
+                            const { startTime: from, endTime: to } = proposed;
+                            const keep = from && to && to > from ? minutesOf(to) - minutesOf(from) : 30;
+                            const end = v && (!to || to <= v || (from && to > from)) ? addMinutes(v, keep) : to;
+                            setCardEdits(m.id, i, { startTime: v, ...(end !== undefined ? { endTime: end } : {}) });
+                          }}
                         />
-                      </label>
-                      <label className={`rs-agent-field${proposed.startTime && !proposed.endTime ? " rs-agent-field-missing" : ""}`}>
-                        <span>End</span>
-                        <input
-                          type="time"
+                      </div>
+                      <div className={`rs-agent-field${proposed.startTime && !proposed.endTime ? " rs-agent-field-missing" : ""}`}>
+                        <label htmlFor={`rs-end-${m.id}-${i}`}>End</label>
+                        <TimePicker
+                          id={`rs-end-${m.id}-${i}`}
                           value={proposed.endTime ?? ""}
-                          onChange={(e) => setCardEdits(m.id, i, { endTime: e.target.value })}
+                          placeholder="--:--"
+                          step={15}
+                          showDurationFrom={proposed.startTime || undefined}
+                          minTime={proposed.startTime ? addMinutes(proposed.startTime, 14) : undefined}
+                          onChange={(v) => setCardEdits(m.id, i, { endTime: v })}
                         />
-                      </label>
+                      </div>
                       {problem && <p className="rs-agent-fields-hint">{problem}</p>}
                     </div>
                   )}

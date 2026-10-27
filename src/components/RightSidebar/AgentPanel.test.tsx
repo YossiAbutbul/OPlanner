@@ -4,6 +4,17 @@ import AgentPanel from "./AgentPanel";
 import { sendAgentMessage } from "../../services/agent";
 
 vi.mock("../../services/agent", () => ({ sendAgentMessage: vi.fn() }));
+// The app's pickers open popovers; plain inputs stand in for them here.
+vi.mock("../DatePicker", () => ({
+  default: ({ value, onChange }: { value: string | null; onChange: (v: string | null) => void }) => (
+    <input data-testid="date-picker" value={value ?? ""} onChange={(e) => onChange(e.target.value || null)} />
+  ),
+}));
+vi.mock("../TimePicker", () => ({
+  default: ({ id, value, onChange }: { id?: string; value: string; onChange: (v: string) => void }) => (
+    <input id={id} value={value} onChange={(e) => onChange(e.target.value)} />
+  ),
+}));
 const send = vi.mocked(sendAgentMessage);
 
 describe("AgentPanel", () => {
@@ -73,7 +84,7 @@ describe("AgentPanel", () => {
     expect(await screen.findByText("Study session")).toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Add to Schedule" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
     await waitFor(() => expect(screen.getByText("Added to your Schedule")).toBeInTheDocument());
     expect(onConfirm).toHaveBeenCalledWith(proposal, 2026, "A");
   });
@@ -415,7 +426,7 @@ describe("AgentPanel", () => {
     expect(screen.queryByLabelText("Name")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Read chapter 3" } });
-    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-10-30" } });
+    fireEvent.change(screen.getByTestId("date-picker"), { target: { value: "2026-10-30" } });
     fireEvent.click(screen.getByRole("button", { name: "Add task" }));
     await screen.findByText("Added to your planner");
     expect(onConfirm.mock.calls[0][0]).toMatchObject({ name: "Read chapter 3", dueDate: "2026-10-30" });
@@ -435,7 +446,7 @@ describe("AgentPanel", () => {
     expect(screen.getByText("No final exam date")).toBeInTheDocument();
     // Optional, so adding isn't blocked; the field is there to fill.
     expect(screen.getByRole("button", { name: "Add course" })).toBeEnabled();
-    fireEvent.change(screen.getByLabelText("Final exam (optional)"), { target: { value: "2027-02-10" } });
+    fireEvent.change(screen.getByTestId("date-picker"), { target: { value: "2027-02-10" } });
     fireEvent.click(screen.getByRole("button", { name: "Add course" }));
     await screen.findByText("Course added");
     expect(onConfirm.mock.calls[0][0]).toMatchObject({ action: "course", name: "Linear Algebra", dueDate: "2027-02-10" });
@@ -511,7 +522,7 @@ describe("AgentPanel", () => {
     expect(await screen.findByText("No date yet")).toBeInTheDocument();
     expect(screen.getByText("Pick a date.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add task" })).toBeDisabled();
-    fireEvent.change(screen.getByLabelText("Date"), { target: { value: "2026-10-29" } });
+    fireEvent.change(screen.getByTestId("date-picker"), { target: { value: "2026-10-29" } });
     expect(screen.getByRole("button", { name: "Add task" })).toBeEnabled();
   });
 

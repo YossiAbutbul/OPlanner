@@ -191,12 +191,11 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding-right: 2px;
-  scrollbar-width: thin;
+  /* Scrolls without a bar: the slots themselves show it's a list. */
+  scrollbar-width: none;
 }
 
-.tp-list::-webkit-scrollbar { width: 6px; }
-.tp-list::-webkit-scrollbar-thumb { background: var(--fill-3); border-radius: var(--radius-full); }
+.tp-list::-webkit-scrollbar { display: none; }
 
 .tp-slot {
   background: transparent;
@@ -253,4 +252,27 @@
   .tp-input-ok {
     width: 40px;
   }
+}
+
+/* Dark material for pickers opened from the dark right sidebar, matching
+   DatePicker's. */
+.tp-popover-dark {
+  color-scheme: dark;
+  --popover-bg: rgba(34, 36, 41, 0.92);
+  --popover-border: rgba(255, 255, 255, 0.1);
+  --popover-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3),
+    0 14px 36px rgba(0, 0, 0, 0.5);
+  --label: #f2f2f4;
+  --label-2: #c9cad0;
+  --label-3: #9a9ca3;
+  --separator: rgba(255, 255, 255, 0.075);
+  --fill: rgba(255, 255, 255, 0.05);
+  --fill-2: rgba(255, 255, 255, 0.085);
+  --fill-3: rgba(255, 255, 255, 0.12);
+  --surface: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.24);
+  --accent-text: #3ddc78;
+  --accent-tint: rgba(29, 185, 84, 0.16);
+  --accent-tint-strong: rgba(29, 185, 84, 0.26);
 }

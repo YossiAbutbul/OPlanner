@@ -15,6 +15,7 @@ interface Props {
 }
 
 const POPOVER_WIDTH = 180;
+const SIDEBAR_MIN_WIDTH = 120;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -47,7 +48,8 @@ const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, pla
   const SLOTS = useMemo(() => buildSlots(step), [step]);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  // `dark`: opened from the always-dark right sidebar, like DatePicker.
+  const [pos, setPos] = useState<{ top: number; left: number; width: number; dark: boolean } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -66,13 +68,15 @@ const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, pla
       const above = rect.top;
       const openUp = below < popH + 12 && above > below;
       const top = openUp ? rect.top - popH - 6 : rect.bottom + 6;
+      // In the narrow right sidebar: exactly as wide as the field, and kept
+      // inside the sidebar's edges.
+      const sidebar = wrapRef.current?.closest(".rs")?.getBoundingClientRect();
+      const width = sidebar ? Math.max(SIDEBAR_MIN_WIDTH, rect.width) : POPOVER_WIDTH;
+      const minLeft = sidebar ? sidebar.left + 8 : 8;
+      const maxLeft = (sidebar ? sidebar.right : window.innerWidth) - width - 8;
       // Right-align popover to trigger's right edge.
-      const desiredLeft = rect.right - POPOVER_WIDTH;
-      const left = Math.min(
-        Math.max(8, desiredLeft),
-        window.innerWidth - POPOVER_WIDTH - 8
-      );
-      setPos({ top, left });
+      const left = Math.min(Math.max(minLeft, rect.right - width), maxLeft);
+      setPos({ top, left, width, dark: !!sidebar });
     };
     update();
     const raf = requestAnimationFrame(update);
@@ -210,10 +214,10 @@ const TimePicker: React.FC<Props> = ({ value, onChange, label, id, disabled, pla
       {open && pos && createPortal(
         <div
           ref={popRef}
-          className="tp-popover"
+          className={`tp-popover${pos.dark ? " tp-popover-dark" : ""}`}
           role="dialog"
           aria-label="Pick time"
-          style={{ top: pos.top, left: pos.left, width: POPOVER_WIDTH }}
+          style={{ top: pos.top, left: pos.left, width: pos.width }}
         >
           <div className="tp-input-row">
             <input
