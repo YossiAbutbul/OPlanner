@@ -463,7 +463,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                     key={text}
                     type="button"
                     className="rs-agent-chip"
-                    style={{ animationDelay: `${60 + i * 40}ms` }}
+                    style={{ animationDelay: `${60 + (SUGGESTIONS.length - 1 - i) * 55}ms` }}
                     onClick={() => pickSuggestion(text)}
                     disabled={!ready || busy}
                   >
