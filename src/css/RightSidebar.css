@@ -1222,12 +1222,14 @@
   }
 }
 
+/* Pill field with the send button inset concentrically: outer radius =
+   button radius (16px) + padding (6px). */
 .rs-agent-form {
   display: flex;
   align-items: flex-end;
-  gap: 0.4rem;
-  padding: 0.45rem;
-  border-radius: 16px;
+  gap: 0.25rem;
+  padding: 6px;
+  border-radius: 22px;
   background: var(--rs-elev);
   border: 1px solid var(--rs-border);
 }
@@ -1246,8 +1248,9 @@
   color: var(--rs-text);
   font: inherit;
   font-size: 0.86rem;
-  line-height: 1.4;
-  padding: 0.35rem 0.4rem;
+  line-height: 20px;
+  min-height: 32px;
+  padding: 6px 4px 6px 10px;
   max-height: 7.5rem;
   field-sizing: content;
 }
@@ -1257,11 +1260,13 @@
 }
 
 .rs-agent-send {
-  flex: 0 0 auto;
+  /* Reset the global button padding so it stays a circle. */
+  flex: 0 0 32px;
   display: grid;
   place-items: center;
   width: 32px;
   height: 32px;
+  padding: 0;
   border: none;
   border-radius: 50%;
   background: var(--rs-accent);
