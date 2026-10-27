@@ -1,16 +1,28 @@
+/* Bottom-right corner of the main page, just left of the right sidebar,
+   next to the actions toasts report on and clear of the Schedule and the
+   AI Assistant. Below 1025px the sidebar is a drawer, so the stack sits in
+   the window's corner instead. */
 .toast-stack {
   position: fixed;
   bottom: 1.25rem;
-  right: 1.25rem;
+  /* The sidebar's width var is its content box: add its side padding
+     (0.85rem each) and 1px border to clear its real edge. */
+  right: calc(var(--rsidebar-w) + 1.7rem + 1px + 0.6rem);
   display: flex;
-  /* Newest toast stays closest to the corner ג€” stack grows upward. */
+  /* Newest toast stays closest to the corner; the stack grows upward. */
   flex-direction: column-reverse;
   gap: 0.65rem;
   z-index: var(--z-toast);
-  /* Match the right sidebar's width so toasts line up under it. */
-  width: var(--rsidebar-w);
-  max-width: calc(100vw - 2rem);
+  width: 340px;
+  max-width: calc(100vw - var(--rsidebar-w) - 3.55rem - 1px);
   pointer-events: none;
+}
+
+@media (max-width: 1024px) {
+  .toast-stack {
+    right: 1.25rem;
+    max-width: calc(100vw - 2rem);
+  }
 }
 
 .toast {
@@ -216,16 +228,8 @@
   }
 }
 
-/* Keep toasts off the Assistant's input. The stack sits in the sidebar's
-   corner, so while the Assistant tab is showing it lifts to just above the
-   field (the sidebar's bottom padding + the 38px field + a gap). Below
-   1024px the sidebar is a drawer, so only while it's open. */
-@media (min-width: 1025px) {
-  body:has(.rs-agent-wrap:not([hidden])) .toast-stack {
-    bottom: calc(1rem + 38px + 0.75rem);
-  }
-}
-
+/* Drawer layout: the open drawer covers the window's corner, so while the
+   AI Assistant shows there the stack lifts above its input. */
 @media (max-width: 1024px) {
   body:has(.rs.mobile-open .rs-agent-wrap:not([hidden])) .toast-stack {
     bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem + 38px + 0.75rem);
