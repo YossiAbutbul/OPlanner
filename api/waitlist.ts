@@ -16,14 +16,24 @@ import { cleanName, takeEmailSlot, waitlistEmail } from "../server/waitlist.js";
 const sendEmail = async (message: { subject: string; text: string }) => {
   const key = process.env.RESEND_API_KEY;
   const to = process.env.WAITLIST_NOTIFY_EMAIL;
-  if (!key || !to) return;
+  if (!key || !to) {
+    console.warn("Waitlist: email skipped, RESEND_API_KEY or WAITLIST_NOTIFY_EMAIL is not set");
+    return;
+  }
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     // resend.dev is Resend's shared sender; it can mail the account's own address.
     body: JSON.stringify({ from: "OPlanner <onboarding@resend.dev>", to: [to], ...message }),
   });
-  if (!res.ok) console.error("Waitlist: email failed", res.status);
+  if (res.ok) {
+    console.info("Waitlist: owner emailed");
+    return;
+  }
+  // Resend's error says why (e.g. the test sender only mails the account's
+  // own address). It holds no secrets; keep it short.
+  const detail = (await res.text().catch(() => "")).slice(0, 300);
+  console.error("Waitlist: email failed", res.status, detail);
 };
 
 export async function POST(request: Request): Promise<Response> {
@@ -42,10 +52,14 @@ export async function POST(request: Request): Promise<Response> {
     notify = await db().runTransaction(async (tx) => {
       const [snap, meta] = await Promise.all([tx.get(ref), tx.get(metaRef)]);
       // Asking again changes nothing and sends nothing.
-      if (snap.exists) return false;
+      if (snap.exists) {
+        console.info("Waitlist: already on the list, no email");
+        return false;
+      }
       const slot = takeEmailSlot(meta.data(), Date.now());
       tx.set(ref, { ...entry, requestedAt: FieldValue.serverTimestamp() });
       if (slot.notify) tx.set(metaRef, slot.next);
+      else console.warn("Waitlist: daily email cap reached, saved without email");
       return slot.notify;
     });
   } catch (err) {
