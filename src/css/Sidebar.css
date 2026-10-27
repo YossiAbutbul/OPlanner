@@ -1049,6 +1049,31 @@ button:focus:not(:focus-visible) { outline: none; }
   transform: translateX(12px);
 }
 
+/* Running version, trailing the Check for updates row. */
+.settings-version {
+  margin-left: auto;
+  padding-left: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-spin {
+  animation: settings-spin 0.9s linear infinite;
+}
+
+@keyframes settings-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-spin {
+    animation: none;
+  }
+}
+
 .settings-menu button:disabled {
   opacity: 0.5;
   cursor: not-allowed;

@@ -1,6 +1,22 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { readFileSync } from 'node:fs';
+
+// The app's version, from package.json. Bump it there to ship a release:
+// the Release workflow tags and publishes it when it reaches main.
+const APP_VERSION: string = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version;
+
+// version.json next to index.html names the deployed build, so a running
+// app can tell what a waiting update is (and check without a service
+// worker). Not precached, so it always reflects the newest deploy.
+const versionFile = (): Plugin => ({
+  name: 'version-file',
+  apply: 'build',
+  generateBundle() {
+    this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ version: APP_VERSION }) });
+  },
+});
 
 // The CSP meta in index.html allows bare ws:/wss: so Vite's HMR websocket
 // works in dev. Production has no HMR, and an open ws:/wss: would let an
@@ -25,9 +41,13 @@ export default defineConfig(({ mode }) => {
 
   return {
     base,
+    define: {
+      __APP_VERSION__: JSON.stringify(APP_VERSION),
+    },
     plugins: [
       react(),
       tightenCspForProd(),
+      versionFile(),
       VitePWA({
         // 'prompt' here really means "apply on next launch": the new SW
         // downloads in the background and waits; we never show a prompt or

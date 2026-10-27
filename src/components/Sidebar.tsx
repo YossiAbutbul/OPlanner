@@ -3,7 +3,8 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Sun, Moon, LayoutGrid, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Sun, Moon, LayoutGrid, MoreVertical, Pencil, Trash2, RefreshCw } from "lucide-react";
+import { useUpdate } from "../context/UpdateContext";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useConfettiPref } from "../hooks/useConfettiPref";
 import { useThemePref } from "../hooks/useThemePref";
@@ -72,6 +73,22 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const toast = useToast();
+  const update = useUpdate();
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  // Checks now instead of waiting for the hourly or on-focus check. A newer
+  // build shows the Update banner; this row then applies it directly.
+  const onCheckForUpdates = async () => {
+    if (update.needRefresh) {
+      update.applyUpdate();
+      return;
+    }
+    setCheckingUpdate(true);
+    const result = await update.checkForUpdates();
+    setCheckingUpdate(false);
+    setSettingsOpen(false);
+    if (result === "current") toast.success(`You're on the latest version (${update.version})`);
+    else if (result === "offline") toast.error("Couldn't check for updates. Check your connection.");
+  };
   const { canInstall, installed, promptInstall } = useInstallPrompt();
   const [installHelpOpen, setInstallHelpOpen] = useState(false);
   const [confettiOn, setConfettiOn] = useConfettiPref();
@@ -460,6 +477,19 @@ const Sidebar: React.FC<SidebarProps> = ({
               </button>
             )}
             <div className="settings-menu-divider"></div>
+            <button onClick={() => void onCheckForUpdates()} disabled={checkingUpdate}>
+              <RefreshCw size={15} className={checkingUpdate ? "settings-spin" : undefined} />
+              <span>
+                {checkingUpdate
+                  ? "Checking…"
+                  : update.needRefresh
+                    ? update.nextVersion
+                      ? `Update to ${update.nextVersion}`
+                      : "Update now"
+                    : "Check for updates"}
+              </span>
+              <span className="settings-version">v{update.version}</span>
+            </button>
             <button
               onClick={() => {
                 setSettingsOpen(false);

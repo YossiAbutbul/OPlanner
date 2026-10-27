@@ -20,6 +20,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { CoinsProvider } from "./context/CoinsContext";
 import { PomodoroProvider } from "./context/PomodoroContext";
 import { NotificationProvider } from "./context/NotificationContext";
+import { UpdateProvider } from "./context/UpdateContext";
 
 // Mobile debug console: dev builds only, visit ?debug=1 to enable on phones.
 if (import.meta.env.DEV && new URLSearchParams(location.search).get("debug") === "1") {
@@ -39,6 +40,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <ErrorBoundary>
       {isKnownRoute ? (
         <ToastProvider>
+          <UpdateProvider>
           <AuthProvider>
             <CoinsProvider>
               <PomodoroProvider>
@@ -54,6 +56,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
               </PomodoroProvider>
             </CoinsProvider>
           </AuthProvider>
+          </UpdateProvider>
         </ToastProvider>
       ) : (
         <NotFound />
