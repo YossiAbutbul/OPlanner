@@ -28,6 +28,9 @@ export interface StudyAlert {
 
 const DAY_MS = 86_400_000;
 
+// The planner stores finished tasks as COMPLETED; the Assistant says DONE.
+export const isDone = (t: { status: string }) => t.status === "COMPLETED" || t.status === "DONE";
+
 // A course's Final Exam task (id "final-exam"), or anything named as an
 // exam: something to study for, not hand in.
 export const isExam = (t: AlertTask) =>
@@ -76,7 +79,7 @@ export const studyAlerts = (
   limit = 2
 ): StudyAlert[] => {
   const today = ymd(now);
-  const open = tasks.filter((t) => t.status !== "DONE" && t.dueDate && t.dueDate >= today);
+  const open = tasks.filter((t) => !isDone(t) && t.dueDate && t.dueDate >= today);
 
   const unplanned = open
     .map((t) => ({ t, days: daysBetween(today, t.dueDate) }))

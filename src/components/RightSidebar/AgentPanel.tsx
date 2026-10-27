@@ -186,7 +186,7 @@ const editChanges = (p: AgentProposal): { label: string; from: string; to: strin
   if (!prev) return [];
   const timeOf = (t: { startTime?: string; endTime?: string }) =>
     t.startTime ? (t.endTime ? `${t.startTime}–${t.endTime}` : t.startTime) : "No time";
-  const statusOf = (s: string) => (s === "DONE" ? "Done" : "Pending");
+  const statusOf = (s: string) => (s === "DONE" || s === "COMPLETED" ? "Done" : "Pending");
   const rows = [
     { label: "Course", from: capitalizeWords(prev.course), to: capitalizeWords(p.course) },
     { label: "Name", from: prev.name, to: p.name },
@@ -232,7 +232,7 @@ const KIND: Record<CardKind, { label: string; action: string; working: string; d
     icon: <svg {...ICON_PROPS}><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z" /><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3" /><path d="M9 7h6" /></svg>,
   },
   block: {
-    label: "Study session", action: "Add", working: "Adding…", doneText: "Added to your Schedule",
+    label: "Study session", action: "Add", working: "Adding…", doneText: "Added to your tasks",
     icon: <svg {...ICON_PROPS}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>,
   },
   delete: {
@@ -789,7 +789,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                           <span className="rs-agent-card-meta">
                             {shown.dueDate ? formatDate(shown.dueDate) : "No date yet"}
                             {formatTime(shown) && <span className="rs-agent-card-time">{formatTime(shown)}</span>}
-                            {shown.status === "DONE" && <span className="rs-agent-card-time">Done</span>}
+                            {(shown.status === "DONE" || shown.status === "COMPLETED") && <span className="rs-agent-card-time">Done</span>}
                           </span>
                         </>
                       )}

@@ -478,13 +478,14 @@ const DayPanel: React.FC<Props> = ({
                   {compact ? (
                     <div className="rs-day-event-compact-row">
                       <span className="rs-day-event-title">{t.name}</span>
-                      <span className="rs-day-event-meta">{startHHmm}–{endHHmm}</span>
+                      <span className="rs-day-event-meta" dir="ltr">{startHHmm}–{endHHmm}</span>
                     </div>
                   ) : (
                     <>
                       <div className="rs-day-event-title">{t.name}</div>
                       <div className="rs-day-event-meta">
-                        {startHHmm}–{endHHmm} · {capitalizeWords(t.course)}
+                        {/* Times read left to right even in a Hebrew row. */}
+                        <bdi dir="ltr">{startHHmm}–{endHHmm}</bdi> · {capitalizeWords(t.course)}
                       </div>
                     </>
                   )}
@@ -530,13 +531,13 @@ const DayPanel: React.FC<Props> = ({
                   {compact ? (
                     <div className="rs-day-event-compact-row">
                       <span className="rs-day-event-title">{b.title}</span>
-                      <span className="rs-day-event-meta">{startHHmm}–{endHHmm}</span>
+                      <span className="rs-day-event-meta" dir="ltr">{startHHmm}–{endHHmm}</span>
                     </div>
                   ) : (
                     <>
                       <div className="rs-day-event-title">{b.title}</div>
                       <div className="rs-day-event-meta">
-                        {startHHmm}–{endHHmm}
+                        <bdi dir="ltr">{startHHmm}–{endHHmm}</bdi>
                       </div>
                     </>
                   )}

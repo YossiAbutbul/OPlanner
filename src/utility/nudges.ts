@@ -3,7 +3,7 @@
 // (exams aside: their date passing is the answer), and opening a new week with what's due in it. One at a time; each is
 // shown until answered or closed.
 
-import { countPhrase, isExam, type AlertTask } from "./studyAlerts";
+import { countPhrase, isDone, isExam, type AlertTask } from "./studyAlerts";
 
 export interface NudgeTask extends AlertTask {
   id: string;
@@ -30,7 +30,7 @@ const LOOKBACK_DAYS = 14;
 
 export const pickNudge = (tasks: NudgeTask[], now: Date, seen: ReadonlySet<string>): Nudge | null => {
   const today = ymd(now);
-  const open = tasks.filter((t) => t.status !== "DONE" && t.dueDate);
+  const open = tasks.filter((t) => !isDone(t) && t.dueDate);
 
   // The most recent miss first: it's the one most likely still fixable.
   const missed = open

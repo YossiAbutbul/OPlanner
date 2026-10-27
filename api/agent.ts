@@ -94,7 +94,8 @@ const semesterData = (uid: string, year: number, semester: string) => {
             dueDate: typeof t.dueDate === "string" ? t.dueDate : "",
             ...(typeof t.startTime === "string" ? { startTime: t.startTime } : {}),
             ...(typeof t.endTime === "string" ? { endTime: t.endTime } : {}),
-            status: typeof t.status === "string" ? t.status : "PENDING",
+            // Stored as COMPLETED; the model's tools speak DONE/PENDING.
+            status: t.status === "COMPLETED" || t.status === "DONE" ? "DONE" : "PENDING",
           };
         })
       );
@@ -163,7 +164,20 @@ const runTool = async (
         if (!match) return { content: `No course named "${p.value.course}". Use list_courses.`, isError: true };
         course = match.name;
       }
-      const clash = (await data.loadTimeBlocks()).find(
+      // Busy: anything on their Schedule, and open tasks with set hours
+      // (all-day ones, 07:00-23:00 or no times, don't take up the day).
+      const blocks = (await data.loadTimeBlocks()).map((b) => ({ ...b }));
+      const timed = (await data.loadTasks())
+        .filter(
+          (t) =>
+            t.status !== "DONE" &&
+            t.dueDate === date &&
+            t.startTime &&
+            t.endTime &&
+            !(t.startTime === "07:00" && t.endTime === "23:00")
+        )
+        .map((t) => ({ date: t.dueDate, title: t.name, startTime: t.startTime!, endTime: t.endTime! }));
+      const clash = [...blocks, ...timed].find(
         (b) => b.date === date && b.startTime < endTime && startTime < b.endTime
       );
       if (clash) {
@@ -173,7 +187,7 @@ const runTool = async (
         };
       }
       return {
-        content: "Proposal shown to the student. It's added to their Schedule only if they confirm.",
+        content: "Proposal shown to the student. It's added as a task only if they confirm.",
         proposal: { action: "block", course, name: title, dueDate: date, startTime, endTime, status: "PENDING" },
       };
     }

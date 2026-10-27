@@ -65,7 +65,7 @@ describe("AgentPanel", () => {
     expect(screen.getByPlaceholderText("Open a semester first")).toBeDisabled();
   });
 
-  it("adds a proposed study session to the Schedule after confirming", async () => {
+  it("adds a proposed study session as a task after confirming", async () => {
     const proposal = {
       action: "block" as const,
       course: "calculus",
@@ -85,7 +85,7 @@ describe("AgentPanel", () => {
     expect(onConfirm).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
-    await waitFor(() => expect(screen.getByText("Added to your Schedule")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Added to your tasks")).toBeInTheDocument());
     expect(onConfirm).toHaveBeenCalledWith(proposal, 2026, "A");
   });
 

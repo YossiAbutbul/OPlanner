@@ -5,7 +5,6 @@ import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
 import { requireUid } from "../firebase";
 import { createTaskRef } from "../services/homework";
-import { generateTimeBlockId } from "../services/timeBlocks";
 import { fetchAgentAccess, type AgentAccess, type AgentProposal } from "../services/agent";
 import { lsCache } from "../hooks/useLocalStorageCache";
 
@@ -221,18 +220,21 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   // Resolves with the saved task's id, so the card can follow the task.
   const confirmProposal = async (p: AgentProposal, year: number, semester: string): Promise<string | void> => {
     // A study session goes into the Schedule, not the task list.
+    // A planned study session is a task like any other: in its course (or
+    // a reminder when it isn't about one), with the session's times, so it
+    // shows in Up next, the calendar and the course's list.
     if (p.action === "block") {
       if (!p.startTime || !p.endTime) throw new Error("A study session needs a start and end time.");
-      await saveBlock({
-        id: generateTimeBlockId(requireUid()),
-        date: p.dueDate,
-        startTime: p.startTime,
-        endTime: p.endTime,
-        title: p.name,
-        ...(p.course ? { courseId: p.course } : {}),
-      });
-      toast.success("Added to your Schedule");
-      return;
+      const course = p.course || "reminders";
+      const id = createTaskRef(requireUid(), year, semester, course).id;
+      try {
+        await addHomework(id, p.name, p.dueDate, "PENDING", year, semester, course, false, undefined, p.startTime, p.endTime);
+      } catch (e) {
+        toast.error(`Couldn't add “${p.name}”`);
+        throw e;
+      }
+      toast.success(`Task “${p.name}” added`);
+      return id;
     }
     if (p.action === "course") {
       const key =
@@ -280,7 +282,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         taskId,
         p.name,
         p.dueDate,
-        p.status,
+        // The Assistant says DONE; the planner stores COMPLETED.
+        p.status === "DONE" ? "COMPLETED" : "PENDING",
         year,
         semester,
         p.course,
