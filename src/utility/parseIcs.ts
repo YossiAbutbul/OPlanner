@@ -6,6 +6,7 @@ export interface IcsEvent {
   location: string;
   startDate: string; // YYYY-MM-DD
   startTime: string | null; // HH:MM or null (all-day)
+  endTime?: string | null; // HH:MM when DTEND is a time on the same day
   category: IcsCategory;
   course: string | null;
   courseNumber: string | null;
@@ -92,6 +93,8 @@ export const parseIcs = (raw: string): IcsEvent[] => {
     let location = "";
     let startDate = "";
     let startTime: string | null = null;
+    let endDate = "";
+    let endTime: string | null = null;
 
     for (const line of lines) {
       const { key, value, params } = stripParam(line);
@@ -102,6 +105,10 @@ export const parseIcs = (raw: string): IcsEvent[] => {
         const r = parseDtStart(value, params);
         startDate = r.date;
         startTime = r.time;
+      } else if (key === "DTEND") {
+        const r = parseDtStart(value, params);
+        endDate = r.date;
+        endTime = r.time;
       }
     }
 
@@ -114,6 +121,7 @@ export const parseIcs = (raw: string): IcsEvent[] => {
       location,
       startDate,
       startTime,
+      endTime: endDate === startDate && startTime && endTime && endTime > startTime ? endTime : null,
       category: categorize(summary),
       course,
       courseNumber,

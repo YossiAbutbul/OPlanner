@@ -162,3 +162,52 @@ describe("buildTaskName", () => {
       .toBe("Event");
   });
 });
+
+describe("Open University calendar export", () => {
+  // Shapes taken from a real export: a timed lecture, an assignment
+  // deadline and a course-less academic date.
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "BEGIN:VEVENT",
+    "SUMMARY;LANGUAGE=he:מפגש",
+    "DESCRIPTION;LANGUAGE=he:אלגוריתמים (20417) בסמסטר א2027",
+    "LOCATION;LANGUAGE=he:מרכז לימוד תל אביב - קמפוס רמת אביב (630) בקבוצה 03",
+    "DTSTART:20261026T163000",
+    "DTEND:20261026T190000",
+    "END:VEVENT",
+    "BEGIN:VEVENT",
+    'SUMMARY;LANGUAGE=he:מועד אחרון להגשת ממ"ן',
+    "DESCRIPTION;LANGUAGE=he:קורס אלגוריתמים (20417) בסמסטר א2027 מטלה 01",
+    "DTSTART;VALUE=DATE:20261113",
+    "DTEND;VALUE=DATE:20261114",
+    "END:VEVENT",
+    "BEGIN:VEVENT",
+    "SUMMARY;LANGUAGE=he:התחלת סמסטר",
+    'DESCRIPTION;LANGUAGE=he:סתיו תשפ"ז (א2027) ',
+    "DTSTART;VALUE=DATE:20261025",
+    "DTEND;VALUE=DATE:20261026",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+  const [lecture, deadline, academic] = parseIcs(ics);
+
+  it("reads a lecture's start and end time and its course", () => {
+    expect(lecture).toMatchObject({
+      category: "meeting",
+      startDate: "2026-10-26",
+      startTime: "16:30",
+      endTime: "19:00",
+      course: "אלגוריתמים",
+      semester: "Semester A",
+      year: 2027,
+    });
+  });
+
+  it("keeps all-day deadlines without an end time", () => {
+    expect(deadline).toMatchObject({ category: "maman", startTime: null, endTime: null, taskNumber: "01" });
+  });
+
+  it("leaves academic dates without a course", () => {
+    expect(academic).toMatchObject({ category: "other", course: null, startDate: "2026-10-25" });
+  });
+});

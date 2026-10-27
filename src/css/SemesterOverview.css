@@ -1054,86 +1054,251 @@
   opacity: 0;
 }
 
-/* Empty-semester state — same plain card as the rest of the overview */
-.overview-empty {
+/* Empty semester: a faint preview of the finished overview fills the page,
+   and a panel in front offers the two ways in, import first. */
+.ov-setup {
+  position: relative;
   margin-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 3rem 1.5rem;
-  background: var(--surface);
-  border: 1px solid var(--separator);
+  min-height: calc(100dvh - 12rem);
+  display: grid;
+  /* The panel sits at the top, where the overview's first cards would be. */
+  justify-items: center;
+  align-items: start;
+  padding: 1.25rem 1rem 2rem;
   border-radius: var(--radius-lg);
+  overflow: hidden;
   animation: overviewFadeUp var(--dur-3) var(--ease-out) both;
 }
 
-.overview-empty-art {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  margin-bottom: 1.2rem;
-  border-radius: var(--radius-xl);
-  color: var(--color-accent);
-  background: var(--accent-tint);
+.ov-setup-ghost {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 0.9rem;
+  pointer-events: none;
+  opacity: 0.55;
+  mask-image: radial-gradient(70% 60% at 50% 20%, rgba(0, 0, 0, 0.25), #000 85%);
 }
 
-.overview-empty-title {
-  margin: 0 0 0.5rem;
-  font-size: var(--text-xl);
-  line-height: var(--leading-snug);
-  letter-spacing: var(--tracking-title);
-  font-weight: 700;
+.ov-ghost-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 0.9rem;
+}
+
+.ov-ghost-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.1rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--separator);
+}
+
+.ov-ghost-card i {
+  display: block;
+}
+
+.ov-ghost-line {
+  height: 9px;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+.ov-ghost-line.tall {
+  height: 22px;
+  border-radius: 7px;
+}
+
+.ov-ghost-line.w20 { width: 20%; }
+.ov-ghost-line.w30 { width: 30%; }
+.ov-ghost-line.w55 { width: 55%; }
+.ov-ghost-line.w60 { width: 60%; }
+.ov-ghost-line.w70 { width: 70%; }
+.ov-ghost-line.w80 { width: 80%; }
+
+.ov-ghost-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-tint) 45%, var(--surface-3) 45%);
+}
+
+.ov-ghost-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.ov-ghost-stats i {
+  height: 46px;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.ov-ghost-cal {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 4px;
+}
+
+.ov-ghost-cal i {
+  border-radius: 6px;
+  background: var(--surface-2);
+  min-height: 34px;
+}
+
+/* The panel in front: the choices, on a solid card with real depth. */
+.ov-setup-panel {
+  position: relative;
+  width: min(560px, 100%);
+  padding: 2rem 1.75rem 1.5rem;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  border: 1px solid var(--separator);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 24px 60px -24px rgba(0, 0, 0, 0.28);
+  text-align: center;
+}
+
+.ov-setup-title {
+  margin: 0;
+  font-size: var(--text-2xl);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 750;
   color: var(--label);
 }
 
-.overview-empty-text {
-  margin: 0 auto 0.5rem;
-  max-width: 46ch;
+.ov-setup-text {
+  margin: 0.55rem auto 0;
+  max-width: 42ch;
   color: var(--label-3);
   font-size: 0.95rem;
   line-height: 1.55;
 }
 
-.overview-empty-text strong {
+.ov-setup-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  text-align: start;
+}
+
+.ov-choice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--separator);
+  background: var(--surface-2);
   color: var(--label);
-  font-weight: 600;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-1) var(--ease-out),
+    background-color var(--dur-1) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out),
+    transform 120ms var(--ease-out);
 }
 
-.overview-empty-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  justify-content: center;
-  margin-top: 1.4rem;
+.ov-choice:hover {
+  border-color: var(--border-strong);
+  box-shadow: 0 10px 24px -14px rgba(0, 0, 0, 0.35);
 }
 
-.overview-empty-hints {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.6rem 1.4rem;
-  list-style: none;
-  margin: 1.8rem 0 0;
-  padding: 1.4rem 0 0;
-  width: 100%;
-  max-width: 540px;
-  border-top: 1px solid var(--separator);
+.ov-choice:active {
+  transform: scale(0.98);
 }
 
-.overview-empty-hints li {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: var(--label-3);
-  font-size: 0.85rem;
-  font-weight: 500;
+.ov-choice:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
-.overview-empty-hints svg {
+.ov-choice-primary {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--surface));
+}
+
+.ov-choice-primary:hover {
+  border-color: var(--color-accent);
+}
+
+.ov-choice-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 0.35rem;
+  border-radius: 11px;
   color: var(--color-accent);
+  background: var(--accent-tint);
+}
+
+.ov-choice-primary .ov-choice-icon {
+  color: #fff;
+  background: var(--color-accent);
+}
+
+.ov-choice-badge {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--color-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.ov-choice-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.ov-choice-text {
+  color: var(--label-3);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.ov-setup-foot {
+  margin: 1.1rem 0 0;
+  color: var(--label-3);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 640px) {
+  .ov-setup-choices {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ov-ghost-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ov-setup-panel {
+    padding: 1.5rem 1.1rem 1.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ov-setup,
+  .ov-choice {
+    animation: none;
+    transition: none;
+  }
 }
 
 /* Entry animation for overview cards */

@@ -17,7 +17,7 @@ import AddCourseModal from "./SemesterOverview/AddCourseModal";
 import OverviewSkeleton from "./SemesterOverview/OverviewSkeleton";
 import { useSemesterStats } from "../hooks/useSemesterStats";
 import type { CourseInfo, HomeworkEntry } from "../types/models";
-import { BookPlus, CalendarClock, CalendarPlus, Download, ListChecks } from "lucide-react";
+import { BookPlus, Download } from "lucide-react";
 import "../css/SemesterOverview.css";
 
 interface Props {
@@ -193,45 +193,71 @@ const SemesterOverview: React.FC<Props> = ({
       />
 
       {isEmpty ? (
-        <section className="overview-empty">
-          <div className="overview-empty-art" aria-hidden="true">
-            <CalendarPlus size={32} strokeWidth={1.7} />
+        <section className="ov-setup">
+          {/* A faint picture of the finished overview, so the empty page
+              shows what the two choices below lead to. */}
+          <div className="ov-setup-ghost" aria-hidden="true">
+            <div className="ov-ghost-row">
+              <div className="ov-ghost-card">
+                <i className="ov-ghost-line w30 tall" />
+                <i className="ov-ghost-bar" />
+                <div className="ov-ghost-stats">
+                  <i />
+                  <i />
+                  <i />
+                </div>
+              </div>
+              <div className="ov-ghost-card">
+                <i className="ov-ghost-line w20" />
+                <i className="ov-ghost-line w70" />
+                <i className="ov-ghost-line w55" />
+              </div>
+            </div>
+            <div className="ov-ghost-row">
+              <div className="ov-ghost-card ov-ghost-cal">
+                {Array.from({ length: 35 }, (_, i) => (
+                  <i key={i} />
+                ))}
+              </div>
+              <div className="ov-ghost-card">
+                <i className="ov-ghost-line w30" />
+                <i className="ov-ghost-line w80" />
+                <i className="ov-ghost-line w80" />
+                <i className="ov-ghost-line w60" />
+              </div>
+            </div>
           </div>
-          <h2 className="overview-empty-title">Let's build {semester}</h2>
-          <p className="overview-empty-text">
-            No courses here yet. Add your first one to start tracking tasks,
-            counting down to finals and importing your calendar.
-          </p>
-          <div className="overview-empty-actions">
-            <button
-              className="overview-add-course"
-              onClick={() => setAddOpen(true)}
-            >
-              <BookPlus size={16} />
-              <span>Add your first course</span>
-            </button>
-            <button
-              className="overview-import"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Download size={16} />
-              <span>Import calendar</span>
-            </button>
+
+          <div className="ov-setup-panel">
+            <h2 className="ov-setup-title">Set up {semester}</h2>
+            <p className="ov-setup-text">
+              Bring in your courses to start tracking assignments, deadlines and finals.
+            </p>
+            <div className="ov-setup-choices">
+              <button
+                type="button"
+                className="ov-choice ov-choice-primary"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <span className="ov-choice-icon">
+                  <Download size={20} strokeWidth={2} />
+                </span>
+                <span className="ov-choice-badge">Recommended</span>
+                <span className="ov-choice-title">Import your calendar</span>
+                <span className="ov-choice-text">
+                  Upload the .ics from your university. Courses and deadlines appear in seconds.
+                </span>
+              </button>
+              <button type="button" className="ov-choice" onClick={() => setAddOpen(true)}>
+                <span className="ov-choice-icon">
+                  <BookPlus size={20} strokeWidth={2} />
+                </span>
+                <span className="ov-choice-title">Add a course</span>
+                <span className="ov-choice-text">Type a course name and add its tasks yourself.</span>
+              </button>
+            </div>
+            <p className="ov-setup-foot">You can add, rename or remove courses anytime.</p>
           </div>
-          <ul className="overview-empty-hints">
-            <li>
-              <ListChecks size={16} strokeWidth={2} />
-              Track every assignment
-            </li>
-            <li>
-              <CalendarClock size={16} strokeWidth={2} />
-              Live finals countdown
-            </li>
-            <li>
-              <CalendarPlus size={16} strokeWidth={2} />
-              One-click .ics import
-            </li>
-          </ul>
         </section>
       ) : !loaded ? (
         <OverviewSkeleton courses={courses} />
