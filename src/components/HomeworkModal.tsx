@@ -248,7 +248,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Enter homework name"
+        placeholder="Enter task name"
         autoComplete="off"
         autoFocus
       />
