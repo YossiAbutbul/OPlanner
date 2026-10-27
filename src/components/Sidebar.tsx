@@ -17,6 +17,7 @@ const FOCUS_TAB_ENABLED = false;
 import { useInstallPrompt } from "../hooks/useInstallPrompt";
 import InstallHelpModal from "./InstallHelpModal";
 import ReminderSettingsModal from "./ReminderSettingsModal";
+import DeleteAccountModal from "./DeleteAccountModal";
 import { deleteCourse, renameCourse } from "../utility/initializeDatabase";
 import { CourseInfo } from "../App";
 import { courseColor } from "../utility/courseColor";
@@ -87,6 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     return () => mq.removeEventListener("change", handle);
   }, []);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
 
   // DeleteModal tracks its own isLoading; we just await the delete promise.
@@ -460,6 +462,17 @@ const Sidebar: React.FC<SidebarProps> = ({
               <LogOut size={15} />
               <span>Sign out</span>
             </button>
+            <button
+              onClick={() => {
+                setSettingsOpen(false);
+                setDeleteAccountOpen(true);
+                onCloseMobile();
+              }}
+              className="danger"
+            >
+              <Trash2 size={15} />
+              <span>Delete account</span>
+            </button>
           </motion.div>
         )}
         </AnimatePresence>
@@ -572,6 +585,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       >
         <p>Are you sure you want to sign out? Your data will be saved before signing out.</p>
       </Modal>
+
+      {user?.email && (
+        <DeleteAccountModal
+          isOpen={deleteAccountOpen}
+          email={user.email}
+          onClose={() => setDeleteAccountOpen(false)}
+        />
+      )}
 
       <InstallHelpModal
         isOpen={installHelpOpen}

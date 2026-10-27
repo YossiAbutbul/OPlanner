@@ -719,3 +719,16 @@
 .app-modal .app-modal-body .tb-color-swatch-active {
   box-shadow: 0 0 0 2px var(--elevated), 0 0 0 4px var(--label-3);
 }
+
+/* Delete account dialog. */
+.delete-account-hint {
+  margin: 0.9rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--label-3);
+}
+
+.delete-account-error {
+  margin: 0.8rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--danger-text);
+}
