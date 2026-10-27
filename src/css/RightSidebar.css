@@ -1025,6 +1025,12 @@
   align-self: flex-end;
 }
 
+/* Each question starts a new group: a question sits close to its answer,
+   and clear space separates one exchange from the next. */
+.rs-agent-msg + .rs-agent-user {
+  margin-top: 1.1rem;
+}
+
 /* Replies read as plain text across the full width; only the user's own
    messages get a bubble. Green stays on actions (Confirm, send). */
 .rs-agent-assistant {
@@ -1056,6 +1062,46 @@
 
 /* Error notice: calm surface, the red is only on the icon so the message
    stays readable. Retry sits beside it. */
+/* Reply Markdown: the subset AgentText renders. */
+.rs-agent-md {
+  white-space: normal;
+}
+
+.rs-agent-md > * {
+  margin: 0;
+}
+
+.rs-agent-md > * + * {
+  margin-top: 0.55rem;
+}
+
+.rs-agent-md ol,
+.rs-agent-md ul {
+  padding-inline-start: 1.25rem;
+}
+
+.rs-agent-md li + li {
+  margin-top: 0.3rem;
+}
+
+.rs-agent-md li::marker {
+  color: var(--rs-text-muted);
+}
+
+.rs-agent-md strong,
+.rs-agent-md-h {
+  font-weight: 600;
+  color: var(--rs-text);
+}
+
+.rs-agent-md code {
+  padding: 0.05rem 0.3rem;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+
 .rs-agent-alert {
   display: flex;
   align-items: flex-start;
@@ -1135,6 +1181,11 @@
 .rs-agent-card-dismissed,
 .rs-agent-card-expired {
   opacity: 0.5;
+}
+
+.rs-agent-card-delete .rs-agent-card-icon {
+  color: var(--rs-danger);
+  background: color-mix(in srgb, var(--rs-danger) 16%, transparent);
 }
 
 .rs-agent-card-head {
@@ -1282,6 +1333,28 @@
 
 .rs-agent-btn-primary:hover:not(:disabled) {
   background: var(--rs-accent-hover);
+}
+
+.rs-agent-btn-danger {
+  background: color-mix(in srgb, var(--rs-danger) 18%, transparent);
+  color: #ff8a8a;
+}
+
+.rs-agent-btn-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--rs-danger) 28%, transparent);
+}
+
+/* Confirms every pending card in a reply; quieter than each card's own
+   button so it doesn't compete with them. */
+.rs-agent-btn-all {
+  flex: none;
+  align-self: stretch;
+  background: color-mix(in srgb, var(--rs-accent) 14%, transparent);
+  color: var(--rs-accent);
+}
+
+.rs-agent-btn-all:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--rs-accent) 22%, transparent);
 }
 
 .rs-agent-btn:disabled {
@@ -1438,4 +1511,38 @@
   .rs-agent-clear:active:not(:disabled) {
     transform: none;
   }
+}
+
+/* ===== Assistant waitlist (accounts without access) ===== */
+.rs-waitlist-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.35rem;
+  border-radius: 14px;
+  color: var(--rs-accent);
+  background: color-mix(in srgb, var(--rs-accent) 14%, transparent);
+}
+
+.rs-waitlist-btn {
+  flex: none;
+  margin-top: 0.6rem;
+  padding: 0.55rem 1.1rem;
+}
+
+.rs-waitlist-done {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--rs-ok);
+}
+
+.rs-waitlist-error {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  color: var(--rs-danger);
 }

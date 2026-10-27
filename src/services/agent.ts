@@ -4,6 +4,7 @@ import { auth } from "../firebase";
 // client only asks so it can show or hide the tab.
 
 export interface AgentProposal {
+  action?: "delete";  // omitted for create/edit
   id?: string;
   course: string;
   name: string;
@@ -50,14 +51,33 @@ const readJson = async (res: Response): Promise<Record<string, unknown> | null> 
   }
 };
 
-export const fetchAgentEnabled = async (): Promise<boolean> => {
+export interface AgentAccess {
+  enabled: boolean;
+  waitlisted: boolean;
+}
+
+// null when the server couldn't say (offline, error); keep what's known.
+export const fetchAgentAccess = async (): Promise<AgentAccess | null> => {
   try {
     const res = await fetch("/api/agent", { headers: await authHeader() });
     const body = await readJson(res);
-    return res.ok && body?.enabled === true;
+    if (!res.ok || !body) return null;
+    return { enabled: body.enabled === true, waitlisted: body.waitlisted === true };
   } catch {
-    return false;
+    return null;
   }
+};
+
+export const joinWaitlist = async (): Promise<void> => {
+  let res: Response;
+  try {
+    res = await fetch("/api/waitlist", { method: "POST", headers: await authHeader() });
+  } catch {
+    throw new Error("You're offline. Check your connection and try again.");
+  }
+  if (res.ok) return;
+  const body = await readJson(res);
+  throw new Error(typeof body?.error === "string" ? body.error : "Couldn't join the waitlist. Try again in a moment.");
 };
 
 const UNREACHABLE = "Couldn't reach the assistant. Try again in a moment.";

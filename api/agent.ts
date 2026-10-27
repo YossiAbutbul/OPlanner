@@ -10,9 +10,7 @@
 //   AGENT_ALLOWED_EMAILS      comma-separated emails that may use the agent
 //   FIREBASE_SERVICE_ACCOUNT  service account JSON (shared with send-reminders)
 import Anthropic from "@anthropic-ai/sdk";
-import { cert, getApps, initializeApp } from "firebase-admin/app";
-import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
-import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { FieldValue } from "firebase-admin/firestore";
 import {
   MAX_BODY_BYTES,
   MAX_PROPOSALS,
@@ -26,58 +24,30 @@ import {
   costMicros,
   emptyUsage,
   filterTasks,
-  isAllowed,
   parseAgentRequest,
-  parseAllowlist,
   parseProposal,
   parseTaskFilter,
+  parseDeleteProposal,
+  filterTimeBlocks,
   takeRequest,
   type TaskProposal,
   type TaskView,
+  type TimeBlockView,
   type UsageState,
 } from "../server/agent.js";
-import { serviceAccount } from "../server/serviceAccount.js";
+import { authenticate, db, json } from "../server/firebaseAdmin.js";
 
 const REMINDERS = "reminders";
-
-const admin = () => {
-  if (getApps().length === 0) {
-    initializeApp({ credential: cert(serviceAccount()) });
-  }
-};
-const db = () => {
-  admin();
-  return getFirestore();
-};
 
 let anthropic: Anthropic | null = null;
 const claude = () => (anthropic ??= new Anthropic({ maxRetries: 1, timeout: 60_000 }));
 
-const json = (status: number, body: unknown, headers?: Record<string, string>) =>
-  Response.json(body, { status, headers: { "Cache-Control": "no-store", ...headers } });
-
-// Verified token of an allowed user, or the error response to send.
-const authenticate = async (
-  request: Request
-): Promise<{ user: DecodedIdToken; allowed: boolean } | Response> => {
-  const header = request.headers.get("authorization") ?? "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-  if (!token) return json(401, { error: "Sign in to use the assistant." });
-  admin();
-  try {
-    // checkRevoked: a signed-out or disabled account stops working at once.
-    const user = await getAuth().verifyIdToken(token, true);
-    const allowed = isAllowed(user.email, user.email_verified, parseAllowlist(process.env.AGENT_ALLOWED_EMAILS));
-    return { user, allowed };
-  } catch {
-    return json(401, { error: "Your session expired. Sign in again." });
-  }
-};
-
 export async function GET(request: Request): Promise<Response> {
   const auth = await authenticate(request);
   if (auth instanceof Response) return auth;
-  return json(200, { enabled: auth.allowed });
+  if (auth.allowed) return json(200, { enabled: true, waitlisted: false });
+  const entry = await db().collection("agentWaitlist").doc(auth.user.uid).get();
+  return json(200, { enabled: false, waitlisted: entry.exists });
 }
 
 // ---------------------------------------------------------------- data
@@ -122,7 +92,28 @@ const semesterData = (uid: string, year: number, semester: string) => {
       );
     }));
 
-  return { loadCourses, loadTasks };
+  // Time blocks aren't per semester; the date filter scopes them.
+  let blocks: Promise<TimeBlockView[]> | null = null;
+  const loadTimeBlocks = () =>
+    (blocks ??= db()
+      .collection(`users/${uid}/timeBlocks`)
+      .get()
+      .then((snap) =>
+        snap.docs.flatMap((d): TimeBlockView[] => {
+          const b = d.data();
+          if (typeof b.date !== "string" || typeof b.startTime !== "string" || typeof b.endTime !== "string") return [];
+          const course = typeof b.courseId === "string" ? b.courseId.split("|").pop() : undefined;
+          return [{
+            title: typeof b.title === "string" ? b.title.slice(0, 200) : "",
+            date: b.date,
+            startTime: b.startTime,
+            endTime: b.endTime,
+            ...(course ? { course } : {}),
+          }];
+        })
+      ));
+
+  return { loadCourses, loadTasks, loadTimeBlocks };
 };
 
 // A proposal the client shows as a confirm card. `prevCourse` is set when an
@@ -145,6 +136,32 @@ const runTool = async (
       const f = parseTaskFilter(input);
       if (!f.ok) return { content: f.error, isError: true };
       return { content: JSON.stringify(filterTasks(await data.loadTasks(), f.value)) };
+    }
+
+    case "list_time_blocks": {
+      const f = parseTaskFilter(input);
+      if (!f.ok) return { content: f.error, isError: true };
+      return { content: JSON.stringify(filterTimeBlocks(await data.loadTimeBlocks(), f.value)) };
+    }
+
+    case "propose_delete": {
+      const p = parseDeleteProposal(input);
+      if (!p.ok) return { content: p.error, isError: true };
+      const t = (await data.loadTasks()).find((x) => x.id === p.value.id);
+      if (!t) return { content: `No task with id "${p.value.id}". Use list_tasks.`, isError: true };
+      return {
+        content: "Proposal shown to the student. The task is deleted only if they confirm.",
+        proposal: {
+          action: "delete",
+          id: t.id,
+          course: t.course,
+          name: t.name,
+          dueDate: t.dueDate,
+          ...(t.startTime ? { startTime: t.startTime } : {}),
+          ...(t.endTime ? { endTime: t.endTime } : {}),
+          status: t.status === "DONE" ? "DONE" : "PENDING",
+        },
+      };
     }
 
     case "propose_task": {
@@ -177,7 +194,7 @@ const runTool = async (
         };
       }
       return {
-        content: "Proposal shown to the student. It is saved only if they tap Confirm.",
+        content: "Proposal shown to the student. It is saved only if they confirm.",
         proposal,
       };
     }
@@ -286,7 +303,9 @@ type AgentEvent =
 const TOOL_STATUS: Record<string, string> = {
   list_courses: "Reading your courses…",
   list_tasks: "Checking your tasks…",
+  list_time_blocks: "Checking your schedule…",
   propose_task: "Preparing a suggestion…",
+  propose_delete: "Preparing a suggestion…",
 };
 
 const describeError = (err: unknown): string => {
@@ -316,6 +335,10 @@ const runAgent = async (
       model: MODEL,
       max_tokens: MAX_TOKENS,
       system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+      // Second breakpoint on the last block: each tool round, and the next
+      // message, reads the conversation so far from cache instead of paying
+      // for it again.
+      cache_control: { type: "ephemeral" },
       tools: TOOLS,
       output_config: { effort: "low" },
       messages,
@@ -346,7 +369,7 @@ const runAgent = async (
       if (block.type !== "tool_use") continue;
       onStatus(TOOL_STATUS[block.name] ?? "Working…");
       const out: ToolOutcome =
-        block.name === "propose_task" && proposals.length >= MAX_PROPOSALS
+        block.name.startsWith("propose_") && proposals.length >= MAX_PROPOSALS
           ? { content: `At most ${MAX_PROPOSALS} proposals per reply. Stop proposing.`, isError: true }
           : await runTool(block.name, block.input, data);
       if (out.proposal) proposals.push(out.proposal);
