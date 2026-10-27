@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
-import { deleteAccount, usesPassword } from "../services/account";
+import { deleteAccount, resumePendingDeletion, usesPassword } from "../services/account";
 
 interface Props {
   isOpen: boolean;
   email: string;
   onClose: () => void;
+  // Back from the Google sign-in a deletion asked for: finish it.
+  resume?: boolean;
 }
 
 // Permanent, so it asks for the email typed out and a fresh sign-in.
-const DeleteAccountModal: React.FC<Props> = ({ isOpen, email, onClose }) => {
+const DeleteAccountModal: React.FC<Props> = ({ isOpen, email, onClose, resume = false }) => {
   const [typed, setTyped] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -23,6 +25,20 @@ const DeleteAccountModal: React.FC<Props> = ({ isOpen, email, onClose }) => {
     setError(null);
   }, [isOpen]);
 
+  // Signed out and the local cache is gone; start from a clean page.
+  const leave = () => window.location.replace(import.meta.env.BASE_URL);
+
+  useEffect(() => {
+    if (!isOpen || !resume) return;
+    setBusy(true);
+    resumePendingDeletion()
+      .then(leave)
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : "Couldn't delete your account. Try again.");
+        setBusy(false);
+      });
+  }, [isOpen, resume]);
+
   const confirmed = typed.trim().toLowerCase() === email.toLowerCase() && (!needsPassword || password.length > 0);
 
   const submit = async () => {
@@ -30,9 +46,9 @@ const DeleteAccountModal: React.FC<Props> = ({ isOpen, email, onClose }) => {
     setBusy(true);
     setError(null);
     try {
-      await deleteAccount(needsPassword ? password : undefined);
-      // Signed out and the local cache is gone; start from a clean page.
-      window.location.replace(import.meta.env.BASE_URL);
+      // A Google account may be sent to sign in again first; the page then
+      // leaves, and the deletion finishes when it comes back.
+      if ((await deleteAccount(needsPassword ? password : undefined)) === "deleted") leave();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't delete your account. Try again.");
       setBusy(false);
@@ -105,7 +121,7 @@ const DeleteAccountModal: React.FC<Props> = ({ isOpen, email, onClose }) => {
             />
           </>
         ) : (
-          <p className="delete-account-hint">You'll sign in with Google once more to confirm.</p>
+          <p className="delete-account-hint">If you signed in a while ago, Google will ask you to sign in again first.</p>
         )}
         {error && (
           <p className="delete-account-error" role="alert">

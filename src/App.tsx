@@ -176,6 +176,7 @@ const App: React.FC = () => {
         addingYear={tree.addingYear}
         treeLoading={tree.treeLoading}
         loadError={tree.loadError}
+        onAddYear={tree.handleAddYear}
         selectedYear={sel.selectedYear}
         selectedSemester={sel.selectedSemester}
         onSelectYear={sel.selectYear}

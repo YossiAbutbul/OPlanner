@@ -38,6 +38,8 @@ interface MainContentProps {
   onSelectSemester: (s: string) => void;
   onSelectCourse: (c: string) => void;
   onYearsChanged: () => void;
+  // Creates the next year; offered when the account has none.
+  onAddYear?: () => void;
   onDeleteYear: (year: number) => Promise<void>;
   onUpdateYearColor: (year: number, color: string | null) => Promise<void>;
   onUpdateSemesterColor: (year: number, semesterKey: string, color: string | null) => Promise<void>;
@@ -65,6 +67,7 @@ const MainContent: React.FC<MainContentProps> = ({
   addingYear,
   treeLoading = false,
   loadError = false,
+  onAddYear,
   selectedYear,
   selectedSemester,
   onSelectYear,
@@ -456,6 +459,16 @@ const MainContent: React.FC<MainContentProps> = ({
             </p>
             <button type="button" className="load-error-btn" onClick={() => window.location.reload()}>
               Try again
+            </button>
+          </div>
+        ) : !treeLoading && years.length === 0 && onAddYear ? (
+          // No years (a first-run setup that never finished, or the user
+          // deleted them all): offer the way forward instead of a blank page.
+          <div className="load-error">
+            <p className="load-error-title">Start your first year</p>
+            <p className="load-error-text">A year comes with three semesters. Add your courses after that.</p>
+            <button type="button" className="load-error-btn" onClick={onAddYear} disabled={addingYear}>
+              {addingYear ? "Adding…" : "Add year"}
             </button>
           </div>
         ) : treeLoading ? (
