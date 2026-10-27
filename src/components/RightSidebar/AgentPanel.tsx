@@ -195,6 +195,8 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
   // the unsent text to come back to.
   const [recall, setRecall] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
+  const lastRecall = useRef(0);
+  if (recall !== null) lastRecall.current = recall;
 
   const remember = (message: string) =>
     setSent((prev) => {
@@ -623,9 +625,16 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
             }
           }}
         />
-        {recall !== null && (
-          <span className="rs-agent-recall" aria-live="polite" aria-label={`Message ${recall + 1} of ${sent.length}`}>
-            History {recall + 1}/{sent.length}
+        {sent.length > 0 && (
+          // Stays mounted so it can open and close smoothly; keeps showing the
+          // last position while it closes.
+          <span
+            className={`rs-agent-recall${recall !== null ? " is-on" : ""}`}
+            aria-hidden={recall === null}
+            aria-live="polite"
+            aria-label={recall !== null ? `Message ${recall + 1} of ${sent.length}` : undefined}
+          >
+            History {(recall ?? lastRecall.current) + 1}/{sent.length}
           </span>
         )}
         <button type="submit" className="rs-agent-send" disabled={!ready || busy || !input.trim()} aria-label="Send">

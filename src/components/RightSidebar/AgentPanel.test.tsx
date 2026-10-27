@@ -264,7 +264,7 @@ describe("AgentPanel", () => {
     expect(box().value).toBe("second");
     fireEvent.keyDown(box(), { key: "ArrowDown" });
     expect(box().value).toBe("draft");
-    expect(screen.queryByText(/^History \d+\/\d+$/)).toBeNull();
+    expect(screen.getByText(/^History/)).not.toHaveClass("is-on");
   });
 
   it("asks for a missing end time on the card before adding", async () => {
