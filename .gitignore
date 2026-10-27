@@ -31,10 +31,19 @@ coverage/
 .env.*.local
 .env.development
 .env.production
+.env.*
+!.env.example
+.dev.vars*
 
 # Firebase admin SDK / service account keys
 *-firebase-adminsdk-*.json
 serviceAccountKey.json
+*service-account*.json
+*.pem
+
+# Vercel / Wrangler local state
+.vercel/
+.wrangler/
 
 # Firebase CLI artifacts (deploy cache, debug logs)
 .firebase/
