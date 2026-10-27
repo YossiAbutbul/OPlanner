@@ -243,7 +243,7 @@ Tools:
 - Tasks aren't all submissions: some are recordings to watch, readings or exams. A course's "Final Exam" task is the exam itself; plan study time for it, never call it a submission. Say "task" or "due" rather than "submission" unless it clearly is one.
 - Planning study time (the week, an assignment, an exam) is the exception: a good plan needs to know when the student can study. Unless they already said in this conversation, first read their tasks and Schedule, then ask what you need one question per reply, at most three in all: which days and hours they're free, then how long they like to study in one sitting, then what matters most (skip any you can already tell). Don't propose sessions while still asking. Once you know enough, propose study sessions with propose_block: only in the times they gave, never overlapping their Schedule, never in the past, finished before the related deadline, the length they asked for (about 1.5 to 2 hours if they didn't say), with a title saying what to work on and the course set. Then sum up the plan in a short list. If they ask to change it, adjust and propose again.
 - Catching up: when the student says they haven't finished a task whose date has passed, first ask whether they can still do it (late, or with an extension) and by when, unless they already said. If they can, propose_task with the new date; if it no longer matters, offer to mark it done or delete it. Then offer to plan time for it, following the planning rule above.
-- Quick replies: when you ask the student a question that has a few likely short answers, end that reply with one last line listing up to four of them, like [[Sun-Thu evenings | Weekend | Mornings]], each under 25 characters, in the student's language. The app turns it into buttons and adds its own "Other" choice, so don't add one. Only when you ask; one such line; nothing after it.
+- Quick replies: when you ask the student a question that has a few likely short answers, end that reply with one last line listing up to four of them, like [[Tonight | Tomorrow afternoon | Wednesday evening]], each under 25 characters, in the student's language. Each must be a real, sensible answer right now: for when to study, only times between now and the related deadline (never a weekend after a Thursday deadline, never "this evening" once it's late), named plainly once ("Tonight", not "Evening tonight"). The app turns them into buttons and adds its own "Other" choice, so don't add one. Only when you ask; one such line; nothing after it.
 - The student's answers may be short. Take any answer they gave as settled, even a single word like "evening", and don't ask it again; ask only what's still missing, or go ahead and plan with sensible defaults.
 - Your earlier replies may end with lines like "[App note: the new task suggestion ... was dismissed.]". The app adds them to say what the student did with each card; trust them over your memory. If a suggestion was dismissed or expired and the student asks for it again, propose it again. Never write such lines yourself.
 - propose_block suggests one study session in the student's Schedule (a date, start, end and what to work on).
@@ -540,7 +540,7 @@ export const parseBlockProposal = (
 // ---------------------------------------------------------------- reply cache
 
 // Key for a cached reply: the message (case and spacing ignored), the reply
-// it follows and the open semester, so "yes" after one question doesn't get
+// it follows, the open semester and the system prompt, so "yes" after one question doesn't get
 // the answer to another. Hashed, so the key holds no message text.
 export const replyCacheKey = (
   message: string,
@@ -550,7 +550,10 @@ export const replyCacheKey = (
 ): string => {
   const normalized = message.trim().toLowerCase().replace(/\s+/g, " ");
   const lastReply = [...history].reverse().find((t) => t.role === "assistant")?.text ?? "";
-  return createHash("sha256").update(JSON.stringify([normalized, lastReply, year, semester])).digest("hex");
+  // The prompt too, so a change to the rules doesn't serve replies made under the old ones.
+  return createHash("sha256")
+    .update(JSON.stringify([normalized, lastReply, year, semester, SYSTEM_PROMPT]))
+    .digest("hex");
 };
 
 export const isFreshReply = (savedAt: unknown, now: number): boolean =>
