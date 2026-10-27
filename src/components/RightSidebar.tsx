@@ -45,7 +45,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   const { user } = useAuth();
 
   // Day opens first: today's schedule is the most-used view.
-  const [tab, setTab] = useState<"day" | "agent">("day");
+  // The Assistant opens first; Schedule is one tap away.
+  const [tab, setTab] = useState<"day" | "agent">("agent");
 
   // Who may use the assistant is decided by the server (api/agent.ts). The
   // last answer is kept per user, so after a reload the Assistant tab shows
@@ -292,7 +293,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   };
 
   return (
-    <aside className={`rs ${mobileOpen ? "mobile-open" : ""}`}>
+    <aside className={`rs ${mobileOpen ? "mobile-open" : ""}${tab === "agent" ? " rs-assistant" : ""}`}>
       <div className="rs-glow" aria-hidden />
 
       {user && (

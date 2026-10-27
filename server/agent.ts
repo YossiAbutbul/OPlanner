@@ -30,6 +30,10 @@ export const PER_MINUTE = 20;
 export const PER_DAY = 200;
 // Spend cap per user per UTC day, in micro-dollars ($0.50).
 export const DAILY_BUDGET_MICROS = 500_000;
+// Spend cap for the whole app per UTC day ($5). With access open to every
+// account, new accounts each get a fresh per-user budget; this bounds the
+// total no matter how many there are.
+export const GLOBAL_DAILY_BUDGET_MICROS = 5_000_000;
 // Reserved up front for each request and settled after it, so concurrent
 // requests can't all pass the budget check before any of them is billed.
 // About a long tool loop of Haiku calls ($0.02); anything over it is
@@ -57,12 +61,13 @@ export const parseAllowlist = (raw: string | undefined): Set<string> =>
   );
 
 // Unverified emails don't count: anyone can sign up with email/password
-// using someone else's address.
+// using someone else's address. "*" in the list lets in every verified
+// account.
 export const isAllowed = (
   email: string | undefined,
   emailVerified: boolean | undefined,
   allowlist: Set<string>
-): boolean => !!email && emailVerified === true && allowlist.has(email.toLowerCase());
+): boolean => !!email && emailVerified === true && (allowlist.has("*") || allowlist.has(email.toLowerCase()));
 
 // ---------------------------------------------------------------- request
 
@@ -181,6 +186,29 @@ export const takeRequest = (prev: UsageState, now: number): LimitResult => {
   s.dayCount++;
   s.dayMicros += RESERVE_MICROS;
   return { ok: true, next: s };
+};
+
+// App-wide spend for the day, at agentUsageMeta/daily (server-only, like
+// agentUsage/). Reserved and settled the same way as the per-user budget.
+export interface GlobalUsage {
+  day: string;
+  micros: number;
+}
+
+export const takeGlobal = (
+  prev: Partial<GlobalUsage> | undefined,
+  now: number
+): { ok: true; next: GlobalUsage } | { ok: false; reason: string; retryAfterSec: number } => {
+  const today = utcDay(now);
+  const micros = prev?.day === today ? prev.micros ?? 0 : 0;
+  if (micros + RESERVE_MICROS > GLOBAL_DAILY_BUDGET_MICROS) {
+    return {
+      ok: false,
+      reason: "The assistant is busy today. Try again tomorrow.",
+      retryAfterSec: Math.ceil((Date.parse(today) + DAY_MS - now) / 1000),
+    };
+  }
+  return { ok: true, next: { day: today, micros: micros + RESERVE_MICROS } };
 };
 
 export const costMicros = (u: {
