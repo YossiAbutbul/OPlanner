@@ -5,10 +5,13 @@
 export const WAITLIST_EMAILS_PER_DAY = 20;
 
 // Display names come from the user's account; keep them to one short line.
+// Control characters, line/paragraph separators and invisible format
+// characters (bidi overrides like U+202E) are dropped, so a name can't
+// break lines or make the email read misleadingly.
+const UNSAFE = /[\p{Cc}\p{Cf}\u2028\u2029]+/gu;
+
 export const cleanName = (name: unknown): string =>
-  typeof name === "string"
-    ? [...name].map((ch) => (ch.charCodeAt(0) < 32 || ch.charCodeAt(0) === 127 ? " " : ch)).join("").trim().slice(0, 100)
-    : "";
+  typeof name === "string" ? name.replace(UNSAFE, " ").trim().slice(0, 100) : "";
 
 export const takeEmailSlot = (
   prev: { day?: unknown; count?: unknown } | undefined,

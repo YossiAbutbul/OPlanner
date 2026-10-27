@@ -17,7 +17,41 @@ interface Card {
   // The planner task this card is about: the proposal's id, or the id a new
   // task got when it was added. Lets the card follow later changes.
   taskId?: string;
+  // The user's own changes to the suggestion, made on the card before saving.
+  edits?: TaskDetails;
+  editing?: boolean;
 }
+
+type TaskDetails = { name?: string; dueDate?: string; startTime?: string; endTime?: string };
+
+// The suggestion with the user's edits applied. An emptied time field
+// removes that time.
+const withEdits = (c: { proposal: AgentProposal; edits?: TaskDetails }): AgentProposal => {
+  const p = { ...c.proposal, ...c.edits };
+  if (!p.startTime) delete p.startTime;
+  if (!p.endTime) delete p.endTime;
+  return p;
+};
+
+// A start without an end (or the reverse) is incomplete: the card asks for
+// the rest instead of the agent guessing.
+const missingDetails = (p: AgentProposal) => !!p.startTime !== !!p.endTime;
+
+// A course's final exam date is optional, but the card opens its field when
+// it's missing so it's easy to add.
+const needsInput = (kind: CardKind, p: AgentProposal) => (kind === "course" ? !p.dueDate : missingDetails(p));
+
+const detailsProblem = (p: AgentProposal): string | null => {
+  if (!p.name.trim()) return "Add a name.";
+  if (p.action === "course") {
+    if (/[/]/.test(p.name)) return "A course name can't contain /.";
+    return p.dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(p.dueDate) ? "Pick a valid date." : null;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(p.dueDate)) return "Pick a date.";
+  if (missingDetails(p)) return p.startTime ? "Pick an end time." : "Pick a start time.";
+  if (p.startTime && p.endTime && p.endTime <= p.startTime) return "End time must be after the start.";
+  return null;
+};
 
 // A task as the planner has it now, for keeping cards current.
 export interface LiveTask {
@@ -55,6 +89,7 @@ interface Props {
 }
 
 const MAX_STORED = 40;
+const MAX_SENT = 50;
 
 const isMessage = (m: unknown): m is Message => {
   const x = m as Message;
@@ -79,11 +114,11 @@ const loadChat = (key: string | undefined): Message[] => {
 
 // Shown on the empty chat only; tapping one sends it as is.
 const SUGGESTIONS = [
-  "What's due this week?",
-  "What's overdue?",
-  "Plan my study days until finals",
-  "Which course needs the most attention?",
-  "How long until each final?",
+  "מה יש לי השבוע?",
+  "מה פספסתי?",
+  "תבנה לי תוכנית למידה למבחנים",
+  "על איזה קורס כדאי להתמקד?",
+  "כמה זמן נשאר לכל מבחן?",
 ];
 
 const formatDate = (iso: string) =>
@@ -110,11 +145,12 @@ const editChanges = (p: AgentProposal): { label: string; from: string; to: strin
   return rows.filter((r) => r.from !== r.to);
 };
 
-type CardKind = "new" | "edit" | "done" | "delete";
+type CardKind = "new" | "edit" | "done" | "delete" | "course";
 
 // A status-only change to Done gets its own card: it's the most common edit.
 const cardKind = (p: AgentProposal): CardKind => {
   if (p.action === "delete") return "delete";
+  if (p.action === "course") return "course";
   if (!p.id) return "new";
   const changes = editChanges(p);
   return changes.length === 1 && changes[0].label === "Status" && p.status === "DONE" ? "done" : "edit";
@@ -138,6 +174,10 @@ const KIND: Record<CardKind, { label: string; action: string; working: string; d
     label: "Mark as done", action: "Mark done", working: "Saving…", doneText: "Marked as done",
     icon: <svg {...ICON_PROPS}><circle cx="12" cy="12" r="8.5" /><path d="M8.5 12.3l2.4 2.4 4.6-5" /></svg>,
   },
+  course: {
+    label: "New course", action: "Add course", working: "Adding…", doneText: "Course added",
+    icon: <svg {...ICON_PROPS}><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z" /><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3" /><path d="M9 7h6" /></svg>,
+  },
   delete: {
     label: "Delete task", action: "Delete", working: "Deleting…", doneText: "Deleted",
     icon: <svg {...ICON_PROPS}><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" /></svg>,
@@ -155,6 +195,54 @@ const reserveIds = (list: Message[]) => {
 const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, storageKey, onCleared }) => {
   const [messages, setMessages] = useState<Message[]>(() => reserveIds(loadChat(storageKey)));
   const [input, setInput] = useState("");
+
+  // Messages you sent, newest last, for ↑/↓ recall like a terminal. Kept in
+  // this browser only (never Firestore) and across New chat; sign-out
+  // clears it with the other oplanner.* keys.
+  const sentKey = storageKey ? `${storageKey}.sent` : undefined;
+  const [sent, setSent] = useState<string[]>(() => {
+    const saved = sentKey ? lsCache.read<unknown>(sentKey) : null;
+    return Array.isArray(saved) ? saved.filter((x): x is string => typeof x === "string") : [];
+  });
+  // Position while browsing history (null = editing a fresh message) and
+  // the unsent text to come back to.
+  const [recall, setRecall] = useState<number | null>(null);
+  const [draft, setDraft] = useState("");
+  const lastRecall = useRef(0);
+  if (recall !== null) lastRecall.current = recall;
+
+  const remember = (message: string) =>
+    setSent((prev) => {
+      const next = [...prev.filter((m) => m !== message), message].slice(-MAX_SENT);
+      if (sentKey) lsCache.write(sentKey, next);
+      return next;
+    });
+
+  // ↑ on the first line goes back, ↓ on the last line goes forward and
+  // finally returns to the draft. Elsewhere the arrows move the caret.
+  const recallKey = (e: React.KeyboardEvent<HTMLTextAreaElement>): boolean => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || !sent.length) return false;
+    const el = e.currentTarget;
+    if (e.key === "ArrowUp" && !el.value.slice(0, el.selectionStart).includes("\n")) {
+      const at = recall === null ? sent.length - 1 : Math.max(0, recall - 1);
+      if (recall === null) setDraft(input);
+      setRecall(at);
+      setInput(sent[at]);
+      return true;
+    }
+    if (e.key === "ArrowDown" && recall !== null && !el.value.slice(el.selectionEnd).includes("\n")) {
+      const at = recall + 1;
+      if (at >= sent.length) {
+        setRecall(null);
+        setInput(draft);
+      } else {
+        setRecall(at);
+        setInput(sent[at]);
+      }
+      return true;
+    }
+    return false;
+  };
   const [busy, setBusy] = useState(false);
   // What the agent is doing right now, streamed from the server.
   const [status, setStatus] = useState("Thinking…");
@@ -203,6 +291,8 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
       .map((m) => ({ role: m.role, text: m.text }));
     setMessages([...base, { id: nextId++, role: "user", text: message }]);
     setInput("");
+    setRecall(null);
+    remember(message);
     setBusy(true);
     setStatus("Thinking…");
     try {
@@ -254,12 +344,26 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
   const confirm = async (msgId: number, index: number, card: Card) => {
     setCardState(msgId, index, "saving");
     try {
-      const savedId = await onConfirm(card.proposal, card.year, card.semester);
+      const savedId = await onConfirm(withEdits(card), card.year, card.semester);
       setCardState(msgId, index, "saved", savedId || card.proposal.id);
     } catch {
       setCardState(msgId, index, "pending");
     }
   };
+
+  const setCardEdits = (msgId: number, index: number, patch: TaskDetails, editing?: boolean) =>
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === msgId && m.cards
+          ? {
+              ...m,
+              cards: m.cards.map((c, i) =>
+                i === index ? { ...c, edits: { ...c.edits, ...patch }, ...(editing ? { editing } : {}) } : c
+              ),
+            }
+          : m
+      )
+    );
 
   // Follow a card's task in the planner when its semester is the one loaded.
   // A deleted task makes the card read as gone (except a delete that was
@@ -273,9 +377,14 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
   const isGone = (c: Card) => track(c).gone;
 
   // One at a time, so each card shows its own result.
+  // Deletes are left out: each needs its own click, so text injected into a
+  // task name can't turn one click into several deletions.
   const confirmAll = async (msgId: number, cards: Card[]) => {
     for (const [i, c] of cards.entries()) {
-      if (c.state === "pending" && !isGone(c)) await confirm(msgId, i, c);
+      const k = cardKind(c.proposal);
+      if (k === "delete") continue;
+      const blocked = (k === "new" || k === "edit" || k === "course") && detailsProblem(withEdits(c));
+      if (c.state === "pending" && !isGone(c) && !blocked) await confirm(msgId, i, c);
     }
   };
 
@@ -283,8 +392,18 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
     <div className="rs-agent">
       {messages.length > 0 && (
         <div className="rs-agent-head">
-          <button type="button" className="rs-agent-clear" onClick={clearChat} disabled={busy}>
-            New chat
+          <button
+            type="button"
+            className="rs-agent-clear"
+            onClick={clearChat}
+            disabled={busy}
+            aria-label="New chat"
+            title="New chat"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V12" />
+              <path d="M18.4 3.6a2 2 0 0 1 2.9 2.9L13 14.8l-3.6.8.8-3.6z" />
+            </svg>
           </button>
         </div>
       )}
@@ -295,10 +414,10 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
             <p className="rs-empty-title">Ask about your semester</p>
             <p className="rs-empty-text">
               {ready
-                ? "It reads your courses and tasks. Changes it suggests are saved only when you confirm."
+                ? "Reads your tasks. Saves only what you approve."
                 : "Open a semester first."}
             </p>
-            <div className="rs-agent-chips">
+            <div className="rs-agent-chips" dir="rtl">
               {SUGGESTIONS.map((s) => (
                 <button key={s} type="button" className="rs-agent-chip" onClick={() => void send(s)} disabled={!ready || busy}>
                   {s}
@@ -339,24 +458,39 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                 const kind = cardKind(c.proposal);
                 const k = KIND[kind];
                 const { live, gone } = track(c);
-                const shown = c.state === "saved" && live ? { ...c.proposal, ...live } : c.proposal;
+                const proposed = withEdits(c);
+                const shown = c.state === "saved" && live ? { ...proposed, ...live } : proposed;
+                const editable = kind === "new" || kind === "edit" || kind === "course";
+                const problem = editable ? detailsProblem(proposed) : null;
                 const actionable = (c.state === "pending" || c.state === "saving") && !gone;
                 return (
                 <div key={i} className={`rs-agent-card rs-agent-card-${c.state} rs-agent-card-${kind}`}>
                   <div className="rs-agent-card-head">
                     <span className="rs-agent-card-icon" aria-hidden="true">{k.icon}</span>
                     <div className="rs-agent-card-body">
-                      <span className="rs-agent-card-kind">{k.label}</span>
+                      <span className="rs-agent-card-kind">
+                        {k.label}
+                        {/* Cards write to the semester they were proposed in. */}
+                        {(c.year !== year || c.semester !== semester) && ` · ${c.semester} ${c.year}`}
+                      </span>
                       {/* <bdi> keeps Hebrew names from reordering the English around them. */}
                       <span className="rs-agent-card-name"><bdi>{shown.name}</bdi></span>
-                      <span className="rs-agent-card-meta">
-                        <bdi>{capitalizeWords(shown.course)}</bdi>
-                      </span>
-                      <span className="rs-agent-card-meta">
-                        {formatDate(shown.dueDate)}
-                        {formatTime(shown) && <span className="rs-agent-card-time">{formatTime(shown)}</span>}
-                        {shown.status === "DONE" && <span className="rs-agent-card-time">Done</span>}
-                      </span>
+                      {kind === "course" ? (
+                        <span className="rs-agent-card-meta">
+                          {shown.dueDate ? `Final exam ${formatDate(shown.dueDate)}` : "No final exam date"}
+                        </span>
+                      ) : (
+                        <>
+                          <span className="rs-agent-card-meta">
+                            <bdi>{capitalizeWords(shown.course)}</bdi>
+                          </span>
+                          <span className="rs-agent-card-meta">
+                            {formatDate(shown.dueDate)}
+                            {formatTime(shown) && <span className="rs-agent-card-time">{formatTime(shown)}</span>}
+                            {shown.status === "DONE" && <span className="rs-agent-card-time">Done</span>}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                   {kind === "edit" && !gone && c.state !== "saved" && (
@@ -387,6 +521,68 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                   {c.state === "expired" && (
                     <span className="rs-agent-card-status">Expired. Ask again for a fresh suggestion.</span>
                   )}
+                  {actionable && kind === "course" && (c.editing || needsInput(kind, proposed) || problem) && (
+                    <div className="rs-agent-fields">
+                      <label className="rs-agent-field rs-agent-field-wide">
+                        <span>Name</span>
+                        <input
+                          type="text"
+                          dir="auto"
+                          maxLength={100}
+                          value={proposed.name}
+                          onChange={(e) => setCardEdits(m.id, i, { name: e.target.value })}
+                        />
+                      </label>
+                      <label className="rs-agent-field rs-agent-field-wide">
+                        <span>Final exam (optional)</span>
+                        <input
+                          type="date"
+                          value={proposed.dueDate}
+                          onChange={(e) => setCardEdits(m.id, i, { dueDate: e.target.value })}
+                        />
+                      </label>
+                      {problem && <p className="rs-agent-fields-hint">{problem}</p>}
+                    </div>
+                  )}
+                  {actionable && editable && kind !== "course" && (c.editing || missingDetails(proposed) || problem) && (
+                    <div className="rs-agent-fields">
+                      <label className="rs-agent-field rs-agent-field-wide">
+                        <span>Name</span>
+                        <input
+                          type="text"
+                          dir="auto"
+                          maxLength={120}
+                          value={proposed.name}
+                          onChange={(e) => setCardEdits(m.id, i, { name: e.target.value })}
+                        />
+                      </label>
+                      <label className="rs-agent-field rs-agent-field-wide">
+                        <span>Date</span>
+                        <input
+                          type="date"
+                          value={proposed.dueDate}
+                          onChange={(e) => setCardEdits(m.id, i, { dueDate: e.target.value })}
+                        />
+                      </label>
+                      <label className={`rs-agent-field${!proposed.startTime && proposed.endTime ? " rs-agent-field-missing" : ""}`}>
+                        <span>Start</span>
+                        <input
+                          type="time"
+                          value={proposed.startTime ?? ""}
+                          onChange={(e) => setCardEdits(m.id, i, { startTime: e.target.value })}
+                        />
+                      </label>
+                      <label className={`rs-agent-field${proposed.startTime && !proposed.endTime ? " rs-agent-field-missing" : ""}`}>
+                        <span>End</span>
+                        <input
+                          type="time"
+                          value={proposed.endTime ?? ""}
+                          onChange={(e) => setCardEdits(m.id, i, { endTime: e.target.value })}
+                        />
+                      </label>
+                      {problem && <p className="rs-agent-fields-hint">{problem}</p>}
+                    </div>
+                  )}
                   {actionable && (
                     <div className="rs-agent-card-actions">
                       <button
@@ -397,11 +593,21 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                       >
                         Dismiss
                       </button>
+                      {editable && !c.editing && !needsInput(kind, proposed) && !problem && (
+                        <button
+                          type="button"
+                          className="rs-agent-btn"
+                          onClick={() => setCardEdits(m.id, i, {}, true)}
+                          disabled={c.state === "saving"}
+                        >
+                          Edit
+                        </button>
+                      )}
                       <button
                         type="button"
                         className={`rs-agent-btn ${kind === "delete" ? "rs-agent-btn-danger" : "rs-agent-btn-primary"}`}
                         onClick={() => void confirm(m.id, i, c)}
-                        disabled={c.state === "saving"}
+                        disabled={c.state === "saving" || !!problem}
                       >
                         {c.state === "saving" ? k.working : k.action}
                       </button>
@@ -411,9 +617,12 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                 );
               })}
               {(() => {
-                const pending = m.cards?.filter((c) => c.state === "pending" && !isGone(c)) ?? [];
+                const pending =
+                  m.cards?.filter(
+                    (c) => c.state === "pending" && !isGone(c) && cardKind(c.proposal) !== "delete"
+                  ) ?? [];
                 if (pending.length < 2) return null;
-                const allNew = pending.every((c) => cardKind(c.proposal) === "new");
+                const allNew = pending.every((c) => ["new", "course"].includes(cardKind(c.proposal)));
                 return (
                   <button
                     type="button"
@@ -455,14 +664,33 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
           placeholder={ready ? "Ask anything about your semester…" : "Open a semester first"}
           value={input}
           disabled={!ready}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+            setRecall(null);
+          }}
           onKeyDown={(e) => {
+            if (recallKey(e)) {
+              e.preventDefault();
+              return;
+            }
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
               void send(input);
             }
           }}
         />
+        {sent.length > 0 && (
+          // Stays mounted so it can open and close smoothly; keeps showing the
+          // last position while it closes.
+          <span
+            className={`rs-agent-recall${recall !== null ? " is-on" : ""}`}
+            aria-hidden={recall === null}
+            aria-live="polite"
+            aria-label={recall !== null ? `Message ${recall + 1} of ${sent.length}` : undefined}
+          >
+            History {(recall ?? lastRecall.current) + 1}/{sent.length}
+          </span>
+        )}
         <button type="submit" className="rs-agent-send" disabled={!ready || busy || !input.trim()} aria-label="Send">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 19V5M5 12l7-7 7 7" />

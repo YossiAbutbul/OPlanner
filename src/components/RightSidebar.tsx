@@ -27,6 +27,8 @@ interface RightSidebarProps {
   selectedSemester: string | null;
   selectedCourse: string | null;
   mobileOpen?: boolean;
+  // Adds a course the assistant proposed, the way Add course does.
+  onAddCourse?: (year: number, semesterKey: string, name: string, finalDate?: string) => Promise<void>;
 }
 
 const RightSidebar: React.FC<RightSidebarProps> = ({
@@ -35,6 +37,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   selectedSemester,
   selectedCourse,
   mobileOpen = false,
+  onAddCourse,
 }) => {
   const { getCourseTasks, addHomework, removeHomework, homework, applyEdits } = useHomework();
   const { blocks, saveBlock, removeBlock } = useTimeBlocks();
@@ -215,9 +218,27 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   // the fields the agent can't see (notes, color, ignoreOverdue).
   // Resolves with the saved task's id, so the card can follow the task.
   const confirmProposal = async (p: AgentProposal, year: number, semester: string): Promise<string | void> => {
+    if (p.action === "course") {
+      const key =
+        years
+          .find((y) => y.year === year)
+          ?.semesters.find((s) => s.name === semester || s.key === semester)?.key ?? semester;
+      const name = p.name.trim();
+      try {
+        if (!onAddCourse) throw new Error("Adding courses isn't available here");
+        await onAddCourse(year, key, name, p.dueDate || undefined);
+      } catch (e) {
+        toast.error(`Couldn't add “${name}”`);
+        throw e;
+      }
+      toast.success(`Course “${name}” added`);
+      return;
+    }
     const fromCourse = p.prevCourse ?? p.course;
     const existing = p.id
-      ? allSemesterTasks.find((t) => t.id === p.id && t.course === fromCourse && t.year === year)
+      ? allSemesterTasks.find(
+          (t) => t.id === p.id && t.course === fromCourse && t.year === year && t.semester === semester
+        )
       : undefined;
     // Never let a proposal create a task under an id the user doesn't have.
     if (p.id && !existing) {

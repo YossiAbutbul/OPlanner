@@ -921,20 +921,23 @@
   flex-direction: column;
 }
 
+/* Top bar of the conversation: a compose button, like Messages. */
 .rs-agent-head {
   display: flex;
   justify-content: flex-end;
-  margin: -0.35rem 0 0.25rem;
+  margin: -0.4rem 0 0;
 }
 
 .rs-agent-clear {
-  background: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
   border: none;
-  padding: 0.25rem 0.5rem;
-  border-radius: 999px;
-  color: var(--rs-text-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--rs-text-soft);
   cursor: pointer;
   transition:
     background-color var(--dur-1) var(--ease-out),
@@ -944,7 +947,12 @@
 
 .rs-agent-clear:hover:not(:disabled) {
   color: var(--rs-text);
-  background: var(--rs-hover);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.rs-agent-clear:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .rs-agent-log {
@@ -954,7 +962,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  padding: 0.2rem 0.2rem 0.6rem;
+  /* Scroll edge effect instead of a divider: messages fade out as they
+     slide under the input (and the top bar). Padding matches each fade,
+     so at rest the first and last messages sit fully clear of them. */
+  padding: 0.75rem 0.2rem 1.5rem;
+  mask-image: linear-gradient(to bottom, transparent, #000 0.75rem, #000 calc(100% - 1.5rem), transparent);
   scrollbar-width: thin;
 }
 
@@ -1423,7 +1435,9 @@
   padding: 4px;
   border-radius: 18px;
   background: var(--rs-elev);
-  border: 1px solid var(--rs-border);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  /* Reads as a layer above the conversation, not part of it. */
+  box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
 }
 
 .rs-agent-form:focus-within {
@@ -1473,6 +1487,52 @@
     background-color var(--dur-1) var(--ease-out),
     color var(--dur-1) var(--ease-out),
     transform 100ms var(--ease-out);
+}
+
+/* "History 2/5" while browsing sent messages with the arrows: its own line
+   at the top of the field, above the text (as in Claude). */
+.rs-agent-form {
+  flex-wrap: wrap;
+}
+
+.rs-agent-recall {
+  order: -1;
+  flex: 1 0 100%;
+  direction: ltr;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2rem;
+  color: var(--rs-text-muted);
+  font-variant-numeric: tabular-nums;
+  /* Closed: no height, so the field is its usual single line. Opening grows
+     the field upward (it's anchored to the bottom) and the label rises into
+     place. A transition, not keyframes, so quick ↑/↓ presses reverse from
+     wherever it is instead of jumping. */
+  max-height: 0;
+  padding: 0 10px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    max-height 240ms var(--ease-out),
+    padding 240ms var(--ease-out),
+    opacity 180ms var(--ease-out),
+    transform 240ms var(--ease-out);
+}
+
+.rs-agent-recall.is-on {
+  max-height: 1.6rem;
+  padding: 3px 10px 0;
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rs-agent-recall {
+    transition: opacity 150ms linear;
+    transform: none;
+  }
 }
 
 /* Disabled reads as neutral, not as a faded accent. */
@@ -1545,4 +1605,59 @@
   margin: 0.4rem 0 0;
   font-size: 0.78rem;
   color: var(--rs-danger);
+}
+
+/* Task details the user fills or edits on a card before saving: name and
+   date full width, start and end side by side. A missing time is outlined
+   so it's clear what's left to pick. */
+.rs-agent-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.rs-agent-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--rs-text-muted);
+}
+
+.rs-agent-field-wide {
+  grid-column: 1 / -1;
+}
+
+.rs-agent-field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--rs-text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color-scheme: dark;
+}
+
+.rs-agent-field input:focus {
+  outline: none;
+  border-color: var(--rs-accent);
+}
+
+.rs-agent-field-missing input {
+  border-color: color-mix(in srgb, var(--rs-warn) 70%, transparent);
+}
+
+.rs-agent-fields-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--rs-warn);
 }

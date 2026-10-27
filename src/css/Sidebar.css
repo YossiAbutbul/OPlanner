@@ -949,7 +949,11 @@ button:focus:not(:focus-visible) { outline: none; }
 .settings-menu {
   position: absolute;
   bottom: calc(100% + 6px);
-  right: 0;
+  /* Anchored to the footer's left edge so a narrow sidebar can't push the
+     220px menu off the left of the window; it opens over the content. */
+  left: 0;
+  right: auto;
+  min-width: 100%;
   background: rgba(34, 36, 41, 0.92);
   -webkit-backdrop-filter: var(--popover-blur);
   backdrop-filter: var(--popover-blur);
@@ -961,8 +965,8 @@ button:focus:not(:focus-visible) { outline: none; }
   box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3),
     0 14px 36px rgba(0, 0, 0, 0.5);
   z-index: 100;
-  /* Grows out of the gear that opened it (springs live in Sidebar.tsx). */
-  transform-origin: bottom right;
+  /* Grows up out of the footer (springs live in Sidebar.tsx). */
+  transform-origin: bottom left;
 }
 
 .sidebar.collapsed .settings-menu {

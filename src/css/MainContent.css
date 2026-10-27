@@ -787,3 +787,35 @@
   height: 0;
   display: none;
 }
+
+/* Shown instead of a blank page when the planner couldn't be read. */
+.load-error {
+  max-width: 26rem;
+  margin: 18vh auto 0;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.load-error-title {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--label);
+}
+
+.load-error-text {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--label-3);
+}
+
+.load-error-btn {
+  background: var(--color-accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.load-error-btn:hover {
+  background: var(--color-accent-hover);
+}
