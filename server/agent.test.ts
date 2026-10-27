@@ -20,6 +20,10 @@ import {
   takeGlobal,
   takeRequest,
   RESERVE_MICROS,
+  REPLY_CACHE_TTL_MS,
+  replyCacheKey,
+  isFreshReply,
+  type ChatTurn,
   type TaskView,
   type UsageState,
 } from "./agent";
@@ -276,5 +280,36 @@ describe("task proposals without a date", () => {
     const r = parseProposal({ course: "Calculus", name: "HW" });
     expect(r.ok && r.value.dueDate).toBe("");
     expect(parseProposal({ course: "Calculus", name: "HW", dueDate: "soon" }).ok).toBe(false);
+  });
+});
+
+describe("reply cache", () => {
+  const history: ChatTurn[] = [
+    { role: "user", text: "hi" },
+    { role: "assistant", text: "Hi! What can I help with?" },
+  ];
+
+  it("matches the same message regardless of case and spacing", () => {
+    expect(replyCacheKey("  What's  3*3? ", history, 2027, "Semester A")).toBe(
+      replyCacheKey("what's 3*3?", history, 2027, "Semester A")
+    );
+  });
+
+  it("separates replies that follow different answers or semesters", () => {
+    const key = replyCacheKey("yes", history, 2027, "Semester A");
+    expect(replyCacheKey("yes", [{ role: "assistant", text: "Want it on Friday?" }], 2027, "Semester A")).not.toBe(key);
+    expect(replyCacheKey("yes", history, 2027, "Semester B")).not.toBe(key);
+  });
+
+  it("holds no message text", () => {
+    expect(replyCacheKey("my secret question", [], 2027, "Semester A")).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("uses a saved reply only while it's fresh", () => {
+    const now = 1_000_000_000;
+    expect(isFreshReply(now - 60_000, now)).toBe(true);
+    expect(isFreshReply(now - REPLY_CACHE_TTL_MS, now)).toBe(false);
+    expect(isFreshReply(now + 5_000, now)).toBe(false);
+    expect(isFreshReply("soon", now)).toBe(false);
   });
 });

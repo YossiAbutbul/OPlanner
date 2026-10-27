@@ -10,13 +10,17 @@ const SIDE_COLLECTIONS = ["agentUsage", "agentWaitlist"];
 // fields, plus the server-only docs keyed by the uid.
 export const deleteUserData = async (db: Firestore, uid: string): Promise<void> => {
   await db.recursiveDelete(db.doc(`users/${uid}`));
+  // The Assistant's saved replies (agentReplyCache/{uid}/replies/...).
+  await db.recursiveDelete(db.doc(`agentReplyCache/${uid}`));
   await Promise.all(SIDE_COLLECTIONS.map((c) => db.doc(`${c}/${uid}`).delete()));
 };
 
 // Every uid that has data anywhere. listDocuments also returns ids whose doc
 // has no fields but has subcollections, which is how users/{uid} usually is.
 export const uidsWithData = async (db: Firestore): Promise<string[]> => {
-  const lists = await Promise.all(["users", ...SIDE_COLLECTIONS].map((c) => db.collection(c).listDocuments()));
+  const lists = await Promise.all(
+    ["users", "agentReplyCache", ...SIDE_COLLECTIONS].map((c) => db.collection(c).listDocuments())
+  );
   return [...new Set(lists.flat().map((ref) => ref.id))].sort();
 };
 

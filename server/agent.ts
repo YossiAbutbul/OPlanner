@@ -11,6 +11,7 @@
 //   3. Task names come from user data (including imported .ics files), so they
 //      are passed as data and the system prompt says never to obey them.
 import type Anthropic from "@anthropic-ai/sdk";
+import { createHash } from "node:crypto";
 
 export const MODEL = "claude-haiku-5-5";
 export const MAX_TOKENS = 4096;
@@ -39,6 +40,9 @@ export const GLOBAL_DAILY_BUDGET_MICROS = 5_000_000;
 // About a long tool loop of Haiku calls ($0.02); anything over it is
 // billed when the request settles.
 export const RESERVE_MICROS = 20_000;
+// A repeated message gets its saved reply for this long instead of a new
+// model call, so spamming the same question costs nothing.
+export const REPLY_CACHE_TTL_MS = 10 * 60 * 1000;
 // Confirm cards per reply: an injected task name can't flood the UI.
 export const MAX_PROPOSALS = 5;
 
@@ -482,3 +486,22 @@ export const parseCourseProposal = (input: unknown): Parsed<{ name: string; fina
   }
   return { ok: true, value: { name, ...(i.finalDate ? { finalDate: i.finalDate as string } : {}) } };
 };
+
+// ---------------------------------------------------------------- reply cache
+
+// Key for a cached reply: the message (case and spacing ignored), the reply
+// it follows and the open semester, so "yes" after one question doesn't get
+// the answer to another. Hashed, so the key holds no message text.
+export const replyCacheKey = (
+  message: string,
+  history: ChatTurn[],
+  year: number,
+  semester: string
+): string => {
+  const normalized = message.trim().toLowerCase().replace(/\s+/g, " ");
+  const lastReply = [...history].reverse().find((t) => t.role === "assistant")?.text ?? "";
+  return createHash("sha256").update(JSON.stringify([normalized, lastReply, year, semester])).digest("hex");
+};
+
+export const isFreshReply = (savedAt: unknown, now: number): boolean =>
+  typeof savedAt === "number" && now - savedAt >= 0 && now - savedAt < REPLY_CACHE_TTL_MS;

@@ -30,6 +30,7 @@ Set a monthly spend limit in the Anthropic Console as the final backstop.
 | Allowlist + `email_verified` required | Use by anyone not listed, or by an unverified signup with a listed address |
 | Per user: 20 requests/min, 200/day, $0.50/day (`agentUsage/{uid}`, transaction) | Spam and runaway cost; clients can't reset it (no rules match) |
 | Whole app: $5/day (`agentUsageMeta/daily`, same transaction) | Many new accounts each using their own per-user budget |
+| Repeated messages: a reply that needed no planner data is saved for 10 min (`agentReplyCache/{uid}`); the same message gets it back with no model call | Spamming one question to burn tokens; repeats still count toward the message limits |
 | Input caps: 2000 chars per message, 20 turns, 64 KB body, 5 tool rounds, 4096 output tokens | Oversized requests, loops |
 | Tools use the uid from the token only | A hijacked model reading other users' data |
 | The model can't write; `propose_task` returns a card the user must confirm | Injected text in task names silently changing data |

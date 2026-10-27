@@ -34,6 +34,8 @@ import {
   filterTimeBlocks,
   takeGlobal,
   takeRequest,
+  replyCacheKey,
+  isFreshReply,
   type TaskProposal,
   type TaskView,
   type TimeBlockView,
@@ -280,6 +282,17 @@ export async function POST(request: Request): Promise<Response> {
     return json(429, { error: gate.reason }, { "Retry-After": String(gate.retryAfterSec) });
   }
 
+  // A repeat of a recent message that needed no planner data gets the saved
+  // reply: no model call, and the reservation is refunded below. It still
+  // counted against the per-minute and daily message limits above.
+  const cacheRef = db()
+    .collection("agentReplyCache")
+    .doc(uid)
+    .collection("replies")
+    .doc(replyCacheKey(req.message, req.history, req.year, req.semester));
+  const cached = await cacheRef.get().catch(() => null);
+  const cachedReply = cached?.exists && isFreshReply(cached.get("savedAt"), Date.now()) ? cached.get("reply") : null;
+
   const data = semesterData(uid, req.year, req.semester);
   const messages: Anthropic.MessageParam[] = [
     ...req.history.map((t): Anthropic.MessageParam => ({ role: t.role, content: t.text })),
@@ -300,9 +313,22 @@ export async function POST(request: Request): Promise<Response> {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const emit = (event: AgentEvent) => controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
-      emit({ type: "status", text: "Thinking…" });
       try {
-        emit(await runAgent(messages, data, (text) => emit({ type: "status", text }), (micros) => (spent += micros)));
+        if (typeof cachedReply === "string") {
+          emit({ type: "done", reply: cachedReply, proposals: [] });
+          return;
+        }
+        emit({ type: "status", text: "Thinking…" });
+        const result = await runAgent(
+          messages,
+          data,
+          (text) => emit({ type: "status", text }),
+          (micros) => (spent += micros)
+        );
+        emit(result.event);
+        if (result.cacheable && result.event.type === "done") {
+          await cacheRef.set({ reply: result.event.reply, savedAt: Date.now() }).catch(() => {});
+        }
       } catch (err) {
         emit({ type: "error", error: describeError(err) });
       } finally {
@@ -367,16 +393,15 @@ const runAgent = async (
   data: ReturnType<typeof semesterData>,
   onStatus: (text: string) => void,
   onSpend: (micros: number) => void
-): Promise<AgentEvent> => {
+): Promise<{ event: AgentEvent; cacheable: boolean }> => {
   const proposals: ClientProposal[] = [];
   const deadline = Date.now() + REQUEST_DEADLINE_MS;
   let spent = 0;
   for (let round = 0; ; round++) {
     if (round > 0 && (spent >= RESERVE_MICROS || Date.now() > deadline)) {
       return {
-        type: "done",
-        reply: "That one took too long to work out. Try a narrower question.",
-        proposals,
+        event: { type: "done", reply: "That one took too long to work out. Try a narrower question.", proposals },
+        cacheable: false,
       };
     }
     const response = await claude().messages.create({
@@ -402,15 +427,26 @@ const runAgent = async (
       .trim();
 
     if (response.stop_reason === "refusal") {
-      return { type: "done", reply: "I can't help with that one. Try asking about your courses or schedule.", proposals };
+      return {
+        event: { type: "done", reply: "I can't help with that one. Try asking about your courses or schedule.", proposals },
+        cacheable: true,
+      };
     }
     if (response.stop_reason !== "tool_use") {
       let reply = text || "Done.";
       if (response.stop_reason === "max_tokens") reply += "\n\n(Answer cut short.)";
-      return { type: "done", reply, proposals };
+      // Only a first-round reply with no tools is safe to reuse: it didn't
+      // read the planner, so it doesn't go stale when the planner changes.
+      return {
+        event: { type: "done", reply, proposals },
+        cacheable: round === 0 && proposals.length === 0 && response.stop_reason === "end_turn" && !!text,
+      };
     }
     if (round >= MAX_TOOL_ROUNDS) {
-      return { type: "done", reply: text || "That took too many steps. Try a narrower question.", proposals };
+      return {
+        event: { type: "done", reply: text || "That took too many steps. Try a narrower question.", proposals },
+        cacheable: false,
+      };
     }
 
     messages.push({ role: "assistant", content: response.content });

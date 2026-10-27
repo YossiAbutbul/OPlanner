@@ -21,14 +21,14 @@ describe("user data", () => {
       recursiveDelete: vi.fn(async (ref: { path: string }) => void deleted.push(`${ref.path}/**`)),
     } as unknown as Firestore;
     await deleteUserData(db, "u1");
-    expect(deleted.sort()).toEqual(["agentUsage/u1", "agentWaitlist/u1", "users/u1/**"]);
+    expect(deleted.sort()).toEqual(["agentReplyCache/u1/**", "agentUsage/u1", "agentWaitlist/u1", "users/u1/**"]);
   });
 
   it("collects every uid that has data, once", async () => {
-    const ids: Record<string, string[]> = { users: ["b", "a"], agentUsage: ["a", "c"], agentWaitlist: [] };
+    const ids: Record<string, string[]> = { users: ["b", "a"], agentReplyCache: ["d"], agentUsage: ["a", "c"], agentWaitlist: [] };
     const db = {
       collection: (c: string) => ({ listDocuments: async () => ids[c].map((id) => ({ id })) }),
     } as unknown as Firestore;
-    expect(await uidsWithData(db)).toEqual(["a", "b", "c"]);
+    expect(await uidsWithData(db)).toEqual(["a", "b", "c", "d"]);
   });
 });
