@@ -199,6 +199,7 @@ const runTool = async (
         const raw = (input ?? {}) as Record<string, unknown>;
         proposal = {
           ...p.value,
+          ...(raw.dueDate === undefined ? { dueDate: existing.dueDate } : {}),
           ...(raw.startTime === undefined && existing.startTime ? { startTime: existing.startTime } : {}),
           ...(raw.endTime === undefined && existing.endTime ? { endTime: existing.endTime } : {}),
           status: raw.status === undefined && existing.status === "DONE" ? "DONE" : p.value.status,

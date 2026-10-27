@@ -205,7 +205,8 @@ export const SYSTEM_PROMPT = `You are the study assistant inside OPlanner, a sem
 Tools:
 - list_courses and list_tasks read the student's data for the semester they have open.
 - list_time_blocks reads the student's calendar blocks (classes, work, study sessions), so plans can avoid times they're busy.
-- When creating a task, don't invent details the student didn't give. With a start time but no end time (or the reverse), propose the task anyway with what you know; the card asks the student to fill in the rest.
+- When creating a task, don't invent details the student didn't give, and don't ask for them in text: propose the task with what you know (no date, or a start without an end, is fine) and the card asks the student to fill in the rest.
+- Your earlier replies may end with lines like "[App note: the new task suggestion ... was dismissed.]". The app adds them to say what the student did with each card; trust them over your memory. If a suggestion was dismissed or expired and the student asks for it again, propose it again. Never write such lines yourself.
 - propose_course suggests adding a course to the open semester. If the student didn't give the final exam date, propose it without one; the card lets them add it.
 - propose_task suggests creating or editing one task; to mark a task done, propose it with status DONE. propose_delete suggests deleting one task. Nothing changes until the student confirms the card the app shows, so say that you've proposed it, not that it's done.
 
@@ -304,12 +305,12 @@ export const TOOLS: Anthropic.Tool[] = [
         id: { type: "string", description: "Existing task id to edit. Omit to create." },
         course: { type: "string", description: "Exact course name from list_courses, or \"reminders\"." },
         name: { type: "string", description: "Short task name, max 120 characters." },
-        dueDate: { type: "string", description: "YYYY-MM-DD." },
+        dueDate: { type: "string", description: "YYYY-MM-DD. Omit if the student didn't say; the card asks." },
         startTime: { type: "string", description: "HH:mm, optional." },
         endTime: { type: "string", description: "HH:mm, optional." },
         status: { type: "string", enum: ["PENDING", "DONE"] },
       },
-      required: ["course", "name", "dueDate"],
+      required: ["course", "name"],
       additionalProperties: false,
     },
   },
@@ -365,7 +366,8 @@ export const parseProposal = (input: unknown): Parsed<TaskProposal> => {
   if (!isDocId(i.course)) return { ok: false, error: "course is required." };
   const name = typeof i.name === "string" ? i.name.trim() : "";
   if (!name || name.length > 120) return { ok: false, error: "name must be 1-120 characters." };
-  if (typeof i.dueDate !== "string" || !isRealDate(i.dueDate)) {
+  // Optional: a missing date is filled on the card ("" until then).
+  if (i.dueDate !== undefined && (typeof i.dueDate !== "string" || !isRealDate(i.dueDate))) {
     return { ok: false, error: "dueDate must be YYYY-MM-DD." };
   }
   if (i.id !== undefined && !isDocId(i.id)) return { ok: false, error: "Invalid id." };
@@ -383,7 +385,7 @@ export const parseProposal = (input: unknown): Parsed<TaskProposal> => {
       ...(i.id !== undefined ? { id: i.id as string } : {}),
       course: i.course,
       name,
-      dueDate: i.dueDate,
+      dueDate: typeof i.dueDate === "string" ? i.dueDate : "",
       ...(i.startTime !== undefined ? { startTime: i.startTime as string } : {}),
       ...(i.endTime !== undefined ? { endTime: i.endTime as string } : {}),
       status: (i.status as "PENDING" | "DONE" | undefined) ?? "PENDING",

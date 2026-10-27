@@ -241,3 +241,11 @@ describe("course proposals", () => {
     expect(parseCourseProposal({ name: "Calc", finalDate: "soon" }).ok).toBe(false);
   });
 });
+
+describe("task proposals without a date", () => {
+  it("leaves a missing date for the card to ask", () => {
+    const r = parseProposal({ course: "Calculus", name: "HW" });
+    expect(r.ok && r.value.dueDate).toBe("");
+    expect(parseProposal({ course: "Calculus", name: "HW", dueDate: "soon" }).ok).toBe(false);
+  });
+});
