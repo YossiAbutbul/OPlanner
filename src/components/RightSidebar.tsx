@@ -236,7 +236,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     }
     const fromCourse = p.prevCourse ?? p.course;
     const existing = p.id
-      ? allSemesterTasks.find((t) => t.id === p.id && t.course === fromCourse && t.year === year)
+      ? allSemesterTasks.find(
+          (t) => t.id === p.id && t.course === fromCourse && t.year === year && t.semester === semester
+        )
       : undefined;
     // Never let a proposal create a task under an id the user doesn't have.
     if (p.id && !existing) {

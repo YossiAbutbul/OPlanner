@@ -56,6 +56,13 @@ export async function POST(request: Request): Promise<Response> {
         console.info("Waitlist: already on the list, no email");
         return false;
       }
+      // Unverified addresses are saved but never emailed, so throwaway
+      // signups can't use up the daily email allowance.
+      if (!entry.verified) {
+        tx.set(ref, { ...entry, requestedAt: FieldValue.serverTimestamp() });
+        console.info("Waitlist: saved without email, address not verified");
+        return false;
+      }
       const slot = takeEmailSlot(meta.data(), Date.now());
       tx.set(ref, { ...entry, requestedAt: FieldValue.serverTimestamp() });
       if (slot.notify) tx.set(metaRef, slot.next);

@@ -377,9 +377,12 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
   const isGone = (c: Card) => track(c).gone;
 
   // One at a time, so each card shows its own result.
+  // Deletes are left out: each needs its own click, so text injected into a
+  // task name can't turn one click into several deletions.
   const confirmAll = async (msgId: number, cards: Card[]) => {
     for (const [i, c] of cards.entries()) {
       const k = cardKind(c.proposal);
+      if (k === "delete") continue;
       const blocked = (k === "new" || k === "edit" || k === "course") && detailsProblem(withEdits(c));
       if (c.state === "pending" && !isGone(c) && !blocked) await confirm(msgId, i, c);
     }
@@ -465,7 +468,11 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                   <div className="rs-agent-card-head">
                     <span className="rs-agent-card-icon" aria-hidden="true">{k.icon}</span>
                     <div className="rs-agent-card-body">
-                      <span className="rs-agent-card-kind">{k.label}</span>
+                      <span className="rs-agent-card-kind">
+                        {k.label}
+                        {/* Cards write to the semester they were proposed in. */}
+                        {(c.year !== year || c.semester !== semester) && ` · ${c.semester} ${c.year}`}
+                      </span>
                       {/* <bdi> keeps Hebrew names from reordering the English around them. */}
                       <span className="rs-agent-card-name"><bdi>{shown.name}</bdi></span>
                       {kind === "course" ? (
@@ -610,7 +617,10 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                 );
               })}
               {(() => {
-                const pending = m.cards?.filter((c) => c.state === "pending" && !isGone(c)) ?? [];
+                const pending =
+                  m.cards?.filter(
+                    (c) => c.state === "pending" && !isGone(c) && cardKind(c.proposal) !== "delete"
+                  ) ?? [];
                 if (pending.length < 2) return null;
                 const allNew = pending.every((c) => ["new", "course"].includes(cardKind(c.proposal)));
                 return (

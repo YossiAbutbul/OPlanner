@@ -14,6 +14,8 @@ import { FieldValue } from "firebase-admin/firestore";
 import {
   MAX_BODY_BYTES,
   MAX_PROPOSALS,
+  MAX_TOOLS_PER_ROUND,
+  REQUEST_DEADLINE_MS,
   MAX_TOKENS,
   MAX_TOOL_ROUNDS,
   MODEL,
@@ -342,6 +344,10 @@ const describeError = (err: unknown): string => {
 };
 
 // The tool loop. Reports each tool as it starts and each call's cost.
+// Stays within the request's reservation (RESERVE_MICROS): once a round has
+// used it up, or the deadline passes, it returns what it has instead of
+// starting another round, so one request can't spend past the daily budget
+// by more than a single call.
 const runAgent = async (
   messages: Anthropic.MessageParam[],
   data: ReturnType<typeof semesterData>,
@@ -349,7 +355,16 @@ const runAgent = async (
   onSpend: (micros: number) => void
 ): Promise<AgentEvent> => {
   const proposals: ClientProposal[] = [];
+  const deadline = Date.now() + REQUEST_DEADLINE_MS;
+  let spent = 0;
   for (let round = 0; ; round++) {
+    if (round > 0 && (spent >= RESERVE_MICROS || Date.now() > deadline)) {
+      return {
+        type: "done",
+        reply: "That one took too long to work out. Try a narrower question.",
+        proposals,
+      };
+    }
     const response = await claude().messages.create({
       model: MODEL,
       max_tokens: MAX_TOKENS,
@@ -362,7 +377,9 @@ const runAgent = async (
       output_config: { effort: "low" },
       messages,
     });
-    onSpend(costMicros(response.usage));
+    const cost = costMicros(response.usage);
+    spent += cost;
+    onSpend(cost);
 
     const text = response.content
       .filter((b): b is Anthropic.TextBlock => b.type === "text")
@@ -384,13 +401,17 @@ const runAgent = async (
 
     messages.push({ role: "assistant", content: response.content });
     const results: Anthropic.ToolResultBlockParam[] = [];
+    let calls = 0;
     for (const block of response.content) {
       if (block.type !== "tool_use") continue;
-      onStatus(TOOL_STATUS[block.name] ?? "Working…");
+      calls++;
+      if (calls <= MAX_TOOLS_PER_ROUND) onStatus(TOOL_STATUS[block.name] ?? "Working…");
       const out: ToolOutcome =
-        block.name.startsWith("propose_") && proposals.length >= MAX_PROPOSALS
-          ? { content: `At most ${MAX_PROPOSALS} proposals per reply. Stop proposing.`, isError: true }
-          : await runTool(block.name, block.input, data);
+        calls > MAX_TOOLS_PER_ROUND
+          ? { content: `At most ${MAX_TOOLS_PER_ROUND} tool calls at once. Use filters instead.`, isError: true }
+          : block.name.startsWith("propose_") && proposals.length >= MAX_PROPOSALS
+            ? { content: `At most ${MAX_PROPOSALS} proposals per reply. Stop proposing.`, isError: true }
+            : await runTool(block.name, block.input, data);
       if (out.proposal) proposals.push(out.proposal);
       results.push({
         type: "tool_result",

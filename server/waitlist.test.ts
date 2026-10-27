@@ -16,7 +16,9 @@ describe("waitlist", () => {
   });
 
   it("keeps display names to one short line", () => {
-    expect(cleanName("Dana\r\nBcc: x@y.z")).toBe("Dana  Bcc: x@y.z");
+    expect(cleanName("Dana\r\nBcc: x@y.z")).toBe("Dana Bcc: x@y.z");
+    expect(cleanName("Dana‮moc.live")).toBe("Dana moc.live");
+    expect(cleanName("a b")).toBe("a b");
     expect(cleanName("x".repeat(300))).toHaveLength(100);
     expect(cleanName(undefined)).toBe("");
   });

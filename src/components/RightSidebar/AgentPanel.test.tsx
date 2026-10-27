@@ -327,6 +327,32 @@ describe("AgentPanel", () => {
     expect(onConfirm.mock.calls[0][0]).toMatchObject({ action: "course", name: "Linear Algebra", dueDate: "2027-02-10" });
   });
 
+  it("never deletes through Confirm all", async () => {
+    const del = (id: string) => ({ action: "delete" as const, id, course: "x", name: id, dueDate: "2026-11-03", status: "PENDING" as const });
+    const add = (name: string) => ({ course: "x", name, dueDate: "2026-11-03", status: "PENDING" as const });
+    send.mockResolvedValue({ reply: "Proposed.", proposals: [del("a"), add("B"), del("c"), add("D")] });
+    const onConfirm = vi.fn().mockResolvedValue("id");
+    render(<AgentPanel year={2026} semester="A" onConfirm={onConfirm} />);
+    fireEvent.click(screen.getByRole("button", { name: "מה פספסתי?" }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add all 2" }));
+    await waitFor(() => expect(screen.getAllByText("Added to your planner")).toHaveLength(2));
+    expect(onConfirm.mock.calls.map((c) => c[0].name)).toEqual(["B", "D"]);
+    expect(screen.getAllByRole("button", { name: "Delete" })).toHaveLength(2);
+  });
+
+  it("shows which semester a card writes to after switching semesters", async () => {
+    send.mockResolvedValue({
+      reply: "Proposed.",
+      proposals: [{ course: "x", name: "HW", dueDate: "2026-11-03", status: "PENDING" }],
+    });
+    const { rerender } = render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "מה פספסתי?" }));
+    expect(await screen.findByText("New task")).toBeInTheDocument();
+    rerender(<AgentPanel year={2026} semester="B" onConfirm={vi.fn()} />);
+    expect(screen.getByText("New task · A 2026")).toBeInTheDocument();
+  });
+
   it("renders replies as text, not HTML", async () => {
     send.mockResolvedValue({ reply: '<img src=x onerror="alert(1)">', proposals: [] });
     const { container } = render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);

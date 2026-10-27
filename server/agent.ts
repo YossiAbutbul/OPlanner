@@ -15,6 +15,11 @@ import type Anthropic from "@anthropic-ai/sdk";
 export const MODEL = "claude-haiku-5-5";
 export const MAX_TOKENS = 4096;
 export const MAX_TOOL_ROUNDS = 5;
+// Tool calls the model may make in one round; extras get an error back.
+export const MAX_TOOLS_PER_ROUND = 4;
+// A request stops starting new rounds after this, well inside the
+// function's time limit, so its spend is always recorded.
+export const REQUEST_DEADLINE_MS = 100_000;
 
 export const MAX_BODY_BYTES = 64 * 1024;
 export const MAX_USER_CHARS = 2000;
