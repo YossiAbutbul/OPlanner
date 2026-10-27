@@ -105,6 +105,9 @@ const MAX_STORED = 40;
 const MAX_SENT = 50;
 const MAX_NUDGES = 100;
 
+const ymd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 const isMessage = (m: unknown): m is Message => {
   const x = m as Message;
   return !!x && typeof x.id === "number" && (x.role === "user" || x.role === "assistant") && typeof x.text === "string";
@@ -283,18 +286,38 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
     }
     return false;
   };
-  // Nudges already answered or closed, so each comes up once.
+  // Nudges and alerts put away: "forever" once answered or removed, or the
+  // day they come back after "not now".
   const nudgeKey = storageKey ? `${storageKey}.nudges` : undefined;
-  const [seenNudges, setSeenNudges] = useState<string[]>(() => {
+  const [hidden, setHidden] = useState<Record<string, string>>(() => {
     const saved = nudgeKey ? lsCache.read<unknown>(nudgeKey) : null;
-    return Array.isArray(saved) ? saved.filter((x): x is string => typeof x === "string") : [];
+    // Before snoozing existed this was a list of keys put away for good.
+    if (Array.isArray(saved))
+      return Object.fromEntries(saved.filter((x): x is string => typeof x === "string").map((k) => [k, "forever"]));
+    if (!saved || typeof saved !== "object") return {};
+    return Object.fromEntries(Object.entries(saved).filter((e): e is [string, string] => typeof e[1] === "string"));
   });
-  const closeNudge = (key: string) =>
-    setSeenNudges((prev) => {
-      const next = [...prev.filter((k) => k !== key), key].slice(-MAX_NUDGES);
+  // The alert or nudge whose close button was tapped, asking when to bring it back.
+  const [asking, setAsking] = useState<string | null>(null);
+  const hide = (key: string, until: "forever" | "tomorrow") => {
+    setAsking(null);
+    setHidden((prev) => {
+      const now = new Date();
+      const today = ymd(now);
+      // Drop snoozes that have run out, and keep the newest entries.
+      const kept = Object.entries(prev).filter(([k, v]) => k !== key && (v === "forever" || v > today));
+      const value =
+        until === "forever" ? "forever" : ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+      const next = Object.fromEntries([...kept, [key, value]].slice(-MAX_NUDGES));
       if (nudgeKey) lsCache.write(nudgeKey, next);
       return next;
     });
+  };
+  const isHidden = (key: string) => {
+    const v = hidden[key];
+    return !!v && (v === "forever" || v > ymd(new Date()));
+  };
+  const closeNudge = (key: string) => hide(key, "forever");
   const [nudgeSaving, setNudgeSaving] = useState(false);
 
   const [busy, setBusy] = useState(false);
@@ -457,7 +480,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
 
   const nudge =
     ready && liveTasks && liveTasks.year === year && liveTasks.semester === semester
-      ? pickNudge(liveTasks.tasks, new Date(), new Set(seenNudges))
+      ? pickNudge(liveTasks.tasks, new Date(), new Set(Object.keys(hidden).filter(isHidden)))
       : null;
 
   // "Yes, I handed it in" marks the task done right away; the toast says so.
@@ -489,6 +512,30 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
   // The newest reply's quick answers, while nothing else has been said.
   const last = messages[messages.length - 1];
   const quickReplies = last?.role === "assistant" && !last.error ? splitQuickReplies(last.text).replies : [];
+
+  // Asked after the close button: bring it back tomorrow, or never.
+  const snoozeChoice = (key: string) => (
+    <div className="rs-agent-snooze" dir="rtl">
+      <span className="rs-agent-snooze-q">להזכיר לך שוב?</span>
+      <button type="button" className="rs-agent-nudge-btn is-primary" onClick={() => hide(key, "tomorrow")}>
+        מחר
+      </button>
+      <button type="button" className="rs-agent-nudge-btn" onClick={() => hide(key, "forever")}>
+        לא להזכיר
+      </button>
+      <button type="button" className="rs-agent-snooze-back" onClick={() => setAsking(null)}>
+        ביטול
+      </button>
+    </div>
+  );
+
+  const closeButton = (key: string, className: string) => (
+    <button type="button" className={className} onClick={() => setAsking(key)} aria-label="Close" title="Close">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+        <path d="M6 6l12 12M18 6L6 18" />
+      </svg>
+    </button>
+  );
 
   return (
     <div className="rs-agent">
@@ -562,35 +609,45 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                 above the input; each opens a planning conversation about it. */}
             <div className="rs-agent-starters">
               {ready && liveTasks && (() => {
-                const alerts = studyAlerts(liveTasks.tasks, blocks ?? [], new Date(), nudge ? 1 : 2);
+                const alerts = studyAlerts(liveTasks.tasks, blocks ?? [], new Date(), 20)
+                  .filter((a) => !isHidden(a.key))
+                  .slice(0, nudge ? 1 : 2);
                 return alerts.length > 0 ? (
                   <div className="rs-agent-risks" dir="rtl">
                     {alerts.map((a) => (
-                      // The whole card is the button: one tap opens the plan.
-                      <button
-                        key={a.key}
-                        type="button"
-                        className="rs-agent-risk"
-                        onClick={() => void send(a.prompt)}
-                        disabled={busy}
-                      >
-                        <span className="rs-agent-risk-icon" aria-hidden="true">
-                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 9v4M12 17h.01" />
-                            <path d="M10.3 3.9L2.4 17.5a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
-                          </svg>
-                        </span>
-                        <span className="rs-agent-risk-body">
-                          <span className="rs-agent-risk-label">{a.label}</span>
-                          <span className="rs-agent-risk-title">{a.title}</span>
-                        </span>
-                        <span className="rs-agent-risk-cta">
-                          תכנן לי
-                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <path d="M15 6l-6 6 6 6" />
-                          </svg>
-                        </span>
-                      </button>
+                      <div key={a.key} className={`rs-agent-risk${asking === a.key ? " is-asking" : ""}`}>
+                        {asking === a.key ? (
+                          snoozeChoice(a.key)
+                        ) : (
+                          <>
+                            {/* Most of the card is the button: one tap opens the plan. */}
+                            <button
+                              type="button"
+                              className="rs-agent-risk-open"
+                              onClick={() => void send(a.prompt)}
+                              disabled={busy}
+                            >
+                              <span className="rs-agent-risk-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M12 9v4M12 17h.01" />
+                                  <path d="M10.3 3.9L2.4 17.5a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+                                </svg>
+                              </span>
+                              <span className="rs-agent-risk-body">
+                                <span className="rs-agent-risk-label">{a.label}</span>
+                                <span className="rs-agent-risk-title">{a.title}</span>
+                              </span>
+                              <span className="rs-agent-risk-cta">
+                                תכנן לי
+                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                  <path d="M15 6l-6 6 6 6" />
+                                </svg>
+                              </span>
+                            </button>
+                            {closeButton(a.key, "rs-agent-risk-close")}
+                          </>
+                        )}
+                      </div>
                     ))}
                   </div>
                 ) : null;
@@ -873,6 +930,9 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
               <path d="M18 14.5C18.3 16.4 19.1 17.2 21 17.5C19.1 17.8 18.3 18.6 18 20.5C17.7 18.6 16.9 17.8 15 17.5C16.9 17.2 17.7 16.4 18 14.5Z" />
             </svg>
           </span>
+          {asking === nudge.key ? (
+            <div className="rs-agent-nudge-body">{snoozeChoice(nudge.key)}</div>
+          ) : (
           <div className="rs-agent-nudge-body">
             <p className="rs-agent-nudge-text">{nudge.text}</p>
             <div className="rs-agent-nudge-actions">
@@ -911,23 +971,16 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                   >
                     בוא נתכנן
                   </button>
-                  <button type="button" className="rs-agent-nudge-btn" onClick={() => closeNudge(nudge.key)}>
+                  {/* Comes back tomorrow, while the week still has work. */}
+                  <button type="button" className="rs-agent-nudge-btn" onClick={() => hide(nudge.key, "tomorrow")}>
                     לא עכשיו
                   </button>
                 </>
               )}
             </div>
           </div>
-          <button
-            type="button"
-            className="rs-agent-nudge-close"
-            onClick={() => closeNudge(nudge.key)}
-            aria-label="Close"
-          >
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
+          )}
+          {asking !== nudge.key && closeButton(nudge.key, "rs-agent-nudge-close")}
         </div>
       )}
 

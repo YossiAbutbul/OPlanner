@@ -118,6 +118,25 @@ describe("AgentPanel", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  it("puts an alert away until tomorrow from its close button", () => {
+    const due = new Date(Date.now() + 2 * 86_400_000);
+    const iso = `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, "0")}-${String(due.getDate()).padStart(2, "0")}`;
+    const tasks = [{ id: "t1", name: "מטלה 11", course: "אלגוריתמים", dueDate: iso, status: "PENDING" }];
+    const props = { year: 2026, semester: "A", onConfirm: vi.fn(), storageKey: "test.snooze", blocks: [] };
+    const { unmount } = render(<AgentPanel {...props} liveTasks={{ year: 2026, semester: "A", tasks }} />);
+    const label = "בעוד 2 ימים · אין זמן לימוד ביומן";
+
+    fireEvent.click(screen.getByText(label).closest(".rs-agent-risk")!.querySelector(".rs-agent-risk-close")!);
+    fireEvent.click(screen.getByRole("button", { name: "מחר" }));
+    expect(screen.queryByText(label)).not.toBeInTheDocument();
+
+    // Still away after reopening today.
+    unmount();
+    render(<AgentPanel {...props} liveTasks={{ year: 2026, semester: "A", tasks }} />);
+    expect(screen.queryByText(label)).not.toBeInTheDocument();
+    localStorage.clear();
+  });
+
   it("turns the reply's likely answers into buttons", async () => {
     send.mockResolvedValueOnce({ reply: "When are you free?\n[[Evenings | Weekend]]", proposals: [] });
     send.mockResolvedValueOnce({ reply: "Got it.", proposals: [] });
