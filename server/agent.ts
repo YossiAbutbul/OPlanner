@@ -25,6 +25,13 @@ export const PER_MINUTE = 20;
 export const PER_DAY = 200;
 // Spend cap per user per UTC day, in micro-dollars ($0.50).
 export const DAILY_BUDGET_MICROS = 500_000;
+// Reserved up front for each request and settled after it, so concurrent
+// requests can't all pass the budget check before any of them is billed.
+// About a long tool loop of Haiku calls ($0.02); anything over it is
+// billed when the request settles.
+export const RESERVE_MICROS = 20_000;
+// Confirm cards per reply: an injected task name can't flood the UI.
+export const MAX_PROPOSALS = 5;
 
 // Haiku 5.5 list price, micro-dollars per token ($0.10 / $0.50 per MTok).
 // Cache writes bill at 1.25x input, reads at 0.1x.
@@ -151,7 +158,7 @@ export const takeRequest = (prev: UsageState, now: number): LimitResult => {
   }
 
   const untilTomorrow = Math.ceil((Date.parse(today) + DAY_MS - now) / 1000);
-  if (s.dayMicros >= DAILY_BUDGET_MICROS) {
+  if (s.dayMicros + RESERVE_MICROS > DAILY_BUDGET_MICROS) {
     return { ok: false, reason: "Daily AI budget reached. It resets at midnight UTC.", retryAfterSec: untilTomorrow };
   }
   if (s.dayCount >= PER_DAY) {
@@ -167,6 +174,7 @@ export const takeRequest = (prev: UsageState, now: number): LimitResult => {
 
   s.minuteCount++;
   s.dayCount++;
+  s.dayMicros += RESERVE_MICROS;
   return { ok: true, next: s };
 };
 

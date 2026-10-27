@@ -198,6 +198,11 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     const existing = p.id
       ? allSemesterTasks.find((t) => t.id === p.id && t.course === fromCourse && t.year === year)
       : undefined;
+    // Never let a proposal create a task under an id the user doesn't have.
+    if (p.id && !existing) {
+      toast.error(`“${p.name}” no longer exists`);
+      throw new Error("Proposed task not found");
+    }
     try {
       await addHomework(
         p.id ?? null,

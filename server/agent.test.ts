@@ -14,6 +14,7 @@ import {
   parseProposal,
   parseTaskFilter,
   takeRequest,
+  RESERVE_MICROS,
   type TaskView,
   type UsageState,
 } from "./agent";
@@ -119,7 +120,21 @@ describe("takeRequest", () => {
   it("resets the daily counters on a new UTC day", () => {
     const s = { ...emptyUsage(), day: "2026-10-26", dayCount: PER_DAY, dayMicros: DAILY_BUDGET_MICROS };
     const r = takeRequest(s, NOON);
-    expect(r.ok && r.next).toMatchObject({ dayCount: 1, dayMicros: 0 });
+    expect(r.ok && r.next).toMatchObject({ dayCount: 1, dayMicros: RESERVE_MICROS });
+  });
+
+  it("reserves spend up front so concurrent requests can't overshoot the budget", () => {
+    let s = { ...emptyUsage(), day: "2026-10-27", dayMicros: DAILY_BUDGET_MICROS - 2 * RESERVE_MICROS };
+    let passed = 0;
+    for (let i = 0; i < 20; i++) {
+      const r = takeRequest(s, NOON + i * 61000);
+      if (r.ok) {
+        passed++;
+        s = r.next;
+      }
+    }
+    expect(passed).toBe(2);
+    expect(s.dayMicros).toBe(DAILY_BUDGET_MICROS);
   });
 });
 

@@ -12,6 +12,15 @@ export interface AgentProposal {
   endTime?: string;
   status: "PENDING" | "DONE";
   prevCourse?: string;  // set when an edit moves the task to another course
+  // Edits only: the task as currently stored, shown against the new values.
+  prev?: {
+    course: string;
+    name: string;
+    dueDate: string;
+    startTime?: string;
+    endTime?: string;
+    status: string;
+  };
 }
 
 export interface AgentTurn {
@@ -69,7 +78,7 @@ export const sendAgentMessage = async (input: {
   }
   const body = await readJson(res);
   if (!res.ok || !body) {
-    throw new Error(typeof body?.error === "string" ? body.error : "The assistant is unavailable right now.");
+    throw new Error(typeof body?.error === "string" ? body.error : "Couldn't reach the assistant. Try again in a moment.");
   }
   return {
     reply: typeof body.reply === "string" ? body.reply : "",

@@ -7,15 +7,77 @@ rules_version = '2';
 // read or reset them.
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // Coin balance before this write (0 for a new user doc).
+    function prevCoins() {
+      return resource == null ? 0 : resource.data.get("coins", 0);
+    }
+
     match /users/{uid}/{document=**} {
-      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow read, delete: if isOwner(uid);
+    }
+
+    // Top-level user doc: holds the Pomodoro coin balance. Coins only go up
+    // (nothing spends them) and by at most 600 per write, which covers a
+    // long offline backlog (1 coin per focused minute) but not a jump to
+    // an arbitrary value.
+    match /users/{uid} {
+      allow create, update: if isOwner(uid)
+        && request.resource.data.size() <= 50
+        && (
+          !("coins" in request.resource.data)
+          || (request.resource.data.coins is int
+              && request.resource.data.coins >= prevCoins()
+              && request.resource.data.coins - prevCoins() <= 600)
+        );
+    }
+
+    // Web Push subscriptions, read by api/send-reminders.ts across all
+    // users. Only the exact shape src/utility/push.ts writes is accepted,
+    // keyed by the sha256 of the endpoint, with the endpoint on a known
+    // push service. The sender also caps how many it reads per user.
+    match /users/{uid}/pushSubs/{subId} {
+      allow create, update: if isOwner(uid)
+        && subId.matches("^[0-9a-f]{64}$")
+        && request.resource.data.keys().hasOnly(["endpoint", "keys", "tz", "leadMinutes", "updatedAt"])
+        && request.resource.data.endpoint is string
+        && request.resource.data.endpoint.size() <= 1000
+        && request.resource.data.endpoint.matches(
+             "https://(fcm[.]googleapis[.]com|updates[.]push[.]services[.]mozilla[.]com|web[.]push[.]apple[.]com|[a-z0-9.-]+[.]notify[.]windows[.]com)/.*")
+        && request.resource.data["keys"] is map
+        && request.resource.data["keys"].keys().hasOnly(["p256dh", "auth"])
+        && request.resource.data["keys"].p256dh is string
+        && request.resource.data["keys"].p256dh.size() <= 200
+        && request.resource.data["keys"].auth is string
+        && request.resource.data["keys"].auth.size() <= 100
+        && request.resource.data.tz is string
+        && request.resource.data.tz.size() <= 64
+        && request.resource.data.leadMinutes is number
+        && request.resource.data.leadMinutes >= 0
+        && request.resource.data.leadMinutes <= 1440
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // Everything else under the user (years/, semesters, courses, tasks,
+    // timeBlocks, ...). pushSubs is excluded so its stricter rule above is
+    // the only way to write one.
+    match /users/{uid}/{col}/{rest=**} {
       // Writes additionally bound document size so a compromised client
       // can't grief storage costs: at most 50 top-level fields, and the
       // notes field (rich-text HTML, the only unbounded user input) is
       // capped at 50k characters.
-      allow create, update: if request.auth != null
-        && request.auth.uid == uid
+      allow create, update: if isOwner(uid)
+        && col != "pushSubs"
         && request.resource.data.size() <= 50
+        // Task (and course) names: plain text, bounded.
+        && (
+          !("name" in request.resource.data)
+          || (request.resource.data.name is string
+              && request.resource.data.name.size() <= 500)
+        )
         && (
           !("notes" in request.resource.data)
           || (request.resource.data.notes is string

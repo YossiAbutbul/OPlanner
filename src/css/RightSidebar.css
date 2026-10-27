@@ -1069,8 +1069,66 @@
   color: var(--rs-text-soft);
 }
 
-.rs-agent-error .rs-agent-text {
+/* Error notice: calm surface, the red is only on the icon so the message
+   stays readable. Retry sits beside it. */
+.rs-agent-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.6rem 0.65rem 0.6rem 0.7rem;
+  border-radius: 12px;
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.18);
+}
+
+.rs-agent-alert-icon {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
   color: var(--rs-danger);
+}
+
+.rs-agent-alert-text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--rs-text-soft);
+}
+
+.rs-agent-alert-retry {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 0.3rem 0.6rem;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--rs-text);
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    transform 100ms var(--ease-out);
+}
+
+.rs-agent-alert-retry:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.rs-agent-alert-retry:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.rs-agent-alert-retry:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.rs-agent-alert-retry:focus-visible {
+  outline: 2px solid var(--rs-accent);
+  outline-offset: 2px;
 }
 
 /* Cards stay left-to-right like the rest of the UI; Hebrew names sit in

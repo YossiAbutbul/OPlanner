@@ -12,6 +12,35 @@ const SANITIZE_CFG = {
   ALLOWED_ATTR: ["href", "target", "rel", "dir", "style", "class"],
 };
 
+// Inline styles and classes are narrowed to what the toolbar emits (color,
+// highlight, size, alignment; editor-owned classes). A pasted
+// `position:fixed` overlay or an app class like a modal backdrop would
+// otherwise survive and could cover the app.
+const STYLE_RULES: Record<string, RegExp> = {
+  color: /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|[a-z]+)$/i,
+  "background-color": /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|[a-z]+)$/i,
+  "font-size": /^\d{1,2}(\.\d+)?px$/,
+  "text-align": /^(left|right|center|justify|start|end)$/,
+};
+const CLASS_RE = /^(ne-[\w-]+|mention)$/;
+
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+  if (!(node instanceof HTMLElement)) return;
+  if (node.hasAttribute("style")) {
+    const kept = Object.entries(STYLE_RULES).flatMap(([prop, re]) => {
+      const value = node.style.getPropertyValue(prop).trim();
+      return value && re.test(value) ? [`${prop}:${value}`] : [];
+    });
+    if (kept.length > 0) node.setAttribute("style", kept.join(";"));
+    else node.removeAttribute("style");
+  }
+  if (node.hasAttribute("class")) {
+    const kept = Array.from(node.classList).filter((c) => CLASS_RE.test(c));
+    if (kept.length > 0) node.setAttribute("class", kept.join(" "));
+    else node.removeAttribute("class");
+  }
+});
+
 export const sanitize = (html: string): string =>
   DOMPurify.sanitize(html || "", SANITIZE_CFG);
 

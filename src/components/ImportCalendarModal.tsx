@@ -7,6 +7,7 @@ import {
   initializeYear,
   addCourse,
 } from "../utility/initializeDatabase";
+import { isSafeSegment } from "../utility/firestorePath";
 import "../css/ImportCalendarModal.css";
 
 interface Props {
@@ -83,6 +84,13 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
 
     for (const [, g] of groups) {
       setProgress(`${g.course} (${g.semester} ${g.year})…`);
+      // Names become Firestore path segments; skip the group rather than
+      // write under a re-rooted path.
+      if (!isSafeSegment(g.course) || !isSafeSegment(g.semester)) {
+        failed += g.events.length;
+        reasons.push(`${g.course}: invalid course name`);
+        continue;
+      }
       if (autoCreate) {
         await initializeYear(g.year);
         await addCourse(g.year, g.semester, g.course);

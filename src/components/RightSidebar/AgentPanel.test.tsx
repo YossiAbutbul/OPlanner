@@ -71,6 +71,20 @@ describe("AgentPanel", () => {
     );
   });
 
+  it("retries a failed message without sending it twice", async () => {
+    send.mockRejectedValueOnce(new Error("Couldn't reach the assistant."));
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "What's overdue?" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't reach the assistant.");
+
+    send.mockResolvedValueOnce({ reply: "Nothing overdue.", proposals: [] });
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await screen.findByText("Nothing overdue.");
+    expect(send).toHaveBeenLastCalledWith(expect.objectContaining({ history: [], message: "What's overdue?" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getAllByText("What's overdue?")).toHaveLength(1);
+  });
+
   it("renders replies as text, not HTML", async () => {
     send.mockResolvedValue({ reply: '<img src=x onerror="alert(1)">', proposals: [] });
     const { container } = render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);

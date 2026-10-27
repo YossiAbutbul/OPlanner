@@ -51,8 +51,10 @@ const SEM_MAP: Record<string, string> = {
 const extractCourse = (description: string) => {
   // קורס שפות תכנות (20905) בסמסטר ב2026
   // שפות תכנות (20905) בסמסטר ב2026
-  const re = /(?:קורס\s+)?(.+?)\s*\((\d+)\)\s*בסמסטר\s*([אבגדה])(\d{4})/;
-  const m = description.match(re);
+  // Bounded input and a bounded group: an unanchored lazy (.+?) backtracks
+  // quadratically, so a crafted 50k-char DESCRIPTION froze the tab.
+  const re = /(?:קורס\s+)?([^()\n]{1,100}?)\s*\((\d+)\)\s*בסמסטר\s*([אבגדה])(\d{4})/;
+  const m = description.slice(0, 500).match(re);
   if (!m) {
     return { course: null, courseNumber: null, semester: null, year: null };
   }

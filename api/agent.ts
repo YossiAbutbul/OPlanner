@@ -15,9 +15,11 @@ import { getAuth, type DecodedIdToken } from "firebase-admin/auth";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import {
   MAX_BODY_BYTES,
+  MAX_PROPOSALS,
   MAX_TOKENS,
   MAX_TOOL_ROUNDS,
   MODEL,
+  RESERVE_MICROS,
   SYSTEM_PROMPT,
   TOOLS,
   contextBlock,
@@ -34,12 +36,13 @@ import {
   type TaskView,
   type UsageState,
 } from "../server/agent.js";
+import { serviceAccount } from "../server/serviceAccount.js";
 
 const REMINDERS = "reminders";
 
 const admin = () => {
   if (getApps().length === 0) {
-    initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT ?? "{}")) });
+    initializeApp({ credential: cert(serviceAccount()) });
   }
 };
 const db = () => {
@@ -123,8 +126,9 @@ const semesterData = (uid: string, year: number, semester: string) => {
 };
 
 // A proposal the client shows as a confirm card. `prevCourse` is set when an
-// edit moves a task to another course.
-export type ClientProposal = TaskProposal & { prevCourse?: string };
+// edit moves a task to another course; `prev` is the task as stored, so the
+// card can show old against new and an injected edit can't slip by unnoticed.
+export type ClientProposal = TaskProposal & { prevCourse?: string; prev?: Omit<TaskView, "id"> };
 
 type ToolOutcome = { content: string; isError?: boolean; proposal?: ClientProposal };
 
@@ -162,6 +166,14 @@ const runTool = async (
           ...(raw.endTime === undefined && existing.endTime ? { endTime: existing.endTime } : {}),
           status: raw.status === undefined && existing.status === "DONE" ? "DONE" : p.value.status,
           ...(existing.course !== p.value.course ? { prevCourse: existing.course } : {}),
+          prev: {
+            course: existing.course,
+            name: existing.name,
+            dueDate: existing.dueDate,
+            ...(existing.startTime ? { startTime: existing.startTime } : {}),
+            ...(existing.endTime ? { endTime: existing.endTime } : {}),
+            status: existing.status,
+          },
         };
       }
       return {
@@ -183,8 +195,11 @@ export async function POST(request: Request): Promise<Response> {
   if (!auth.allowed) return json(403, { error: "The assistant isn't enabled for this account." });
   const uid = auth.user.uid;
 
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) {
+    return json(413, { error: "Request is too large." });
+  }
   const raw = await request.text();
-  if (raw.length > MAX_BODY_BYTES) return json(413, { error: "Request is too large." });
+  if (Buffer.byteLength(raw, "utf8") > MAX_BODY_BYTES) return json(413, { error: "Request is too large." });
   let body: unknown;
   try {
     body = JSON.parse(raw);
@@ -197,13 +212,21 @@ export async function POST(request: Request): Promise<Response> {
 
   // Rate limit + daily budget, atomically. agentUsage/ sits outside users/ so
   // firestore.rules deny clients; only this function can move the counters.
+  // takeRequest reserves RESERVE_MICROS here; the finally below settles it
+  // against what was actually spent.
   const usageRef = db().collection("agentUsage").doc(uid);
-  const gate = await db().runTransaction(async (tx) => {
-    const snap = await tx.get(usageRef);
-    const result = takeRequest({ ...emptyUsage(), ...(snap.data() as Partial<UsageState> | undefined) }, Date.now());
-    if (result.ok) tx.set(usageRef, result.next);
-    return result;
-  });
+  let gate: ReturnType<typeof takeRequest>;
+  try {
+    gate = await db().runTransaction(async (tx) => {
+      const snap = await tx.get(usageRef);
+      const result = takeRequest({ ...emptyUsage(), ...(snap.data() as Partial<UsageState> | undefined) }, Date.now());
+      if (result.ok) tx.set(usageRef, result.next);
+      return result;
+    });
+  } catch (err) {
+    console.error("Agent: usage check failed", err instanceof Error ? err.name : "unknown");
+    return json(503, { error: "The assistant is unavailable right now." });
+  }
   if (!gate.ok) {
     return json(429, { error: gate.reason }, { "Retry-After": String(gate.retryAfterSec) });
   }
@@ -260,7 +283,10 @@ export async function POST(request: Request): Promise<Response> {
       const results: Anthropic.ToolResultBlockParam[] = [];
       for (const block of response.content) {
         if (block.type !== "tool_use") continue;
-        const out = await runTool(block.name, block.input, data);
+        const out: ToolOutcome =
+          block.name === "propose_task" && proposals.length >= MAX_PROPOSALS
+            ? { content: `At most ${MAX_PROPOSALS} proposals per reply. Stop proposing.`, isError: true }
+            : await runTool(block.name, block.input, data);
         if (out.proposal) proposals.push(out.proposal);
         results.push({
           type: "tool_result",
@@ -286,11 +312,14 @@ export async function POST(request: Request): Promise<Response> {
     console.error("Agent: unexpected error", err);
     return json(500, { error: "Something went wrong." });
   } finally {
-    // Bill what was actually spent, even when the loop failed part-way.
-    if (spent > 0) {
-      await usageRef.set({ dayMicros: FieldValue.increment(spent) }, { merge: true }).catch((e) => {
-        console.error("Agent: failed to record usage", e);
-      });
+    // Settle the reservation against what was actually spent, even when the
+    // loop failed part-way.
+    if (spent !== RESERVE_MICROS) {
+      await usageRef
+        .set({ dayMicros: FieldValue.increment(spent - RESERVE_MICROS) }, { merge: true })
+        .catch((e) => {
+          console.error("Agent: failed to record usage", e);
+        });
     }
   }
 

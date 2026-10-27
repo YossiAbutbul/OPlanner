@@ -7,6 +7,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { seg } from "../utility/firestorePath";
 import type { HomeworkEntry } from "../types/models";
 
 // The Final Exam task's id inside each course (see setCourseFinalDate).
@@ -31,14 +32,14 @@ export const saveCourseFinalDate = async (
   course: string,
   date: string | null
 ): Promise<void> => {
-  await updateDoc(doc(db, `users/${uid}/years/${year}/semesters/${semester}/courses/${course}`), {
+  await updateDoc(doc(db, `users/${uid}/years/${year}/semesters/${seg(semester)}/courses/${seg(course)}`), {
     finalDate: date,
   });
 };
 
 // Firestore collection path for a course's tasks subcollection.
 const tasksPath = (uid: string, year: number, semester: string, course: string) =>
-  `users/${uid}/years/${year}/semesters/${semester}/courses/${course}/tasks`;
+  `users/${uid}/years/${year}/semesters/${seg(semester)}/courses/${seg(course)}/tasks`;
 
 export const fetchCourseTasks = async (
   uid: string,
@@ -48,8 +49,8 @@ export const fetchCourseTasks = async (
 ): Promise<HomeworkEntry[]> => {
   const snap = await getDocs(collection(db, tasksPath(uid, year, semester, course)));
   return snap.docs.map((d) => ({
-    id: d.id,
     ...d.data(),
+    id: d.id,
     year,
     semester,
     course,

@@ -1,11 +1,12 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { seg } from "../utility/firestorePath";
 import type { CourseLink, CourseMeta, ExamColumn, ExamRow, ExamTable } from "../types/models";
 
 // Firestore path of the course doc itself (links/notes/info live on it,
 // alongside the existing color/finalDate fields).
 const coursePath = (uid: string, year: number, semester: string, course: string) =>
-  `users/${uid}/years/${year}/semesters/${semester}/courses/${course}`;
+  `users/${uid}/years/${year}/semesters/${seg(semester)}/courses/${seg(course)}`;
 
 export const MAX_LINKS = 20;
 export const MAX_LABEL_LEN = 100;

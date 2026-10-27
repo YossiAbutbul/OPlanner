@@ -18,6 +18,7 @@ interface Message {
   text: string;
   cards?: Card[];
   error?: boolean;
+  retry?: string;  // errors only: the message to send again
 }
 
 interface Props {
@@ -40,6 +41,24 @@ const formatDate = (iso: string) =>
 const formatTime = (p: AgentProposal) =>
   p.startTime ? (p.endTime ? `${p.startTime}–${p.endTime}` : p.startTime) : "";
 
+// Fields an edit changes, old against new, so the student sees exactly what
+// Confirm will do (a task name can carry injected instructions).
+const editChanges = (p: AgentProposal): { label: string; from: string; to: string }[] => {
+  const prev = p.prev;
+  if (!prev) return [];
+  const timeOf = (t: { startTime?: string; endTime?: string }) =>
+    t.startTime ? (t.endTime ? `${t.startTime}–${t.endTime}` : t.startTime) : "No time";
+  const statusOf = (s: string) => (s === "DONE" ? "Done" : "Pending");
+  const rows = [
+    { label: "Course", from: capitalizeWords(prev.course), to: capitalizeWords(p.course) },
+    { label: "Name", from: prev.name, to: p.name },
+    { label: "Date", from: prev.dueDate ? formatDate(prev.dueDate) : "None", to: formatDate(p.dueDate) },
+    { label: "Time", from: timeOf(prev), to: timeOf(p) },
+    { label: "Status", from: statusOf(prev.status), to: statusOf(p.status) },
+  ];
+  return rows.filter((r) => r.from !== r.to);
+};
+
 let nextId = 1;
 
 // Chat with the study agent. Replies render as plain text (React escapes
@@ -60,14 +79,16 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm }) => {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, busy]);
 
-  const send = async (text: string) => {
+  // `base` is the conversation to continue from; a retry passes the log
+  // without the failed turn so it isn't sent twice.
+  const send = async (text: string, base: Message[] = messages) => {
     const message = text.trim();
     if (!message || busy || !ready) return;
-    // Error bubbles are local only; the model never sees them.
-    const history = messages
+    // Error notices are local only; the model never sees them.
+    const history = base
       .filter((m) => !m.error)
       .map((m) => ({ role: m.role, text: m.text }));
-    setMessages((prev) => [...prev, { id: nextId++, role: "user", text: message }]);
+    setMessages([...base, { id: nextId++, role: "user", text: message }]);
     setInput("");
     setBusy(true);
     try {
@@ -84,11 +105,24 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm }) => {
     } catch (e) {
       setMessages((prev) => [
         ...prev,
-        { id: nextId++, role: "assistant", text: e instanceof Error ? e.message : "Something went wrong.", error: true },
+        {
+          id: nextId++,
+          role: "assistant",
+          text: e instanceof Error ? e.message : "Something went wrong.",
+          error: true,
+          retry: message,
+        },
       ]);
     } finally {
       setBusy(false);
     }
+  };
+
+  // Drops the failed question and its error notice, then asks again.
+  const retry = (errorId: number, text: string) => {
+    const at = messages.findIndex((m) => m.id === errorId);
+    const prior = messages[at - 1]?.role === "user" ? at - 1 : at;
+    void send(text, messages.slice(0, prior));
   };
 
   const setCardState = (msgId: number, index: number, state: ProposalState) =>
@@ -140,10 +174,45 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm }) => {
         ) : (
           messages.map((m) => (
             <div key={m.id} className={`rs-agent-msg rs-agent-${m.role}${m.error ? " rs-agent-error" : ""}`}>
-              <p className="rs-agent-text" dir="auto">{m.text}</p>
-              {m.cards?.map((c, i) => (
+              {m.error ? (
+                <div className="rs-agent-alert" role="alert">
+                  <svg className="rs-agent-alert-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 8v4.5M12 16h.01" />
+                  </svg>
+                  <p className="rs-agent-alert-text" dir="auto">{m.text}</p>
+                  {m.retry && (
+                    <button
+                      type="button"
+                      className="rs-agent-alert-retry"
+                      onClick={() => retry(m.id, m.retry!)}
+                      disabled={busy || !ready}
+                    >
+                      Try again
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <p className="rs-agent-text" dir="auto">{m.text}</p>
+              )}
+              {m.cards?.map((c, i) => {
+                const changes = editChanges(c.proposal);
+                return (
                 <div key={i} className={`rs-agent-card rs-agent-card-${c.state}`}>
                   <span className="rs-agent-card-kind">{c.proposal.id ? "Edit task" : "New task"}</span>
+                  {c.proposal.prev && (
+                    <ul className="rs-agent-card-changes">
+                      {changes.length === 0 && <li>No changes</li>}
+                      {changes.map((ch) => (
+                        <li key={ch.label} className={ch.label === "Course" ? "rs-agent-card-move" : undefined}>
+                          <span className="rs-agent-card-change-label">{ch.label}</span>
+                          <del><bdi>{ch.from}</bdi></del>
+                          <span aria-hidden="true">→</span>
+                          <ins><bdi>{ch.to}</bdi></ins>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {/* <bdi> keeps Hebrew names from reordering the English around them. */}
                   <span className="rs-agent-card-name"><bdi>{c.proposal.name}</bdi></span>
                   <span className="rs-agent-card-meta">
@@ -178,7 +247,8 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm }) => {
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           ))
         )}
