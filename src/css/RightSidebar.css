@@ -1100,15 +1100,44 @@
   animation: rs-empty-in 0.5s var(--ease-out) both;
 }
 
+/* The assistant's mark: just the sparks, floating on a soft glow. */
 .rs-agent-mark {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  color: #fff;
-  background: linear-gradient(135deg, var(--rs-accent), #7c6cf2);
-  box-shadow: 0 8px 22px -8px color-mix(in srgb, #7c6cf2 70%, transparent);
+  width: 52px;
+  height: 52px;
+}
+
+.rs-agent-mark::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(140, 170, 255, 0.22), transparent 68%);
+  pointer-events: none;
+}
+
+.rs-agent-mark svg {
+  position: relative;
+}
+
+.rs-agent-mark-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  filter: drop-shadow(0 0 4px rgba(150, 200, 255, 0.35));
+  animation: rs-spark-in 0.6s 0.15s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+
+.rs-agent-mark-spark-sm {
+  animation-delay: 0.32s;
+}
+
+@keyframes rs-spark-in {
+  from {
+    opacity: 0;
+    transform: scale(0.3) rotate(-45deg);
+  }
 }
 
 .rs-agent-title {
@@ -1119,15 +1148,113 @@
   letter-spacing: -0.005em;
 }
 
+/* Early warnings above the suggestions: what needs planning soon. */
+.rs-agent-risks {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.rs-agent-risk {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #ffb547 22%, transparent);
+  background: color-mix(in srgb, #ffb547 7%, rgba(30, 32, 38, 0.85));
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  animation: rs-chip-in 0.5s cubic-bezier(0.2, 0.9, 0.25, 1.05) both;
+  transition:
+    transform 100ms var(--ease-out),
+    background var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out);
+}
+
+.rs-agent-risk:hover:not(:disabled) {
+  border-color: color-mix(in srgb, #ffb547 38%, transparent);
+  background: color-mix(in srgb, #ffb547 11%, rgba(30, 32, 38, 0.85));
+}
+
+.rs-agent-risk:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.rs-agent-risk:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.rs-agent-risk-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: #ffc36b;
+  background: color-mix(in srgb, #ffb547 16%, transparent);
+}
+
+.rs-agent-risk-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.rs-agent-risk-label {
+  color: #ffc36b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rs-agent-risk-title {
+  color: var(--rs-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rs-agent-risk-cta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  color: var(--rs-accent);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+/* The arrow leans toward where the tap takes you (RTL: left). */
+.rs-agent-risk-cta svg {
+  transition: transform var(--dur-1) var(--ease-out);
+}
+
+.rs-agent-risk:hover:not(:disabled) .rs-agent-risk-cta svg {
+  transform: translateX(-3px);
+}
+
 .rs-agent-starters {
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
 }
 
-/* Starters: every prompt visible at once as pills that wrap, centered,
-   just above the input. */
+/* Starters: every prompt visible at once as pills that wrap, centered
+   under the title. */
 .rs-agent-chips {
+  margin-top: 0.6rem;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -1623,6 +1750,152 @@
 
 /* Pill field with the send button inset concentrically: outer radius =
    button radius (14px) + padding (4px). */
+/* The Assistant speaking first, just above the input. */
+.rs-agent-nudge {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0 0 0.5rem;
+  padding: 0.65rem 0.7rem 0.7rem 2rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, #20232a 88%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 22px -12px rgba(0, 0, 0, 0.6);
+  transform-origin: 50% 100%;
+  animation: rs-chip-in 0.45s cubic-bezier(0.2, 0.9, 0.25, 1.05) both;
+}
+
+.rs-agent-nudge-mark {
+  flex: none;
+  margin-top: 0.1rem;
+  color: #a9c8ff;
+}
+
+.rs-agent-nudge-body {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.rs-agent-nudge-text {
+  margin: 0;
+  color: var(--rs-text);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.rs-agent-nudge-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.rs-agent-nudge-btn {
+  height: 28px;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--rs-text-soft);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    filter var(--dur-1) var(--ease-out),
+    transform 100ms var(--ease-out);
+}
+
+.rs-agent-nudge-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.rs-agent-nudge-btn.is-primary {
+  border-color: transparent;
+  background: var(--rs-accent);
+  color: #fff;
+}
+
+.rs-agent-nudge-btn.is-primary:hover:not(:disabled) {
+  background: var(--rs-accent);
+  filter: brightness(1.08);
+}
+
+.rs-agent-nudge-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.rs-agent-nudge-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.rs-agent-nudge-close {
+  position: absolute;
+  top: 0.45rem;
+  left: 0.45rem;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--rs-text-soft);
+  opacity: 0.6;
+  cursor: pointer;
+  transition: opacity var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out);
+}
+
+.rs-agent-nudge-close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Likely answers to the Assistant's question, one tap each. */
+.rs-agent-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.rs-agent-quick-btn {
+  height: 30px;
+  padding: 0 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--rs-accent) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--rs-accent) 10%, transparent);
+  color: var(--rs-text);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  animation: rs-chip-in 0.4s cubic-bezier(0.2, 0.9, 0.25, 1.05) both;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    transform 100ms var(--ease-out);
+}
+
+.rs-agent-quick-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--rs-accent) 20%, transparent);
+}
+
+.rs-agent-quick-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.rs-agent-quick-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .rs-agent-form {
   display: flex;
   align-items: flex-end;
@@ -1768,6 +2041,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rs-agent-hello,
+  .rs-agent-mark-spark,
+  .rs-agent-nudge,
+  .rs-agent-quick-btn,
   .rs-agent-chip,
   .rs-agent-msg,
   .rs-agent-dots span,

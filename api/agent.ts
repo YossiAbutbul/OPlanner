@@ -31,6 +31,7 @@ import {
   parseTaskFilter,
   parseDeleteProposal,
   parseCourseProposal,
+  parseBlockProposal,
   filterTimeBlocks,
   takeGlobal,
   takeRequest,
@@ -149,6 +150,32 @@ const runTool = async (
       const f = parseTaskFilter(input);
       if (!f.ok) return { content: f.error, isError: true };
       return { content: JSON.stringify(filterTimeBlocks(await data.loadTimeBlocks(), f.value)) };
+    }
+
+    case "propose_block": {
+      const p = parseBlockProposal(input);
+      if (!p.ok) return { content: p.error, isError: true };
+      const { date, startTime, endTime, title } = p.value;
+      // Use the course's stored spelling so the block links to it.
+      let course = "";
+      if (p.value.course) {
+        const match = (await data.loadCourses()).find((c) => c.name.toLowerCase() === p.value.course!.toLowerCase());
+        if (!match) return { content: `No course named "${p.value.course}". Use list_courses.`, isError: true };
+        course = match.name;
+      }
+      const clash = (await data.loadTimeBlocks()).find(
+        (b) => b.date === date && b.startTime < endTime && startTime < b.endTime
+      );
+      if (clash) {
+        return {
+          content: `That overlaps "${clash.title}" (${clash.startTime}-${clash.endTime}) on ${date}. Pick another time.`,
+          isError: true,
+        };
+      }
+      return {
+        content: "Proposal shown to the student. It's added to their Schedule only if they confirm.",
+        proposal: { action: "block", course, name: title, dueDate: date, startTime, endTime, status: "PENDING" },
+      };
     }
 
     case "propose_course": {
@@ -367,6 +394,7 @@ const TOOL_STATUS: Record<string, string> = {
   propose_task: "Preparing a suggestion…",
   propose_delete: "Preparing a suggestion…",
   propose_course: "Preparing a suggestion…",
+  propose_block: "Planning a study session…",
 };
 
 const describeError = (err: unknown): string => {

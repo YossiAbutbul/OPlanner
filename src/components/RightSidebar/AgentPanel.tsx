@@ -3,6 +3,8 @@ import { sendAgentMessage, type AgentProposal } from "../../services/agent";
 import { capitalizeWords } from "../../utility/dayCalendar";
 import { lsCache } from "../../hooks/useLocalStorageCache";
 import AgentText from "./AgentText";
+import { studyAlerts, type AlertBlock } from "../../utility/studyAlerts";
+import { pickNudge, splitQuickReplies } from "../../utility/nudges";
 
 // "expired": restored from storage without an answer. Its data may be stale,
 // so it can't be confirmed any more.
@@ -40,7 +42,11 @@ const missingDetails = (p: AgentProposal) => !!p.startTime !== !!p.endTime;
 // A course's final exam date is optional, but the card opens its field when
 // it's missing so it's easy to add.
 const needsInput = (kind: CardKind, p: AgentProposal) =>
-  kind === "course" ? !p.dueDate : !p.dueDate || missingDetails(p);
+  kind === "course"
+    ? !p.dueDate
+    : kind === "block"
+      ? !p.dueDate || !p.startTime || !p.endTime
+      : !p.dueDate || missingDetails(p);
 
 const detailsProblem = (p: AgentProposal): string | null => {
   if (!p.name.trim()) return "Add a name.";
@@ -49,6 +55,9 @@ const detailsProblem = (p: AgentProposal): string | null => {
     return p.dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(p.dueDate) ? "Pick a valid date." : null;
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(p.dueDate)) return "Pick a date.";
+  // A study session in the Schedule needs both ends.
+  if (p.action === "block" && !p.startTime) return "Pick a start time.";
+  if (p.action === "block" && !p.endTime) return "Pick an end time.";
   if (missingDetails(p)) return p.startTime ? "Pick an end time." : "Pick a start time.";
   if (p.startTime && p.endTime && p.endTime <= p.startTime) return "End time must be after the start.";
   return null;
@@ -87,10 +96,14 @@ interface Props {
   storageKey?: string;
   // Called after New chat with a function that brings the chat back.
   onCleared?: (undo: () => void) => void;
+  // The Schedule, so the empty screen can warn about deadlines with no
+  // study time planned.
+  blocks?: AlertBlock[];
 }
 
 const MAX_STORED = 40;
 const MAX_SENT = 50;
+const MAX_NUDGES = 100;
 
 const isMessage = (m: unknown): m is Message => {
   const x = m as Message;
@@ -116,10 +129,10 @@ const loadChat = (key: string | undefined): Message[] => {
 // Shown on the empty chat only; tapping one sends it as is. One ending in
 // "..." needs the student to finish it, so it goes into the input instead.
 const SUGGESTIONS: { text: string; icon: React.ReactNode }[] = [
+  { text: "בוא נתכנן את השבוע הקרוב", icon: <><rect x="4" y="5" width="16" height="15" rx="2.5" /><path d="M4 10h16M9 3v4M15 3v4M9 14.5l2 2 4-4" /></> },
   { text: "מה יש לי השבוע?", icon: <><rect x="4" y="5" width="16" height="15" rx="2.5" /><path d="M4 10h16M9 3v4M15 3v4" /></> },
   { text: "תיצור לי קורס חדש בשם...", icon: <path d="M12 5v14M5 12h14" /> },
   { text: "מה פספסתי?", icon: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5M12 16h.01" /></> },
-  { text: "תבנה לי תוכנית למידה למבחנים", icon: <path d="M4 6.5C6.5 5 9.5 5 12 6.5v12.5c-2.5-1.5-5.5-1.5-8 0zM12 6.5c2.5-1.5 5.5-1.5 8 0v12.5c-2.5-1.5-5.5-1.5-8 0" /> },
 ];
 
 const formatDate = (iso: string) =>
@@ -146,12 +159,13 @@ const editChanges = (p: AgentProposal): { label: string; from: string; to: strin
   return rows.filter((r) => r.from !== r.to);
 };
 
-type CardKind = "new" | "edit" | "done" | "delete" | "course";
+type CardKind = "new" | "edit" | "done" | "delete" | "course" | "block";
 
 // A status-only change to Done gets its own card: it's the most common edit.
 const cardKind = (p: AgentProposal): CardKind => {
   if (p.action === "delete") return "delete";
   if (p.action === "course") return "course";
+  if (p.action === "block") return "block";
   if (!p.id) return "new";
   const changes = editChanges(p);
   return changes.length === 1 && changes[0].label === "Status" && p.status === "DONE" ? "done" : "edit";
@@ -178,6 +192,10 @@ const KIND: Record<CardKind, { label: string; action: string; working: string; d
   course: {
     label: "New course", action: "Add course", working: "Adding…", doneText: "Course added",
     icon: <svg {...ICON_PROPS}><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z" /><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3" /><path d="M9 7h6" /></svg>,
+  },
+  block: {
+    label: "Study session", action: "Add to Schedule", working: "Adding…", doneText: "Added to your Schedule",
+    icon: <svg {...ICON_PROPS}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>,
   },
   delete: {
     label: "Delete task", action: "Delete", working: "Deleting…", doneText: "Deleted",
@@ -214,7 +232,7 @@ const reserveIds = (list: Message[]) => {
 
 // Chat with the study agent. Replies render through AgentText, which only
 // builds React elements, so a reply can't inject markup, links or images.
-const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, storageKey, onCleared }) => {
+const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, storageKey, onCleared, blocks }) => {
   const [messages, setMessages] = useState<Message[]>(() => reserveIds(loadChat(storageKey)));
   const [input, setInput] = useState("");
 
@@ -265,6 +283,20 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
     }
     return false;
   };
+  // Nudges already answered or closed, so each comes up once.
+  const nudgeKey = storageKey ? `${storageKey}.nudges` : undefined;
+  const [seenNudges, setSeenNudges] = useState<string[]>(() => {
+    const saved = nudgeKey ? lsCache.read<unknown>(nudgeKey) : null;
+    return Array.isArray(saved) ? saved.filter((x): x is string => typeof x === "string") : [];
+  });
+  const closeNudge = (key: string) =>
+    setSeenNudges((prev) => {
+      const next = [...prev.filter((k) => k !== key), key].slice(-MAX_NUDGES);
+      if (nudgeKey) lsCache.write(nudgeKey, next);
+      return next;
+    });
+  const [nudgeSaving, setNudgeSaving] = useState(false);
+
   const [busy, setBusy] = useState(false);
   // What the agent is doing right now, streamed from the server.
   const [status, setStatus] = useState("Thinking…");
@@ -418,10 +450,45 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
     for (const [i, c] of cards.entries()) {
       const k = cardKind(c.proposal);
       if (k === "delete") continue;
-      const blocked = (k === "new" || k === "edit" || k === "course") && detailsProblem(withEdits(c));
+      const blocked = (k === "new" || k === "edit" || k === "course" || k === "block") && detailsProblem(withEdits(c));
       if (c.state === "pending" && !isGone(c) && !blocked) await confirm(msgId, i, c);
     }
   };
+
+  const nudge =
+    ready && liveTasks && liveTasks.year === year && liveTasks.semester === semester
+      ? pickNudge(liveTasks.tasks, new Date(), new Set(seenNudges))
+      : null;
+
+  // "Yes, I handed it in" marks the task done right away; the toast says so.
+  const markSubmitted = async (key: string, t: LiveTask) => {
+    if (year === null || !semester) return;
+    setNudgeSaving(true);
+    try {
+      await onConfirm(
+        {
+          id: t.id,
+          course: t.course,
+          name: t.name,
+          dueDate: t.dueDate,
+          ...(t.startTime ? { startTime: t.startTime } : {}),
+          ...(t.endTime ? { endTime: t.endTime } : {}),
+          status: "DONE",
+        },
+        year,
+        semester
+      );
+      closeNudge(key);
+    } catch {
+      // The toast already explained; leave the question up to try again.
+    } finally {
+      setNudgeSaving(false);
+    }
+  };
+
+  // The newest reply's quick answers, while nothing else has been said.
+  const last = messages[messages.length - 1];
+  const quickReplies = last?.role === "assistant" && !last.error ? splitQuickReplies(last.text).replies : [];
 
   return (
     <div className="rs-agent">
@@ -448,22 +515,35 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
           <div className="rs-agent-intro">
             <div className="rs-agent-hello">
               <span className="rs-agent-mark" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4z" />
-                  <path d="M18.5 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" />
+                {/* Two sparks, the familiar sign for an AI helper, filled
+                    with a quiet green-to-violet light. */}
+                <svg viewBox="0 0 24 24" width="36" height="36" fill="none">
+                  <defs>
+                    <linearGradient id="rs-spark-fill" x1="4" y1="3" x2="20" y2="21" gradientUnits="userSpaceOnUse">
+                      <stop offset="0" stopColor="#7ee2a8" />
+                      <stop offset="1" stopColor="#a99bff" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    className="rs-agent-mark-spark"
+                    d="M10 4C10.7 8.6 12.4 10.3 17 11C12.4 11.7 10.7 13.4 10 18C9.3 13.4 7.6 11.7 3 11C7.6 10.3 9.3 8.6 10 4Z"
+                    fill="url(#rs-spark-fill)"
+                  />
+                  <path
+                    className="rs-agent-mark-spark rs-agent-mark-spark-sm"
+                    d="M18 14.5C18.3 16.4 19.1 17.2 21 17.5C19.1 17.8 18.3 18.6 18 20.5C17.7 18.6 16.9 17.8 15 17.5C16.9 17.2 17.7 16.4 18 14.5Z"
+                    fill="url(#rs-spark-fill)"
+                  />
                 </svg>
               </span>
               <p className="rs-agent-title">{ready ? "Ask about your semester" : "Open a semester first"}</p>
-            </div>
-
-            <div className="rs-agent-starters">
               <div className="rs-agent-chips" dir="rtl">
                 {SUGGESTIONS.map(({ text, icon }, i) => (
                   <button
                     key={text}
                     type="button"
                     className="rs-agent-chip"
-                    style={{ animationDelay: `${60 + (SUGGESTIONS.length - 1 - i) * 55}ms` }}
+                    style={{ animationDelay: `${120 + i * 55}ms` }}
                     onClick={() => pickSuggestion(text)}
                     disabled={!ready || busy}
                   >
@@ -476,6 +556,45 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Early warnings from the planner itself (no model call), right
+                above the input; each opens a planning conversation about it. */}
+            <div className="rs-agent-starters">
+              {ready && liveTasks && (() => {
+                const alerts = studyAlerts(liveTasks.tasks, blocks ?? [], new Date(), nudge ? 1 : 2);
+                return alerts.length > 0 ? (
+                  <div className="rs-agent-risks" dir="rtl">
+                    {alerts.map((a) => (
+                      // The whole card is the button: one tap opens the plan.
+                      <button
+                        key={a.key}
+                        type="button"
+                        className="rs-agent-risk"
+                        onClick={() => void send(a.prompt)}
+                        disabled={busy}
+                      >
+                        <span className="rs-agent-risk-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 9v4M12 17h.01" />
+                            <path d="M10.3 3.9L2.4 17.5a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+                          </svg>
+                        </span>
+                        <span className="rs-agent-risk-body">
+                          <span className="rs-agent-risk-label">{a.label}</span>
+                          <span className="rs-agent-risk-title">{a.title}</span>
+                        </span>
+                        <span className="rs-agent-risk-cta">
+                          תכנן לי
+                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M15 6l-6 6 6 6" />
+                          </svg>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
             </div>
           </div>
         ) : (
@@ -501,10 +620,26 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                 </div>
               ) : (
                 m.role === "assistant" ? (
-                  <AgentText text={m.text} />
+                  <AgentText text={splitQuickReplies(m.text).text} />
                 ) : (
                   <p className="rs-agent-text" dir="auto">{m.text}</p>
                 )
+              )}
+              {m === last && quickReplies.length > 0 && (
+                <div className="rs-agent-quick" dir="auto">
+                  {quickReplies.map((r, i) => (
+                    <button
+                      key={r}
+                      type="button"
+                      className="rs-agent-quick-btn"
+                      style={{ animationDelay: `${80 + i * 50}ms` }}
+                      onClick={() => void send(r)}
+                      disabled={busy || !ready}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
               )}
               {m.cards?.map((c, i) => {
                 const changes = editChanges(c.proposal);
@@ -513,7 +648,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                 const { live, gone } = track(c);
                 const proposed = withEdits(c);
                 const shown = c.state === "saved" && live ? { ...proposed, ...live } : proposed;
-                const editable = kind === "new" || kind === "edit" || kind === "course";
+                const editable = kind === "new" || kind === "edit" || kind === "course" || kind === "block";
                 const problem = editable ? detailsProblem(proposed) : null;
                 const actionable = (c.state === "pending" || c.state === "saving") && !gone;
                 return (
@@ -534,9 +669,11 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                         </span>
                       ) : (
                         <>
-                          <span className="rs-agent-card-meta">
-                            <bdi>{capitalizeWords(shown.course)}</bdi>
-                          </span>
+                          {shown.course && (
+                            <span className="rs-agent-card-meta">
+                              <bdi>{capitalizeWords(shown.course)}</bdi>
+                            </span>
+                          )}
                           <span className="rs-agent-card-meta">
                             {shown.dueDate ? formatDate(shown.dueDate) : "No date yet"}
                             {formatTime(shown) && <span className="rs-agent-card-time">{formatTime(shown)}</span>}
@@ -700,7 +837,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                     (c) => c.state === "pending" && !isGone(c) && cardKind(c.proposal) !== "delete"
                   ) ?? [];
                 if (pending.length < 2) return null;
-                const allNew = pending.every((c) => ["new", "course"].includes(cardKind(c.proposal)));
+                const allNew = pending.every((c) => ["new", "course", "block"].includes(cardKind(c.proposal)));
                 return (
                   <button
                     type="button"
@@ -725,6 +862,74 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
           </div>
         )}
       </div>
+
+      {nudge && (
+        // The Assistant speaking first: one question at a time, right above
+        // the input, answered with a tap.
+        <div key={nudge.key} className="rs-agent-nudge" dir="rtl" role="status">
+          <span className="rs-agent-nudge-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+              <path d="M10 4C10.7 8.6 12.4 10.3 17 11C12.4 11.7 10.7 13.4 10 18C9.3 13.4 7.6 11.7 3 11C7.6 10.3 9.3 8.6 10 4Z" />
+              <path d="M18 14.5C18.3 16.4 19.1 17.2 21 17.5C19.1 17.8 18.3 18.6 18 20.5C17.7 18.6 16.9 17.8 15 17.5C16.9 17.2 17.7 16.4 18 14.5Z" />
+            </svg>
+          </span>
+          <div className="rs-agent-nudge-body">
+            <p className="rs-agent-nudge-text">{nudge.text}</p>
+            <div className="rs-agent-nudge-actions">
+              {nudge.kind === "submitted" ? (
+                <>
+                  <button
+                    type="button"
+                    className="rs-agent-nudge-btn is-primary"
+                    onClick={() => void markSubmitted(nudge.key, nudge.task as LiveTask)}
+                    disabled={busy || nudgeSaving}
+                  >
+                    {nudgeSaving ? "מסמן…" : "כן, הגשתי"}
+                  </button>
+                  <button
+                    type="button"
+                    className="rs-agent-nudge-btn"
+                    onClick={() => {
+                      closeNudge(nudge.key);
+                      void send(nudge.catchUp);
+                    }}
+                    disabled={busy || nudgeSaving}
+                  >
+                    עוד לא
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="rs-agent-nudge-btn is-primary"
+                    onClick={() => {
+                      closeNudge(nudge.key);
+                      void send("בוא נתכנן את השבוע הקרוב");
+                    }}
+                    disabled={busy}
+                  >
+                    בוא נתכנן
+                  </button>
+                  <button type="button" className="rs-agent-nudge-btn" onClick={() => closeNudge(nudge.key)}>
+                    לא עכשיו
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="rs-agent-nudge-close"
+            onClick={() => closeNudge(nudge.key)}
+            aria-label="Close"
+          >
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       <form
         className="rs-agent-form"

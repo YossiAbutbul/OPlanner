@@ -5,6 +5,7 @@ import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
 import { requireUid } from "../firebase";
 import { createTaskRef } from "../services/homework";
+import { generateTimeBlockId } from "../services/timeBlocks";
 import { fetchAgentAccess, type AgentAccess, type AgentProposal } from "../services/agent";
 import { lsCache } from "../hooks/useLocalStorageCache";
 
@@ -219,6 +220,20 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   // the fields the agent can't see (notes, color, ignoreOverdue).
   // Resolves with the saved task's id, so the card can follow the task.
   const confirmProposal = async (p: AgentProposal, year: number, semester: string): Promise<string | void> => {
+    // A study session goes into the Schedule, not the task list.
+    if (p.action === "block") {
+      if (!p.startTime || !p.endTime) throw new Error("A study session needs a start and end time.");
+      await saveBlock({
+        id: generateTimeBlockId(requireUid()),
+        date: p.dueDate,
+        startTime: p.startTime,
+        endTime: p.endTime,
+        title: p.name,
+        ...(p.course ? { courseId: p.course } : {}),
+      });
+      toast.success("Added to your Schedule");
+      return;
+    }
     if (p.action === "course") {
       const key =
         years
@@ -335,6 +350,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
                   : undefined
               }
               storageKey={`oplanner.agentChat.${user.uid}`}
+              blocks={blocks}
               onCleared={(undo) => toast.info("Chat cleared", { action: { label: "Undo", onClick: undo } })}
             />
           )}

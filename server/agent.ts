@@ -17,7 +17,7 @@ export const MODEL = "claude-haiku-5-5";
 export const MAX_TOKENS = 4096;
 export const MAX_TOOL_ROUNDS = 5;
 // Tool calls the model may make in one round; extras get an error back.
-export const MAX_TOOLS_PER_ROUND = 4;
+export const MAX_TOOLS_PER_ROUND = 8;
 // A request stops starting new rounds after this, well inside the
 // function's time limit, so its spend is always recorded.
 export const REQUEST_DEADLINE_MS = 100_000;
@@ -44,7 +44,9 @@ export const RESERVE_MICROS = 20_000;
 // model call, so spamming the same question costs nothing.
 export const REPLY_CACHE_TTL_MS = 10 * 60 * 1000;
 // Confirm cards per reply: an injected task name can't flood the UI.
-export const MAX_PROPOSALS = 5;
+// A week's study plan is a handful of blocks, so allow a few more than one
+// card per task.
+export const MAX_PROPOSALS = 8;
 
 // Haiku 5.5 list price, micro-dollars per token ($0.10 / $0.50 per MTok).
 // Cache writes bill at 1.25x input, reads at 0.1x.
@@ -238,7 +240,11 @@ Tools:
 - list_courses and list_tasks read the student's data for the semester they have open.
 - list_time_blocks reads the student's calendar blocks (classes, work, study sessions), so plans can avoid times they're busy.
 - When creating a task, don't invent details the student didn't give, and don't ask for them in text: propose the task with what you know (no date, or a start without an end, is fine) and the card asks the student to fill in the rest.
+- Planning study time (the week, an assignment, an exam) is the exception: a good plan needs to know when the student can study. Unless they already said in this conversation, first read their tasks and Schedule, then ask up to three short questions in one message, such as which days and hours they're free this week, how long they like to study in one sitting, and what matters most to them. Don't propose sessions in that same reply. Once they answer, propose study sessions with propose_block: only in the times they gave, never overlapping their Schedule, never in the past, finished before the related deadline, the length they asked for (about 1.5 to 2 hours if they didn't say), with a title saying what to work on and the course set. Then sum up the plan in a short list. If they ask to change it, adjust and propose again.
+- Catching up: when the student says they haven't submitted a task whose date has passed, first ask whether they can still hand it in (late, or with an extension) and by when, unless they already said. If they can, propose_task with the new date; if it no longer matters, offer to mark it done or delete it. Then offer to plan time for it, following the planning rule above.
+- Quick replies: when you ask the student a question that has a few likely short answers, end that reply with one last line listing up to four of them, like [[Evenings | Weekend | Mornings]], each under 25 characters, in the student's language. The app turns it into buttons. Only when you ask a question; never otherwise, and never more than one such line.
 - Your earlier replies may end with lines like "[App note: the new task suggestion ... was dismissed.]". The app adds them to say what the student did with each card; trust them over your memory. If a suggestion was dismissed or expired and the student asks for it again, propose it again. Never write such lines yourself.
+- propose_block suggests one study session in the student's Schedule (a date, start, end and what to work on).
 - propose_course suggests adding a course to the open semester. If the student didn't give the final exam date, propose it without one; the card lets them add it.
 - propose_task suggests creating or editing one task; to mark a task done, propose it with status DONE. propose_delete suggests deleting one task. Nothing changes until the student confirms the card the app shows, so say that you've proposed it, not that it's done.
 
@@ -300,6 +306,23 @@ export const TOOLS: Anthropic.Tool[] = [
         to: { type: "string", description: "Latest date, YYYY-MM-DD." },
       },
       additionalProperties: false,
+    },
+  },
+  {
+    name: "propose_block",
+    description:
+      "Propose one study session in the student's Schedule. The student confirms or dismisses it in the app. Check list_time_blocks first: never overlap an existing block (lectures, work, other sessions) and never schedule in the past.",
+    input_schema: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        date: { type: "string", description: "YYYY-MM-DD." },
+        startTime: { type: "string", description: "HH:mm." },
+        endTime: { type: "string", description: "HH:mm, after startTime, same day." },
+        title: { type: "string", description: "What to work on, max 120 characters, e.g. \"Study: assignment 12 part A\"." },
+        course: { type: "string", description: "Exact course name from list_courses, if the session is for one course." },
+      },
+      required: ["date", "startTime", "endTime", "title"],
     },
   },
   {
@@ -383,7 +406,7 @@ export const parseTaskFilter = (input: unknown): Parsed<TaskFilter> => {
 };
 
 export interface TaskProposal {
-  action?: "delete" | "course";  // omitted for task create/edit
+  action?: "delete" | "course" | "block";  // omitted for task create/edit
   id?: string;
   course: string;
   name: string;
@@ -485,6 +508,31 @@ export const parseCourseProposal = (input: unknown): Parsed<{ name: string; fina
     return { ok: false, error: "finalDate must be YYYY-MM-DD." };
   }
   return { ok: true, value: { name, ...(i.finalDate ? { finalDate: i.finalDate as string } : {}) } };
+};
+
+// A study session for the Schedule: a date, a start and end on the same
+// day, a title and optionally the course it's for.
+export const parseBlockProposal = (
+  input: unknown
+): Parsed<{ date: string; startTime: string; endTime: string; title: string; course?: string }> => {
+  const i = (input ?? {}) as Record<string, unknown>;
+  if (typeof i.date !== "string" || !isRealDate(i.date)) return { ok: false, error: "date must be YYYY-MM-DD." };
+  if (typeof i.startTime !== "string" || !HHMM.test(i.startTime)) return { ok: false, error: "startTime must be HH:mm." };
+  if (typeof i.endTime !== "string" || !HHMM.test(i.endTime)) return { ok: false, error: "endTime must be HH:mm." };
+  if (i.endTime <= i.startTime) return { ok: false, error: "endTime must be after startTime." };
+  const title = typeof i.title === "string" ? i.title.trim() : "";
+  if (!title || title.length > 120) return { ok: false, error: "title must be 1-120 characters." };
+  if (i.course !== undefined && i.course !== "" && !isDocId(i.course)) return { ok: false, error: "Invalid course." };
+  return {
+    ok: true,
+    value: {
+      date: i.date,
+      startTime: i.startTime,
+      endTime: i.endTime,
+      title,
+      ...(typeof i.course === "string" && i.course ? { course: i.course } : {}),
+    },
+  };
 };
 
 // ---------------------------------------------------------------- reply cache

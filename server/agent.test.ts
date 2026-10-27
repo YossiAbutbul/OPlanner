@@ -12,6 +12,7 @@ import {
   filterTimeBlocks,
   parseDeleteProposal,
   parseCourseProposal,
+  parseBlockProposal,
   isAllowed,
   parseAgentRequest,
   parseAllowlist,
@@ -311,5 +312,25 @@ describe("reply cache", () => {
     expect(isFreshReply(now - REPLY_CACHE_TTL_MS, now)).toBe(false);
     expect(isFreshReply(now + 5_000, now)).toBe(false);
     expect(isFreshReply("soon", now)).toBe(false);
+  });
+});
+
+describe("study session proposals", () => {
+  const ok = { date: "2026-11-02", startTime: "18:00", endTime: "20:00", title: "Study: HW 4", course: "calculus" };
+
+  it("accepts a session on one day", () => {
+    expect(parseBlockProposal(ok)).toEqual({ ok: true, value: ok });
+    const noCourse = { date: ok.date, startTime: ok.startTime, endTime: ok.endTime, title: ok.title };
+    expect(parseBlockProposal(noCourse)).toEqual({ ok: true, value: noCourse });
+  });
+
+  it("rejects bad dates, times, order and titles", () => {
+    expect(parseBlockProposal({ ...ok, date: "2026-02-30" }).ok).toBe(false);
+    expect(parseBlockProposal({ ...ok, startTime: "25:00" }).ok).toBe(false);
+    expect(parseBlockProposal({ ...ok, endTime: "17:00" }).ok).toBe(false);
+    expect(parseBlockProposal({ ...ok, endTime: "18:00" }).ok).toBe(false);
+    expect(parseBlockProposal({ ...ok, title: "  " }).ok).toBe(false);
+    expect(parseBlockProposal({ ...ok, title: "x".repeat(121) }).ok).toBe(false);
+    expect(parseBlockProposal({ ...ok, course: "a/b" }).ok).toBe(false);
   });
 });

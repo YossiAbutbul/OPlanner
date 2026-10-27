@@ -54,6 +54,84 @@ describe("AgentPanel", () => {
     expect(screen.getByPlaceholderText("Open a semester first")).toBeDisabled();
   });
 
+  it("adds a proposed study session to the Schedule after confirming", async () => {
+    const proposal = {
+      action: "block" as const,
+      course: "calculus",
+      name: "Study: HW 4",
+      dueDate: "2026-11-02",
+      startTime: "18:00",
+      endTime: "20:00",
+      status: "PENDING" as const,
+    };
+    send.mockResolvedValue({ reply: "Here's a session.", proposals: [proposal] });
+    const onConfirm = vi.fn().mockResolvedValue(undefined);
+    render(<AgentPanel year={2026} semester="A" onConfirm={onConfirm} />);
+
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "plan my week" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(await screen.findByText("Study session")).toBeInTheDocument();
+    expect(onConfirm).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to Schedule" }));
+    await waitFor(() => expect(screen.getByText("Added to your Schedule")).toBeInTheDocument());
+    expect(onConfirm).toHaveBeenCalledWith(proposal, 2026, "A");
+  });
+
+  it("warns about a deadline with no study time and opens a plan for it", async () => {
+    send.mockResolvedValue({ reply: "When are you free?", proposals: [] });
+    const due = new Date(Date.now() + 2 * 86_400_000);
+    const iso = `${due.getFullYear()}-${String(due.getMonth() + 1).padStart(2, "0")}-${String(due.getDate()).padStart(2, "0")}`;
+    render(
+      <AgentPanel
+        year={2026}
+        semester="A"
+        onConfirm={vi.fn()}
+        liveTasks={{ year: 2026, semester: "A", tasks: [{ id: "t1", name: "מטלה 11", course: "אלגוריתמים", dueDate: iso, status: "PENDING" }] }}
+        blocks={[]}
+      />
+    );
+    expect(screen.getByText("בעוד 2 ימים · אין זמן לימוד ביומן")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /תכנן לי/ }));
+    await waitFor(() => expect(send).toHaveBeenCalled());
+    expect(send.mock.calls[0][0].message).toContain("תעזור לי לתכנן זמן למטלה 11");
+  });
+
+  it("asks whether a missed task was handed in and marks it done on yes", async () => {
+    const onConfirm = vi.fn().mockResolvedValue("t1");
+    const past = new Date(Date.now() - 86_400_000);
+    const iso = `${past.getFullYear()}-${String(past.getMonth() + 1).padStart(2, "0")}-${String(past.getDate()).padStart(2, "0")}`;
+    render(
+      <AgentPanel
+        year={2026}
+        semester="A"
+        onConfirm={onConfirm}
+        liveTasks={{ year: 2026, semester: "A", tasks: [{ id: "t1", name: "מטלה 11", course: "אלגוריתמים", dueDate: iso, status: "PENDING" }] }}
+      />
+    );
+    expect(screen.getByText("הגשת את מטלה 11 באלגוריתמים? ההגשה הייתה אתמול.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "כן, הגשתי" }));
+    await waitFor(() =>
+      expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ id: "t1", status: "DONE" }), 2026, "A")
+    );
+    await waitFor(() => expect(screen.queryByText(/הגשת את מטלה 11/)).not.toBeInTheDocument());
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it("turns the reply's likely answers into buttons", async () => {
+    send.mockResolvedValueOnce({ reply: "When are you free?\n[[Evenings | Weekend]]", proposals: [] });
+    send.mockResolvedValueOnce({ reply: "Got it.", proposals: [] });
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "בוא נתכנן את השבוע הקרוב" }));
+
+    expect(await screen.findByText("When are you free?")).toBeInTheDocument();
+    expect(screen.queryByText(/\[\[/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Weekend" }));
+    expect(await screen.findByText("Got it.")).toBeInTheDocument();
+    expect(send.mock.calls[1][0].message).toBe("Weekend");
+    expect(screen.queryByRole("button", { name: "Evenings" })).not.toBeInTheDocument();
+  });
+
   it("saves a proposal only after Add task", async () => {
     const proposal = { course: "calculus", name: "HW 4", dueDate: "2026-11-03", status: "PENDING" as const };
     send.mockResolvedValue({ reply: "I proposed it.", proposals: [proposal] });
