@@ -116,7 +116,9 @@ const App: React.FC = () => {
     );
   }
 
-  if (!user) return <Login />;
+  // Dev only: ?preview=login shows the landing page while signed in.
+  const previewLogin = import.meta.env.DEV && new URLSearchParams(location.search).get("preview") === "login";
+  if (!user || previewLogin) return <Login />;
 
   return (
     <div className="app-container">
