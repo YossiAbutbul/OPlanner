@@ -34,12 +34,11 @@ const SUGGESTIONS = [
   "Which course needs the most attention?",
 ];
 
-const formatDue = (p: AgentProposal) => {
-  const d = new Date(p.dueDate + "T00:00:00");
-  const date = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-  const time = p.startTime ? (p.endTime ? `${p.startTime}–${p.endTime}` : p.startTime) : "";
-  return time ? `${date} · ${time}` : date;
-};
+const formatDate = (iso: string) =>
+  new Date(iso + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+
+const formatTime = (p: AgentProposal) =>
+  p.startTime ? (p.endTime ? `${p.startTime}–${p.endTime}` : p.startTime) : "";
 
 let nextId = 1;
 
@@ -52,6 +51,9 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm }) => {
   const listRef = useRef<HTMLDivElement>(null);
 
   const ready = year !== null && !!semester;
+  // Once chatting, offer only the suggestions not asked yet.
+  const asked = new Set(messages.filter((m) => m.role === "user").map((m) => m.text));
+  const remaining = SUGGESTIONS.filter((s) => !asked.has(s));
 
   useEffect(() => {
     const el = listRef.current;
@@ -110,16 +112,13 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm }) => {
 
   return (
     <div className="rs-agent">
-      <header className="rs-head rs-agent-head">
-        <div className="rs-scope-row">
-          <span className="rs-eyebrow">Study assistant</span>
-          {messages.length > 0 && (
-            <button type="button" className="rs-agent-clear" onClick={() => setMessages([])} disabled={busy}>
-              Clear
-            </button>
-          )}
+      {messages.length > 0 && (
+        <div className="rs-agent-head">
+          <button type="button" className="rs-agent-clear" onClick={() => setMessages([])} disabled={busy}>
+            New chat
+          </button>
         </div>
-      </header>
+      )}
 
       <div className="rs-agent-log" ref={listRef} aria-live="polite">
         {messages.length === 0 ? (
@@ -145,10 +144,16 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm }) => {
               {m.cards?.map((c, i) => (
                 <div key={i} className={`rs-agent-card rs-agent-card-${c.state}`}>
                   <span className="rs-agent-card-kind">{c.proposal.id ? "Edit task" : "New task"}</span>
-                  <span className="rs-agent-card-name" dir="auto">{c.proposal.name}</span>
-                  <span className="rs-agent-card-meta" dir="auto">
-                    {capitalizeWords(c.proposal.course)} · {formatDue(c.proposal)}
-                    {c.proposal.status === "DONE" ? " · Done" : ""}
+                  {/* <bdi> keeps Hebrew names from reordering the English around them. */}
+                  <span className="rs-agent-card-name"><bdi>{c.proposal.name}</bdi></span>
+                  <span className="rs-agent-card-meta">
+                    <span className="rs-agent-card-dot" aria-hidden="true" />
+                    <bdi>{capitalizeWords(c.proposal.course)}</bdi>
+                  </span>
+                  <span className="rs-agent-card-meta">
+                    {formatDate(c.proposal.dueDate)}
+                    {formatTime(c.proposal) && <span className="rs-agent-card-time">{formatTime(c.proposal)}</span>}
+                    {c.proposal.status === "DONE" && <span className="rs-agent-card-time">Done</span>}
                   </span>
                   {c.state === "saved" && <span className="rs-agent-card-done">Saved</span>}
                   {c.state === "dismissed" && <span className="rs-agent-card-done">Dismissed</span>}
@@ -184,9 +189,9 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm }) => {
         )}
       </div>
 
-      {messages.length > 0 && (
+      {messages.length > 0 && remaining.length > 0 && (
         <div className="rs-agent-chips rs-agent-chips-row">
-          {SUGGESTIONS.slice(0, 2).map((s) => (
+          {remaining.map((s) => (
             <button key={s} type="button" className="rs-agent-chip" onClick={() => void send(s)} disabled={!ready || busy}>
               {s}
             </button>

@@ -922,18 +922,24 @@
 }
 
 .rs-agent-head {
-  margin-bottom: 0.6rem;
+  display: flex;
+  justify-content: flex-end;
+  margin: -0.35rem 0 0.25rem;
 }
 
 .rs-agent-clear {
   background: none;
   border: none;
-  padding: 0.15rem 0.35rem;
-  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
   color: var(--rs-text-muted);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    transform 100ms var(--ease-out);
 }
 
 .rs-agent-clear:hover:not(:disabled) {
@@ -953,7 +959,8 @@
 }
 
 .rs-agent-intro {
-  margin-top: 1.5rem;
+  margin: auto 0;
+  padding-bottom: 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -974,9 +981,24 @@
   margin-top: 0.6rem;
 }
 
+/* Follow-up suggestions: one scrolling line, faded at the edges. */
 .rs-agent-chips-row {
+  flex-wrap: nowrap;
   justify-content: flex-start;
-  margin: 0 0 0.5rem;
+  overflow-x: auto;
+  margin: 0 -0.85rem 0.5rem;
+  padding: 0 0.85rem;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, transparent, #000 0.85rem, #000 calc(100% - 0.85rem), transparent);
+}
+
+.rs-agent-chips-row::-webkit-scrollbar {
+  display: none;
+}
+
+.rs-agent-chips-row .rs-agent-chip {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .rs-agent-chip {
@@ -992,7 +1014,8 @@
   text-align: start;
   transition:
     background-color var(--dur-1) var(--ease-out),
-    color var(--dur-1) var(--ease-out);
+    color var(--dur-1) var(--ease-out),
+    transform 100ms var(--ease-out);
 }
 
 .rs-agent-chip:hover:not(:disabled) {
@@ -1034,6 +1057,7 @@
 .rs-agent-user .rs-agent-text {
   background: var(--rs-accent);
   color: #fff;
+  font-weight: 500;
   border-bottom-right-radius: 5px;
 }
 
@@ -1049,20 +1073,25 @@
   border-color: rgba(255, 107, 107, 0.3);
 }
 
+/* Cards stay left-to-right like the rest of the UI; Hebrew names sit in
+   <bdi> so mixed-direction lines don't reorder. */
 .rs-agent-card {
+  direction: ltr;
+  text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: 12px;
+  gap: 0.25rem;
+  padding: 0.7rem 0.8rem 0.75rem;
+  border-radius: 14px;
   background: var(--rs-row);
   border: 1px solid var(--rs-border);
-  border-left: 3px solid var(--rs-accent);
+  box-shadow: inset 3px 0 0 var(--rs-accent);
+  transition: opacity var(--dur-2) var(--ease-out);
 }
 
 .rs-agent-card-dismissed {
-  opacity: 0.55;
-  border-left-color: var(--rs-border);
+  opacity: 0.5;
+  box-shadow: none;
 }
 
 .rs-agent-card-kind {
@@ -1079,9 +1108,31 @@
   color: var(--rs-text);
 }
 
+.rs-agent-card-name {
+  overflow-wrap: anywhere;
+}
+
 .rs-agent-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
   font-size: 0.78rem;
   color: var(--rs-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rs-agent-card-dot {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--rs-accent);
+}
+
+.rs-agent-card-time::before {
+  content: "·";
+  margin-right: 0.35rem;
 }
 
 .rs-agent-card-done {
@@ -1109,8 +1160,11 @@
   font-size: 0.8rem;
   font-weight: 600;
   padding: 0.4rem 0.6rem;
-  border-radius: 8px;
+  border-radius: 9px;
   cursor: pointer;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    transform 100ms var(--ease-out);
 }
 
 .rs-agent-btn:hover:not(:disabled) {
@@ -1213,11 +1267,33 @@
   background: var(--rs-accent);
   color: #fff;
   cursor: pointer;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out),
+    transform 100ms var(--ease-out);
 }
 
+/* Disabled reads as neutral, not as a faded accent. */
 .rs-agent-send:disabled {
-  opacity: 0.4;
+  background: var(--rs-hover);
+  color: var(--rs-text-muted);
   cursor: default;
+}
+
+/* Press feedback lands on pointer-down. */
+.rs-agent-chip:active:not(:disabled),
+.rs-agent-btn:active:not(:disabled),
+.rs-agent-send:active:not(:disabled),
+.rs-agent-clear:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.rs-agent-chip:focus-visible,
+.rs-agent-btn:focus-visible,
+.rs-agent-send:focus-visible,
+.rs-agent-clear:focus-visible {
+  outline: 2px solid var(--rs-accent);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1225,5 +1301,11 @@
   .rs-agent-msg,
   .rs-agent-typing span {
     animation: none;
+  }
+  .rs-agent-chip:active:not(:disabled),
+  .rs-agent-btn:active:not(:disabled),
+  .rs-agent-send:active:not(:disabled),
+  .rs-agent-clear:active:not(:disabled) {
+    transform: none;
   }
 }
