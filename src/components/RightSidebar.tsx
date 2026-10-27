@@ -3,13 +3,15 @@ import { useHomework } from "../context/HomeworkContext";
 import { useTimeBlocks } from "../context/TimeBlockContext";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
-import { fetchAgentEnabled, type AgentProposal } from "../services/agent";
+import { fetchAgentAccess, type AgentAccess, type AgentProposal } from "../services/agent";
+import { lsCache } from "../hooks/useLocalStorageCache";
 
 // Heavy form modals — only mounted when the user actually opens them, so
 // their chunks fetch on first interaction instead of in the initial bundle.
 const HomeworkModal = lazy(() => import("./HomeworkModal"));
 const TimeBlockModal = lazy(() => import("./TimeBlockModal"));
 import AgentPanel from "./RightSidebar/AgentPanel";
+import WaitlistPanel from "./RightSidebar/WaitlistPanel";
 import DayPanel from "./RightSidebar/DayPanel";
 import RemindersModal from "./RemindersModal";
 import { courseColor } from "../utility/courseColor";
@@ -40,19 +42,32 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   // Day opens first: today's schedule is the most-used view.
   const [tab, setTab] = useState<"day" | "agent">("day");
 
-  // The Agent tab shows only for accounts the server allows (api/agent.ts).
-  // The dev server has no /api, so show it there to work on the UI.
-  const [agentEnabled, setAgentEnabled] = useState(import.meta.env.DEV);
+  // Who may use the assistant is decided by the server (api/agent.ts). The
+  // last answer is kept per user, so after a reload the Assistant tab shows
+  // the right thing at once instead of waiting for the request. The dev
+  // server has no /api, so the assistant is on there to work on the UI.
+  const accessKey = user ? `oplanner.agentAccess.${user.uid}` : null;
+  const [access, setAccess] = useState<AgentAccess | null>(() =>
+    import.meta.env.DEV ? { enabled: true, waitlisted: false } : accessKey ? lsCache.read<AgentAccess>(accessKey) : null
+  );
   useEffect(() => {
-    if (!user || import.meta.env.DEV) return;
+    if (!accessKey || import.meta.env.DEV) return;
+    setAccess(lsCache.read<AgentAccess>(accessKey));
     let cancelled = false;
-    void fetchAgentEnabled().then((ok) => {
-      if (!cancelled) setAgentEnabled(ok);
+    void fetchAgentAccess().then((next) => {
+      if (cancelled || !next) return;
+      setAccess(next);
+      lsCache.write(accessKey, next);
     });
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [accessKey]);
+  const markWaitlisted = () => {
+    const next = { enabled: false, waitlisted: true };
+    setAccess(next);
+    if (accessKey) lsCache.write(accessKey, next);
+  };
 
   // Shared semester-wide task pool (Day filters it by date).
   // Fetched from Firestore; optimistic edits are layered on below.
@@ -249,7 +264,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     <aside className={`rs ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="rs-glow" aria-hidden />
 
-      {agentEnabled && (
+      {user && (
         <div className="rs-tabs" role="tablist" data-active={tab}>
           <button
             role="tab"
@@ -271,17 +286,21 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         </div>
       )}
 
-      {/* Stays mounted while hidden so the conversation survives tab switches. */}
-      {agentEnabled && (
+      {/* Stays mounted while hidden so the conversation survives tab switches.
+          While access is still unknown (first visit), the tab stays empty. */}
+      {user && (
         <div className="rs-agent-wrap" hidden={tab !== "agent"}>
-          <AgentPanel
-            key={user?.uid ?? "signed-out"}
-            year={selectedYear}
-            semester={selectedSemester}
-            onConfirm={confirmProposal}
-            storageKey={user ? `oplanner.agentChat.${user.uid}` : undefined}
-            onCleared={(undo) => toast.info("Chat cleared", { action: { label: "Undo", onClick: undo } })}
-          />
+          {access && !access.enabled && <WaitlistPanel waitlisted={access.waitlisted} onJoined={markWaitlisted} />}
+          {access?.enabled && (
+            <AgentPanel
+              key={user.uid}
+              year={selectedYear}
+              semester={selectedSemester}
+              onConfirm={confirmProposal}
+              storageKey={`oplanner.agentChat.${user.uid}`}
+              onCleared={(undo) => toast.info("Chat cleared", { action: { label: "Undo", onClick: undo } })}
+            />
+          )}
         </div>
       )}
 

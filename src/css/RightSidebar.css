@@ -1506,3 +1506,37 @@
     transform: none;
   }
 }
+
+/* ===== Assistant waitlist (accounts without access) ===== */
+.rs-waitlist-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.35rem;
+  border-radius: 14px;
+  color: var(--rs-accent);
+  background: color-mix(in srgb, var(--rs-accent) 14%, transparent);
+}
+
+.rs-waitlist-btn {
+  flex: none;
+  margin-top: 0.6rem;
+  padding: 0.55rem 1.1rem;
+}
+
+.rs-waitlist-done {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--rs-ok);
+}
+
+.rs-waitlist-error {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  color: var(--rs-danger);
+}
