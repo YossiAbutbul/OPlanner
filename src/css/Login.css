@@ -1,644 +1,748 @@
 /* ============================================================
-   Landing ג€” one focused screen.
-   Dark stage (#0e0f12, same as the app's sidebar chrome) holding
-   headline, three feature points and the live demo card. Minimal
-   scroll, app-native components: white cards, var(--color-accent) actions.
+   Landing page. Light, on a warm paper background (#efede8),
+   ink type and the app's green as the one accent. Product shots are
+   plain white cards, like the app itself.
    ============================================================ */
 
-.landing {
+.lp {
+  --lp-bg: #efede8;
+  --lp-surface: #faf9f6;
+  --lp-text: #16181d;
+  --lp-soft: #4b5059;
+  --lp-muted: #8a8f98;
+  --lp-line: rgba(22, 24, 29, 0.08);
+  --lp-fill: rgba(22, 24, 29, 0.04);
+  --lp-fill-2: rgba(22, 24, 29, 0.07);
+  --lp-green: #1a9f4a;
+  --lp-shadow: 0 1px 2px rgba(22, 24, 29, 0.05), 0 12px 32px -12px rgba(22, 24, 29, 0.16);
+  --lp-shadow-lg: 0 1px 2px rgba(22, 24, 29, 0.05), 0 30px 60px -24px rgba(22, 24, 29, 0.25);
+
   position: relative;
-  min-height: 100vh;
-  min-height: 100dvh;
-  width: 100vw;
-  background:
-    radial-gradient(140% 100% at 50% -20%, #16241c 0%, #0e0f12 55%),
-    #0e0f12;
-  color: #e7e9ee;
+  isolation: isolate;
+  /* Its own scroller: the app keeps the body from scrolling. */
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  font-family: inherit;
+  background: var(--lp-bg);
+  color: var(--lp-text);
+  overflow-x: hidden;
+  overflow-y: auto;
+  color-scheme: light;
+}
+
+/* Depth from light and perspective: a pool of light from above that falls
+   off into warmer edges, the planner grid laid as a floor receding to a
+   horizon, and a hint of paper grain. */
+.lp-bg {
+  /* The hero's stage: it scrolls away with the hero, and the sections
+     below sit on plain paper. */
+  position: absolute;
+  inset: 0 0 auto;
+  height: 100dvh;
+  min-height: 640px;
+  /* Melts into the plain paper below instead of ending on a line. */
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  z-index: -1;
   overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(90% 70% at 50% -10%, #faf9f5 0%, rgba(250, 249, 245, 0) 70%),
+    radial-gradient(140% 110% at 50% 40%, transparent 55%, rgba(120, 104, 80, 0.12) 100%),
+    #ebe8e1;
 }
 
-/* Keep page content above the aurora backdrop. */
-.landing > .landing-nav,
-.landing > .landing-main,
-.landing > .landing-footer {
-  position: relative;
-  z-index: 1;
+/* The floor: grid lines tilted back in perspective, fading toward the
+   horizon and toward the sides. */
+.lp-bg::before {
+  content: "";
+  position: absolute;
+  left: -60%;
+  right: -60%;
+  top: 64%;
+  height: 140%;
+  background-image:
+    linear-gradient(rgba(22, 24, 29, 0.075) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(22, 24, 29, 0.075) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: perspective(700px) rotateX(64deg);
+  transform-origin: 50% 0;
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 18%, #000 55%, transparent 90%);
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 18%, #000 55%, transparent 90%);
 }
 
-/* ---------- nav ---------- */
+/* Soft light on the horizon line, and grain over everything. */
+.lp-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
+    radial-gradient(60% 12% at 50% 64%, rgba(255, 253, 248, 0.9), transparent 70%);
+}
 
-.landing-nav {
+/* ---------- header ---------- */
+
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.1rem 2.5rem;
+  min-height: 60px;
+  padding: 0.6rem clamp(1rem, 4vw, 2.75rem);
   box-sizing: border-box;
-  flex-shrink: 0;
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 0.3s var(--ease-out),
+    border-color 0.3s var(--ease-out);
 }
 
-.landing-brand {
+.lp-nav-solid {
+  background: rgba(239, 237, 232, 0.84);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-bottom-color: var(--lp-line);
+}
+
+.lp-brand {
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
   font-weight: 700;
   font-size: 1.05rem;
-  color: #fff;
+  letter-spacing: -0.01em;
+  cursor: pointer;
 }
 
-.landing-logo {
-  width: 28px;
-  height: 28px;
+/* The logo is white artwork; invert it to ink on paper. */
+.lp-logo {
+  width: 26px;
+  height: 26px;
+  filter: invert(1) brightness(0.15);
 }
 
-.landing-nav-right {
-  display: inline-flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.landing-nav-btn {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #fff;
+.lp-nav-cta {
   padding: 0.45rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--lp-text);
+  color: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lp-nav-cta:active {
+  transform: scale(0.96);
+}
+
+/* ---------- hero ---------- */
+
+.lp-main {
+  flex: none;
+  min-height: calc(100dvh - 4.5rem);
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 4.5rem);
+  padding: 1rem clamp(1rem, 4vw, 2.75rem) 3rem;
+  box-sizing: border-box;
+}
+
+.lp-copy {
+  max-width: 480px;
+}
+
+.lp-eyebrow {
+  margin: 0;
+  color: var(--lp-muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.lp h1 {
+  margin: 0.9rem 0 1rem;
+  font-size: clamp(2.5rem, 5.2vw, 3.9rem);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  font-weight: 750;
+}
+
+.lp-accent {
+  color: var(--lp-green);
+}
+
+.lp-lead {
+  margin: 0 0 1.8rem;
+  font-size: 1.08rem;
+  line-height: 1.6;
+  color: var(--lp-soft);
+}
+
+/* ---------- sign-in ---------- */
+
+.lp-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-width: 380px;
+}
+
+.lp .lp-google.auth-google {
+  min-height: 46px;
+  border-radius: 12px;
+  background: var(--lp-text);
+  border-color: var(--lp-text);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: transform 120ms var(--ease-out), background-color var(--dur-1) var(--ease-out);
+}
+
+/* The Google mark sits on a white chip so its colors read on the dark button. */
+.lp .lp-google svg {
+  padding: 3px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.lp .lp-google.auth-google:hover:not(:disabled) {
+  background: #2a2d34;
+  border-color: #2a2d34;
+}
+
+.lp .lp-google.auth-google:active:not(:disabled),
+.lp-email-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.lp-email-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 46px;
+  border-radius: 12px;
+  border: 1px solid rgba(22, 24, 29, 0.14);
+  background: var(--lp-surface);
+  color: var(--lp-text);
+  font: inherit;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out),
+    transform 120ms var(--ease-out);
 }
 
-.landing-nav-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.32);
+.lp-email-btn:hover:not(:disabled) {
+  border-color: rgba(22, 24, 29, 0.26);
 }
 
-.landing-nav-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
+.lp-email {
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid var(--lp-line);
+  background: var(--lp-surface);
+  box-shadow: var(--lp-shadow);
 }
 
-/* ---------- hero stage ---------- */
-
-.landing-main {
-  flex: 1;
-  display: flex;
-  min-height: 0;
+.lp-reset-note {
+  margin: 0 0 0.8rem;
+  font-size: 0.88rem;
+  color: var(--lp-soft);
 }
 
-.landing-hero {
+.lp-google-error {
+  margin-top: 0.25rem;
+}
+
+/* The shared auth styles are dark; restyle them for paper. */
+.lp .auth-tabs {
+  background: var(--lp-fill-2);
+}
+
+.lp .auth-tab {
+  color: var(--lp-muted);
+}
+
+.lp .auth-tab.active {
+  color: var(--lp-text);
+}
+
+.lp .auth-tab-pill {
+  background: var(--lp-surface);
+  box-shadow: 0 1px 3px rgba(22, 24, 29, 0.12);
+}
+
+.lp .auth-field > span:first-child {
+  color: var(--lp-soft);
+}
+
+.lp .auth-field input {
+  background: var(--lp-surface);
+  border-color: rgba(22, 24, 29, 0.14);
+  color: var(--lp-text);
+}
+
+.lp .auth-field input::placeholder {
+  color: #a3a8b0;
+}
+
+.lp .auth-field input:focus {
+  border-color: var(--lp-green);
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.15);
+}
+
+.lp .auth-field input:-webkit-autofill,
+.lp .auth-field input:-webkit-autofill:hover,
+.lp .auth-field input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #faf9f6 inset !important;
+  box-shadow: 0 0 0 1000px #faf9f6 inset !important;
+  -webkit-text-fill-color: var(--lp-text) !important;
+  caret-color: var(--lp-text);
+}
+
+.lp .auth-password-toggle,
+.lp .auth-forgot,
+.lp .auth-back {
+  color: var(--lp-muted);
+}
+
+.lp .auth-forgot:hover,
+.lp .auth-back:hover,
+.lp .auth-password-toggle:hover {
+  color: var(--lp-text);
+}
+
+.lp .auth-error {
+  background: #fdecec;
+  border-color: #f5c2c2;
+  color: #b42318;
+}
+
+.lp .auth-info {
+  background: #e8f7ee;
+  border-color: #b7e4c7;
+  color: #146c34;
+}
+
+.lp .auth-submit {
+  box-shadow: none;
+}
+
+/* ---------- hero demo ---------- */
+
+.lp-art {
   position: relative;
-  flex: 1;
+}
+
+.lp-demo {
+  --lp-chat-h: 400px;
+  position: relative;
+  padding: 0 0 8.75rem 2.5rem;
+}
+
+.lp-chat {
+  position: relative;
   display: flex;
-  align-items: center;
-  padding: 1.5rem 2.5rem 3rem;
-  box-sizing: border-box;
+  flex-direction: column;
+  height: var(--lp-chat-h);
+  border-radius: 20px;
+  border: 1px solid var(--lp-line);
+  background: var(--lp-surface);
+  box-shadow: var(--lp-shadow-lg);
   overflow: hidden;
 }
 
-/* Aurora: two soft glows slowly drifting behind the stage. */
-.landing-hero-glow {
-  position: absolute;
-  top: 50%;
-  right: -10%;
-  width: 720px;
-  height: 720px;
-  translate: 0 -50%;
-  background: radial-gradient(
-    circle,
-    rgba(29, 185, 84, 0.18),
-    rgba(29, 185, 84, 0.05) 45%,
-    transparent 70%
-  );
-  pointer-events: none;
-  animation: glowDrift 18s ease-in-out infinite alternate;
-}
-
-/* Second, blue counterpart on the text side (pure CSS, no markup). */
-.landing-hero::before {
-  content: "";
-  position: absolute;
-  top: -25%;
-  left: -15%;
-  width: 640px;
-  height: 640px;
-  background: radial-gradient(
-    circle,
-    rgba(52, 152, 219, 0.12),
-    rgba(52, 152, 219, 0.04) 45%,
-    transparent 70%
-  );
-  pointer-events: none;
-  animation: glowDrift 24s ease-in-out infinite alternate-reverse;
-}
-
-@keyframes glowDrift {
-  from {
-    transform: translate(0, 0) scale(1);
-  }
-  to {
-    transform: translate(-70px, 50px) scale(1.18);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-hero-glow,
-  .landing-hero::before {
-    animation: none;
-  }
-}
-
-.landing-hero-inner {
-  position: relative;
-  max-width: 1180px;
-  width: 100%;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 4rem;
+.lp-chat-head {
+  display: flex;
   align-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--lp-line);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
-.landing-hero-text {
-  max-width: 540px;
+.lp-chat-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--lp-green);
 }
 
-.landing-eyebrow {
+.lp-chat-live {
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  background: rgba(29, 185, 84, 0.14);
-  border: 1px solid rgba(29, 185, 84, 0.3);
-  color: #4ade80;
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  padding: 0.3rem 0.7rem;
-  border-radius: 999px;
-  margin-bottom: 1.4rem;
+  gap: 0.35rem;
+  color: var(--lp-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
-.landing-eyebrow-dot {
+.lp-chat-live-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--color-accent);
-  animation: eyebrowPulse 2s ease-in-out infinite;
+  background: var(--lp-green);
 }
 
-@keyframes eyebrowPulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(0.8);
-  }
-}
-
-.landing-hero h1 {
-  margin: 0 0 1.1rem;
-  font-size: clamp(2.5rem, 5.2vw, 3.9rem);
-  font-weight: 800;
-  line-height: 1.04;
-  letter-spacing: -0.025em;
-  color: #fff;
-}
-
-/* Gradient text with a slow shimmer sweeping through it. */
-.landing-hero-accent {
-  background: linear-gradient(
-    100deg,
-    var(--color-accent) 0%,
-    #4ade80 35%,
-    #a7f3c4 50%,
-    #4ade80 65%,
-    var(--color-accent) 100%
-  );
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: accentShimmer 5s ease-in-out infinite;
-}
-
-@keyframes accentShimmer {
-  0%,
-  100% {
-    background-position: 0% 0;
-  }
-  50% {
-    background-position: 100% 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-hero-accent {
-    animation: none;
-  }
-}
-
-.landing-lead {
-  margin: 0 0 1.8rem;
-  color: #9aa1ab;
-  font-size: 1.08rem;
-  line-height: 1.6;
-  max-width: 440px;
-}
-
-.landing-cta-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 2.2rem;
-}
-
-/* Same recipe as the app's primary action button (.course-add-task). */
-.landing-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  background: var(--color-accent);
-  color: #fff;
-  border: 1px solid #19a449;
-  padding: 0.8rem 1.5rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.08s ease;
-  box-shadow: 0 8px 26px rgba(29, 185, 84, 0.35);
-  animation: ctaBreathe 3.2s ease-in-out infinite;
-}
-
-/* Gentle glow breathing so the primary action never looks static. */
-@keyframes ctaBreathe {
-  0%,
-  100% {
-    box-shadow: 0 8px 26px rgba(29, 185, 84, 0.3);
-  }
-  50% {
-    box-shadow: 0 8px 34px rgba(29, 185, 84, 0.5);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-cta {
-    animation: none;
-  }
-}
-
-.landing-cta:hover:not(:disabled) {
-  background: var(--color-accent-hover);
-  border-color: #1bbf52;
-}
-
-.landing-cta:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
-.landing-cta:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-/* Hidden until hover: collapses width and cancels the parent gap so the
-   resting button has no trailing space, then slides in on hover. */
-.landing-cta-arrow {
-  display: inline-flex;
-  align-items: center;
-  max-width: 0;
-  margin-left: -0.6rem;
-  opacity: 0;
-  overflow: hidden;
-  transform: translateX(-4px);
-  transition:
-    max-width 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-    margin-left 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.18s ease,
-    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.landing-cta:hover:not(:disabled) .landing-cta-arrow,
-.landing-cta:focus-visible:not(:disabled) .landing-cta-arrow {
-  max-width: 1.4em;
-  margin-left: 0;
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.landing-cta-note {
-  color: #777;
-  font-size: 0.85rem;
-}
-
-/* ---------- feature points (inside the hero, no extra scroll) ---------- */
-
-.landing-points {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.landing-point {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-.landing-point-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: rgba(29, 185, 84, 0.12);
-  border: 1px solid rgba(29, 185, 84, 0.25);
-  color: #4ade80;
-  flex-shrink: 0;
-}
-
-.landing-point-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-}
-
-.landing-point-copy strong {
-  color: #e7e9ee;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.landing-point-copy span {
-  color: #8a93a0;
-  font-size: 0.85rem;
-  line-height: 1.45;
-}
-
-/* ---------- hero art / demo card ---------- */
-
-.landing-hero-art {
-  position: relative;
-  display: flex;
-  justify-content: center;
-}
-
-.landing-demo-float {
-  animation: demoBob 6s ease-in-out 1.8s infinite;
-}
-
-@keyframes demoBob {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  50% {
-    translate: 0 -8px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .landing-demo-float {
-    animation: none;
-  }
-}
-
-/* App-style card ג€” pops against the dark stage. */
-.landing-demo {
-  position: relative;
-  z-index: 2;
-  width: 350px;
-  background: #fff;
-  border: 1px solid #e3e3e6;
-  border-radius: 12px;
-  padding: 1.1rem 1.15rem 0.9rem;
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.5),
-    0 0 70px rgba(29, 185, 84, 0.12);
-  color: #1a1a1a;
-}
-
-.landing-demo-head {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #1a1a1a;
-  margin-bottom: 0.9rem;
-}
-
-.landing-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.landing-pill {
-  margin-left: auto;
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 0.18rem 0.5rem;
-  border-radius: 999px;
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #86efac;
-}
-
-.landing-demo-body {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.landing-demo-donut {
-  position: relative;
-  width: 92px;
-  height: 92px;
-  flex-shrink: 0;
-}
-
-.landing-demo-donut svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.landing-demo-ring-bg {
-  fill: none;
-  stroke: #ececef;
-  stroke-width: 8;
-}
-
-.landing-demo-ring {
-  fill: none;
-  stroke: var(--color-accent);
-  stroke-width: 8;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.landing-demo-pct {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 1.15rem;
-  color: #1a1a1a;
-  font-variant-numeric: tabular-nums;
-}
-
-.landing-demo-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+.lp-chat-log {
   flex: 1;
-}
-
-.landing-demo-task {
+  min-height: 0;
   display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  width: 100%;
-  background: transparent;
-  border: none;
-  padding: 0.3rem 0.35rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font: inherit;
-  color: #333;
-  font-size: 0.85rem;
-  text-align: left;
-  transition: background-color 0.15s ease;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem;
+  overflow: hidden;
 }
 
-.landing-demo-task:hover {
-  background: #f4f4f6;
+.lp-bubble-user {
+  align-self: flex-end;
+  max-width: 80%;
+  padding: 0.5rem 0.8rem;
+  border-radius: 16px 16px 4px 16px;
+  background: var(--lp-fill-2);
+  font-size: 0.88rem;
 }
 
-.landing-demo-check {
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
-  border: 1.5px solid #c5c8cc;
+.lp-status {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: 0.65rem;
-  color: #fff;
-  flex-shrink: 0;
-  background: #fff;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
+  gap: 0.5rem;
+  color: var(--lp-muted);
+  font-size: 0.82rem;
 }
 
-.landing-demo-task.done .landing-demo-check {
+.lp-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.lp-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: lp-dot 1s ease-in-out infinite;
+}
+
+.lp-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.lp-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes lp-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.lp-reply {
+  margin: 0;
+  max-width: 92%;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--lp-text);
+}
+
+.lp-card {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.8rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--lp-line);
+  background: var(--lp-surface);
+  box-shadow: 0 1px 2px rgba(22, 24, 29, 0.05);
+  transition: border-color var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out);
+}
+
+.lp-card-added {
+  border-color: #b7e4c7;
+  background: #f3fbf6;
+}
+
+.lp-card-kind {
+  color: var(--lp-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.lp-card-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.lp-card-meta {
+  color: var(--lp-soft);
+  font-size: 0.8rem;
+}
+
+.lp-card-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+  min-height: 28px;
+  align-items: center;
+}
+
+.lp-card-btn {
+  padding: 0.32rem 0.8rem;
+  border-radius: 8px;
   background: var(--color-accent);
-  border-color: var(--color-accent);
-}
-
-.landing-demo-task.done .landing-demo-name {
-  color: #999;
-  text-decoration: line-through;
-}
-
-.landing-demo-foot {
-  margin-top: 0.85rem;
-  padding-top: 0.7rem;
-  border-top: 1px solid #ececef;
+  color: #fff;
   font-size: 0.78rem;
-  color: #888;
+  font-weight: 600;
+  transition: transform 120ms var(--ease-out), filter 120ms var(--ease-out);
+}
+
+.lp-card-btn-ghost {
+  background: var(--lp-fill-2);
+  color: var(--lp-soft);
+}
+
+.lp-pressed {
+  transform: scale(0.94);
+  filter: brightness(0.9);
+}
+
+.lp-card-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--lp-green);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.lp-chat-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0.75rem 0.75rem;
+  padding: 0.35rem 0.35rem 0.35rem 0.85rem;
+  border-radius: 16px;
+  border: 1px solid rgba(22, 24, 29, 0.12);
+  background: var(--lp-surface);
+  font-size: 0.86rem;
+}
+
+.lp-chat-input > span:first-child {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.lp-placeholder {
+  color: var(--lp-muted);
+}
+
+.lp-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: -0.15em;
+  background: var(--lp-green);
+  animation: lp-blink 1s steps(1) infinite;
+}
+
+@keyframes lp-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.lp-send {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--lp-fill-2);
+  color: var(--lp-muted);
+  transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+}
+
+.lp-send-ready {
+  background: var(--lp-text);
+  color: #fff;
+}
+
+/* Up next: the planner the Assistant writes to, in front of the chat. */
+.lp-upnext {
+  position: absolute;
+  left: 0;
+  /* Hangs from just under the chat input, so added rows grow downward. */
+  top: calc(var(--lp-chat-h) - 22px);
+  width: min(280px, 64%);
+  padding: 0.85rem 0.9rem;
+  border-radius: 16px;
+  border: 1px solid var(--lp-line);
+  background: var(--lp-surface);
+  box-shadow: var(--lp-shadow-lg);
+}
+
+.lp-upnext-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.lp-upnext-head span {
+  color: var(--lp-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.lp-upnext ul {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.lp-upnext li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 10px;
+  background: var(--lp-fill);
+  font-size: 0.8rem;
+}
+
+.lp-upnext-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.lp-upnext-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lp-upnext-meta {
+  color: var(--lp-muted);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+/* The task carried from the chat card into Up next. */
+.lp-flight {
+  position: absolute;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid #b7e4c7;
+  background: var(--lp-surface);
+  box-shadow: 0 14px 30px -10px rgba(22, 24, 29, 0.3);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  will-change: transform;
 }
 
 /* ---------- footer ---------- */
 
-.landing-footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  padding: 1.1rem 2.5rem;
+.lp-footer {
   display: flex;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 1rem;
+  padding: 1.5rem 1rem 2rem;
+  border-top: 1px solid var(--lp-line);
+  color: var(--lp-muted);
   font-size: 0.82rem;
-  color: #6b7280;
-  flex-shrink: 0;
 }
 
-.landing-footer a {
-  color: #9aa1ab;
+.lp-footer a {
+  color: var(--lp-soft);
   text-decoration: none;
-  transition: color 0.15s ease;
 }
 
-.landing-footer a:hover {
-  color: #fff;
+.lp-footer a:hover {
+  color: var(--lp-text);
 }
 
-/* ---------- responsive ---------- */
+/* ---------- small screens ---------- */
 
-@media (max-width: 880px) {
-  .landing-nav {
-    padding: 0.85rem 1.25rem;
+@media (max-width: 900px) {
+  .lp-main {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 0.5rem;
   }
-  .landing-hero {
-    padding: 0.5rem 1.25rem 2rem;
-    align-items: flex-start;
-  }
-  .landing-hero-inner {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  .landing-hero h1 {
-    font-size: 2.3rem;
-  }
-  .landing-lead {
-    font-size: 1rem;
-    margin-bottom: 1.4rem;
-  }
-  .landing-cta-row {
-    margin-bottom: 1.6rem;
-  }
-  .landing-points {
-    gap: 0.7rem;
-  }
-  .landing-hero-art {
-    padding: 3rem 0 3.2rem;
-  }
-  .landing-demo {
+
+  .lp-copy,
+  .lp-art {
+    max-width: 520px;
     width: 100%;
-    max-width: 340px;
-    box-sizing: border-box;
   }
-  .landing-hero-glow {
-    top: auto;
-    bottom: -20%;
-    right: -30%;
-    width: 480px;
-    height: 480px;
-    translate: none;
+
+  .lp-demo {
+    --lp-chat-h: 340px;
+  }
+}
+
+@media (max-width: 480px) {
+  .lp-demo {
+    padding-left: 1rem;
+  }
+
+  .lp-upnext {
+    width: 84%;
+  }
+
+  .lp-auth {
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-dots span,
+  .lp-caret {
+    animation: none;
   }
 }
