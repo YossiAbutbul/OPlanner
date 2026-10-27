@@ -1056,6 +1056,46 @@
 
 /* Error notice: calm surface, the red is only on the icon so the message
    stays readable. Retry sits beside it. */
+/* Reply Markdown: the subset AgentText renders. */
+.rs-agent-md {
+  white-space: normal;
+}
+
+.rs-agent-md > * {
+  margin: 0;
+}
+
+.rs-agent-md > * + * {
+  margin-top: 0.55rem;
+}
+
+.rs-agent-md ol,
+.rs-agent-md ul {
+  padding-inline-start: 1.25rem;
+}
+
+.rs-agent-md li + li {
+  margin-top: 0.3rem;
+}
+
+.rs-agent-md li::marker {
+  color: var(--rs-text-muted);
+}
+
+.rs-agent-md strong,
+.rs-agent-md-h {
+  font-weight: 600;
+  color: var(--rs-text);
+}
+
+.rs-agent-md code {
+  padding: 0.05rem 0.3rem;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+
 .rs-agent-alert {
   display: flex;
   align-items: flex-start;

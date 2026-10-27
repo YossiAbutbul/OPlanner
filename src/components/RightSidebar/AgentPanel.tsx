@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { sendAgentMessage, type AgentProposal } from "../../services/agent";
 import { capitalizeWords } from "../../utility/dayCalendar";
 import { lsCache } from "../../hooks/useLocalStorageCache";
+import AgentText from "./AgentText";
 
 // "expired": restored from storage without an answer. Its data may be stale,
 // so it can't be confirmed any more.
@@ -96,8 +97,8 @@ const reserveIds = (list: Message[]) => {
   return list;
 };
 
-// Chat with the study agent. Replies render as plain text (React escapes
-// them), so a reply can't inject markup, links or images.
+// Chat with the study agent. Replies render through AgentText, which only
+// builds React elements, so a reply can't inject markup, links or images.
 const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, storageKey, onCleared }) => {
   const [messages, setMessages] = useState<Message[]>(() => reserveIds(loadChat(storageKey)));
   const [input, setInput] = useState("");
@@ -253,7 +254,11 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, storageKey, on
                   )}
                 </div>
               ) : (
-                <p className="rs-agent-text" dir="auto">{m.text}</p>
+                m.role === "assistant" ? (
+                  <AgentText text={m.text} />
+                ) : (
+                  <p className="rs-agent-text" dir="auto">{m.text}</p>
+                )
               )}
               {m.cards?.map((c, i) => {
                 const changes = editChanges(c.proposal);

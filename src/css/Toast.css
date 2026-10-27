@@ -510,3 +510,19 @@
     animation: none;
   }
 }
+
+/* Keep toasts off the Assistant's input. The stack sits in the sidebar's
+   corner, so while the Assistant tab is showing it lifts to just above the
+   field (the sidebar's bottom padding + the 38px field + a gap). Below
+   1024px the sidebar is a drawer, so only while it's open. */
+@media (min-width: 1025px) {
+  body:has(.rs-agent-wrap:not([hidden])) .toast-stack {
+    bottom: calc(1rem + 38px + 0.75rem);
+  }
+}
+
+@media (max-width: 1024px) {
+  body:has(.rs.mobile-open .rs-agent-wrap:not([hidden])) .toast-stack {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem + 38px + 0.75rem);
+  }
+}
