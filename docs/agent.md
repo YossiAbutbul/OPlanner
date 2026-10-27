@@ -13,7 +13,7 @@ In the Vercel project → Settings → Environment Variables (Production):
 | Name | Type | Value |
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` | Secret | API key from console.anthropic.com |
-| `AGENT_ALLOWED_EMAILS` | Config | comma-separated emails, e.g. `me@example.com` |
+| `AGENT_ALLOWED_EMAILS` | Config | comma-separated emails, e.g. `me@example.com`, or `*` for every verified account |
 | `FIREBASE_SERVICE_ACCOUNT` | Secret | already set for push reminders |
 
 Redeploy after changing them. Type the names by hand: copying them from
@@ -29,6 +29,7 @@ Set a monthly spend limit in the Anthropic Console as the final backstop.
 | Firebase ID token verified on every request (revocation checked) | Anonymous calls, impersonation |
 | Allowlist + `email_verified` required | Use by anyone not listed, or by an unverified signup with a listed address |
 | Per user: 20 requests/min, 200/day, $0.50/day (`agentUsage/{uid}`, transaction) | Spam and runaway cost; clients can't reset it (no rules match) |
+| Whole app: $5/day (`agentUsageMeta/daily`, same transaction) | Many new accounts each using their own per-user budget |
 | Input caps: 2000 chars per message, 20 turns, 64 KB body, 5 tool rounds, 4096 output tokens | Oversized requests, loops |
 | Tools use the uid from the token only | A hijacked model reading other users' data |
 | The model can't write; `propose_task` returns a card the user must confirm | Injected text in task names silently changing data |

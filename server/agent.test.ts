@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DAILY_BUDGET_MICROS,
+  GLOBAL_DAILY_BUDGET_MICROS,
   MAX_HISTORY,
   MAX_USER_CHARS,
   PER_DAY,
@@ -16,6 +17,7 @@ import {
   parseAllowlist,
   parseProposal,
   parseTaskFilter,
+  takeGlobal,
   takeRequest,
   RESERVE_MICROS,
   type TaskView,
@@ -44,6 +46,33 @@ describe("access", () => {
 
   it("refuses everyone when the env var is unset", () => {
     expect(isAllowed("me@example.com", true, parseAllowlist(undefined))).toBe(false);
+  });
+
+  it("lets in every verified account with *", () => {
+    const all = parseAllowlist("*");
+    expect(isAllowed("anyone@example.com", true, all)).toBe(true);
+    expect(isAllowed("anyone@example.com", false, all)).toBe(false);
+    expect(isAllowed(undefined, true, all)).toBe(false);
+  });
+});
+
+describe("takeGlobal", () => {
+  const now = Date.parse("2026-10-27T12:00:00Z");
+
+  it("reserves against today's app-wide spend", () => {
+    const r = takeGlobal({ day: "2026-10-27", micros: 1000 }, now);
+    expect(r).toEqual({ ok: true, next: { day: "2026-10-27", micros: 1000 + RESERVE_MICROS } });
+  });
+
+  it("starts fresh on a new day", () => {
+    const r = takeGlobal({ day: "2026-10-26", micros: GLOBAL_DAILY_BUDGET_MICROS }, now);
+    expect(r).toEqual({ ok: true, next: { day: "2026-10-27", micros: RESERVE_MICROS } });
+    expect(takeGlobal(undefined, now).ok).toBe(true);
+  });
+
+  it("refuses once the app-wide budget is spent", () => {
+    const r = takeGlobal({ day: "2026-10-27", micros: GLOBAL_DAILY_BUDGET_MICROS - RESERVE_MICROS + 1 }, now);
+    expect(r.ok).toBe(false);
   });
 });
 

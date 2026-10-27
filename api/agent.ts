@@ -7,7 +7,7 @@
 //
 // Env (Vercel project settings):
 //   ANTHROPIC_API_KEY         Claude API key (Secret)
-//   AGENT_ALLOWED_EMAILS      comma-separated emails that may use the agent
+//   AGENT_ALLOWED_EMAILS      comma-separated emails that may use the agent, or * for every verified account
 //   FIREBASE_SERVICE_ACCOUNT  service account JSON (shared with send-reminders)
 import Anthropic from "@anthropic-ai/sdk";
 import { FieldValue } from "firebase-admin/firestore";
@@ -32,10 +32,12 @@ import {
   parseDeleteProposal,
   parseCourseProposal,
   filterTimeBlocks,
+  takeGlobal,
   takeRequest,
   type TaskProposal,
   type TaskView,
   type TimeBlockView,
+  type GlobalUsage,
   type UsageState,
 } from "../server/agent.js";
 import { authenticate, db, json } from "../server/firebaseAdmin.js";
@@ -253,12 +255,21 @@ export async function POST(request: Request): Promise<Response> {
   // takeRequest reserves RESERVE_MICROS here; the finally below settles it
   // against what was actually spent.
   const usageRef = db().collection("agentUsage").doc(uid);
-  let gate: ReturnType<typeof takeRequest>;
+  const globalRef = db().collection("agentUsageMeta").doc("daily");
+  let gate: ReturnType<typeof takeRequest> | ReturnType<typeof takeGlobal>;
   try {
     gate = await db().runTransaction(async (tx) => {
-      const snap = await tx.get(usageRef);
-      const result = takeRequest({ ...emptyUsage(), ...(snap.data() as Partial<UsageState> | undefined) }, Date.now());
-      if (result.ok) tx.set(usageRef, result.next);
+      const [snap, globalSnap] = await Promise.all([tx.get(usageRef), tx.get(globalRef)]);
+      const now = Date.now();
+      const result = takeRequest({ ...emptyUsage(), ...(snap.data() as Partial<UsageState> | undefined) }, now);
+      if (!result.ok) return result;
+      const app = takeGlobal(globalSnap.data() as Partial<GlobalUsage> | undefined, now);
+      if (!app.ok) {
+        console.warn("Agent: app-wide daily budget reached");
+        return app;
+      }
+      tx.set(usageRef, result.next);
+      tx.set(globalRef, app.next);
       return result;
     });
   } catch (err) {
@@ -298,11 +309,13 @@ export async function POST(request: Request): Promise<Response> {
         // Settle the reservation against what was actually spent, even when
         // the loop failed part-way.
         if (spent !== RESERVE_MICROS) {
-          await usageRef
-            .set({ dayMicros: FieldValue.increment(spent - RESERVE_MICROS) }, { merge: true })
-            .catch((e) => {
-              console.error("Agent: failed to record usage", e);
-            });
+          const delta = FieldValue.increment(spent - RESERVE_MICROS);
+          await Promise.all([
+            usageRef.set({ dayMicros: delta }, { merge: true }),
+            globalRef.set({ micros: delta }, { merge: true }),
+          ]).catch((e) => {
+            console.error("Agent: failed to record usage", e);
+          });
         }
         controller.close();
       }

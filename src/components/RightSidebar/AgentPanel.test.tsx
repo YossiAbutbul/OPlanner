@@ -24,6 +24,15 @@ describe("AgentPanel", () => {
     );
   });
 
+  it("puts an unfinished suggestion in the input instead of sending it", () => {
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "תיצור לי קורס חדש בשם..." }));
+
+    expect(send).not.toHaveBeenCalled();
+    expect(screen.getByRole("textbox")).toHaveValue("תיצור לי קורס חדש בשם ");
+  });
+
   it("shows what the agent is doing while it works", async () => {
     let finish!: (r: { reply: string; proposals: [] }) => void;
     send.mockImplementation((_input, onStatus) => {
