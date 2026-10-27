@@ -1,4 +1,4 @@
-import { doc, setDoc, getDocs, collection, getDoc, deleteDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { doc, setDoc, getDocs, getDocsFromServer, collection, getDoc, deleteDoc, updateDoc, writeBatch, query, limit } from "firebase/firestore";
 import { db, requireUid, auth } from "../firebase";
 
 const MAX_NAME_LENGTH = 100;
@@ -29,37 +29,57 @@ const SEMESTER_DEFAULT_COLORS: Record<string, string> = {
 const randomYearColor = () =>
   YEAR_COLOR_PALETTE[Math.floor(Math.random() * YEAR_COLOR_PALETTE.length)];
 
-export const initializeYear = async (year: number): Promise<boolean> => {
+export const SEMESTER_NAMES = ["Semester A", "Semester B", "Semester C"];
+
+// "failed" is kept apart from "exists" so callers that try the next year
+// don't loop forever when the write itself fails.
+export type InitYearResult = "created" | "exists" | "failed";
+
+// Creates a year with its three semesters (and optionally a first course in
+// Semester A) in one batch: one round trip instead of one per document.
+export const initializeYear = async (
+  year: number,
+  opts: { color?: string; starterCourse?: string } = {}
+): Promise<InitYearResult> => {
   try {
     const base = userBase();
     const yearDoc = doc(db, `${base}/years`, year.toString());
     const yearSnapshot = await getDoc(yearDoc);
 
     if (yearSnapshot.exists()) {
-      return false;
+      return "exists";
     }
 
-    await setDoc(yearDoc, { year, color: randomYearColor() });
-
-    const semesters = [
-      { name: "Semester A", key: "Semester A" },
-      { name: "Semester B", key: "Semester B" },
-      { name: "Semester C", key: "Semester C" },
-    ];
-
-    for (const semester of semesters) {
-      const semesterDoc = doc(db, `${base}/years/${year}/semesters`, semester.key);
-      await setDoc(semesterDoc, {
-        name: semester.name,
-        color: SEMESTER_DEFAULT_COLORS[semester.key],
+    const batch = writeBatch(db);
+    batch.set(yearDoc, { year, color: opts.color ?? randomYearColor() });
+    for (const name of SEMESTER_NAMES) {
+      batch.set(doc(db, `${base}/years/${year}/semesters`, name), {
+        name,
+        color: SEMESTER_DEFAULT_COLORS[name],
       });
     }
-
-    return true;
+    if (opts.starterCourse && isValidName(opts.starterCourse)) {
+      batch.set(doc(db, `${base}/years/${year}/semesters/${SEMESTER_NAMES[0]}/courses`, opts.starterCourse), {
+        tasks: [],
+      });
+    }
+    await batch.commit();
+    return "created";
   } catch (error) {
     console.error(`Error initializing year ${year}:`, error);
-    return false;
+    return "failed";
   }
+};
+
+export const semesterDefaultColor = (name: string): string | undefined => SEMESTER_DEFAULT_COLORS[name];
+export const pickYearColor = randomYearColor;
+
+// True only when the server itself says the account has no years. A
+// failed load and an empty offline cache also look like "no years", and
+// must not trigger first-run setup. Throws when the server can't be reached.
+export const hasNoYearsOnServer = async (): Promise<boolean> => {
+  const snap = await getDocsFromServer(query(collection(db, `${userBase()}/years`), limit(1)));
+  return snap.empty;
 };
 
 export const initializeYearIfEmpty = async (): Promise<void> => {
@@ -69,8 +89,7 @@ export const initializeYearIfEmpty = async (): Promise<void> => {
     const snapshot = await getDocs(yearsCollection);
 
     if (snapshot.empty) {
-      const currentYear = new Date().getFullYear();
-      await initializeYear(currentYear);
+      await initializeYear(new Date().getFullYear());
     }
   } catch (error) {
     console.error("Error initializing year if empty:", error);
@@ -155,8 +174,10 @@ export const getAllYearsAndSemesters = async (): Promise<
 
     return yearsData;
   } catch (error) {
+    // Thrown, not turned into [], so a failed load isn't mistaken for an
+    // account with no years (which would show a blank page).
     console.error("Error fetching years and semesters:", error);
-    return [];
+    throw error;
   }
 };
 

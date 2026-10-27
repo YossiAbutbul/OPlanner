@@ -156,6 +156,7 @@ const App: React.FC = () => {
         onYearsChanged={tree.refreshYears}
         onAddYear={tree.handleAddYear}
         addingYear={tree.addingYear}
+        treeLoading={tree.treeLoading}
         onUpdateCourseColor={tree.handleUpdateCourseColor}
         mobileOpen={mobileNavOpen}
         onCloseMobile={() => setMobileNavOpen(false)}
@@ -172,6 +173,8 @@ const App: React.FC = () => {
       <MainContent
         years={tree.years}
         addingYear={tree.addingYear}
+        treeLoading={tree.treeLoading}
+        loadError={tree.loadError}
         selectedYear={sel.selectedYear}
         selectedSemester={sel.selectedSemester}
         onSelectYear={sel.selectYear}

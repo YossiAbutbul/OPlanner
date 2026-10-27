@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useState, useEffect, useMemo } from "react";
 import OverviewStats from "./SemesterOverview/OverviewStats";
 import HomeworkTable from "./HomeworkTable";
 import SemesterOverview from "./SemesterOverview";
+import OverviewSkeleton from "./SemesterOverview/OverviewSkeleton";
 import { ListPlus } from "lucide-react";
 import { motion } from "framer-motion";
 import { SPRING_SNAPPY } from "../utility/motion";
@@ -27,6 +28,10 @@ import { isOverdue } from "../utility/dayCalendar";
 interface MainContentProps {
   years: YearTreeData[];
   addingYear: boolean;
+  // Nothing to show yet (first load or new-account setup): show a skeleton.
+  treeLoading?: boolean;
+  // The tree couldn't be read: say so instead of a blank page.
+  loadError?: boolean;
   selectedYear: number | null;
   selectedSemester: string | null;
   onSelectYear: (y: number) => void;
@@ -58,6 +63,8 @@ const capitalizeWords = (str: string) =>
 const MainContent: React.FC<MainContentProps> = ({
   years,
   addingYear,
+  treeLoading = false,
+  loadError = false,
   selectedYear,
   selectedSemester,
   onSelectYear,
@@ -440,6 +447,21 @@ const MainContent: React.FC<MainContentProps> = ({
             onYearsChanged={onYearsChanged}
             onError={(msg) => toast.error(msg)}
           />
+        ) : loadError ? (
+          <div className="load-error" role="alert">
+            <p className="load-error-title">Couldn't load your planner</p>
+            <p className="load-error-text">
+              Check your connection. If this site is open in another tab or window signed in to a different
+              account, close it, then try again.
+            </p>
+            <button type="button" className="load-error-btn" onClick={() => window.location.reload()}>
+              Try again
+            </button>
+          </div>
+        ) : treeLoading ? (
+          <div className="overview">
+            <OverviewSkeleton courses={[]} />
+          </div>
         ) : (
           <div className="empty-state" />
         )}

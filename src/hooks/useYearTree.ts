@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 import {
-  addCourse,
+  SEMESTER_NAMES,
   deleteYear,
   getAllYearsAndSemesters,
+  hasNoYearsOnServer,
   initializeYear,
+  pickYearColor,
+  semesterDefaultColor,
   setCourseColor,
   setCourseFinalDate,
   setCourseOrder,
@@ -35,6 +38,10 @@ export function useYearTree(
     if (user) lsCache.write(yearsCacheKey(user.uid), next);
   }, [user]);
 
+  // Set when the tree couldn't be read (permissions, offline). What's on
+  // screen stays as it was, and the main view offers a retry.
+  const [loadError, setLoadError] = useState(false);
+
   const refreshYears = useCallback(async () => {
     if (!user) return;
     setYearsLoading(true);
@@ -42,6 +49,9 @@ export function useYearTree(
       const data = await getAllYearsAndSemesters();
       setYears(data);
       persistYears(data);
+      setLoadError(false);
+    } catch {
+      setLoadError(true);
     } finally {
       setYearsLoading(false);
     }
@@ -61,26 +71,57 @@ export function useYearTree(
     refreshYears();
   }, [user, refreshYears]);
 
-  // Bootstrap: brand-new account with zero years gets the current calendar
-  // year auto-created so the overview is immediately useful. One-shot per
-  // user — if they delete the year later we don't recreate it.
+  // Bootstrap: a brand-new account gets the current year, its semesters and
+  // a first course so the overview is useful at once. The tree is shown
+  // straight away and written in one batch behind it. Runs only when the
+  // server confirms there are no years (a failed load or an empty offline
+  // cache looks the same), and the flag is set only after it worked, so a
+  // failed first try runs again next time. Once done it never re-runs, even
+  // if the user later deletes the year.
+  const [bootstrapping, setBootstrapping] = useState(false);
+  const bootstrapStarted = useRef(false);
   useEffect(() => {
-    if (!user || yearsLoading) return;
-    if (years.length > 0) return;
+    if (!user || yearsLoading || loadError || years.length > 0 || bootstrapStarted.current) return;
     const flag = bootstrappedKey(user.uid);
     if (localStorage.getItem(flag)) return;
-    localStorage.setItem(flag, "1");
+    bootstrapStarted.current = true;
+    setBootstrapping(true);
     (async () => {
-      let yearToAdd = new Date().getFullYear();
-      while (true) {
-        const added = await initializeYear(yearToAdd);
-        if (added) break;
-        yearToAdd += 1;
+      try {
+        if (!(await hasNoYearsOnServer())) {
+          localStorage.setItem(flag, "1");
+          await refreshYears();
+          return;
+        }
+        const year = new Date().getFullYear();
+        const color = pickYearColor();
+        const starter: YearTreeData[] = [{
+          year,
+          color,
+          semesters: SEMESTER_NAMES.map((name, i) => ({
+            name,
+            key: name,
+            color: semesterDefaultColor(name),
+            courses: i === 0 ? [{ name: "Course 1" }] : [],
+          })),
+        }];
+        setYears(starter);
+        const result = await initializeYear(year, { color, starterCourse: "Course 1" });
+        if (result === "failed") {
+          setYears([]);
+          return;
+        }
+        persistYears(starter);
+        localStorage.setItem(flag, "1");
+        await refreshYears();
+      } catch (e) {
+        // Offline or the server didn't answer: try again on the next load.
+        console.error("First-run setup failed:", e);
+      } finally {
+        setBootstrapping(false);
       }
-      await addCourse(yearToAdd, "Semester A", "Course 1");
-      await refreshYears();
     })();
-  }, [user, years, yearsLoading, refreshYears]);
+  }, [user, years, yearsLoading, loadError, refreshYears, persistYears]);
 
   const handleReorderCourses = useCallback(
     (year: number, semester: string, names: string[]) => {
@@ -269,11 +310,12 @@ export function useYearTree(
   const handleAddYear = useCallback(async () => {
     setAddingYear(true);
     try {
-      let yearToAdd = new Date().getFullYear();
-      while (true) {
-        const added = await initializeYear(yearToAdd);
-        if (added) break;
-        yearToAdd += 1;
+      // Next year that doesn't exist yet; stop on a failed write instead of
+      // trying ever later years.
+      const start = new Date().getFullYear();
+      for (let y = start; y < start + 50; y++) {
+        const result = await initializeYear(y);
+        if (result !== "exists") break;
       }
       await refreshYears();
     } finally {
@@ -284,6 +326,9 @@ export function useYearTree(
   return {
     years,
     yearsLoading,
+    // Nothing to show yet: first load with no cached tree, or first-run setup.
+    treeLoading: years.length === 0 && (yearsLoading || bootstrapping),
+    loadError: loadError && years.length === 0,
     addingYear,
     refreshYears,
     handleReorderCourses,

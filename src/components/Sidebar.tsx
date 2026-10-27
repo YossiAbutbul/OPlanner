@@ -34,6 +34,8 @@ interface SidebarProps {
   onYearsChanged: () => void | Promise<void>;
   onAddYear: () => void;
   addingYear: boolean;
+  // Tree still loading or being set up for a new account.
+  treeLoading?: boolean;
   onUpdateCourseColor: (
     year: number,
     semesterKey: string,
@@ -59,6 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onYearsChanged,
   onAddYear,
   addingYear,
+  treeLoading = false,
   onUpdateCourseColor,
   mobileOpen,
   onCloseMobile,
@@ -218,7 +221,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </li>
           )}
           {!canManage && (
-            <li className="open-empty">Select a year and semester</li>
+            <li className="open-empty">{treeLoading ? "Setting up your planner…" : "Select a year and semester"}</li>
           )}
           {canManage && courses.length === 0 && (
             <li className="open-empty">No courses yet</li>
