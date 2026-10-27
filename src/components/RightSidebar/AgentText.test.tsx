@@ -1,6 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import AgentText, { parseBlocks } from "./AgentText";
+import AgentText from "./AgentText";
+import { parseBlocks } from "../../utility/agentMarkdown";
 
 describe("AgentText", () => {
   it("renders the reply from production as lists and bold", () => {

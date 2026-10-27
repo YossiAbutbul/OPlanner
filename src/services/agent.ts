@@ -4,6 +4,7 @@ import { auth } from "../firebase";
 // client only asks so it can show or hide the tab.
 
 export interface AgentProposal {
+  action?: "delete";  // omitted for create/edit
   id?: string;
   course: string;
   name: string;

@@ -133,12 +133,12 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     };
   }, [sources, getCourseTasks, homework, selectedYear, selectedSemester]);
 
-  // Listen for "open this day in sidebar" requests from calendar widgets.
+  // Calendar widgets pick the day the Schedule tab shows. The open tab stays
+  // as it is, so clicking a day doesn't pull you out of the Assistant.
   useEffect(() => {
     const onPick = (e: Event) => {
       const detail = (e as CustomEvent<{ date: string }>).detail;
       if (!detail?.date) return;
-      setTab("day");
       setDayDate(detail.date);
     };
     window.addEventListener("oplanner:select-day", onPick);
@@ -202,6 +202,17 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     if (p.id && !existing) {
       toast.error(`“${p.name}” no longer exists`);
       throw new Error("Proposed task not found");
+    }
+    if (p.action === "delete" && existing) {
+      try {
+        await removeHomework(existing.id, existing.year, existing.semester, existing.course);
+      } catch (e) {
+        toast.error(`Couldn't delete “${p.name}”`);
+        throw e;
+      }
+      setAllSemesterTasks((prev) => prev.filter((x) => x.id !== existing.id));
+      toast.success(`Deleted “${p.name}”`);
+      return;
     }
     try {
       await addHomework(

@@ -31,9 +31,12 @@ import {
   parseAllowlist,
   parseProposal,
   parseTaskFilter,
+  parseDeleteProposal,
+  filterTimeBlocks,
   takeRequest,
   type TaskProposal,
   type TaskView,
+  type TimeBlockView,
   type UsageState,
 } from "../server/agent.js";
 import { serviceAccount } from "../server/serviceAccount.js";
@@ -122,7 +125,28 @@ const semesterData = (uid: string, year: number, semester: string) => {
       );
     }));
 
-  return { loadCourses, loadTasks };
+  // Time blocks aren't per semester; the date filter scopes them.
+  let blocks: Promise<TimeBlockView[]> | null = null;
+  const loadTimeBlocks = () =>
+    (blocks ??= db()
+      .collection(`users/${uid}/timeBlocks`)
+      .get()
+      .then((snap) =>
+        snap.docs.flatMap((d): TimeBlockView[] => {
+          const b = d.data();
+          if (typeof b.date !== "string" || typeof b.startTime !== "string" || typeof b.endTime !== "string") return [];
+          const course = typeof b.courseId === "string" ? b.courseId.split("|").pop() : undefined;
+          return [{
+            title: typeof b.title === "string" ? b.title.slice(0, 200) : "",
+            date: b.date,
+            startTime: b.startTime,
+            endTime: b.endTime,
+            ...(course ? { course } : {}),
+          }];
+        })
+      ));
+
+  return { loadCourses, loadTasks, loadTimeBlocks };
 };
 
 // A proposal the client shows as a confirm card. `prevCourse` is set when an
@@ -145,6 +169,32 @@ const runTool = async (
       const f = parseTaskFilter(input);
       if (!f.ok) return { content: f.error, isError: true };
       return { content: JSON.stringify(filterTasks(await data.loadTasks(), f.value)) };
+    }
+
+    case "list_time_blocks": {
+      const f = parseTaskFilter(input);
+      if (!f.ok) return { content: f.error, isError: true };
+      return { content: JSON.stringify(filterTimeBlocks(await data.loadTimeBlocks(), f.value)) };
+    }
+
+    case "propose_delete": {
+      const p = parseDeleteProposal(input);
+      if (!p.ok) return { content: p.error, isError: true };
+      const t = (await data.loadTasks()).find((x) => x.id === p.value.id);
+      if (!t) return { content: `No task with id "${p.value.id}". Use list_tasks.`, isError: true };
+      return {
+        content: "Proposal shown to the student. The task is deleted only if they confirm.",
+        proposal: {
+          action: "delete",
+          id: t.id,
+          course: t.course,
+          name: t.name,
+          dueDate: t.dueDate,
+          ...(t.startTime ? { startTime: t.startTime } : {}),
+          ...(t.endTime ? { endTime: t.endTime } : {}),
+          status: t.status === "DONE" ? "DONE" : "PENDING",
+        },
+      };
     }
 
     case "propose_task": {
@@ -177,7 +227,7 @@ const runTool = async (
         };
       }
       return {
-        content: "Proposal shown to the student. It is saved only if they tap Confirm.",
+        content: "Proposal shown to the student. It is saved only if they confirm.",
         proposal,
       };
     }
@@ -286,7 +336,9 @@ type AgentEvent =
 const TOOL_STATUS: Record<string, string> = {
   list_courses: "Reading your courses…",
   list_tasks: "Checking your tasks…",
+  list_time_blocks: "Checking your schedule…",
   propose_task: "Preparing a suggestion…",
+  propose_delete: "Preparing a suggestion…",
 };
 
 const describeError = (err: unknown): string => {
@@ -346,7 +398,7 @@ const runAgent = async (
       if (block.type !== "tool_use") continue;
       onStatus(TOOL_STATUS[block.name] ?? "Working…");
       const out: ToolOutcome =
-        block.name === "propose_task" && proposals.length >= MAX_PROPOSALS
+        block.name.startsWith("propose_") && proposals.length >= MAX_PROPOSALS
           ? { content: `At most ${MAX_PROPOSALS} proposals per reply. Stop proposing.`, isError: true }
           : await runTool(block.name, block.input, data);
       if (out.proposal) proposals.push(out.proposal);

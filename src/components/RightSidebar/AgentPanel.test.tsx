@@ -142,6 +142,45 @@ describe("AgentPanel", () => {
     expect(screen.getByText("Nothing overdue.")).toBeInTheDocument();
   });
 
+  it("shows a delete card that deletes only on confirm", async () => {
+    const proposal = { action: "delete" as const, id: "t1", course: "x", name: "Old HW", dueDate: "2026-11-03", status: "PENDING" as const };
+    send.mockResolvedValue({ reply: "Proposed.", proposals: [proposal] });
+    const onConfirm = vi.fn().mockResolvedValue(undefined);
+    render(<AgentPanel year={2026} semester="A" onConfirm={onConfirm} />);
+    fireEvent.click(screen.getByRole("button", { name: "What's overdue?" }));
+
+    expect(await screen.findByText("Delete task")).toBeInTheDocument();
+    expect(onConfirm).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(screen.getByText("Deleted")).toBeInTheDocument());
+    expect(onConfirm).toHaveBeenCalledWith(proposal, 2026, "A");
+  });
+
+  it("shows a status-only change to done as Mark done", async () => {
+    const prev = { course: "x", name: "HW", dueDate: "2026-11-03", status: "PENDING" };
+    send.mockResolvedValue({
+      reply: "Proposed.",
+      proposals: [{ id: "t1", course: "x", name: "HW", dueDate: "2026-11-03", status: "DONE", prev }],
+    });
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "What's overdue?" }));
+    expect(await screen.findByRole("button", { name: "Mark done" })).toBeInTheDocument();
+    expect(screen.queryByText("Status")).toBeNull();
+  });
+
+  it("confirms every pending card with Add all", async () => {
+    const p = (name: string) => ({ course: "x", name, dueDate: "2026-11-03", status: "PENDING" as const });
+    send.mockResolvedValue({ reply: "A plan.", proposals: [p("A"), p("B"), p("C")] });
+    const onConfirm = vi.fn().mockResolvedValue(undefined);
+    render(<AgentPanel year={2026} semester="A" onConfirm={onConfirm} />);
+    fireEvent.click(screen.getByRole("button", { name: "What's overdue?" }));
+
+    fireEvent.click((await screen.findAllByRole("button", { name: "Dismiss" }))[1]);
+    fireEvent.click(screen.getByRole("button", { name: "Add all 2" }));
+    await waitFor(() => expect(screen.getAllByText("Added to your planner")).toHaveLength(2));
+    expect(onConfirm.mock.calls.map((c) => c[0].name)).toEqual(["A", "C"]);
+  });
+
   it("renders replies as text, not HTML", async () => {
     send.mockResolvedValue({ reply: '<img src=x onerror="alert(1)">', proposals: [] });
     const { container } = render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);

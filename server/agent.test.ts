@@ -8,6 +8,8 @@ import {
   costMicros,
   emptyUsage,
   filterTasks,
+  filterTimeBlocks,
+  parseDeleteProposal,
   isAllowed,
   parseAgentRequest,
   parseAllowlist,
@@ -196,5 +198,26 @@ describe("filterTasks", () => {
 
   it("caps the result size", () => {
     expect(filterTasks(tasks, {}, 2)).toHaveLength(2);
+  });
+});
+
+describe("delete proposals and time blocks", () => {
+  it("validates the task id to delete", () => {
+    expect(parseDeleteProposal({ id: "t1" })).toEqual({ ok: true, value: { id: "t1" } });
+    expect(parseDeleteProposal({}).ok).toBe(false);
+    expect(parseDeleteProposal({ id: "../x" }).ok).toBe(false);
+  });
+
+  it("filters time blocks by date and sorts them", () => {
+    const blocks = [
+      { title: "Lab", date: "2026-11-02", startTime: "14:00", endTime: "16:00" },
+      { title: "Lecture", date: "2026-11-02", startTime: "09:00", endTime: "11:00" },
+      { title: "Work", date: "2026-11-09", startTime: "10:00", endTime: "18:00" },
+    ];
+    expect(filterTimeBlocks(blocks, { from: "2026-11-01", to: "2026-11-05" }).map((b) => b.title)).toEqual([
+      "Lecture",
+      "Lab",
+    ]);
+    expect(filterTimeBlocks(blocks, {}, 1)).toHaveLength(1);
   });
 });

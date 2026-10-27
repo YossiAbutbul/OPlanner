@@ -1177,6 +1177,11 @@
   opacity: 0.5;
 }
 
+.rs-agent-card-delete .rs-agent-card-icon {
+  color: var(--rs-danger);
+  background: color-mix(in srgb, var(--rs-danger) 16%, transparent);
+}
+
 .rs-agent-card-head {
   display: flex;
   align-items: flex-start;
@@ -1322,6 +1327,28 @@
 
 .rs-agent-btn-primary:hover:not(:disabled) {
   background: var(--rs-accent-hover);
+}
+
+.rs-agent-btn-danger {
+  background: color-mix(in srgb, var(--rs-danger) 18%, transparent);
+  color: #ff8a8a;
+}
+
+.rs-agent-btn-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--rs-danger) 28%, transparent);
+}
+
+/* Confirms every pending card in a reply; quieter than each card's own
+   button so it doesn't compete with them. */
+.rs-agent-btn-all {
+  flex: none;
+  align-self: stretch;
+  background: color-mix(in srgb, var(--rs-accent) 14%, transparent);
+  color: var(--rs-accent);
+}
+
+.rs-agent-btn-all:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--rs-accent) 22%, transparent);
 }
 
 .rs-agent-btn:disabled {
