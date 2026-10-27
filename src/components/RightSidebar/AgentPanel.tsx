@@ -483,7 +483,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
       ? pickNudge(liveTasks.tasks, new Date(), new Set(Object.keys(hidden).filter(isHidden)))
       : null;
 
-  // "Yes, I handed it in" marks the task done right away; the toast says so.
+  // "Yes, done" marks the task done right away; the toast says so.
   const markSubmitted = async (key: string, t: LiveTask) => {
     if (year === null || !semester) return;
     setNudgeSaving(true);
@@ -511,7 +511,11 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
 
   // The newest reply's quick answers, while nothing else has been said.
   const last = messages[messages.length - 1];
-  const quickReplies = last?.role === "assistant" && !last.error ? splitQuickReplies(last.text).replies : [];
+  // The Assistant asks one question at a time; its likely answers are one
+  // tap each, and "Other" is just the field below.
+  const quickReplies =
+    last?.role === "assistant" && !last.error ? (splitQuickReplies(last.text).groups.at(-1)?.options ?? []) : [];
+  const typeOwn = () => requestAnimationFrame(() => inputRef.current?.focus());
 
   // Asked after the close button: bring it back tomorrow, or never.
   const snoozeChoice = (key: string) => (
@@ -696,6 +700,15 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                       {r}
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    className="rs-agent-quick-btn is-other"
+                    style={{ animationDelay: `${80 + quickReplies.length * 50}ms` }}
+                    onClick={typeOwn}
+                    disabled={busy || !ready}
+                  >
+                    אחר…
+                  </button>
                 </div>
               )}
               {m.cards?.map((c, i) => {
@@ -944,7 +957,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                     onClick={() => void markSubmitted(nudge.key, nudge.task as LiveTask)}
                     disabled={busy || nudgeSaving}
                   >
-                    {nudgeSaving ? "מסמן…" : "כן, הגשתי"}
+                    {nudgeSaving ? "מסמן…" : "כן, סיימתי"}
                   </button>
                   <button
                     type="button"

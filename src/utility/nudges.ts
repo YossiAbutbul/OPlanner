@@ -1,9 +1,9 @@
 // Things the AI Assistant brings up on its own, worked out on the device
-// (no model call): asking whether a task whose date just passed was handed
-// in, and opening a new week with what's due in it. One at a time; each is
+// (no model call): asking whether a task whose date just passed was done
+// (exams aside: their date passing is the answer), and opening a new week with what's due in it. One at a time; each is
 // shown until answered or closed.
 
-import type { AlertTask } from "./studyAlerts";
+import { countPhrase, isExam, type AlertTask } from "./studyAlerts";
 
 export interface NudgeTask extends AlertTask {
   id: string;
@@ -34,7 +34,7 @@ export const pickNudge = (tasks: NudgeTask[], now: Date, seen: ReadonlySet<strin
 
   // The most recent miss first: it's the one most likely still fixable.
   const missed = open
-    .filter((t) => t.dueDate < today && daysBetween(t.dueDate, today) <= LOOKBACK_DAYS)
+    .filter((t) => !isExam(t) && t.dueDate < today && daysBetween(t.dueDate, today) <= LOOKBACK_DAYS)
     .sort((a, b) => b.dueDate.localeCompare(a.dueDate))
     .find((t) => !seen.has(`s|${t.id}|${t.dueDate}`));
   if (missed) {
@@ -42,9 +42,9 @@ export const pickNudge = (tasks: NudgeTask[], now: Date, seen: ReadonlySet<strin
     return {
       kind: "submitted",
       key: `s|${missed.id}|${missed.dueDate}`,
-      text: `הגשת את ${missed.name} ב${missed.course}? ההגשה הייתה ${ago === 1 ? "אתמול" : `ב-${dm(missed.dueDate)}`}.`,
+      text: `סיימת את ${missed.name} ב${missed.course}? התאריך היה ${ago === 1 ? "אתמול" : `ב-${dm(missed.dueDate)}`}.`,
       task: missed,
-      catchUp: `עוד לא הגשתי את ${missed.name} ב${missed.course} (ההגשה הייתה ב-${dm(missed.dueDate)}). תעזור לי להשלים?`,
+      catchUp: `עוד לא סיימתי את ${missed.name} ב${missed.course} (התאריך היה ${dm(missed.dueDate)}). תעזור לי להשלים?`,
     };
   }
 
@@ -63,20 +63,41 @@ export const pickNudge = (tasks: NudgeTask[], now: Date, seen: ReadonlySet<strin
     key: weekKey,
     text:
       due.length === 1
-        ? `שבוע חדש: ${first.name} ב${first.course} להגשה ${when}. נתכנן?`
-        : `שבוע חדש: ${due.length} הגשות השבוע, הראשונה ${when}. נתכנן?`,
+        ? isExam(first)
+          ? `שבוע חדש: מבחן ב${first.course} ${when}. נתכנן?`
+          : `שבוע חדש: ${first.name} ב${first.course} ${when}. נתכנן?`
+        : `שבוע חדש: ${countPhrase(due)} השבוע, הקרוב ${when}. נתכנן?`,
   };
 };
 
-// "[[A | B | C]]" on the last line of a reply: buttons for the student's
-// likely answers. Returns the text without it.
-export const splitQuickReplies = (text: string): { text: string; replies: string[] } => {
-  const m = /\n?[ \t]*\[\[([^\]\n]+)\]\][ \t]*$/.exec(text.trimEnd());
-  if (!m) return { text, replies: [] };
-  const replies = m[1]
-    .split("|")
-    .map((r) => r.trim())
-    .filter((r) => r.length > 0 && r.length <= 40)
-    .slice(0, 4);
-  return { text: text.trimEnd().slice(0, m.index).trimEnd(), replies };
+export interface ReplyGroup {
+  label?: string;
+  options: string[];
+}
+
+const OPTIONS_LINE = /^\[\[([^\]\n]+)\]\]$/;
+
+// Lines like "[[Days: Evenings | Weekend]]" at the end of a reply: buttons
+// for the student's likely answers, one line per question asked. Returns
+// the text without them.
+export const splitQuickReplies = (text: string): { text: string; groups: ReplyGroup[] } => {
+  const lines = text.trimEnd().split("\n");
+  const groups: ReplyGroup[] = [];
+  while (lines.length && OPTIONS_LINE.test(lines[lines.length - 1].trim())) {
+    let body = OPTIONS_LINE.exec(lines.pop()!.trim())![1];
+    let label: string | undefined;
+    const colon = body.indexOf(":");
+    if (colon > 0 && colon <= 24 && !body.slice(0, colon).includes("|")) {
+      label = body.slice(0, colon).trim();
+      body = body.slice(colon + 1);
+    }
+    const options = body
+      .split("|")
+      .map((r) => r.trim())
+      .filter((r) => r.length > 0 && r.length <= 40)
+      .slice(0, 5);
+    if (options.length) groups.unshift({ ...(label ? { label } : {}), options });
+  }
+  if (!groups.length) return { text, groups: [] };
+  return { text: lines.join("\n").trimEnd(), groups: groups.slice(0, 3) };
 };

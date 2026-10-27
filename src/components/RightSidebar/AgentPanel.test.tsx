@@ -109,12 +109,12 @@ describe("AgentPanel", () => {
         liveTasks={{ year: 2026, semester: "A", tasks: [{ id: "t1", name: "מטלה 11", course: "אלגוריתמים", dueDate: iso, status: "PENDING" }] }}
       />
     );
-    expect(screen.getByText("הגשת את מטלה 11 באלגוריתמים? ההגשה הייתה אתמול.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "כן, הגשתי" }));
+    expect(screen.getByText("סיימת את מטלה 11 באלגוריתמים? התאריך היה אתמול.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "כן, סיימתי" }));
     await waitFor(() =>
       expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({ id: "t1", status: "DONE" }), 2026, "A")
     );
-    await waitFor(() => expect(screen.queryByText(/הגשת את מטלה 11/)).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText(/סיימת את מטלה 11/)).not.toBeInTheDocument());
     expect(send).not.toHaveBeenCalled();
   });
 
@@ -149,6 +149,14 @@ describe("AgentPanel", () => {
     expect(await screen.findByText("Got it.")).toBeInTheDocument();
     expect(send.mock.calls[1][0].message).toBe("Weekend");
     expect(screen.queryByRole("button", { name: "Evenings" })).not.toBeInTheDocument();
+  });
+
+  it("puts the cursor in the field for an answer of your own", async () => {
+    send.mockResolvedValueOnce({ reply: "When are you free?\n[[Evenings | Weekend]]", proposals: [] });
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "בוא נתכנן את השבוע הקרוב" }));
+    fireEvent.click(await screen.findByRole("button", { name: "אחר…" }));
+    await waitFor(() => expect(screen.getByRole("textbox")).toHaveFocus());
   });
 
   it("saves a proposal only after Add task", async () => {

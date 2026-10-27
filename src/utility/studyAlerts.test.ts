@@ -47,7 +47,7 @@ describe("studyAlerts", () => {
       task({ dueDate: "2026-11-08", name: "מטלה 01" }),
     ];
     const [a] = studyAlerts(tasks, [], now);
-    expect(a.label).toBe("2 הגשות ב-8/11");
+    expect(a.label).toBe("2 משימות ב-8/11");
     expect(a.title).toBe("Java, אלגוריתמים");
   });
 

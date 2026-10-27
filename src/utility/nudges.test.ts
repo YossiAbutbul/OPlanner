@@ -15,8 +15,8 @@ describe("pickNudge", () => {
   it("asks about a task whose date just passed", () => {
     const n = pickNudge([task({})], now, new Set());
     expect(n?.kind).toBe("submitted");
-    expect(n?.text).toBe("הגשת את מטלה 11 באלגוריתמים? ההגשה הייתה אתמול.");
-    expect(n?.kind === "submitted" && n.catchUp).toContain("עוד לא הגשתי את מטלה 11");
+    expect(n?.text).toBe("סיימת את מטלה 11 באלגוריתמים? התאריך היה אתמול.");
+    expect(n?.kind === "submitted" && n.catchUp).toContain("עוד לא סיימתי את מטלה 11");
   });
 
   it("asks about the most recent miss first, and skips answered ones", () => {
@@ -34,8 +34,17 @@ describe("pickNudge", () => {
     const tasks = [task({ dueDate: "2026-10-29" }), task({ id: "t2", dueDate: "2026-10-30" })];
     const n = pickNudge(tasks, now, new Set());
     expect(n?.kind).toBe("week");
-    expect(n?.text).toBe("שבוע חדש: 2 הגשות השבוע, הראשונה ביום חמישי. נתכנן?");
+    expect(n?.text).toBe("שבוע חדש: 2 משימות השבוע, הקרוב ביום חמישי. נתכנן?");
     expect(pickNudge(tasks, now, new Set([n!.key]))).toBeNull();
+  });
+
+  it("never asks whether an exam was done, and calls it an exam", () => {
+    const exam = task({ id: "final-exam", name: "Final Exam – אלגוריתמים", dueDate: "2026-10-26" });
+    expect(pickNudge([exam], now, new Set())).toBeNull();
+    const soon = task({ id: "final-exam", name: "Final Exam – אלגוריתמים", dueDate: "2026-10-29" });
+    expect(pickNudge([soon], now, new Set())?.text).toBe("שבוע חדש: מבחן באלגוריתמים ביום חמישי. נתכנן?");
+    const mixed = [soon, task({ dueDate: "2026-10-30" })];
+    expect(pickNudge(mixed, now, new Set())?.text).toBe("שבוע חדש: משימה אחת ומבחן השבוע, הקרוב ביום חמישי. נתכנן?");
   });
 
   it("says nothing about an empty week", () => {
@@ -45,13 +54,22 @@ describe("pickNudge", () => {
 
 describe("splitQuickReplies", () => {
   it("turns the last line into buttons", () => {
-    expect(splitQuickReplies("מתי אתה פנוי?\n[[ערבים | סופ\"ש | בוקר]]")).toEqual({
-      text: "מתי אתה פנוי?",
-      replies: ["ערבים", "סופ\"ש", "בוקר"],
+    expect(splitQuickReplies("When are you free?\n[[Evenings | Weekend]]")).toEqual({
+      text: "When are you free?",
+      groups: [{ options: ["Evenings", "Weekend"] }],
     });
   });
 
+  it("reads one labeled line per question", () => {
+    const { text, groups } = splitQuickReplies("1. Days?\n2. Length?\n[[Days: Evenings | Weekend]]\n[[Length: 1h | 2h]]");
+    expect(text).toBe("1. Days?\n2. Length?");
+    expect(groups).toEqual([
+      { label: "Days", options: ["Evenings", "Weekend"] },
+      { label: "Length", options: ["1h", "2h"] },
+    ]);
+  });
+
   it("leaves other text as is", () => {
-    expect(splitQuickReplies("No question here.")).toEqual({ text: "No question here.", replies: [] });
+    expect(splitQuickReplies("No question here.")).toEqual({ text: "No question here.", groups: [] });
   });
 });

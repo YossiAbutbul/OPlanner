@@ -5,6 +5,7 @@
 // Assistant to help plan it.
 
 export interface AlertTask {
+  id?: string;
   name: string;
   course: string;
   dueDate: string; // YYYY-MM-DD
@@ -26,6 +27,23 @@ export interface StudyAlert {
 }
 
 const DAY_MS = 86_400_000;
+
+// A course's Final Exam task (id "final-exam"), or anything named as an
+// exam: something to study for, not hand in.
+export const isExam = (t: AlertTask) =>
+  t.id === "final-exam" || /\b(exam|quiz|midterm)\b|מבחן|בחינה|בוחן/i.test(t.name);
+
+// "2 משימות ומבחן": what's on a day or in a week, by kind. Not "הגשות":
+// tasks are also recordings, readings and exams.
+export const countPhrase = (list: AlertTask[]): string => {
+  const exams = list.filter(isExam).length;
+  const tasks = list.length - exams;
+  const parts = [
+    tasks === 1 ? "משימה אחת" : tasks > 1 ? `${tasks} משימות` : "",
+    exams === 1 ? "מבחן" : exams > 1 ? `${exams} מבחנים` : "",
+  ].filter(Boolean);
+  return parts.join(" ו");
+};
 
 const ymd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -69,7 +87,9 @@ export const studyAlerts = (
         key: `u|${t.course}|${t.name}|${t.dueDate}`,
         label: `${whenText(days)} · אין זמן לימוד ביומן`,
         title: `${t.name} · ${t.course}`,
-        prompt: `תעזור לי לתכנן זמן ל${t.name} ב${t.course} (הגשה ב-${dm(t.dueDate)})`,
+        prompt: isExam(t)
+          ? `תעזור לי לתכנן זמן למידה למבחן ב${t.course} (ב-${dm(t.dueDate)})`
+          : `תעזור לי לתכנן זמן ל${t.name} ב${t.course} (עד ${dm(t.dueDate)})`,
       })
     );
 
@@ -84,9 +104,9 @@ export const studyAlerts = (
     .map(
       ([date, list]): StudyAlert => ({
         key: `c|${date}`,
-        label: `${list.length} הגשות ב-${dm(date)}`,
+        label: `${countPhrase(list)} ב-${dm(date)}`,
         title: [...new Set(list.map((t) => t.course))].join(", "),
-        prompt: `יש לי ${list.length} הגשות ב-${dm(date)}. תעזור לי לפרוס את העבודה עליהן?`,
+        prompt: `יש לי ${countPhrase(list)} ב-${dm(date)}. תעזור לי לפרוס את העבודה?`,
       })
     );
 
