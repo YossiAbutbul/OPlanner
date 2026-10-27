@@ -2,7 +2,9 @@ rules_version = '2';
 
 // All app data lives under users/{uid}/... — only the authenticated owner
 // can read or write any document in their own subtree. Nothing else is
-// readable; no public surfaces.
+// readable; no public surfaces. Server-only collections (pushSent/,
+// agentUsage/ rate limits and AI spend) have no match, so clients can't
+// read or reset them.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid}/{document=**} {

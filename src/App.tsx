@@ -132,7 +132,7 @@ const App: React.FC = () => {
         <button
           className="mobile-right-toggle"
           onClick={() => setMobileRightOpen(true)}
-          aria-label="Open upcoming and day panel"
+          aria-label="Open day panel"
         >
           <PanelRight size={22} />
         </button>
