@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { sendAgentMessage, type AgentProposal } from "../../services/agent";
 import { capitalizeWords } from "../../utility/dayCalendar";
 import { lsCache } from "../../hooks/useLocalStorageCache";
@@ -220,7 +220,7 @@ const KIND: Record<CardKind, { label: string; action: string; working: string; d
     icon: <svg {...ICON_PROPS}><rect x="4" y="5" width="16" height="15" rx="2.5" /><path d="M8 3v4M16 3v4M4 10h16M12 13v4M10 15h4" /></svg>,
   },
   edit: {
-    label: "Edit task", action: "Save changes", working: "Saving…", doneText: "Changes saved",
+    label: "Edit task", action: "Save", working: "Saving…", doneText: "Changes saved",
     icon: <svg {...ICON_PROPS}><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z" /></svg>,
   },
   done: {
@@ -363,10 +363,54 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
 
   const ready = year !== null && !!semester;
 
+  // Like a chat app: a message you send moves up to the top of the log and
+  // the reply fills in under it, instead of the view chasing the bottom.
+  // `pinned` is that message; the spacer under the log gives it room to
+  // reach the top while the reply is still short, and shrinks as it grows.
+  const pinned = useRef<number | null>(null);
+  const scrollToPin = useRef(false);
+  const spacerRef = useRef<HTMLDivElement>(null);
+  const [spacer, setSpacer] = useState(0);
+
+  // A restored conversation opens at its end.
   useEffect(() => {
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, busy]);
+  }, []);
+
+  const measurePin = () => {
+    const el = listRef.current;
+    const pin = pinned.current;
+    const msg = el && pin !== null ? el.querySelector<HTMLElement>(`[data-msg-id="${pin}"]`) : null;
+    if (!el || !msg) {
+      setSpacer(0);
+      return;
+    }
+    const pad = getComputedStyle(el);
+    const top = Math.max(0, msg.offsetTop - parseFloat(pad.paddingTop));
+    const below = (spacerRef.current?.offsetTop ?? el.scrollHeight) - top;
+    // Exactly enough room for the message to reach the top and no more, so
+    // scrolling stops with its top edge at the top of the log.
+    setSpacer(Math.max(0, el.clientHeight - below - parseFloat(pad.paddingBottom)));
+    if (scrollToPin.current) {
+      scrollToPin.current = false;
+      const smooth = !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      requestAnimationFrame(() => el.scrollTo({ top, behavior: smooth ? "smooth" : "auto" }));
+    }
+  };
+  const measureRef = useRef(measurePin);
+  useLayoutEffect(() => {
+    measureRef.current = measurePin;
+    measurePin();
+  });
+  // The log's height changes too (a nudge above the input opens or closes).
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => measureRef.current());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!storageKey) return;
@@ -375,6 +419,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
   }, [messages, storageKey]);
 
   const clearChat = () => {
+    pinned.current = null;
     const snapshot = messages;
     setMessages([]);
     // Undo only while the new chat is still empty, so it never overwrites
@@ -414,7 +459,10 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
     const history = base
       .filter((m) => !m.error)
       .map((m) => ({ role: m.role, text: m.cards?.length ? `${m.text}\n\n${cardNotes(m.cards)}` : m.text }));
-    setMessages([...base, { id: nextId++, role: "user", text: message }]);
+    const sentId = nextId++;
+    pinned.current = sentId;
+    scrollToPin.current = true;
+    setMessages([...base, { id: sentId, role: "user", text: message }]);
     setInput("");
     setRecall(null);
     remember(message);
@@ -702,7 +750,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
           </div>
         ) : (
           messages.map((m) => (
-            <div key={m.id} className={`rs-agent-msg rs-agent-${m.role}${m.error ? " rs-agent-error" : ""}`}>
+            <div key={m.id} data-msg-id={m.id} className={`rs-agent-msg rs-agent-${m.role}${m.error ? " rs-agent-error" : ""}`}>
               {m.error ? (
                 <div className="rs-agent-alert" role="alert">
                   <svg className="rs-agent-alert-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -981,6 +1029,9 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
             {/* key restarts the fade so each new step reads as a change. */}
             <span key={status} className="rs-agent-status">{status}</span>
           </div>
+        )}
+        {messages.length > 0 && (
+          <div ref={spacerRef} className="rs-agent-spacer" style={{ height: spacer }} aria-hidden="true" />
         )}
       </div>
 
