@@ -374,8 +374,18 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
     <div className="rs-agent">
       {messages.length > 0 && (
         <div className="rs-agent-head">
-          <button type="button" className="rs-agent-clear" onClick={clearChat} disabled={busy}>
-            New chat
+          <button
+            type="button"
+            className="rs-agent-clear"
+            onClick={clearChat}
+            disabled={busy}
+            aria-label="New chat"
+            title="New chat"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V12" />
+              <path d="M18.4 3.6a2 2 0 0 1 2.9 2.9L13 14.8l-3.6.8.8-3.6z" />
+            </svg>
           </button>
         </div>
       )}

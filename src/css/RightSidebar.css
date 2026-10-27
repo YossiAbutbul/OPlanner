@@ -921,20 +921,23 @@
   flex-direction: column;
 }
 
+/* Top bar of the conversation: a compose button, like Messages. */
 .rs-agent-head {
   display: flex;
   justify-content: flex-end;
-  margin: -0.35rem 0 0.25rem;
+  margin: -0.4rem 0 0;
 }
 
 .rs-agent-clear {
-  background: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
   border: none;
-  padding: 0.25rem 0.5rem;
-  border-radius: 999px;
-  color: var(--rs-text-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--rs-text-soft);
   cursor: pointer;
   transition:
     background-color var(--dur-1) var(--ease-out),
@@ -944,7 +947,12 @@
 
 .rs-agent-clear:hover:not(:disabled) {
   color: var(--rs-text);
-  background: var(--rs-hover);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.rs-agent-clear:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .rs-agent-log {
@@ -955,10 +963,10 @@
   flex-direction: column;
   gap: 0.6rem;
   /* Scroll edge effect instead of a divider: messages fade out as they
-     slide under the input. The bottom padding matches the fade, so at
-     rest the last message sits fully clear of it. */
-  padding: 0.2rem 0.2rem 1.5rem;
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 1.5rem), transparent);
+     slide under the input (and the top bar). Padding matches each fade,
+     so at rest the first and last messages sit fully clear of them. */
+  padding: 0.75rem 0.2rem 1.5rem;
+  mask-image: linear-gradient(to bottom, transparent, #000 0.75rem, #000 calc(100% - 1.5rem), transparent);
   scrollbar-width: thin;
 }
 
