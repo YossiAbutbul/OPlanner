@@ -246,7 +246,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             className={`rs-tab ${tab === "day" ? "rs-tab-active" : ""}`}
             onClick={() => setTab("day")}
           >
-            Day
+            Schedule
           </button>
           <button
             role="tab"
@@ -254,7 +254,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
             className={`rs-tab ${tab === "agent" ? "rs-tab-active" : ""}`}
             onClick={() => setTab("agent")}
           >
-            Agent
+            Assistant
           </button>
           <span className="rs-tab-indicator" aria-hidden />
         </div>
@@ -263,7 +263,14 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       {/* Stays mounted while hidden so the conversation survives tab switches. */}
       {agentEnabled && (
         <div className="rs-agent-wrap" hidden={tab !== "agent"}>
-          <AgentPanel year={selectedYear} semester={selectedSemester} onConfirm={confirmProposal} />
+          <AgentPanel
+            key={user?.uid ?? "signed-out"}
+            year={selectedYear}
+            semester={selectedSemester}
+            onConfirm={confirmProposal}
+            storageKey={user ? `oplanner.agentChat.${user.uid}` : undefined}
+            onCleared={(undo) => toast.info("Chat cleared", { action: { label: "Undo", onClick: undo } })}
+          />
         </div>
       )}
 

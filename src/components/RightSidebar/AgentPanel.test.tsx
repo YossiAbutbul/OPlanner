@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import AgentPanel from "./AgentPanel";
 import { sendAgentMessage } from "../../services/agent";
@@ -18,7 +18,25 @@ describe("AgentPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "What's due this week?" }));
 
     expect(await screen.findByText("Two tasks due.")).toBeInTheDocument();
-    expect(send).toHaveBeenCalledWith({ history: [], message: "What's due this week?", year: 2026, semester: "A" });
+    expect(send).toHaveBeenCalledWith(
+      { history: [], message: "What's due this week?", year: 2026, semester: "A" },
+      expect.any(Function)
+    );
+  });
+
+  it("shows what the agent is doing while it works", async () => {
+    let finish!: (r: { reply: string; proposals: [] }) => void;
+    send.mockImplementation((_input, onStatus) => {
+      onStatus?.("Checking your tasks…");
+      return new Promise((resolve) => (finish = resolve));
+    });
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "What's overdue?" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Checking your tasks…");
+    act(() => finish({ reply: "Nothing overdue.", proposals: [] }));
+    await screen.findByText("Nothing overdue.");
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("disables input until a semester is open", () => {
@@ -27,7 +45,7 @@ describe("AgentPanel", () => {
     expect(screen.getByPlaceholderText("Open a semester first")).toBeDisabled();
   });
 
-  it("saves a proposal only after Confirm", async () => {
+  it("saves a proposal only after Add task", async () => {
     const proposal = { course: "calculus", name: "HW 4", dueDate: "2026-11-03", status: "PENDING" as const };
     send.mockResolvedValue({ reply: "I proposed it.", proposals: [proposal] });
     const onConfirm = vi.fn().mockResolvedValue(undefined);
@@ -38,8 +56,8 @@ describe("AgentPanel", () => {
     expect(await screen.findByText("HW 4")).toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
-    await waitFor(() => expect(screen.getByText("Saved")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Add task" }));
+    await waitFor(() => expect(screen.getByText("Added to your planner")).toBeInTheDocument());
     expect(onConfirm).toHaveBeenCalledWith(proposal, 2026, "A");
   });
 
@@ -67,7 +85,8 @@ describe("AgentPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
     await screen.findByText("ok");
     expect(send).toHaveBeenLastCalledWith(
-      expect.objectContaining({ history: [{ role: "user", text: "What's overdue?" }], message: "again" })
+      expect.objectContaining({ history: [{ role: "user", text: "What's overdue?" }], message: "again" }),
+      expect.any(Function)
     );
   });
 
@@ -80,9 +99,47 @@ describe("AgentPanel", () => {
     send.mockResolvedValueOnce({ reply: "Nothing overdue.", proposals: [] });
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await screen.findByText("Nothing overdue.");
-    expect(send).toHaveBeenLastCalledWith(expect.objectContaining({ history: [], message: "What's overdue?" }));
+    expect(send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ history: [], message: "What's overdue?" }),
+      expect.any(Function)
+    );
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.getAllByText("What's overdue?")).toHaveLength(1);
+  });
+
+  it("keeps the last chat across reloads and expires unanswered proposals", async () => {
+    localStorage.clear();
+    send.mockResolvedValue({
+      reply: "Proposed.",
+      proposals: [{ course: "x", name: "Old task", dueDate: "2026-11-03", status: "PENDING" }],
+    });
+    const first = render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} storageKey="oplanner.agentChat.u1" />);
+    fireEvent.click(screen.getByRole("button", { name: "What's overdue?" }));
+    await screen.findByText("Old task");
+    first.unmount();
+
+    render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} storageKey="oplanner.agentChat.u1" />);
+    expect(screen.getByText("Proposed.")).toBeInTheDocument();
+    expect(screen.getByText(/Expired/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add task" })).toBeNull();
+  });
+
+  it("brings a cleared chat back on undo", async () => {
+    localStorage.clear();
+    send.mockResolvedValue({ reply: "Nothing overdue.", proposals: [] });
+    let undo: (() => void) | undefined;
+    render(
+      <AgentPanel year={2026} semester="A" onConfirm={vi.fn()} storageKey="k" onCleared={(u) => (undo = u)} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "What's overdue?" }));
+    await screen.findByText("Nothing overdue.");
+
+    fireEvent.click(screen.getByRole("button", { name: "New chat" }));
+    expect(screen.queryByText("Nothing overdue.")).toBeNull();
+    expect(localStorage.getItem("k")).toBeNull();
+
+    act(() => undo!());
+    expect(screen.getByText("Nothing overdue.")).toBeInTheDocument();
   });
 
   it("renders replies as text, not HTML", async () => {

@@ -243,85 +243,120 @@ export async function POST(request: Request): Promise<Response> {
     },
   ];
 
-  const proposals: ClientProposal[] = [];
+  // From here the reply streams as NDJSON so the panel can show what the
+  // agent is doing: {type:"status"} lines, then one {type:"done"} or
+  // {type:"error"}. Failures before this point stay plain JSON with a status.
   let spent = 0;
-  let reply: string;
-
-  try {
-    for (let round = 0; ; round++) {
-      const response = await claude().messages.create({
-        model: MODEL,
-        max_tokens: MAX_TOKENS,
-        system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
-        tools: TOOLS,
-        output_config: { effort: "low" },
-        messages,
-      });
-      spent += costMicros(response.usage);
-
-      const text = response.content
-        .filter((b): b is Anthropic.TextBlock => b.type === "text")
-        .map((b) => b.text)
-        .join("\n")
-        .trim();
-
-      if (response.stop_reason === "refusal") {
-        reply = "I can't help with that one. Try asking about your courses or schedule.";
-        break;
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const emit = (event: AgentEvent) => controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+      emit({ type: "status", text: "Thinking…" });
+      try {
+        emit(await runAgent(messages, data, (text) => emit({ type: "status", text }), (micros) => (spent += micros)));
+      } catch (err) {
+        emit({ type: "error", error: describeError(err) });
+      } finally {
+        // Settle the reservation against what was actually spent, even when
+        // the loop failed part-way.
+        if (spent !== RESERVE_MICROS) {
+          await usageRef
+            .set({ dayMicros: FieldValue.increment(spent - RESERVE_MICROS) }, { merge: true })
+            .catch((e) => {
+              console.error("Agent: failed to record usage", e);
+            });
+        }
+        controller.close();
       }
-      if (response.stop_reason !== "tool_use") {
-        reply = text || "Done.";
-        if (response.stop_reason === "max_tokens") reply += "\n\n(Answer cut short.)";
-        break;
-      }
-      if (round >= MAX_TOOL_ROUNDS) {
-        reply = text || "That took too many steps. Try a narrower question.";
-        break;
-      }
+    },
+  });
 
-      messages.push({ role: "assistant", content: response.content });
-      const results: Anthropic.ToolResultBlockParam[] = [];
-      for (const block of response.content) {
-        if (block.type !== "tool_use") continue;
-        const out: ToolOutcome =
-          block.name === "propose_task" && proposals.length >= MAX_PROPOSALS
-            ? { content: `At most ${MAX_PROPOSALS} proposals per reply. Stop proposing.`, isError: true }
-            : await runTool(block.name, block.input, data);
-        if (out.proposal) proposals.push(out.proposal);
-        results.push({
-          type: "tool_result",
-          tool_use_id: block.id,
-          content: out.content,
-          ...(out.isError ? { is_error: true } : {}),
-        });
-      }
-      messages.push({ role: "user", content: results });
-    }
-  } catch (err) {
-    if (err instanceof Anthropic.RateLimitError) {
-      return json(503, { error: "The assistant is busy. Try again in a minute." });
-    }
-    if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
-      console.error("Agent: Anthropic credentials rejected", err.status);
-      return json(500, { error: "The assistant isn't configured correctly." });
-    }
-    if (err instanceof Anthropic.APIError) {
-      console.error("Agent: Anthropic API error", err.status);
-      return json(502, { error: "The assistant is unavailable right now." });
-    }
-    console.error("Agent: unexpected error", err);
-    return json(500, { error: "Something went wrong." });
-  } finally {
-    // Settle the reservation against what was actually spent, even when the
-    // loop failed part-way.
-    if (spent !== RESERVE_MICROS) {
-      await usageRef
-        .set({ dayMicros: FieldValue.increment(spent - RESERVE_MICROS) }, { merge: true })
-        .catch((e) => {
-          console.error("Agent: failed to record usage", e);
-        });
-    }
-  }
-
-  return json(200, { reply, proposals });
+  return new Response(stream, {
+    status: 200,
+    headers: { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store" },
+  });
 }
+
+type AgentEvent =
+  | { type: "status"; text: string }
+  | { type: "done"; reply: string; proposals: ClientProposal[] }
+  | { type: "error"; error: string };
+
+// What the panel shows while each tool runs.
+const TOOL_STATUS: Record<string, string> = {
+  list_courses: "Reading your courses…",
+  list_tasks: "Checking your tasks…",
+  propose_task: "Preparing a suggestion…",
+};
+
+const describeError = (err: unknown): string => {
+  if (err instanceof Anthropic.RateLimitError) return "The assistant is busy. Try again in a minute.";
+  if (err instanceof Anthropic.AuthenticationError || err instanceof Anthropic.PermissionDeniedError) {
+    console.error("Agent: Anthropic credentials rejected", err.status);
+    return "The assistant isn't configured correctly.";
+  }
+  if (err instanceof Anthropic.APIError) {
+    console.error("Agent: Anthropic API error", err.status);
+    return "The assistant is unavailable right now.";
+  }
+  console.error("Agent: unexpected error", err);
+  return "Something went wrong.";
+};
+
+// The tool loop. Reports each tool as it starts and each call's cost.
+const runAgent = async (
+  messages: Anthropic.MessageParam[],
+  data: ReturnType<typeof semesterData>,
+  onStatus: (text: string) => void,
+  onSpend: (micros: number) => void
+): Promise<AgentEvent> => {
+  const proposals: ClientProposal[] = [];
+  for (let round = 0; ; round++) {
+    const response = await claude().messages.create({
+      model: MODEL,
+      max_tokens: MAX_TOKENS,
+      system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+      tools: TOOLS,
+      output_config: { effort: "low" },
+      messages,
+    });
+    onSpend(costMicros(response.usage));
+
+    const text = response.content
+      .filter((b): b is Anthropic.TextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("\n")
+      .trim();
+
+    if (response.stop_reason === "refusal") {
+      return { type: "done", reply: "I can't help with that one. Try asking about your courses or schedule.", proposals };
+    }
+    if (response.stop_reason !== "tool_use") {
+      let reply = text || "Done.";
+      if (response.stop_reason === "max_tokens") reply += "\n\n(Answer cut short.)";
+      return { type: "done", reply, proposals };
+    }
+    if (round >= MAX_TOOL_ROUNDS) {
+      return { type: "done", reply: text || "That took too many steps. Try a narrower question.", proposals };
+    }
+
+    messages.push({ role: "assistant", content: response.content });
+    const results: Anthropic.ToolResultBlockParam[] = [];
+    for (const block of response.content) {
+      if (block.type !== "tool_use") continue;
+      onStatus(TOOL_STATUS[block.name] ?? "Working…");
+      const out: ToolOutcome =
+        block.name === "propose_task" && proposals.length >= MAX_PROPOSALS
+          ? { content: `At most ${MAX_PROPOSALS} proposals per reply. Stop proposing.`, isError: true }
+          : await runTool(block.name, block.input, data);
+      if (out.proposal) proposals.push(out.proposal);
+      results.push({
+        type: "tool_result",
+        tool_use_id: block.id,
+        content: out.content,
+        ...(out.isError ? { is_error: true } : {}),
+      });
+    }
+    messages.push({ role: "user", content: results });
+  }
+};

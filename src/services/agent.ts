@@ -60,12 +60,25 @@ export const fetchAgentEnabled = async (): Promise<boolean> => {
   }
 };
 
-export const sendAgentMessage = async (input: {
-  history: AgentTurn[];
-  message: string;
-  year: number;
-  semester: string;
-}): Promise<AgentReply> => {
+const UNREACHABLE = "Couldn't reach the assistant. Try again in a moment.";
+
+const toReply = (body: Record<string, unknown>): AgentReply => ({
+  reply: typeof body.reply === "string" ? body.reply : "",
+  proposals: Array.isArray(body.proposals) ? (body.proposals as AgentProposal[]) : [],
+});
+
+// A successful POST streams NDJSON: {type:"status"} lines while the agent
+// works, then {type:"done"} or {type:"error"}. Refusals before the stream
+// starts (auth, limits, validation) come back as plain JSON errors.
+export const sendAgentMessage = async (
+  input: {
+    history: AgentTurn[];
+    message: string;
+    year: number;
+    semester: string;
+  },
+  onStatus?: (text: string) => void
+): Promise<AgentReply> => {
   let res: Response;
   try {
     res = await fetch("/api/agent", {
@@ -76,12 +89,38 @@ export const sendAgentMessage = async (input: {
   } catch {
     throw new Error("You're offline. Check your connection and try again.");
   }
-  const body = await readJson(res);
-  if (!res.ok || !body) {
-    throw new Error(typeof body?.error === "string" ? body.error : "Couldn't reach the assistant. Try again in a moment.");
+
+  if (!res.ok || !res.headers.get("content-type")?.includes("application/x-ndjson") || !res.body) {
+    const body = await readJson(res);
+    throw new Error(typeof body?.error === "string" ? body.error : UNREACHABLE);
   }
-  return {
-    reply: typeof body.reply === "string" ? body.reply : "",
-    proposals: Array.isArray(body.proposals) ? (body.proposals as AgentProposal[]) : [],
-  };
+
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffered = "";
+  for (;;) {
+    let chunk: ReadableStreamReadResult<string>;
+    try {
+      chunk = await reader.read();
+    } catch {
+      throw new Error(UNREACHABLE);
+    }
+    if (chunk.done) break;
+    buffered += chunk.value;
+    const lines = buffered.split("\n");
+    buffered = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      let event: Record<string, unknown>;
+      try {
+        event = JSON.parse(line) as Record<string, unknown>;
+      } catch {
+        continue;
+      }
+      if (event.type === "status" && typeof event.text === "string") onStatus?.(event.text);
+      else if (event.type === "done") return toReply(event);
+      else if (event.type === "error") throw new Error(typeof event.error === "string" ? event.error : UNREACHABLE);
+    }
+  }
+  // Stream ended without a result (connection cut, function timed out).
+  throw new Error(UNREACHABLE);
 };
