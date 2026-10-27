@@ -274,6 +274,32 @@
   margin: 0 -0.5rem;
   padding: 0;
   height: calc(var(--upnext-rows, 2) * var(--row-h));
+  /* Opening and closing "+N more" grows the card smoothly. */
+  transition: height 0.35s cubic-bezier(0.2, 0.9, 0.25, 1);
+  overflow: hidden;
+}
+
+.ovs-upnext-list.is-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.ovs-upnext-more {
+  margin-inline-start: 0.5rem;
+  padding: 0.1rem 0.45rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--label-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+
+.ovs-upnext-more:hover {
+  background: var(--fill-2);
+  color: var(--label);
 }
 
 .ovs-upnext-list li + li .ovs-upnext-item::before {
@@ -456,6 +482,9 @@
 @media (prefers-reduced-motion: reduce) {
   .ovs-bar-seg {
     animation: none;
+  }
+  .ovs-upnext-list {
+    transition: none;
   }
 }
 

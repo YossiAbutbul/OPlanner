@@ -339,6 +339,15 @@ const SemesterOverview: React.FC<Props> = ({
             onSave={handleSaveTask}
             selectedCourseData={{ year, semester: semesterKey }}
             editHomework={taskEditTask}
+            onDelete={
+              taskEditTask
+                ? async () => {
+                    const t = taskEditTask;
+                    await removeHomework(t.id, t.year, t.semester, t.course);
+                    toast.success(`Deleted “${t.name}”`);
+                  }
+                : undefined
+            }
             prefilledDueDate={taskPrefillDate}
             isLoading={isLoadingAction}
             availableCourses={courses.map((c) => c.name)}

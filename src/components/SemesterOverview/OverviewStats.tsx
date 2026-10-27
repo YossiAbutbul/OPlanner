@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import type { SemesterTotals } from "../../hooks/useSemesterStats";
 import type { HomeworkEntry } from "../../types/models";
 import RollingNumber from "../RollingNumber";
@@ -22,6 +22,9 @@ interface Props {
 // A non-zero count always gets a visible slice of the bar, however small
 // next to the rest; the other segments give up the difference.
 const MIN_PCT = 3;
+
+// Rows an opened Up next list shows before it scrolls.
+const MAX_EXPANDED = 6;
 
 const dueMoment = (t: HomeworkEntry) => t.dueDate + (t.endTime ?? t.startTime ?? "99:99");
 
@@ -67,6 +70,13 @@ const OverviewStats: React.FC<Props> = ({
       )
       .sort((a, b) => dueMoment(a).localeCompare(dueMoment(b)));
   }, [tasks]);
+
+  // More deadlines than the card's rows: open the list in place, up to
+  // MAX_EXPANDED rows, scrolling past that.
+  const [expanded, setExpanded] = useState(false);
+  const hiddenCount = Math.max(0, upcoming.length - upNextCount);
+  const open = expanded && hiddenCount > 0;
+  const rows = open ? Math.min(upcoming.length, MAX_EXPANDED) : upNextCount;
 
   const dueThisWeek = useMemo(
     () => upcoming.filter((t) => timeLeft(t.dueDate).days < 7).length,
@@ -118,18 +128,28 @@ const OverviewStats: React.FC<Props> = ({
         </div>
       </div>
 
-      <div className="ovs-upnext" style={{ "--upnext-rows": upNextCount } as React.CSSProperties}>
+      <div className="ovs-upnext" style={{ "--upnext-rows": rows } as React.CSSProperties}>
         <div className="ovs-block-head">
           <span className="ovs-label">Up next</span>
           <span className="ovs-caption">
             {dueThisWeek === 0 ? "Nothing this week" : `${dueThisWeek} this week`}
+            {hiddenCount > 0 && (
+              <button
+                type="button"
+                className="ovs-upnext-more"
+                onClick={() => setExpanded((v) => !v)}
+                aria-expanded={open}
+              >
+                {open ? "Show less" : `+${hiddenCount} more`}
+              </button>
+            )}
           </span>
         </div>
         {upcoming.length === 0 ? (
           <p className="ovs-upnext-empty">All clear. Nothing left to hand in.</p>
         ) : (
-          <ul className="ovs-upnext-list">
-            {upcoming.slice(0, upNextCount).map((t) => {
+          <ul className={`ovs-upnext-list${open && upcoming.length > MAX_EXPANDED ? " is-scroll" : ""}`}>
+            {upcoming.slice(0, open ? upcoming.length : upNextCount).map((t) => {
               const left = timeLeft(t.dueDate, t.endTime ?? t.startTime);
               const tone = left.days <= 1 ? "soon" : left.days <= 3 ? "near" : "far";
               const d = new Date(t.dueDate + "T00:00:00");
