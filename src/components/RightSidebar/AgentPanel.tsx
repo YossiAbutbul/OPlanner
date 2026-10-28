@@ -3,6 +3,7 @@ import { sendAgentMessage, type AgentProposal } from "../../services/agent";
 import { capitalizeWords } from "../../utility/dayCalendar";
 import { lsCache } from "../../hooks/useLocalStorageCache";
 import AgentText from "./AgentText";
+import { useDictation } from "../../hooks/useDictation";
 import DatePicker from "../DatePicker";
 import TimePicker from "../TimePicker";
 import { studyAlerts, type AlertBlock } from "../../utility/studyAlerts";
@@ -496,9 +497,27 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
     });
   };
 
+  // Talk instead of typing: what's heard goes into the field (after
+  // anything already typed) to check and send as usual.
+  const dictationBase = useRef("");
+  const dictation = useDictation((heard) => {
+    setInput(dictationBase.current + heard);
+    setRecall(null);
+  });
+  const toggleDictation = () => {
+    if (dictation.listening) {
+      dictation.stop();
+      return;
+    }
+    dictationBase.current = input.trim() ? `${input.trimEnd()} ` : "";
+    dictation.start();
+    inputRef.current?.focus();
+  };
+
   const send = async (text: string, base: Message[] = messages) => {
     const message = text.trim();
     if (!message || busy || !ready) return;
+    dictation.stop();
     // Error notices are local only; the model never sees them.
     const history = base
       .filter((m) => !m.error)
@@ -1160,7 +1179,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
           dir="auto"
           rows={1}
           maxLength={2000}
-          placeholder={ready ? "Ask anything about your semester…" : "Open a semester first"}
+          placeholder={ready ? "Ask anything…" : "Open a semester first"}
           value={input}
           disabled={!ready}
           onChange={(e) => {
@@ -1189,6 +1208,22 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
           >
             History {(recall ?? lastRecall.current) + 1}/{sent.length}
           </span>
+        )}
+        {dictation.supported && (
+          <button
+            type="button"
+            className={`rs-agent-mic${dictation.listening ? " is-on" : ""}`}
+            onClick={toggleDictation}
+            disabled={!ready}
+            aria-pressed={dictation.listening}
+            aria-label={dictation.listening ? "Stop dictation" : "Dictate"}
+            title={dictation.listening ? "Stop" : "Speak"}
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="9" y="3" width="6" height="11" rx="3" />
+              <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+            </svg>
+          </button>
         )}
         <button type="submit" className="rs-agent-send" disabled={!ready || busy || !input.trim()} aria-label="Send">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">

@@ -148,6 +148,39 @@ describe("AgentPanel", () => {
     localStorage.clear();
   });
 
+  it("puts what you say into the field to check before sending", () => {
+    let rec: { onresult: ((e: unknown) => void) | null; onend: (() => void) | null; lang: string } | null = null;
+    class FakeRecognition {
+      lang = "";
+      continuous = false;
+      interimResults = false;
+      onresult: ((e: unknown) => void) | null = null;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      start() {
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        rec = this;
+      }
+      stop() {
+        this.onend?.();
+      }
+      abort() {}
+    }
+    (window as unknown as { webkitSpeechRecognition: unknown }).webkitSpeechRecognition = FakeRecognition;
+    try {
+      render(<AgentPanel year={2026} semester="A" onConfirm={vi.fn()} />);
+      fireEvent.change(screen.getByRole("textbox"), { target: { value: "plan" } });
+      fireEvent.click(screen.getByRole("button", { name: "Dictate" }));
+      act(() => rec!.onresult!({ results: [{ 0: { transcript: "my week" }, length: 1 }] }));
+      expect(screen.getByRole("textbox")).toHaveValue("plan my week");
+      fireEvent.click(screen.getByRole("button", { name: "Stop dictation" }));
+      expect(screen.getByRole("button", { name: "Dictate" })).toBeInTheDocument();
+      expect(send).not.toHaveBeenCalled();
+    } finally {
+      delete (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+    }
+  });
+
   it("turns the reply's likely answers into buttons", async () => {
     send.mockResolvedValueOnce({ reply: "When are you free?\n[[Evenings | Weekend]]", proposals: [] });
     send.mockResolvedValueOnce({ reply: "Got it.", proposals: [] });
