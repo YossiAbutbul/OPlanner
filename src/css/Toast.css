@@ -31,10 +31,15 @@
   width: 100%;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  /* Icon, message, then only the controls that exist (action, close), so
+     the close button always sits at the trailing edge with no empty
+     column (and its gap) after it. */
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: auto;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.85rem 0.95rem 0.85rem 0.85rem;
+  padding: 0.85rem 0.6rem 0.85rem 0.85rem;
   /* Dark chrome to match the sidebars (one cohesive system). */
   background: rgba(24, 26, 30, 0.86);
   backdrop-filter: saturate(180%) blur(24px);
