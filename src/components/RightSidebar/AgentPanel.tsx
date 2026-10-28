@@ -7,6 +7,7 @@ import DatePicker from "../DatePicker";
 import TimePicker from "../TimePicker";
 import { studyAlerts, type AlertBlock } from "../../utility/studyAlerts";
 import { pickNudge, splitQuickReplies } from "../../utility/nudges";
+import { fetchHiddenNudges, mergeHidden, saveHiddenNudges, type HiddenMap } from "../../services/assistantPrefs";
 
 // "expired": restored from storage without an answer. Its data may be stale,
 // so it can't be confirmed any more.
@@ -102,6 +103,9 @@ interface Props {
   // The Schedule, so the empty screen can warn about deadlines with no
   // study time planned.
   blocks?: AlertBlock[];
+  // The signed-in user, to keep put-away alerts and nudges in step across
+  // their devices. Omit to keep them on this device only.
+  uid?: string;
 }
 
 const MAX_STORED = 40;
@@ -271,7 +275,7 @@ const reserveIds = (list: Message[]) => {
 
 // Chat with the study agent. Replies render through AgentText, which only
 // builds React elements, so a reply can't inject markup, links or images.
-const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, storageKey, onCleared, blocks }) => {
+const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, storageKey, onCleared, blocks, uid }) => {
   const [messages, setMessages] = useState<Message[]>(() => reserveIds(loadChat(storageKey)));
   const [input, setInput] = useState("");
 
@@ -335,20 +339,56 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
   });
   // The alert or nudge whose close button was tapped, asking when to bring it back.
   const [asking, setAsking] = useState<string | null>(null);
+  // Kept here (instant, offline) and on the account (other devices).
+  const storeHidden = (next: HiddenMap, sync: boolean) => {
+    setHidden(next);
+    if (nudgeKey) lsCache.write(nudgeKey, next);
+    if (sync && uid) void saveHiddenNudges(uid, next).catch(() => {});
+  };
+
   const hide = (key: string, until: "forever" | "tomorrow") => {
     setAsking(null);
-    setHidden((prev) => {
-      const now = new Date();
-      const today = ymd(now);
-      // Drop snoozes that have run out, and keep the newest entries.
-      const kept = Object.entries(prev).filter(([k, v]) => k !== key && (v === "forever" || v > today));
-      const value =
-        until === "forever" ? "forever" : ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
-      const next = Object.fromEntries([...kept, [key, value]].slice(-MAX_NUDGES));
-      if (nudgeKey) lsCache.write(nudgeKey, next);
-      return next;
-    });
+    const now = new Date();
+    const today = ymd(now);
+    // Drop snoozes that have run out, and keep the newest entries.
+    const kept = Object.entries(hidden).filter(([k, v]) => k !== key && (v === "forever" || v > today));
+    const value =
+      until === "forever" ? "forever" : ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+    storeHidden(Object.fromEntries([...kept, [key, value]].slice(-MAX_NUDGES)), true);
   };
+
+  // Pick up what other devices put away: on open, and whenever the app
+  // comes back to the front.
+  const hiddenRef = useRef(hidden);
+  hiddenRef.current = hidden;
+  useEffect(() => {
+    if (!uid) return;
+    let alive = true;
+    const pull = async () => {
+      try {
+        const remote = await fetchHiddenNudges(uid);
+        if (!alive) return;
+        const merged = mergeHidden(remote, hiddenRef.current);
+        const same = (a: HiddenMap, b: HiddenMap) =>
+          Object.keys(a).length === Object.keys(b).length && Object.entries(a).every(([k, v]) => b[k] === v);
+        if (!same(merged, hiddenRef.current)) storeHidden(merged, false);
+        // This device had some the account didn't: share them.
+        if (!same(merged, remote)) void saveHiddenNudges(uid, merged).catch(() => {});
+      } catch {
+        // Offline or not allowed: this device's own list still works.
+      }
+    };
+    void pull();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void pull();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid]);
   const isHidden = (key: string) => {
     const v = hidden[key];
     return !!v && (v === "forever" || v > ymd(new Date()));
@@ -396,7 +436,10 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
     if (scrollToPin.current) {
       scrollToPin.current = false;
       const smooth = !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-      requestAnimationFrame(() => el.scrollTo({ top, behavior: smooth ? "smooth" : "auto" }));
+      requestAnimationFrame(() => {
+        if (typeof el.scrollTo === "function") el.scrollTo({ top, behavior: smooth ? "smooth" : "auto" });
+        else el.scrollTop = top;
+      });
     }
   };
   const measureRef = useRef(measurePin);
@@ -435,7 +478,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
     const el = inputRef.current;
     if (!el) return;
     el.style.height = "";
-    if (input) el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    if (input) el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
   }, [input]);
 
   // `base` is the conversation to continue from; a retry passes the log
@@ -700,54 +743,6 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
               </div>
             </div>
 
-            {/* Early warnings from the planner itself (no model call), right
-                above the input; each opens a planning conversation about it. */}
-            <div className="rs-agent-starters">
-              {ready && liveTasks && (() => {
-                const alerts = studyAlerts(liveTasks.tasks, blocks ?? [], new Date(), 20)
-                  .filter((a) => !isHidden(a.key))
-                  .slice(0, nudge ? 1 : 2);
-                return alerts.length > 0 ? (
-                  <div className="rs-agent-risks" dir="rtl">
-                    {alerts.map((a) => (
-                      <div key={a.key} className={`rs-agent-risk${asking === a.key ? " is-asking" : ""}`}>
-                        {asking === a.key ? (
-                          snoozeChoice(a.key)
-                        ) : (
-                          <>
-                            {/* Most of the card is the button: one tap opens the plan. */}
-                            <button
-                              type="button"
-                              className="rs-agent-risk-open"
-                              onClick={() => void send(a.prompt)}
-                              disabled={busy}
-                            >
-                              <span className="rs-agent-risk-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M12 9v4M12 17h.01" />
-                                  <path d="M10.3 3.9L2.4 17.5a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
-                                </svg>
-                              </span>
-                              <span className="rs-agent-risk-body">
-                                <span className="rs-agent-risk-label">{a.label}</span>
-                                <span className="rs-agent-risk-title">{a.title}</span>
-                              </span>
-                              <span className="rs-agent-risk-cta">
-                                תכנן לי
-                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                  <path d="M15 6l-6 6 6 6" />
-                                </svg>
-                              </span>
-                            </button>
-                          </>
-                        )}
-                        {cornerButton(a.key)}
-                      </div>
-                    ))}
-                  </div>
-                ) : null;
-              })()}
-            </div>
           </div>
         ) : (
           messages.map((m) => (
@@ -1036,6 +1031,57 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
         )}
       </div>
 
+      {/* Everything the Assistant brings up on its own, stacked right above
+          the input with one spacing: early warnings (empty chat only; each
+          opens a planning conversation) and the nudge. */}
+      <div className="rs-agent-dock">
+        {messages.length === 0 && ready && liveTasks && (() => {
+          const alerts = studyAlerts(liveTasks.tasks, blocks ?? [], new Date(), 20)
+            .filter((a) => !isHidden(a.key))
+            // One at a time: the next slides in once this one is planned or put away.
+            .slice(0, 1);
+          return alerts.length > 0 ? (
+            <div className="rs-agent-risks" dir="rtl">
+              {alerts.map((a) => (
+                // Same card as the nudge below, in the warning color.
+                <div key={a.key} className="rs-agent-nudge is-warn" dir="rtl" role="status">
+                  <span className="rs-agent-nudge-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 9v4M12 17h.01" />
+                      <path d="M10.3 3.9L2.4 17.5a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+                    </svg>
+                  </span>
+                  <div className="rs-agent-nudge-body">
+                    {asking === a.key ? (
+                      snoozeChoice(a.key)
+                    ) : (
+                      <>
+                        <p className="rs-agent-nudge-text">
+                          <span className="rs-agent-nudge-kicker">{a.label}</span>
+                          {a.title}
+                        </p>
+                        <div className="rs-agent-nudge-actions">
+                          <button
+                            type="button"
+                            className="rs-agent-nudge-btn is-primary"
+                            onClick={() => void send(a.prompt)}
+                            disabled={busy}
+                          >
+                            תכנן לי
+                          </button>
+                          <button type="button" className="rs-agent-nudge-btn" onClick={() => hide(a.key, "tomorrow")}>
+                            לא עכשיו
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {cornerButton(a.key)}
+                </div>
+              ))}
+            </div>
+          ) : null;
+        })()}
       {nudge && (
         // The Assistant speaking first: one question at a time, right above
         // the input, answered with a tap.
@@ -1099,6 +1145,7 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
           {cornerButton(nudge.key)}
         </div>
       )}
+      </div>
 
       <form
         className="rs-agent-form"

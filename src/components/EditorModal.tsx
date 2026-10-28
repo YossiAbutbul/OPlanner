@@ -20,6 +20,9 @@ interface Props {
   onSave: () => void;
   // Omit to hide Delete. Resolves once it's deleted; the dialog then closes.
   onDelete?: () => void | Promise<void>;
+  // A line above the fields saying something to know first, like the item
+  // being from another semester.
+  note?: string | null;
   children: React.ReactNode;
 }
 
@@ -33,6 +36,7 @@ const EditorModal: React.FC<Props> = ({
   saving = false,
   onSave,
   onDelete,
+  note,
   children,
 }) => {
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -64,6 +68,15 @@ const EditorModal: React.FC<Props> = ({
           </>
         }
       >
+        {note && (
+          <p className="app-modal-note" role="note">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 11v5M12 8h.01" />
+            </svg>
+            <span>{note}</span>
+          </p>
+        )}
         {children}
       </Modal>
       {isEdit && onDelete && (

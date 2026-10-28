@@ -60,6 +60,8 @@ interface Props {
   dayBlocks: TimeBlock[];
   colorForTask: (t: HomeworkEntry) => string;
   colorForBlock: (b: TimeBlock) => string;
+  // The task's semester when it isn't the open one, to say where it's from.
+  otherSemesterLabel?: (t: HomeworkEntry) => string | null;
   onTaskClick: (t: HomeworkEntry) => void;
   onBlockClick: (b: TimeBlock) => void;
   onSlotDblClick: (args: SlotDblClickArgs) => void;
@@ -74,12 +76,16 @@ const DayPanel: React.FC<Props> = ({
   dayBlocks,
   colorForTask,
   colorForBlock,
+  otherSemesterLabel,
   onTaskClick,
   onBlockClick,
   onSlotDblClick,
   onCommitTaskDrag,
   onCommitBlockDrag,
 }) => {
+  // A task from another semester looks like any task here; hovering names
+  // its semester, and opening it says so at the top of the dialog.
+  const semesterOf = (t: HomeworkEntry) => otherSemesterLabel?.(t) ?? null;
   const allDayItems = useMemo(() => {
     const tasks = dayTasks
       .filter((t) => isAllDay(t.startTime, t.endTime))
@@ -88,6 +94,7 @@ const DayPanel: React.FC<Props> = ({
         id: t.id,
         title: t.name,
         color: colorForTask(t),
+        other: otherSemesterLabel?.(t) ?? null,
         ref: t,
       }));
     const blks = dayBlocks
@@ -97,10 +104,11 @@ const DayPanel: React.FC<Props> = ({
         id: b.id,
         title: b.title,
         color: colorForBlock(b),
+        other: null,
         ref: b,
       }));
     return [...tasks, ...blks];
-  }, [dayTasks, dayBlocks, colorForTask, colorForBlock]);
+  }, [dayTasks, dayBlocks, colorForTask, colorForBlock, otherSemesterLabel]);
 
   const timedTasks = useMemo(
     () => dayTasks.filter((t) => t.startTime && t.endTime && !isAllDay(t.startTime, t.endTime)),
@@ -437,7 +445,7 @@ const DayPanel: React.FC<Props> = ({
                     if (it.kind === "task") onTaskClick(it.ref as HomeworkEntry);
                     else onBlockClick(it.ref as TimeBlock);
                   }}
-                  title={it.title}
+                  title={it.other ? `${it.title} (${it.other})` : it.title}
                 >
                   <div className="rs-day-event-allday-title">{it.title}</div>
                 </div>
@@ -453,9 +461,10 @@ const DayPanel: React.FC<Props> = ({
               const accent = colorForTask(t);
               return (
                 <div
-                  key={`task-${t.course}-${t.id}`}
+                  key={`task-${t.year}-${t.course}-${t.id}`}
                   dir={hasHebrew(t.name) || hasHebrew(t.course) ? "rtl" : "ltr"}
                   className={`rs-day-event rs-day-event-task ${isDragging ? "rs-day-event-dragging" : ""} ${compact ? "rs-day-event-compact" : ""}`}
+                  title={semesterOf(t) ? `${t.name} (${semesterOf(t)})` : undefined}
                   style={{
                     top,
                     height,

@@ -238,6 +238,7 @@ export const SYSTEM_PROMPT = `You are the study assistant inside OPlanner, a sem
 
 Tools:
 - list_courses and list_tasks read the student's data for the semester they have open.
+- list_other_semesters_tasks reads tasks due in a date range from the student's other semesters (a summer course, an overlapping term). A day is a day: when asked what's due today, this week or on a date, and when planning, check it alongside list_tasks, name the semester of anything it finds, and treat those tasks' hours as busy. You can't change them: to edit one, the student opens that semester.
 - list_time_blocks reads the student's calendar blocks (classes, work, study sessions), so plans can avoid times they're busy.
 - When creating a task, don't invent details the student didn't give, and don't ask for them in text: propose the task with what you know (no date, or a start without an end, is fine) and the card asks the student to fill in the rest.
 - Tasks aren't all submissions: some are recordings to watch, readings or exams. A course's "Final Exam" task is the exam itself; plan study time for it, never call it a submission. Say "task" or "due" rather than "submission" unless it clearly is one.
@@ -309,6 +310,20 @@ export const TOOLS: Anthropic.Tool[] = [
         from: { type: "string", description: "Earliest date, YYYY-MM-DD." },
         to: { type: "string", description: "Latest date, YYYY-MM-DD." },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "list_other_semesters_tasks",
+    description:
+      "Read-only: tasks due between two dates (at most 62 days apart) in the student's OTHER semesters, each with its year and semester. At most 100.",
+    input_schema: {
+      type: "object",
+      properties: {
+        from: { type: "string", description: "Earliest due date, YYYY-MM-DD." },
+        to: { type: "string", description: "Latest due date, YYYY-MM-DD." },
+      },
+      required: ["from", "to"],
       additionalProperties: false,
     },
   },
@@ -407,6 +422,20 @@ export const parseTaskFilter = (input: unknown): Parsed<TaskFilter> => {
     f[k] = i[k] as string;
   }
   return { ok: true, value: f };
+};
+
+// A date range for reading other semesters: both ends, at most two months,
+// so one question can't read the whole history.
+export const MAX_OTHER_RANGE_DAYS = 62;
+export const parseOtherTaskRange = (input: unknown): Parsed<{ from: string; to: string }> => {
+  const i = (input ?? {}) as Record<string, unknown>;
+  if (typeof i.from !== "string" || !isRealDate(i.from) || typeof i.to !== "string" || !isRealDate(i.to)) {
+    return { ok: false, error: "from and to must be YYYY-MM-DD." };
+  }
+  const days = (Date.parse(`${i.to}T00:00:00Z`) - Date.parse(`${i.from}T00:00:00Z`)) / 86_400_000;
+  if (days < 0) return { ok: false, error: "to must be on or after from." };
+  if (days > MAX_OTHER_RANGE_DAYS) return { ok: false, error: `At most ${MAX_OTHER_RANGE_DAYS} days at a time.` };
+  return { ok: true, value: { from: i.from, to: i.to } };
 };
 
 export interface TaskProposal {

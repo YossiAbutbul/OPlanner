@@ -53,6 +53,8 @@ interface HomeworkModalProps {
   // Replaces the built-in delete, for callers that also keep their own list
   // of tasks in step. Every edited task can be deleted either way.
   onDelete?: () => void | Promise<void>;
+  // Shown above the fields, e.g. "From 2027 · Semester A".
+  note?: string | null;
 }
 
 const REMINDERS_COURSE = "reminders";
@@ -76,6 +78,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
   isLoading,
   availableCourses,
   onDelete,
+  note,
 }) => {
   const [name, setName] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -234,6 +237,7 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       saving={isLoading}
       onSave={handleSave}
       onDelete={deleteTask}
+      note={note}
     >
       <label htmlFor="homework-name">Name</label>
       <input

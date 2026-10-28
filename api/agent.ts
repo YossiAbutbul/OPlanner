@@ -28,6 +28,7 @@ import {
   filterTasks,
   parseAgentRequest,
   parseProposal,
+  parseOtherTaskRange,
   parseTaskFilter,
   parseDeleteProposal,
   parseCourseProposal,
@@ -123,7 +124,55 @@ const semesterData = (uid: string, year: number, semester: string) => {
         })
       ));
 
-  return { loadCourses, loadTasks, loadTimeBlocks };
+  // Tasks due in a date range across the caller's other semesters. Walks
+  // years → semesters → courses (plus reminders) and asks each task list
+  // for the range only, so it reads just what's due then.
+  const loadOtherTasks = async (from: string, to: string) => {
+    const root = `users/${uid}/years`;
+    const years = await db().collection(root).get();
+    const lists = await Promise.all(
+      years.docs.map(async (y) => {
+        const sems = await db().collection(`${root}/${y.id}/semesters`).get();
+        return Promise.all(
+          sems.docs
+            .filter((s) => !(Number(y.id) === year && s.id === semester))
+            .map(async (s) => {
+              const semBase = `${root}/${y.id}/semesters/${s.id}/courses`;
+              const courseDocs = await db().collection(semBase).get();
+              const names = [...courseDocs.docs.map((c) => c.id).filter((n) => n !== REMINDERS), REMINDERS];
+              const snaps = await Promise.all(
+                names.map((c) =>
+                  db().collection(`${semBase}/${c}/tasks`).where("dueDate", ">=", from).where("dueDate", "<=", to).get()
+                )
+              );
+              const semName = typeof s.get("name") === "string" ? (s.get("name") as string) : s.id;
+              return snaps.flatMap((snap, i) =>
+                snap.docs.map((d) => {
+                  const t = d.data();
+                  return {
+                    year: Number(y.id),
+                    semester: semName,
+                    course: names[i],
+                    name: typeof t.name === "string" ? t.name.slice(0, 200) : "",
+                    dueDate: typeof t.dueDate === "string" ? t.dueDate : "",
+                    ...(typeof t.startTime === "string" ? { startTime: t.startTime } : {}),
+                    ...(typeof t.endTime === "string" ? { endTime: t.endTime } : {}),
+                    ...(t.study === true ? { study: true } : {}),
+                    status: t.status === "COMPLETED" || t.status === "DONE" ? "DONE" : "PENDING",
+                  };
+                })
+              );
+            })
+        );
+      })
+    );
+    return lists
+      .flat(2)
+      .sort((a, b) => (a.dueDate + (a.startTime ?? "")).localeCompare(b.dueDate + (b.startTime ?? "")))
+      .slice(0, 100);
+  };
+
+  return { loadCourses, loadTasks, loadTimeBlocks, loadOtherTasks };
 };
 
 // A proposal the client shows as a confirm card. `prevCourse` is set when an
@@ -146,6 +195,12 @@ const runTool = async (
       const f = parseTaskFilter(input);
       if (!f.ok) return { content: f.error, isError: true };
       return { content: JSON.stringify(filterTasks(await data.loadTasks(), f.value)) };
+    }
+
+    case "list_other_semesters_tasks": {
+      const r = parseOtherTaskRange(input);
+      if (!r.ok) return { content: r.error, isError: true };
+      return { content: JSON.stringify(await data.loadOtherTasks(r.value.from, r.value.to)) };
     }
 
     case "list_time_blocks": {
@@ -406,6 +461,7 @@ const TOOL_STATUS: Record<string, string> = {
   list_courses: "Reading your courses…",
   list_tasks: "Checking your tasks…",
   list_time_blocks: "Checking your schedule…",
+  list_other_semesters_tasks: "Checking your other semesters…",
   propose_task: "Preparing a suggestion…",
   propose_delete: "Preparing a suggestion…",
   propose_course: "Preparing a suggestion…",

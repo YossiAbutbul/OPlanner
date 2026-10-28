@@ -17,6 +17,7 @@ import {
   parseAgentRequest,
   parseAllowlist,
   parseProposal,
+  parseOtherTaskRange,
   parseTaskFilter,
   takeGlobal,
   takeRequest,
@@ -332,5 +333,17 @@ describe("study session proposals", () => {
     expect(parseBlockProposal({ ...ok, title: "  " }).ok).toBe(false);
     expect(parseBlockProposal({ ...ok, title: "x".repeat(121) }).ok).toBe(false);
     expect(parseBlockProposal({ ...ok, course: "a/b" }).ok).toBe(false);
+  });
+});
+
+describe("other semesters' tasks", () => {
+  it("needs both dates, in order, at most two months apart", () => {
+    expect(parseOtherTaskRange({ from: "2026-10-28", to: "2026-11-03" })).toEqual({
+      ok: true,
+      value: { from: "2026-10-28", to: "2026-11-03" },
+    });
+    expect(parseOtherTaskRange({ from: "2026-10-28" }).ok).toBe(false);
+    expect(parseOtherTaskRange({ from: "2026-11-03", to: "2026-10-28" }).ok).toBe(false);
+    expect(parseOtherTaskRange({ from: "2026-01-01", to: "2026-12-31" }).ok).toBe(false);
   });
 });

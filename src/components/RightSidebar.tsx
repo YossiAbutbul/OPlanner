@@ -112,6 +112,50 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     return out;
   }, [years, selectedYear, selectedSemester]);
 
+  // Every other semester's courses and reminders, for the Schedule only: a
+  // day is a day whatever semester its tasks belong to (summer courses,
+  // overlapping terms). The Assistant and the overview stay per semester.
+  const otherSources = useMemo(() => {
+    const out: { year: number; semester: string; course: string }[] = [];
+    for (const y of years) {
+      for (const s of y.semesters) {
+        if (y.year === selectedYear && s.name === selectedSemester) continue;
+        for (const c of s.courses) out.push({ year: y.year, semester: s.name, course: c.name });
+        out.push({ year: y.year, semester: s.name, course: "reminders" });
+      }
+    }
+    return out;
+  }, [years, selectedYear, selectedSemester]);
+  const [fetchedOtherTasks, setFetchedOtherTasks] = useState<HomeworkEntry[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async (force: boolean) => {
+      const lists = await Promise.all(
+        otherSources.map((s) =>
+          getCourseTasks(s.year, s.semester, s.course, force).then((list) =>
+            // A task's own fields don't always name its semester; set it from
+            // where it was read.
+            list.map((t) => ({ ...t, year: s.year, semester: s.semester }))
+          )
+        )
+      );
+      if (!cancelled) setFetchedOtherTasks(lists.flat());
+    };
+    (async () => {
+      await load(false);
+      await load(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [otherSources, getCourseTasks, homework]);
+
+  const otherTasks = useMemo(() => {
+    const where = new Set(otherSources.map((s) => `${s.year}|${s.semester}|${s.course}`));
+    return applyEdits(fetchedOtherTasks, (t) => where.has(`${t.year}|${t.semester}|${t.course}`));
+  }, [fetchedOtherTasks, applyEdits, otherSources]);
+
   // Pending saves show here at once instead of after the Firestore round trip.
   const allSemesterTasks = useMemo(() => {
     const names = new Set(sources.map((s) => s.course));
@@ -196,10 +240,25 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     return courseColor(b.courseId, c?.color);
   };
 
-  const dayTasks = useMemo(
-    () => allSemesterTasks.filter((t) => t.dueDate === dayDate),
-    [allSemesterTasks, dayDate]
+  // "Semester B" (or "2027 · Semester A" for another year) on a task from
+  // outside the open semester; null for the open one's.
+  const openKeys = useMemo(
+    () => new Set(allSemesterTasks.map((t) => `${t.year}|${t.course}|${t.id}`)),
+    [allSemesterTasks]
   );
+  const otherSemesterLabel = (t: HomeworkEntry): string | null => {
+    if (openKeys.has(`${t.year}|${t.course}|${t.id}`)) return null;
+    return t.year === selectedYear ? t.semester : `${t.year} · ${t.semester}`;
+  };
+
+  const dayTasks = useMemo(() => {
+    const open = allSemesterTasks.filter((t) => t.dueDate === dayDate);
+    const seen = new Set(open.map((t) => `${t.year}|${t.course}|${t.id}`));
+    return [
+      ...open,
+      ...otherTasks.filter((t) => t.dueDate === dayDate && !seen.has(`${t.year}|${t.course}|${t.id}`)),
+    ];
+  }, [allSemesterTasks, otherTasks, dayDate]);
   const dayBlocks = useMemo(
     () => blocks.filter((b) => b.date === dayDate),
     [blocks, dayDate]
@@ -345,6 +404,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           {access?.enabled && (
             <AgentPanel
               key={user.uid}
+              uid={user.uid}
               year={selectedYear}
               semester={selectedSemester}
               onConfirm={confirmProposal}
@@ -369,6 +429,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           dayBlocks={dayBlocks}
           colorForTask={colorForTask}
           colorForBlock={colorForBlock}
+          otherSemesterLabel={otherSemesterLabel}
           onTaskClick={handleTaskClick}
           onBlockClick={handleBlockClick}
           onSlotDblClick={handleSlotDblClick}
@@ -425,6 +486,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`);
         }}
         editHomework={editTask}
+        note={editTask && otherSemesterLabel(editTask) ? `From another semester: ${otherSemesterLabel(editTask)}` : null}
         onDelete={editTask ? async () => {
           const name = editTask.name;
           await removeHomework(editTask.id, editTask.year, editTask.semester, editTask.course);

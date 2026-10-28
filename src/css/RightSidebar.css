@@ -1811,13 +1811,28 @@
 
 /* Pill field with the send button inset concentrically: outer radius =
    button radius (14px) + padding (4px). */
+/* Warnings and the nudge above the input: one column, one gap, the
+   input's width. */
+.rs-agent-dock {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0.2rem;
+}
+
+.rs-agent-dock:not(:empty) {
+  margin-bottom: 0.5rem;
+}
+
+.rs-agent-dock .rs-agent-risks {
+  gap: 0.5rem;
+}
+
 /* The Assistant speaking first, just above the input. */
 .rs-agent-nudge {
   position: relative;
   display: flex;
   align-items: flex-start;
   gap: 0.55rem;
-  margin: 0 0 0.5rem;
   padding: 0.65rem 0.7rem 0.7rem 2rem;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1826,6 +1841,25 @@
   box-shadow: 0 8px 22px -12px rgba(0, 0, 0, 0.6);
   transform-origin: 50% 100%;
   animation: rs-chip-in 0.45s cubic-bezier(0.2, 0.9, 0.25, 1.05) both;
+}
+
+/* An early warning: the nudge's card in amber. */
+.rs-agent-nudge.is-warn {
+  border-color: color-mix(in srgb, #ffb547 26%, transparent);
+  background: color-mix(in srgb, #ffb547 8%, rgba(30, 32, 38, 0.88));
+}
+
+.rs-agent-nudge.is-warn .rs-agent-nudge-mark {
+  color: #ffc36b;
+}
+
+/* Why it's here ("מחר · אין זמן לימוד ביומן"), small above the title. */
+.rs-agent-nudge-kicker {
+  display: block;
+  margin-bottom: 0.1rem;
+  color: #ffc36b;
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .rs-agent-nudge-mark {
@@ -1946,9 +1980,12 @@
   align-items: flex-end;
   /* Columns only: a row gap would sit under the closed history line and
      push the field off center. */
-  column-gap: 0.25rem;
-  padding: 4px;
-  border-radius: 18px;
+  column-gap: 0.3rem;
+  /* A comfortable target with room around it: inset from the panel's
+     sides and lifted off its bottom edge (and the phone's home bar). */
+  margin: 0 0.2rem calc(0.35rem + env(safe-area-inset-bottom, 0px));
+  padding: 6px;
+  border-radius: 24px;
   /* Lifted a step above the panel with a clear edge, so the field reads
      at a glance over the glow; just enough translucency to sit in it. */
   background: color-mix(in srgb, #20232a 92%, transparent);
@@ -1971,15 +2008,15 @@
   background: transparent;
   color: var(--rs-text);
   font: inherit;
-  font-size: 0.86rem;
-  line-height: 20px;
+  font-size: 0.92rem;
+  line-height: 22px;
   /* One line at rest, the send button's height; AgentPanel grows it.
      border-box so the padding doesn't add to it (the desktop layout doesn't
      set box-sizing globally). */
   box-sizing: border-box;
-  height: 28px;
-  padding: 4px 4px 4px 10px;
-  max-height: 120px;
+  height: 36px;
+  padding: 7px 6px 7px 12px;
+  max-height: 140px;
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -1991,11 +2028,11 @@
 
 .rs-agent-send {
   /* Reset the global button padding so it stays a circle. */
-  flex: 0 0 28px;
+  flex: 0 0 36px;
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: none;
   border-radius: 50%;
