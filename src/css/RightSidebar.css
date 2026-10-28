@@ -1976,6 +1976,7 @@
 }
 
 .rs-agent-form {
+  position: relative;
   display: flex;
   align-items: flex-end;
   /* Columns only: a row gap would sit under the closed history line and
@@ -2024,6 +2025,24 @@
 .rs-agent-input::placeholder {
   color: var(--rs-text-soft);
   opacity: 0.75;
+}
+
+/* Why dictation stopped: floats just above the field, shifting nothing. */
+.rs-agent-dictation {
+  position: absolute;
+  inset-inline: 0.5rem;
+  bottom: calc(100% + 0.4rem);
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  border-radius: 10px;
+  background: rgba(40, 20, 22, 0.95);
+  border: 1px solid rgba(255, 138, 142, 0.3);
+  color: #ffb3b5;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  text-align: center;
+  pointer-events: none;
+  animation: rs-empty-in 0.25s var(--ease-out) both;
 }
 
 /* Dictation: a quiet mic next to send; red and breathing while it listens. */

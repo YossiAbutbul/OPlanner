@@ -500,16 +500,27 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
   // Talk instead of typing: what's heard goes into the field (after
   // anything already typed) to check and send as usual.
   const dictationBase = useRef("");
-  const dictation = useDictation((heard) => {
-    setInput(dictationBase.current + heard);
-    setRecall(null);
-  });
+  // Why dictation stopped, shown over the field for a few seconds.
+  const [dictationNote, setDictationNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (!dictationNote) return;
+    const t = setTimeout(() => setDictationNote(null), 6000);
+    return () => clearTimeout(t);
+  }, [dictationNote]);
+  const dictation = useDictation(
+    (heard) => {
+      setInput(dictationBase.current + heard);
+      setRecall(null);
+    },
+    setDictationNote
+  );
   const toggleDictation = () => {
     if (dictation.listening) {
       dictation.stop();
       return;
     }
     dictationBase.current = input.trim() ? `${input.trimEnd()} ` : "";
+    setDictationNote(null);
     dictation.start();
     inputRef.current?.focus();
   };
@@ -1209,6 +1220,12 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
             History {(recall ?? lastRecall.current) + 1}/{sent.length}
           </span>
         )}
+        {dictationNote && (
+          // Floats over the conversation, so nothing shifts.
+          <p className="rs-agent-dictation" role="alert">
+            {dictationNote}
+          </p>
+        )}
         {dictation.supported && (
           <button
             type="button"
@@ -1219,10 +1236,17 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
             aria-label={dictation.listening ? "Stop dictation" : "Dictate"}
             title={dictation.listening ? "Stop" : "Speak"}
           >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="9" y="3" width="6" height="11" rx="3" />
-              <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
-            </svg>
+            {dictation.listening ? (
+              // Stop: a rounded square, like a recorder.
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+                <rect x="6" y="6" width="12" height="12" rx="2.5" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="9" y="3" width="6" height="11" rx="3" />
+                <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+              </svg>
+            )}
           </button>
         )}
         <button type="submit" className="rs-agent-send" disabled={!ready || busy || !input.trim()} aria-label="Send">
