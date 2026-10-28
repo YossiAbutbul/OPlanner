@@ -4,6 +4,12 @@ import AgentPanel from "./AgentPanel";
 import { sendAgentMessage } from "../../services/agent";
 
 vi.mock("../../services/agent", () => ({ sendAgentMessage: vi.fn() }));
+// Put-away alerts sync to the account; no Firebase here.
+vi.mock("../../services/assistantPrefs", () => ({
+  fetchHiddenNudges: vi.fn().mockResolvedValue({}),
+  saveHiddenNudges: vi.fn().mockResolvedValue(undefined),
+  mergeHidden: (a: Record<string, string>, b: Record<string, string>) => ({ ...a, ...b }),
+}));
 // The app's pickers open popovers; plain inputs stand in for them here.
 vi.mock("../DatePicker", () => ({
   default: ({ value, onChange }: { value: string | null; onChange: (v: string | null) => void }) => (
