@@ -7,7 +7,7 @@ import { capitalizeWords, isOverdue, timeLeft } from "../../utility/dayCalendar"
 interface Props {
   totals: SemesterTotals;
   completionPct: number;
-  // Every task in the semester (reminders are filtered out here).
+  // Every task in the semester, reminders included.
   tasks: HomeworkEntry[];
   // Course colour for a task, same as the calendar uses.
   colorOf: (t: HomeworkEntry) => string;
@@ -24,7 +24,7 @@ interface Props {
 const MIN_PCT = 3;
 
 // Rows an opened Up next list shows before it scrolls.
-const MAX_EXPANDED = 6;
+const MAX_EXPANDED = 4;
 
 // Up next looks this far ahead; later dates live on the calendar.
 const HORIZON_DAYS = 14;
@@ -67,7 +67,6 @@ const OverviewStats: React.FC<Props> = ({
     return tasks
       .filter(
         (t) =>
-          t.course !== "reminders" &&
           t.status === "PENDING" &&
           !isOverdue(t.dueDate, t.endTime ?? t.startTime, now) &&
           timeLeft(t.dueDate).days < HORIZON_DAYS
@@ -80,7 +79,9 @@ const OverviewStats: React.FC<Props> = ({
   const [expanded, setExpanded] = useState(false);
   const hiddenCount = Math.max(0, upcoming.length - upNextCount);
   const open = expanded && hiddenCount > 0;
-  const rows = open ? Math.min(upcoming.length, MAX_EXPANDED) : upNextCount;
+  // Never fewer rows than closed (a course page shows 5).
+  const maxRows = Math.max(MAX_EXPANDED, upNextCount);
+  const rows = open ? Math.min(upcoming.length, maxRows) : upNextCount;
 
   const dueThisWeek = useMemo(
     () => upcoming.filter((t) => timeLeft(t.dueDate).days < 7).length,
@@ -152,7 +153,7 @@ const OverviewStats: React.FC<Props> = ({
         {upcoming.length === 0 ? (
           <p className="ovs-upnext-empty">All clear for the next 2 weeks.</p>
         ) : (
-          <ul className={`ovs-upnext-list${open && upcoming.length > MAX_EXPANDED ? " is-scroll" : ""}`}>
+          <ul className={`ovs-upnext-list${open && upcoming.length > maxRows ? " is-scroll" : ""}`}>
             {upcoming.slice(0, open ? upcoming.length : upNextCount).map((t) => {
               const left = timeLeft(t.dueDate, t.endTime ?? t.startTime);
               const tone = left.days <= 1 ? "soon" : left.days <= 3 ? "near" : "far";
@@ -176,7 +177,7 @@ const OverviewStats: React.FC<Props> = ({
                     <span className="ovs-upnext-text">
                       <span className="ovs-upnext-name">{capitalizeWords(t.name)}</span>
                       <span className="ovs-upnext-meta">
-                        {[showCourse ? capitalizeWords(t.course) : null, time]
+                        {[showCourse ? (t.course === "reminders" ? "Reminder" : capitalizeWords(t.course)) : null, time]
                           .filter(Boolean)
                           .join(" · ") || "All day"}
                       </span>
