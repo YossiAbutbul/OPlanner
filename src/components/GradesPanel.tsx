@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Scale, Trash2 } from "lucide-react";
 import { useCourseMeta } from "../hooks/useCourseMeta";
 import { useToast } from "../context/ToastContext";
 import RollingNumber from "./RollingNumber";
 import { MAX_CREDITS, MAX_GRADE_ITEMS, MAX_GRADE_LABEL_LEN } from "../services/courseMeta";
-import { formatGrade, summarize } from "../utility/grades";
+import { fillUnweighted, formatGrade, summarize } from "../utility/grades";
 import { assignmentKey, reconcileWithImport, sheetFromTasks } from "../utility/gradeSheet";
 import type { TaskLike } from "../utility/gradeSheet";
 import { FINAL_TASK_ID, isImportedTaskId } from "../services/homework";
@@ -61,6 +61,11 @@ const scoreTone = (score: number) => {
   return "under";
 };
 
+// Enter commits a field the way leaving it does.
+const blurOnEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === "Enter") e.currentTarget.blur();
+};
+
 const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
   const { meta, save } = useCourseMeta(activeTab);
   const toast = useToast();
@@ -106,10 +111,13 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
   }, [meta.gradeItems, meta.gradeSkips, taskKey]);
 
   const summary = useMemo(() => summarize(items), [items]);
-  // Full marks on everything still ungraded.
-  const ceiling = summary.earned + summary.remainingWeight;
   const ungraded = items.filter((i) => i.score === undefined).length;
-  const weightOff = items.length > 0 && summary.totalWeight !== 100;
+  const weightOff = items.length > 0 && !summary.balanced;
+  const balanced = useMemo(() => fillUnweighted(items), [items]);
+  // The bar is the course's 0–100 scale: points banked, points already lost
+  // on graded items, and what is still open.
+  const lost = Math.max(0, summary.gradedWeight - summary.earned);
+  const open = Math.max(0, 100 - summary.gradedWeight);
 
   // Optimistic: the sheet re-renders from local state, the write follows.
   const commit = async (next: GradeItem[]) => {
@@ -138,6 +146,7 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
   // Dropping a row the calendar supplied is a decision, so it is recorded:
   // without that, the next reconcile would add the assignment back.
   const removeItem = async (item: GradeItem) => {
+    const before = items;
     const next = items.filter((i) => i.id !== item.id);
     setItems(next);
     const key = assignmentKey(item.label);
@@ -151,7 +160,21 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
       await save(patch);
     } catch {
       toast.error("Could not save the grade sheet.");
+      return;
     }
+    // A scored row is easy to lose by a stray tap; put it back on request,
+    // skip list included, so the import doesn't treat it as dismissed.
+    toast.info(`Removed ${item.label || "item"}.`, {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          setItems(before);
+          save({ gradeItems: before, gradeSkips: skips }).catch(() =>
+            toast.error("Could not save the grade sheet.")
+          );
+        },
+      },
+    });
   };
 
   const addItem = () => {
@@ -162,9 +185,9 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
     commit([...items, row("", 0)]);
   };
 
-  const saveNumber = async (patch: { credits?: number; gradeGoal?: number }) => {
+  const saveCredits = async (credits: number) => {
     try {
-      await save(patch);
+      await save({ credits });
     } catch {
       toast.error("Could not save that.");
     }
@@ -197,14 +220,13 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
           <div
             className="gp-bar"
             role="img"
-            aria-label={`${formatGrade(summary.gradedWeight)}% graded, ${formatGrade(summary.remainingWeight)}% to come`}
+            aria-label={`${formatGrade(summary.earned)} points banked, ${formatGrade(lost)} lost, ${formatGrade(open)} still open`}
           >
-            {summary.gradedWeight > 0 && (
-              <span className="gp-bar-seg gp-bar-graded" style={{ flexGrow: summary.gradedWeight }} />
+            {summary.earned > 0 && (
+              <span className="gp-bar-seg gp-bar-earned" style={{ flexGrow: summary.earned }} />
             )}
-            {summary.remainingWeight > 0 && (
-              <span className="gp-bar-seg gp-bar-left" style={{ flexGrow: summary.remainingWeight }} />
-            )}
+            {lost > 0 && <span className="gp-bar-seg gp-bar-lost" style={{ flexGrow: lost }} />}
+            {open > 0 && <span className="gp-bar-seg gp-bar-left" style={{ flexGrow: open }} />}
           </div>
 
           <dl className="gp-tiles">
@@ -218,7 +240,7 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
               className="gp-tile gp-tile-best"
               data-zero={summary.remainingWeight === 0 || undefined}
             >
-              <dd><RollingNumber value={Math.round(ceiling)} /></dd>
+              <dd><RollingNumber value={Math.round(summary.ceiling)} /></dd>
               <dt>At best</dt>
             </div>
           </dl>
@@ -229,7 +251,7 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
               : `${ungraded} ${ungraded === 1 ? "item" : "items"} still to grade.`}
           </p>
 
-          <div className="gp-meta" aria-label="Goal and credits">
+          <div className="gp-meta" aria-label="Credits">
             <div className="gp-meta-set">
               <label htmlFor="gp-credits">Credits</label>
               <input
@@ -240,21 +262,38 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
                 min={0}
                 max={MAX_CREDITS}
                 step={0.5}
-                key={meta.credits ?? "none"}
+                key={`credits-${meta.credits ?? "none"}`}
                 defaultValue={meta.credits ?? ""}
                 placeholder="0"
-                onBlur={(e) => saveNumber({ credits: parseNumber(e.target.value, MAX_CREDITS) ?? 0 })}
+                onKeyDown={blurOnEnter}
+                onBlur={(e) => {
+                  const next = parseNumber(e.target.value, MAX_CREDITS) ?? 0;
+                  if (next !== (meta.credits ?? 0)) saveCredits(next);
+                }}
               />
-              <span className="gp-meta-note">counts this course toward the semester average</span>
             </div>
+            <span className="gp-meta-note">counts this course toward the semester average</span>
           </div>
         </div>
 
         <div className="gp-sheet">
           <div className="gp-sheet-head">
             <span className="gp-sheet-title">Graded items</span>
-            <span className={`gp-sheet-total${weightOff ? " gp-sheet-total-off" : ""}`}>
-              {formatGrade(summary.totalWeight)}% of the grade
+            <span className="gp-sheet-status">
+              <span className={`gp-sheet-total${weightOff ? " gp-sheet-total-off" : ""}`}>
+                {formatGrade(summary.totalWeight)}% of the grade
+              </span>
+              {weightOff && balanced && (
+                <button
+                  type="button"
+                  className="gp-balance"
+                  onClick={() => commit(balanced)}
+                  title="Split the missing weight across the rows that have none"
+                >
+                  <Scale size={13} strokeWidth={2.2} />
+                  <span>Fill to 100%</span>
+                </button>
+              )}
             </span>
           </div>
 
@@ -278,6 +317,7 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
                           )
                         )
                       }
+                      onKeyDown={blurOnEnter}
                       onBlur={(e) => patchItem(item.id, { weight: parseNumber(e.target.value, 100) ?? 0 })}
                     />
                     <span className="gp-weight-unit" aria-hidden="true">%</span>
@@ -295,8 +335,15 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
                         l.map((i) => (i.id === item.id ? { ...i, label: e.target.value } : i))
                       )
                     }
+                    onKeyDown={blurOnEnter}
                     onBlur={(e) => patchItem(item.id, { label: e.target.value.trim() })}
                   />
+
+                  {item.score !== undefined && item.weight > 0 && (
+                    <span className="gp-points" title="Points this item adds to the course grade">
+                      +{formatGrade((item.score * item.weight) / 100)}
+                    </span>
+                  )}
 
                   <input
                     className={`gp-score${
@@ -313,6 +360,7 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
                       const raw = e.target.value;
                       setItems((l) => withScore(l, item.id, raw === "" ? undefined : Number(raw)));
                     }}
+                    onKeyDown={blurOnEnter}
                     onBlur={(e) => commit(withScore(items, item.id, parseNumber(e.target.value, 100)))}
                   />
 

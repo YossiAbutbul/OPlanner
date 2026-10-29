@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatGrade, semesterGpa, summarize } from "./grades";
+import { fillUnweighted, formatGrade, semesterGpa, summarize } from "./grades";
 import type { GradeItem } from "../types/models";
 
 const item = (label: string, weight: number, score?: number): GradeItem => {
@@ -18,6 +18,8 @@ describe("summarize", () => {
       soFar: null,
       final: null,
       remainingWeight: 0,
+      balanced: false,
+      ceiling: 100,
     });
   });
 
@@ -40,7 +42,21 @@ describe("summarize", () => {
     const s = summarize([item("a", 30, 60)]);
     expect(s.totalWeight).toBe(30);
     expect(s.soFar).toBeCloseTo(60);
-    expect(s.final).toBeCloseTo(18);
+    // Fully scored but only 30% of the course: not a final grade.
+    expect(s.final).toBeNull();
+    expect(s.balanced).toBe(false);
+  });
+
+  it("treats weights that round to 100 as complete", () => {
+    const s = summarize([item("a", 33.3, 90), item("b", 33.3, 90), item("c", 33.4, 90)]);
+    expect(s.balanced).toBe(true);
+    expect(s.final).toBeCloseTo(90);
+  });
+
+  it("caps the ceiling at full marks on everything still open", () => {
+    expect(summarize([item("a", 30, 50), item("b", 70)]).ceiling).toBeCloseTo(85);
+    // An unlisted 40% is still open too.
+    expect(summarize([item("a", 60, 50)]).ceiling).toBeCloseTo(70);
   });
 
   it("counts a zero score, unlike an ungraded item", () => {
@@ -68,5 +84,22 @@ describe("formatGrade", () => {
     expect(formatGrade(86.44)).toBe("86.4");
     expect(formatGrade(90)).toBe("90");
     expect(formatGrade(89.96)).toBe("90");
+  });
+});
+
+describe("fillUnweighted", () => {
+  it("spreads the missing weight over the rows that have none", () => {
+    const next = fillUnweighted([item("a", 70), item("b", 0), item("c", 0), item("d", 0)]);
+    expect(next?.map((i) => i.weight)).toEqual([70, 10, 10, 10]);
+  });
+
+  it("lets the last row absorb the rounding", () => {
+    const next = fillUnweighted([item("a", 0), item("b", 0), item("c", 0)]);
+    expect(next?.map((i) => i.weight)).toEqual([33.3, 33.3, 33.4]);
+  });
+
+  it("returns null when there is nothing to fill or nowhere to put it", () => {
+    expect(fillUnweighted([item("a", 100), item("b", 0)])).toBeNull();
+    expect(fillUnweighted([item("a", 50), item("b", 30)])).toBeNull();
   });
 });

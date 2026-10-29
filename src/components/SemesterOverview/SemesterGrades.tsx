@@ -19,11 +19,19 @@ interface Props {
 const SemesterGrades: React.FC<Props> = ({ year, semester, courses, onSelectCourse }) => {
   const { byCourse, gpa } = useSemesterGrades(year, semester, courses);
   if (gpa === null) return null;
+  const graded = byCourse.filter((c) => c.grade !== null).length;
 
   return (
     <section className="overview-section ovg">
       <div className="ovg-head">
-        <h2>Grades</h2>
+        <div className="ovg-title">
+          <h2>Grades</h2>
+          {graded < byCourse.length && (
+            <span className="ovg-coverage">
+              {graded} of {byCourse.length} courses graded
+            </span>
+          )}
+        </div>
         <span className="ovg-gpa">
           <span className="ovg-gpa-value">{formatGrade(gpa)}</span>
           <span className="ovg-gpa-label">average</span>
@@ -42,8 +50,21 @@ const SemesterGrades: React.FC<Props> = ({ year, semester, courses, onSelectCour
                 onClick={() => onSelectCourse(c.course)}
               >
                 <span className="ovg-dot" aria-hidden="true" />
-                <span className="ovg-name">{capitalizeWords(c.course)}</span>
-                <span className="ovg-state">{c.grade !== null && !c.complete ? "so far" : ""}</span>
+                <span className="ovg-main">
+                  <span className="ovg-name">{capitalizeWords(c.course)}</span>
+                  {/* How much of the course is marked: a "so far" grade on
+                      10% of it means much less than one on 90%. */}
+                  <span
+                    className="ovg-meter"
+                    role="img"
+                    aria-label={`${Math.round(c.gradedWeight)}% of the course graded`}
+                  >
+                    <span style={{ width: `${c.gradedWeight}%` }} />
+                  </span>
+                </span>
+                <span className="ovg-state">
+                  {c.grade !== null && !c.complete ? `so far · ${Math.round(c.gradedWeight)}%` : ""}
+                </span>
                 <span className={`ovg-grade${c.grade === null ? " ovg-grade-none" : ""}`}>
                   {c.grade === null ? "not yet" : formatGrade(c.grade)}
                 </span>

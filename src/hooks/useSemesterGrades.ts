@@ -13,6 +13,8 @@ export interface CourseGrade {
   credits: number;
   // True once every item on the sheet has a score.
   complete: boolean;
+  // Share of the course grade already marked, 0–100.
+  gradedWeight: number;
 }
 
 // Every course's grade sheet for one semester, and the GPA they add up to.
@@ -73,6 +75,7 @@ export const useSemesterGrades = (year: number, semester: string, courses: Cours
           grade: s.final ?? s.soFar,
           credits: meta?.credits ?? 0,
           complete: s.final !== null,
+          gradedWeight: Math.min(100, s.gradedWeight),
         };
       }),
     [courses, metas]

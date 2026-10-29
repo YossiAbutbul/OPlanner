@@ -107,6 +107,20 @@ service cloud.firestore {
               && (!("rows" in request.resource.data.examTable)
                   || (request.resource.data.examTable.rows is list
                       && request.resource.data.examTable.rows.size() <= 100)))
+        )
+        // Grade sheet: bounded lists (per-row sizes and ranges enforced
+        // client-side). credits/gradeGoal are left unchecked: older course
+        // docs may carry a legacy credits value, and rejecting it would
+        // block every later write to that course.
+        && (
+          !("gradeItems" in request.resource.data)
+          || (request.resource.data.gradeItems is list
+              && request.resource.data.gradeItems.size() <= 40)
+        )
+        && (
+          !("gradeSkips" in request.resource.data)
+          || (request.resource.data.gradeSkips is list
+              && request.resource.data.gradeSkips.size() <= 100)
         );
     }
   }

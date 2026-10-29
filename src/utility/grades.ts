@@ -13,11 +13,22 @@ export interface GradeSummary {
   earned: number;
   // The average over what has been graded, or null before anything has.
   soFar: number | null;
-  // The course grade once every item is scored, else null.
+  // The course grade once every item is scored and the weights add up to
+  // 100, else null. A fully scored sheet that covers 80% is not a grade yet.
   final: number | null;
   // Weight still to come.
   remainingWeight: number;
+  // The weights add up to 100, give or take float noise.
+  balanced: boolean;
+  // Most the course can still end on: full marks on everything not graded,
+  // including whatever share of the 100 the sheet doesn't list yet.
+  ceiling: number;
 }
+
+// 33.3 + 33.3 + 33.4 is not exactly 100 in floating point.
+const WEIGHT_EPSILON = 0.05;
+
+export const weightsBalanced = (total: number) => Math.abs(total - 100) < WEIGHT_EPSILON;
 
 const hasScore = (i: GradeItem): i is GradeItem & { score: number } =>
   typeof i.score === "number";
@@ -35,14 +46,35 @@ export const summarize = (items: GradeItem[]): GradeSummary => {
   }
 
   const remainingWeight = Math.max(0, totalWeight - gradedWeight);
+  const balanced = weightsBalanced(totalWeight);
   return {
     gradedWeight,
     totalWeight,
     earned,
     soFar: gradedWeight > 0 ? (earned / gradedWeight) * 100 : null,
-    final: totalWeight > 0 && remainingWeight === 0 ? earned : null,
+    final: balanced && remainingWeight < WEIGHT_EPSILON ? earned : null,
     remainingWeight,
+    balanced,
+    ceiling: Math.min(100, earned + Math.max(0, 100 - gradedWeight)),
   };
+};
+
+/**
+ * Hand the weight a sheet is missing to its rows that have none, evenly. Rows
+ * the student already weighted are never touched. Null when there is nothing
+ * to hand out or nowhere to put it, so the panel can hide the action.
+ */
+export const fillUnweighted = (items: GradeItem[]): GradeItem[] | null => {
+  const total = items.reduce((n, i) => n + i.weight, 0);
+  const missing = 100 - total;
+  const empty = items.filter((i) => i.weight === 0);
+  if (missing < WEIGHT_EPSILON || !empty.length) return null;
+  const each = Math.round((missing / empty.length) * 10) / 10;
+  const last = empty[empty.length - 1].id;
+  const lastShare = Math.round((missing - each * (empty.length - 1)) * 10) / 10;
+  return items.map((i) =>
+    i.weight !== 0 ? i : { ...i, weight: i.id === last ? lastShare : each }
+  );
 };
 
 // One course's contribution to the GPA.

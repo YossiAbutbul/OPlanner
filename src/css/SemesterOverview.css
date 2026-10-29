@@ -1524,6 +1524,19 @@ button.finals-badge:active {
   gap: 1rem;
 }
 
+.ovg-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.ovg-coverage {
+  font-size: var(--text-xs);
+  color: var(--label-3);
+  white-space: nowrap;
+}
+
 .ovg-gpa {
   display: flex;
   align-items: baseline;
@@ -1586,8 +1599,32 @@ button.finals-badge:active {
   background: var(--course-color, var(--color-accent));
 }
 
-.ovg-name {
+.ovg-main {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ovg-meter {
+  display: block;
+  height: 3px;
+  max-width: 9rem;
+  border-radius: 999px;
+  background: var(--fill-2);
+  overflow: hidden;
+}
+
+.ovg-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--course-color, var(--color-accent));
+  transition: width 700ms var(--ease-out);
+}
+
+.ovg-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1621,6 +1658,10 @@ button.finals-badge:active {
 @media (prefers-reduced-motion: reduce) {
   .ovg-row {
     transition: background-color var(--dur-1) linear;
+  }
+
+  .ovg-meter > span {
+    transition: none;
   }
 
   .ovg-row:active {
