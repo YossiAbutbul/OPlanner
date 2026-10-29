@@ -429,10 +429,13 @@
 .ovs-when-soon { color: var(--danger-text); background: var(--danger-tint); }
 
 .ovs-upnext-empty {
+  /* Keeps the row slots' height so the card does not resize, but the text sits
+     at the top where the first deadline would be, not floating in the middle. */
   height: calc(var(--upnext-rows, 2) * var(--row-h));
   margin: 0;
+  padding-top: 0.45rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   font-size: var(--text-sm);
   color: var(--label-3);
 }
