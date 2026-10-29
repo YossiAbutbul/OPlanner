@@ -1514,157 +1514,134 @@ button.finals-badge:active {
   transform: scale(0.94);
 }
 
-/* --- Semester grades ---------------------------------------------------
-   The GPA and the course grades behind it. Each course's sheet lives on its
-   own Grades tab; this panel is the only place they sit together. */
-.ovg-head {
+/* --- Courses / Grades switcher ---------------------------------------
+   One slot, two views of the same courses. The title stays where the plain
+   section title sat; the arrows ride on the same line. */
+.ovc-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
 }
 
-.ovg-title {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  min-width: 0;
+/* Old and new title stack in one cell while they crossfade. */
+.ovc-title {
+  display: grid;
 }
 
-.ovg-coverage {
-  font-size: var(--text-xs);
-  color: var(--label-3);
+.ovc-head h2 {
+  grid-area: 1 / 1;
+  margin: 0;
   white-space: nowrap;
 }
 
-.ovg-gpa {
+/* The carousel window. popLayout lifts the outgoing page out absolutely;
+   clipping sideways only keeps the cards' shadows and hover fills intact. */
+.ovc-body {
+  position: relative;
+  overflow-x: clip;
+  overflow-clip-margin: 8px;
+}
+
+/* Vertical scrolling still belongs to the page on touch screens. */
+.ovc-page {
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.ovc-page:active {
+  cursor: grabbing;
+}
+
+.ovc-switch {
   display: flex;
-  align-items: baseline;
-  gap: 0.3rem;
+  gap: 2px;
+  margin-inline-start: auto;
 }
 
-.ovg-gpa-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--label);
-}
-
-.ovg-gpa-label {
-  font-size: var(--text-xs);
-  letter-spacing: 0.02em;
-  color: var(--label-3);
-}
-
-.ovg-list {
-  margin: 0.6rem 0 0;
+.ovc-switch-btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
   padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-}
-
-.ovg-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  width: 100%;
-  min-height: 44px;
-  padding: 0 0.5rem;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  font-family: inherit;
-  text-align: start;
+  color: var(--label-2);
   cursor: pointer;
-  transition: background-color var(--dur-1) var(--ease-out),
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out),
     transform var(--dur-press) var(--ease-out);
 }
 
-.ovg-row:hover {
+.ovc-switch-btn:hover {
   background: var(--fill);
-}
-
-.ovg-row:active {
-  transform: scale(var(--press-scale));
-}
-
-.ovg-dot {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 8px;
-  border-radius: 999px;
-  background: var(--course-color, var(--color-accent));
-}
-
-.ovg-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.ovg-meter {
-  display: block;
-  height: 3px;
-  max-width: 9rem;
-  border-radius: 999px;
-  background: var(--fill-2);
-  overflow: hidden;
-}
-
-.ovg-meter > span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--course-color, var(--color-accent));
-  transition: width 700ms var(--ease-out);
-}
-
-.ovg-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--text-sm);
-  letter-spacing: var(--tracking-body);
   color: var(--label);
 }
 
-/* "so far" rides next to the number so a part-marked course isn't read as a
-   final grade. */
-.ovg-state {
-  font-size: var(--text-xs);
-  color: var(--label-3);
+.ovc-switch-btn:active {
+  transform: scale(var(--press-scale));
 }
 
-.ovg-grade {
+.ovc-switch-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ovc-switch-btn {
+    transition: background-color var(--dur-1) linear, color var(--dur-1) linear;
+  }
+
+  .ovc-switch-btn:active {
+    transform: none;
+  }
+}
+
+/* --- Grades rows ---------------------------------------------------------
+   Same card rows as Courses, with a bar where the ring sits: how much of the
+   course is marked. No ring, so the separator starts at the card's inset. */
+.course-stat-graded + .course-stat-graded::before {
+  left: 0.8rem;
+}
+
+.course-stat-graded .course-stat-text {
+  gap: 0.3rem;
+}
+
+.course-stat-bar {
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--course-color) 18%, transparent);
+  overflow: hidden;
+}
+
+.course-stat-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--course-color);
+  transition: width 600ms var(--ease-out);
+}
+
+/* The grade is the row's headline figure, a notch stronger than a task
+   percentage; an unmarked course stays quiet. */
+.course-stat-grade {
   min-width: 2.2rem;
   text-align: end;
   font-size: var(--text-base);
   font-weight: 700;
-  font-variant-numeric: tabular-nums;
   color: var(--label);
 }
 
-.ovg-grade-none {
-  font-weight: 400;
+.course-stat-grade.is-empty {
+  font-weight: 500;
   color: var(--label-4);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ovg-row {
-    transition: background-color var(--dur-1) linear;
-  }
-
-  .ovg-meter > span {
+  .course-stat-bar > span {
     transition: none;
-  }
-
-  .ovg-row:active {
-    transform: none;
   }
 }
