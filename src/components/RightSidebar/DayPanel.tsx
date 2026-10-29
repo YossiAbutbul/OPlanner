@@ -119,62 +119,85 @@ const DayPanel: React.FC<Props> = ({
     [dayBlocks]
   );
 
-  // Outlook-style overlap layout: greedy column packing per cluster.
-  type LayoutEntry = { col: number; cols: number };
+  // Overlapping events are laid out the way Apple Calendar and Google
+  // Calendar do it: a cluster of events that touch in time is packed into
+  // columns, then each event widens into the free columns to its right. Two
+  // events at the same hour take half the width each; one that only clashes
+  // with the first of a pair still gets the rest of the row.
+  type LayoutEntry = { col: number; cols: number; span: number };
   const overlapLayout = useMemo(() => {
-    type Ev = { key: string; start: number; end: number };
+    type Ev = { key: string; start: number; end: number; col: number };
     const evs: Ev[] = [
       ...timedTasks.map((t) => ({
         key: `task-${t.id}`,
         start: minutesFromStart(t.startTime!),
         end: minutesFromStart(t.endTime!),
+        col: 0,
       })),
       ...timedBlocks.map((b) => ({
         key: `block-${b.id}`,
         start: minutesFromStart(b.startTime),
         end: minutesFromStart(b.endTime),
+        col: 0,
       })),
     ];
     evs.sort((a, b) => a.start - b.start || b.end - a.end);
+
     const map = new Map<string, LayoutEntry>();
-    let cluster: Ev[] = [];
-    let clusterEnd = -Infinity;
-    let colsArr: number[] = [];
-    const flush = () => {
-      const cols = colsArr.length;
+    const overlaps = (a: Ev, b: Ev) => a.start < b.end && b.start < a.end;
+
+    // One cluster at a time: events are packed into the first column that is
+    // free, then each one spans every further column it doesn't clash in.
+    const place = (cluster: Ev[], cols: number) => {
       for (const e of cluster) {
-        const r = map.get(e.key)!;
-        r.cols = cols;
+        let span = 1;
+        for (let c = e.col + 1; c < cols; c++) {
+          if (cluster.some((o) => o.col === c && overlaps(e, o))) break;
+          span++;
+        }
+        map.set(e.key, { col: e.col, cols, span });
       }
-      cluster = [];
-      colsArr = [];
-      clusterEnd = -Infinity;
     };
+
+    let cluster: Ev[] = [];
+    let colEnds: number[] = [];
+    let clusterEnd = -Infinity;
     for (const e of evs) {
-      if (e.start >= clusterEnd) flush();
-      let col = colsArr.findIndex((end) => end <= e.start);
-      if (col === -1) {
-        col = colsArr.length;
-        colsArr.push(e.end);
-      } else {
-        colsArr[col] = e.end;
+      if (e.start >= clusterEnd) {
+        if (cluster.length) place(cluster, colEnds.length);
+        cluster = [];
+        colEnds = [];
+        clusterEnd = -Infinity;
       }
+      let col = colEnds.findIndex((end) => end <= e.start);
+      if (col === -1) {
+        col = colEnds.length;
+        colEnds.push(e.end);
+      } else {
+        colEnds[col] = e.end;
+      }
+      e.col = col;
       cluster.push(e);
       clusterEnd = Math.max(clusterEnd, e.end);
-      map.set(e.key, { col, cols: 0 });
     }
-    flush();
+    if (cluster.length) place(cluster, colEnds.length);
     return map;
   }, [timedTasks, timedBlocks]);
 
-  const slotStyle = (key: string): React.CSSProperties => {
+  /** Place one event inside its overlap cluster. */
+  const slotLayout = (key: string): { style: React.CSSProperties; cls: string } => {
     const l = overlapLayout.get(key);
-    if (!l || l.cols <= 1) return {};
-    const widthPct = 100 / l.cols;
+    if (!l || l.cols <= 1) return { style: {}, cls: "" };
+    const unit = 100 / l.cols;
     return {
-      left: `calc(${l.col * widthPct}% + 2px)`,
-      width: `calc(${widthPct}% - 4px)`,
-      right: "auto",
+      style: {
+        "--ev-left": `calc(${l.col * unit}% + 2px)`,
+        "--ev-width": `calc(${l.span * unit}% - 4px)`,
+        // Later columns sit above earlier ones, so a wider event that reaches
+        // under its neighbour never covers it.
+        zIndex: 3 + l.col,
+      } as React.CSSProperties,
+      cls: "rs-day-event-col",
     };
   };
 
@@ -391,6 +414,39 @@ const DayPanel: React.FC<Props> = ({
         </div>
       </header>
 
+      {/* All-day items get their own strip above the hour grid, the way Apple
+          and Google Calendar show them: full rows that take no width from the
+          timed events and stay put while the grid scrolls under them. */}
+      {allDayItems.length > 0 && (
+        <div className="rs-day-allday">
+          <span className="rs-day-allday-label">All-day</span>
+          <div className="rs-day-allday-list">
+            {allDayItems.map((it) => {
+              const accent = it.color ?? "#1db954";
+              return (
+                <button
+                  key={`allday-${it.kind}-${it.id}`}
+                  type="button"
+                  dir={hasHebrew(it.title) ? "rtl" : "ltr"}
+                  className="rs-day-allday-chip"
+                  style={{
+                    background: hexToRgba(accent, 0.3),
+                    borderInlineStartColor: accent,
+                  }}
+                  title={it.other ? `${it.title} (${it.other})` : it.title}
+                  onClick={() => {
+                    if (it.kind === "task") onTaskClick(it.ref as HomeworkEntry);
+                    else onBlockClick(it.ref as TimeBlock);
+                  }}
+                >
+                  {it.title}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="rs-day-scroll" ref={gridRef}>
         <div className="rs-day-grid" style={{ height: totalDayPx }}>
           {hourLabels.map((label, i) => (
@@ -416,42 +472,6 @@ const DayPanel: React.FC<Props> = ({
             onDoubleClick={handleSlotDblClick}
             style={{ height: totalDayPx }}
           >
-            {allDayItems.map((it, idx) => {
-              const accent = it.color ?? "#1db954";
-              const n = allDayItems.length;
-              const widthPct = 100 / n;
-              const adStart = minutesFromStart("07:00");
-              const adEnd = minutesFromStart("23:00");
-              const adTop = (adStart / 60) * PX_PER_HOUR + 1;
-              const adH = ((adEnd - adStart) / 60) * PX_PER_HOUR - 2;
-              return (
-                <div
-                  key={`allday-${it.kind}-${it.id}`}
-                  dir={hasHebrew(it.title) ? "rtl" : "ltr"}
-                  className="rs-day-event rs-day-event-allday"
-                  style={{
-                    top: adTop,
-                    height: adH,
-                    background: hexToRgba(accent, 0.18),
-                    borderInlineStartColor: accent,
-                    color: accent,
-                    left: `calc(${idx * widthPct}% + 2px)`,
-                    width: `calc(${widthPct}% - 4px)`,
-                    right: "auto",
-                    padding: "6px 6px",
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (it.kind === "task") onTaskClick(it.ref as HomeworkEntry);
-                    else onBlockClick(it.ref as TimeBlock);
-                  }}
-                  title={it.other ? `${it.title} (${it.other})` : it.title}
-                >
-                  <div className="rs-day-event-allday-title">{it.title}</div>
-                </div>
-              );
-            })}
-
             {timedTasks.map((t) => {
               const sMin = minutesFromStart(t.startTime!);
               const eMin = minutesFromStart(t.endTime!);
@@ -459,21 +479,28 @@ const DayPanel: React.FC<Props> = ({
               const isDragging = drag?.kind === "task" && drag.id === t.id;
               const compact = height < 36;
               const accent = colorForTask(t);
+              const slot = slotLayout(`task-${t.id}`);
               return (
                 <div
                   key={`task-${t.year}-${t.course}-${t.id}`}
                   dir={hasHebrew(t.name) || hasHebrew(t.course) ? "rtl" : "ltr"}
-                  className={`rs-day-event rs-day-event-task ${isDragging ? "rs-day-event-dragging" : ""} ${compact ? "rs-day-event-compact" : ""}`}
+                  className={`rs-day-event rs-day-event-task ${slot.cls} ${isDragging ? "rs-day-event-dragging" : ""} ${compact ? "rs-day-event-compact" : ""}`}
                   title={semesterOf(t) ? `${t.name} (${semesterOf(t)})` : undefined}
+                  tabIndex={0}
                   style={{
                     top,
                     height,
                     background: hexToRgba(accent, 0.45),
                     borderInlineStartColor: accent,
                     color: accent,
-                    ...slotStyle(`task-${t.id}`),
+                    ...slot.style,
                   }}
                   onMouseDown={(e) => beginDrag(e, "task", t.id, "move", t.startTime!, t.endTime!)}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter" && e.key !== " ") return;
+                    e.preventDefault();
+                    onTaskClick(t);
+                  }}
                   onDoubleClick={(e) => {
                     e.stopPropagation();
                     if (movedRef.current) return;
@@ -513,20 +540,27 @@ const DayPanel: React.FC<Props> = ({
               const isDragging = drag?.kind === "block" && drag.id === b.id;
               const accent = colorForBlock(b);
               const compact = height < 36;
+              const slot = slotLayout(`block-${b.id}`);
               return (
                 <div
                   key={`block-${b.id}`}
                   dir={hasHebrew(b.title) ? "rtl" : "ltr"}
-                  className={`rs-day-event rs-day-event-block ${isDragging ? "rs-day-event-dragging" : ""} ${compact ? "rs-day-event-compact" : ""}`}
+                  className={`rs-day-event rs-day-event-block ${slot.cls} ${isDragging ? "rs-day-event-dragging" : ""} ${compact ? "rs-day-event-compact" : ""}`}
+                  tabIndex={0}
                   style={{
                     top,
                     height,
                     background: hexToRgba(accent, 0.45),
                     borderInlineStartColor: accent,
                     color: accent,
-                    ...slotStyle(`block-${b.id}`),
+                    ...slot.style,
                   }}
                   onMouseDown={(e) => beginDrag(e, "block", b.id, "move", b.startTime, b.endTime)}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter" && e.key !== " ") return;
+                    e.preventDefault();
+                    onBlockClick(b);
+                  }}
                   onDoubleClick={(e) => {
                     e.stopPropagation();
                     if (movedRef.current) return;

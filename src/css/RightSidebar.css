@@ -479,28 +479,34 @@
 .rs-day-allday-label {
   position: absolute;
   left: 0;
-  width: 38px;
-  font-size: 0.65rem;
+  width: 42px;
+  font-size: 0.62rem;
   font-weight: 700;
   color: var(--rs-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.01em;
+  /* Has to stay on one line: the gutter is only as wide as the hour labels. */
+  white-space: nowrap;
   text-align: right;
-  padding-right: 6px;
-  padding-top: 4px;
+  padding-right: 4px;
+  padding-top: 5px;
 }
 
 .rs-day-allday-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 4px;
   flex: 1;
   min-width: 0;
+  /* One row each, and past three the list scrolls rather than pushing the
+     hour grid off the panel. */
+  max-height: 82px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .rs-day-allday-chip {
   border: none;
-  border-left: 3px solid currentColor;
+  border-inline-start: 3px solid currentColor;
   border-radius: var(--radius-sm);
   padding: 4px 8px;
   font-size: 0.78rem;
@@ -511,7 +517,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: left;
+  text-align: start;
   font-family: inherit;
   transition: filter var(--dur-1) var(--ease-out);
 }
@@ -629,6 +635,21 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
 
+/* --- Overlapping events ---------------------------------------------------
+   DayPanel packs a cluster of events that touch in time into columns and lets
+   each widen into the free columns beside it; the result arrives here as
+   --ev-left / --ev-width. */
+.rs-day-event-col {
+  left: var(--ev-left);
+  width: var(--ev-width);
+  right: auto;
+}
+
+/* The dragged event stays above the column it reaches across. */
+.rs-day-event.rs-day-event-dragging {
+  z-index: 60;
+}
+
 .rs-day-event-resize {
   position: absolute;
   left: 0;
@@ -675,20 +696,6 @@
   background: rgba(29, 185, 84, 0.45);
   border-inline-start-color: var(--rs-accent);
   color: var(--rs-accent);
-}
-
-/* All-day vertical bar ג€” keep its own left from inline style */
-.rs-day-event-allday {
-  left: var(--allday-left, 4px);
-}
-
-.rs-day-event-allday-title {
-  font-size: 0.8rem;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: currentColor;
 }
 
 .rs-day-event-title {
