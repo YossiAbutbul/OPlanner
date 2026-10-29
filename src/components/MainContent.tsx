@@ -14,6 +14,7 @@ import ImportCalendarModal from "./ImportCalendarModal";
 import CourseCalendar from "./CourseCalendar";
 import CourseInfoPanel from "./CourseInfoPanel";
 import ExamsPanel from "./ExamsPanel";
+import GradesPanel from "./GradesPanel";
 import DayTasksModal from "./DayTasksModal";
 import DeleteModal from "./DeleteModal";
 import TabSettingsModal from "./TabSettingsModal";
@@ -154,7 +155,7 @@ const MainContent: React.FC<MainContentProps> = ({
   // Inner tab inside the course view: Tasks (chart + calendar + table)
   // vs. Course info (links table + notes). Reset to "tasks" whenever the
   // user switches courses so they don't land on the info tab unexpectedly.
-  type CourseInnerTab = "overview" | "exams" | "info";
+  type CourseInnerTab = "overview" | "exams" | "grades" | "info";
   const [courseInnerTab, setCourseInnerTab] = useState<CourseInnerTab>("overview");
   useEffect(() => { setCourseInnerTab("overview"); }, [activeTab?.course, activeTab?.semester, activeTab?.year]);
 
@@ -349,6 +350,7 @@ const MainContent: React.FC<MainContentProps> = ({
                 ["overview", "Overview"],
                 ["info", "Course info"],
                 ["exams", "Exams"],
+                ["grades", "Grades"],
               ] as const).map(([key, label]) => (
                 <button
                   key={key}
@@ -419,6 +421,8 @@ const MainContent: React.FC<MainContentProps> = ({
               </div>
             ) : courseInnerTab === "exams" ? (
               <ExamsPanel activeTab={activeTab} />
+            ) : courseInnerTab === "grades" ? (
+              <GradesPanel activeTab={activeTab} tasks={filteredHomework} />
             ) : (
               <CourseInfoPanel
                 activeTab={activeTab}

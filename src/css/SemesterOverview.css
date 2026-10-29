@@ -1513,3 +1513,117 @@ button.finals-badge:hover {
 button.finals-badge:active {
   transform: scale(0.94);
 }
+
+/* --- Semester grades ---------------------------------------------------
+   The GPA and the course grades behind it. Each course's sheet lives on its
+   own Grades tab; this panel is the only place they sit together. */
+.ovg-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ovg-gpa {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.ovg-gpa-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--label);
+}
+
+.ovg-gpa-label {
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  color: var(--label-3);
+}
+
+.ovg-list {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.ovg-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-out),
+    transform var(--dur-press) var(--ease-out);
+}
+
+.ovg-row:hover {
+  background: var(--fill);
+}
+
+.ovg-row:active {
+  transform: scale(var(--press-scale));
+}
+
+.ovg-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 999px;
+  background: var(--course-color, var(--color-accent));
+}
+
+.ovg-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-body);
+  color: var(--label);
+}
+
+/* "so far" rides next to the number so a part-marked course isn't read as a
+   final grade. */
+.ovg-state {
+  font-size: var(--text-xs);
+  color: var(--label-3);
+}
+
+.ovg-grade {
+  min-width: 2.2rem;
+  text-align: end;
+  font-size: var(--text-base);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--label);
+}
+
+.ovg-grade-none {
+  font-weight: 400;
+  color: var(--label-4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ovg-row {
+    transition: background-color var(--dur-1) linear;
+  }
+
+  .ovg-row:active {
+    transform: none;
+  }
+}

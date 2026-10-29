@@ -1,0 +1,343 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { useCourseMeta } from "../hooks/useCourseMeta";
+import { useToast } from "../context/ToastContext";
+import RollingNumber from "./RollingNumber";
+import { MAX_CREDITS, MAX_GRADE_ITEMS, MAX_GRADE_LABEL_LEN } from "../services/courseMeta";
+import { formatGrade, summarize } from "../utility/grades";
+import { assignmentKey, reconcileWithImport, sheetFromTasks } from "../utility/gradeSheet";
+import type { TaskLike } from "../utility/gradeSheet";
+import { FINAL_TASK_ID, isImportedTaskId } from "../services/homework";
+import type { CourseTab, GradeItem, HomeworkEntry } from "../types/models";
+import "../css/GradesPanel.css";
+
+interface Props {
+  activeTab: CourseTab;
+  // The course's own tasks: an imported calendar already names every
+  // assignment, so the sheet starts from those instead of placeholders.
+  tasks: HomeworkEntry[];
+}
+
+const row = (label: string, weight: number): GradeItem => ({
+  id: crypto.randomUUID(),
+  label,
+  weight,
+});
+
+// Fallback for a course with no imported assignments to go on.
+const genericSheet = (): GradeItem[] => [
+  row("Assignment 01", 10),
+  row("Assignment 02", 10),
+  row("Assignment 03", 10),
+  row("Final exam", 70),
+];
+
+// A course that has never been graded opens on a sheet built from its own
+// tasks, or the generic shape when it has none. Nothing is written until the
+// student changes something, so visiting the tab leaves no data behind.
+const defaultSheet = (tasks: TaskLike[], skip: ReadonlySet<string>): GradeItem[] => {
+  const drafts = sheetFromTasks(tasks, skip);
+  return drafts ? drafts.map((d) => row(d.label, d.weight)) : genericSheet();
+};
+
+// A number the user is part-way through typing: an empty field and "8." are
+// both states the input has to allow, so values are only clamped on commit.
+const parseNumber = (raw: string, max: number): number | undefined => {
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  const n = Number(trimmed);
+  if (!Number.isFinite(n)) return undefined;
+  return Math.min(Math.max(n, 0), max);
+};
+
+// Score pills, in the same family as the overview's countdown pills: strong
+// marks green, a pass neutral, a fail red. 60 is the pass mark here.
+const PASS_MARK = 60;
+const STRONG_MARK = 85;
+
+const scoreTone = (score: number) => {
+  if (score >= STRONG_MARK) return "good";
+  if (score >= PASS_MARK) return "near";
+  return "under";
+};
+
+const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
+  const { meta, save } = useCourseMeta(activeTab);
+  const toast = useToast();
+
+  const taskList = useMemo<TaskLike[]>(
+    () =>
+      tasks.map((t) => ({
+        name: t.name,
+        dueDate: t.dueDate,
+        isFinal: t.id === FINAL_TASK_ID,
+        isImported: isImportedTaskId(t.id),
+      })),
+    [tasks]
+  );
+  // Only the names and dates matter here, so a status or colour edit doesn't
+  // rebuild the sheet.
+  const taskKey = taskList
+    .map((t) => `${t.name}|${t.dueDate}|${t.isFinal}|${t.isImported}`)
+    .join("~");
+
+  // undefined means the course has never had a sheet, so it opens on one
+  // built from its tasks. An empty array means the student emptied it, and
+  // stays empty. An existing sheet keeps every row as it is, and only picks
+  // up assignments it doesn't already have.
+  const [items, setItems] = useState<GradeItem[]>([]);
+  useEffect(() => {
+    const stored = meta.gradeItems;
+    const skip = new Set(meta.gradeSkips ?? []);
+
+    // No sheet yet: build one from the course's imported assignments, or the
+    // generic shape when it has none.
+    if (!stored) {
+      setItems(defaultSheet(taskList, skip));
+      return;
+    }
+    // Otherwise keep what the student has filled in and line the rest up with
+    // the import. A cleared sheet stays cleared when the course has nothing
+    // imported to put in it.
+    const reconciled = reconcileWithImport(stored, taskList, () => crypto.randomUUID(), skip);
+    setItems(reconciled ?? stored);
+    // taskKey stands in for taskList: same names and dates, same sheet.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meta.gradeItems, meta.gradeSkips, taskKey]);
+
+  const summary = useMemo(() => summarize(items), [items]);
+  // Full marks on everything still ungraded.
+  const ceiling = summary.earned + summary.remainingWeight;
+  const ungraded = items.filter((i) => i.score === undefined).length;
+  const weightOff = items.length > 0 && summary.totalWeight !== 100;
+
+  // Optimistic: the sheet re-renders from local state, the write follows.
+  const commit = async (next: GradeItem[]) => {
+    setItems(next);
+    try {
+      await save({ gradeItems: next });
+    } catch {
+      toast.error("Could not save the grade sheet.");
+    }
+  };
+
+  const patchItem = (id: string, patch: Partial<GradeItem>) =>
+    commit(items.map((i) => (i.id === id ? { ...i, ...patch } : i)));
+
+  // score is optional, so clearing the field deletes the key rather than
+  // writing undefined, which Firestore rejects.
+  const withScore = (list: GradeItem[], id: string, score: number | undefined): GradeItem[] =>
+    list.map((i) => {
+      if (i.id !== id) return i;
+      const next = { ...i };
+      if (score === undefined) delete next.score;
+      else next.score = score;
+      return next;
+    });
+
+  // Dropping a row the calendar supplied is a decision, so it is recorded:
+  // without that, the next reconcile would add the assignment back.
+  const removeItem = async (item: GradeItem) => {
+    const next = items.filter((i) => i.id !== item.id);
+    setItems(next);
+    const key = assignmentKey(item.label);
+    const fromImport = taskList.some((t) => assignmentKey(t.name) === key);
+    const skips = meta.gradeSkips ?? [];
+    const patch =
+      fromImport && !skips.includes(key)
+        ? { gradeItems: next, gradeSkips: [...skips, key] }
+        : { gradeItems: next };
+    try {
+      await save(patch);
+    } catch {
+      toast.error("Could not save the grade sheet.");
+    }
+  };
+
+  const addItem = () => {
+    if (items.length >= MAX_GRADE_ITEMS) {
+      toast.info(`A course holds up to ${MAX_GRADE_ITEMS} graded items.`);
+      return;
+    }
+    commit([...items, row("", 0)]);
+  };
+
+  const saveNumber = async (patch: { credits?: number; gradeGoal?: number }) => {
+    try {
+      await save(patch);
+    } catch {
+      toast.error("Could not save that.");
+    }
+  };
+
+  const tiles = [
+    { key: "graded", label: "Graded", value: summary.gradedWeight, zero: summary.gradedWeight === 0 },
+    { key: "left", label: "To come", value: summary.remainingWeight, zero: summary.remainingWeight === 0 },
+  ];
+
+  return (
+    <div className="gp">
+      {/* Same shape as the semester summary: figure and bar on the left, the
+          list it comes from on the right. */}
+      <section className="gp-card" aria-label="Course grade">
+        <div className="gp-summary">
+          <div className="gp-figure">
+            {summary.soFar === null ? (
+              <span className="gp-figure-none">No marks yet</span>
+            ) : (
+              <>
+                <span className="gp-figure-value">
+                  <RollingNumber value={Math.round(summary.final ?? summary.soFar)} />
+                </span>
+                <span className="gp-figure-label">{summary.final !== null ? "final" : "so far"}</span>
+              </>
+            )}
+          </div>
+
+          <div
+            className="gp-bar"
+            role="img"
+            aria-label={`${formatGrade(summary.gradedWeight)}% graded, ${formatGrade(summary.remainingWeight)}% to come`}
+          >
+            {summary.gradedWeight > 0 && (
+              <span className="gp-bar-seg gp-bar-graded" style={{ flexGrow: summary.gradedWeight }} />
+            )}
+            {summary.remainingWeight > 0 && (
+              <span className="gp-bar-seg gp-bar-left" style={{ flexGrow: summary.remainingWeight }} />
+            )}
+          </div>
+
+          <dl className="gp-tiles">
+            {tiles.map((t) => (
+              <div key={t.key} className={`gp-tile gp-tile-${t.key}`} data-zero={t.zero || undefined}>
+                <dd><RollingNumber value={Math.round(t.value)} suffix="%" /></dd>
+                <dt>{t.label}</dt>
+              </div>
+            ))}
+            <div
+              className="gp-tile gp-tile-best"
+              data-zero={summary.remainingWeight === 0 || undefined}
+            >
+              <dd><RollingNumber value={Math.round(ceiling)} /></dd>
+              <dt>At best</dt>
+            </div>
+          </dl>
+
+          <p className="gp-answer">
+            {ungraded === 0
+              ? "Everything on the sheet is graded."
+              : `${ungraded} ${ungraded === 1 ? "item" : "items"} still to grade.`}
+          </p>
+
+          <div className="gp-meta" aria-label="Goal and credits">
+            <div className="gp-meta-set">
+              <label htmlFor="gp-credits">Credits</label>
+              <input
+                id="gp-credits"
+                className="gp-meta-input"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={MAX_CREDITS}
+                step={0.5}
+                key={meta.credits ?? "none"}
+                defaultValue={meta.credits ?? ""}
+                placeholder="0"
+                onBlur={(e) => saveNumber({ credits: parseNumber(e.target.value, MAX_CREDITS) ?? 0 })}
+              />
+              <span className="gp-meta-note">counts this course toward the semester average</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="gp-sheet">
+          <div className="gp-sheet-head">
+            <span className="gp-sheet-title">Graded items</span>
+            <span className={`gp-sheet-total${weightOff ? " gp-sheet-total-off" : ""}`}>
+              {formatGrade(summary.totalWeight)}% of the grade
+            </span>
+          </div>
+
+          <ul className="gp-list">
+            {items.map((item) => (
+              <li key={item.id}>
+                <div className="gp-item">
+                  <span className="gp-item-weight">
+                    <input
+                      className="gp-weight"
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={100}
+                      value={item.weight}
+                      aria-label={`Weight of ${item.label || "item"} in percent`}
+                      onChange={(e) =>
+                        setItems((l) =>
+                          l.map((i) =>
+                            i.id === item.id ? { ...i, weight: Number(e.target.value) || 0 } : i
+                          )
+                        )
+                      }
+                      onBlur={(e) => patchItem(item.id, { weight: parseNumber(e.target.value, 100) ?? 0 })}
+                    />
+                    <span className="gp-weight-unit" aria-hidden="true">%</span>
+                  </span>
+
+                  <input
+                    className="gp-name"
+                    type="text"
+                    value={item.label}
+                    maxLength={MAX_GRADE_LABEL_LEN}
+                    placeholder="Name this item"
+                    aria-label="Item name"
+                    onChange={(e) =>
+                      setItems((l) =>
+                        l.map((i) => (i.id === item.id ? { ...i, label: e.target.value } : i))
+                      )
+                    }
+                    onBlur={(e) => patchItem(item.id, { label: e.target.value.trim() })}
+                  />
+
+                  <input
+                    className={`gp-score${
+                      item.score === undefined ? " gp-score-empty" : ` gp-score-${scoreTone(item.score)}`
+                    }`}
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={100}
+                    value={item.score ?? ""}
+                    placeholder="Score"
+                    aria-label={`Score for ${item.label || "item"}`}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setItems((l) => withScore(l, item.id, raw === "" ? undefined : Number(raw)));
+                    }}
+                    onBlur={(e) => commit(withScore(items, item.id, parseNumber(e.target.value, 100)))}
+                  />
+
+                  <button
+                    type="button"
+                    className="gp-remove"
+                    aria-label={`Remove ${item.label || "item"}`}
+                    onClick={() => removeItem(item)}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <button type="button" className="gp-add" onClick={addItem}>
+            <Plus size={15} strokeWidth={2.4} />
+            <span>Add item</span>
+          </button>
+        </div>
+      </section>
+
+    </div>
+  );
+};
+
+export default GradesPanel;

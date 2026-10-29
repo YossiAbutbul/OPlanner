@@ -1,7 +1,14 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { seg } from "../utility/firestorePath";
-import type { CourseLink, CourseMeta, ExamColumn, ExamRow, ExamTable } from "../types/models";
+import type {
+  CourseLink,
+  CourseMeta,
+  ExamColumn,
+  ExamRow,
+  ExamTable,
+  GradeItem,
+} from "../types/models";
 
 // Firestore path of the course doc itself (links/notes/info live on it,
 // alongside the existing color/finalDate fields).
@@ -15,6 +22,10 @@ export const MAX_COURSE_NOTES_LEN = 50000;
 export const MAX_EXAM_COLUMNS = 60;
 export const MAX_EXAM_ROWS = 100;
 export const MAX_EXAM_LABEL_LEN = 120;
+export const MAX_GRADE_ITEMS = 40;
+export const MAX_GRADE_SKIPS = 100;
+export const MAX_GRADE_LABEL_LEN = 120;
+export const MAX_CREDITS = 30;
 
 // http(s) only — same philosophy as the notes editor's ALLOWED_URI_REGEXP.
 // new URL() rejects things the prefix check alone would let through ("http://").
@@ -86,7 +97,61 @@ export const normalizeCourseMeta = (data: unknown): CourseMeta => {
   const examTable = normalizeExamTable(d.examTable);
   if (examTable) meta.examTable = examTable;
 
+  const gradeItems = normalizeGradeItems(d.gradeItems);
+  if (gradeItems) meta.gradeItems = gradeItems;
+
+  const gradeSkips = normalizeGradeSkips(d.gradeSkips);
+  if (gradeSkips) meta.gradeSkips = gradeSkips;
+
+  const credits = normalizeNumber(d.credits, 0, MAX_CREDITS);
+  if (credits !== undefined) meta.credits = credits;
+
   return meta;
+};
+
+// A finite number inside [min, max], or undefined. Rejects NaN and Infinity,
+// which JSON.parse of a corrupt cache can produce as null/strings.
+const normalizeNumber = (v: unknown, min: number, max: number): number | undefined => {
+  if (typeof v !== "number" || !Number.isFinite(v)) return undefined;
+  if (v < min || v > max) return undefined;
+  return v;
+};
+
+// Keys of removed assignments: plain bounded strings, deduplicated.
+const normalizeGradeSkips = (data: unknown): string[] | undefined => {
+  if (!Array.isArray(data)) return undefined;
+  const keys = [
+    ...new Set(
+      data
+        .filter((k): k is string => typeof k === "string" && k.length > 0)
+        .map((k) => k.slice(0, MAX_GRADE_LABEL_LEN))
+    ),
+  ].slice(0, MAX_GRADE_SKIPS);
+  return keys.length ? keys : undefined;
+};
+
+// Drop malformed grade rows: non-string ids/labels, weights or scores outside
+// 0–100, and anything past the row cap. An item with no usable score keeps its
+// weight: it is still part of the course, just not graded yet. An empty array
+// survives as an empty array, which is how a sheet the student cleared stays
+// cleared instead of being refilled from the default.
+const normalizeGradeItems = (data: unknown): GradeItem[] | undefined => {
+  if (!Array.isArray(data)) return undefined;
+  const items = data
+    .filter((i): i is Record<string, unknown> => !!i && typeof i === "object")
+    .filter((i) => typeof i.id === "string" && typeof i.label === "string")
+    .slice(0, MAX_GRADE_ITEMS)
+    .map((i) => {
+      const item: GradeItem = {
+        id: i.id as string,
+        label: (i.label as string).slice(0, MAX_GRADE_LABEL_LEN),
+        weight: normalizeNumber(i.weight, 0, 100) ?? 0,
+      };
+      const score = normalizeNumber(i.score, 0, 100);
+      if (score !== undefined) item.score = score;
+      return item;
+    });
+  return items;
 };
 
 // Drop malformed exam-table data: non-string ids/labels, oversized labels,

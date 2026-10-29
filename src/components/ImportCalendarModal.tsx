@@ -6,6 +6,7 @@ import { useHomework } from "../context/HomeworkContext";
 import { useTimeBlocks } from "../context/TimeBlockContext";
 import { useToast } from "../context/ToastContext";
 import { initializeYear, addCourse } from "../utility/initializeDatabase";
+import { IMPORTED_TASK_PREFIX } from "../services/homework";
 import { isSafeSegment } from "../utility/firestorePath";
 import type { TimeBlock } from "../types/models";
 import "../css/ImportCalendarModal.css";
@@ -222,7 +223,7 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
           continue;
         }
         // Deterministic doc ID so re-imports overwrite instead of duplicate.
-        const stableId = `imp_${dueDate}_${name}`.replace(/[\\/]/g, "_").slice(0, 500);
+        const stableId = `${IMPORTED_TASK_PREFIX}${dueDate}_${name}`.replace(/[\\/]/g, "_").slice(0, 500);
         try {
           await addHomework(stableId, name, dueDate, "PENDING", g.year, g.semester, g.course);
           seen.add(key);

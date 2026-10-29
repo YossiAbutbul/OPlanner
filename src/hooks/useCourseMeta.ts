@@ -4,10 +4,13 @@ import { lsCache } from "./useLocalStorageCache";
 import { fetchCourseMeta, normalizeCourseMeta, saveCourseMeta } from "../services/courseMeta";
 import type { CourseMeta, CourseTab } from "../types/models";
 
-const cacheKey = (tab: CourseTab) => {
-  const uid = requireUid();
-  return `oplanner.coursemeta.${uid}.${tab.year}|${tab.semester}|${tab.course}`;
-};
+// Shared with useSemesterGrades, which reads the same cached course docs to
+// work out the GPA — both must agree on the key or one would miss the other's
+// writes.
+export const courseMetaCacheKey = (uid: string, tab: CourseTab) =>
+  `oplanner.coursemeta.${uid}.${tab.year}|${tab.semester}|${tab.course}`;
+
+const cacheKey = (tab: CourseTab) => courseMetaCacheKey(requireUid(), tab);
 
 // Course-page metadata for the active course tab. Stale-while-revalidate:
 // serve the localStorage copy immediately, then refresh with one Firestore

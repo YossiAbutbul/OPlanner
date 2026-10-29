@@ -13,6 +13,7 @@ const HomeworkModal = lazy(() => import("./HomeworkModal"));
 import OverviewStats from "./SemesterOverview/OverviewStats";
 import CoursesPanel from "./SemesterOverview/CoursesPanel";
 import FinalsCountdown from "./SemesterOverview/FinalsCountdown";
+import SemesterGrades from "./SemesterOverview/SemesterGrades";
 import AddCourseModal from "./SemesterOverview/AddCourseModal";
 import OverviewSkeleton from "./SemesterOverview/OverviewSkeleton";
 import { useSemesterStats } from "../hooks/useSemesterStats";
@@ -321,6 +322,12 @@ const SemesterOverview: React.FC<Props> = ({
                   setTaskEditTask(final);
                   setTaskModalOpen(true);
                 }}
+              />
+              <SemesterGrades
+                year={year}
+                semester={semester}
+                courses={courses}
+                onSelectCourse={onSelectCourse}
               />
             </div>
           </div>

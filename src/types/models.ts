@@ -62,6 +62,16 @@ export interface ExamRow {
   solutionUrl?: string;             // optional link to the solution
 }
 
+// One graded item in a course: an assignment, a quiz, the final. `weight` is
+// its share of the course grade in percent; `score` is absent until it comes
+// back marked.
+export interface GradeItem {
+  id: string;      // crypto.randomUUID()
+  label: string;   // e.g. "ממן 11"
+  weight: number;  // 0–100
+  score?: number;  // 0–100
+}
+
 // Per-course exam tracker: a checkbox grid of exams (rows) × questions
 // (columns). Both axes' labels are user-editable.
 export interface ExamTable {
@@ -76,6 +86,11 @@ export interface CourseMeta {
   links?: CourseLink[];     // ordered; max 20 (also enforced in firestore.rules)
   courseNotes?: string;     // sanitized HTML, <=50000 chars
   examTable?: ExamTable;    // exams × questions checkbox grid
+  gradeItems?: GradeItem[]; // weighted grade sheet; max 40
+  // Imported assignments the student removed from the sheet, by the key in
+  // utility/gradeSheet. Without this the next visit adds them straight back.
+  gradeSkips?: string[];    // max 100
+  credits?: number;         // how much this course counts toward the GPA
 }
 
 // Course-level metadata returned by getAllYearsAndSemesters().

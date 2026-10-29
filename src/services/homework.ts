@@ -13,6 +13,13 @@ import type { HomeworkEntry } from "../types/models";
 // The Final Exam task's id inside each course (see setCourseFinalDate).
 export const FINAL_TASK_ID = "final-exam";
 
+// Imported tasks get a deterministic id so a re-import overwrites instead of
+// duplicating. The prefix is also how the rest of the app tells a task that
+// came from the university calendar from one the student wrote themselves.
+export const IMPORTED_TASK_PREFIX = "imp_";
+
+export const isImportedTaskId = (id: string): boolean => id.startsWith(IMPORTED_TASK_PREFIX);
+
 // Window event carrying a course's new final date, so the year tree (which
 // the Finals widget and reminders read) can follow edits made to the Final
 // Exam task anywhere in the app.
