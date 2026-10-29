@@ -57,11 +57,15 @@ const DatePicker: React.FC<Props> = ({ value, onChange, children, block }) => {
       const top = openUp ? rect.top - popH - 6 : rect.bottom + 6;
       // Left-align popover with trigger (popover left edge = field left edge)
       // so it reads as attached to the input. Flip to right-align only if a
-      // left-aligned popover would overflow the viewport's right edge.
-      const overflowsRight = rect.left + POPOVER_WIDTH > window.innerWidth - 8;
-      const left = overflowsRight
-        ? Math.max(8, rect.right - POPOVER_WIDTH)
-        : rect.left;
+      // left-aligned popover would overflow the viewport's right edge. The
+      // width is measured, not assumed: on a phone the popover is wider than
+      // POPOVER_WIDTH, and the assumption used to leave it hanging off the
+      // right edge with the last column cut off.
+      const popW = popRef.current?.offsetWidth ?? POPOVER_WIDTH;
+      const overflowsRight = rect.left + popW > window.innerWidth - 8;
+      const wanted = overflowsRight ? rect.right - popW : rect.left;
+      // Whatever the alignment asked for, it stays on screen.
+      const left = Math.min(Math.max(8, wanted), Math.max(8, window.innerWidth - popW - 8));
       setPos({ top, left, dark: !!wrapRef.current?.closest(".rs") });
     };
     updatePos();

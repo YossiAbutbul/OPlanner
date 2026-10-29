@@ -273,6 +273,12 @@
 
 /* Phones: taller day cells so each date is an easy thumb target. */
 @media (max-width: 480px) {
+  /* The day circles grow here, so the popover has to grow with them or the
+     last column is clipped. It still never exceeds the viewport. */
+  .dp-popover {
+    width: min(300px, calc(100vw - 24px));
+  }
+
   .dp-cell {
     height: 40px;
   }

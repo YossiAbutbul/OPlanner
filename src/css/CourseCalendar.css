@@ -207,6 +207,9 @@
 }
 
 .cal-cell {
+  /* The "+N more" label asks this cell how wide it is, so the word is kept
+     only where it fits. */
+  container-type: inline-size;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -352,11 +355,25 @@
   text-decoration-color: color-mix(in srgb, currentColor 60%, transparent);
 }
 
+/* A count that wraps to a second line falls out of the cell, so it stays on
+   one line and drops to a bare "+N" in a narrow column. */
 .cal-task-more {
   font-size: 0.625rem;
   font-weight: 600;
   color: var(--label-3);
   padding: 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.cal-more-word {
+  display: none;
+}
+
+@container (min-width: 86px) {
+  .cal-more-word {
+    display: inline;
+  }
 }
 
 .cal-legend {
@@ -562,7 +579,4 @@
     text-align: center;
   }
 
-  .cal-more-word {
-    display: none;
-  }
 }
