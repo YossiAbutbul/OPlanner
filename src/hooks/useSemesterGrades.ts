@@ -4,7 +4,7 @@ import { lsCache } from "./useLocalStorageCache";
 import { COURSE_META_EVENT, courseMetaCacheKey, type CourseMetaEventDetail } from "./useCourseMeta";
 import { fetchCourseMeta, normalizeCourseMeta } from "../services/courseMeta";
 import { semesterGpa, summarize } from "../utility/grades";
-import { countedRows } from "../utility/gradeSheet";
+import { countedRows, withAutoExam } from "../utility/gradeSheet";
 import type { CourseInfo, CourseMeta } from "../types/models";
 
 export interface CourseGrade {
@@ -61,6 +61,8 @@ export const useSemesterGrades = (year: number, semester: string, courses: Cours
           names.map(async (course) => [course, await fetchCourseMeta(uid, year, semester, course)] as const)
         );
         if (cancelled) return;
+        // Keep the cache current, so the next visit opens on these figures.
+        for (const [course, meta] of fresh) lsCache.write(courseMetaCacheKey(uid, { year, semester, course }), meta);
         setMetas(Object.fromEntries(fresh));
       } catch (e) {
         console.error("Error fetching semester grades:", e);
@@ -87,7 +89,10 @@ export const useSemesterGrades = (year: number, semester: string, courses: Cours
     () =>
       courses.map((c) => {
         const meta = metas[c.name];
-        const s = summarize(countedRows(meta?.gradeItems ?? [], meta?.gradeCap).counted);
+        // The exam's share as the Grades tab shows it, even when the stored
+        // sheet predates it filling in.
+        const items = withAutoExam(meta?.gradeItems ?? [], meta?.gradeCap);
+        const s = summarize(countedRows(items, meta?.gradeCap).counted);
         return {
           course: c.name,
           grade: s.final ?? s.soFar,
@@ -95,7 +100,7 @@ export const useSemesterGrades = (year: number, semester: string, courses: Cours
           complete: s.final !== null,
           gradedWeight: Math.min(100, s.gradedWeight),
           weightOff: s.totalWeight > 0 && !s.balanced ? s.totalWeight : null,
-          weightsUnset: (meta?.gradeItems?.length ?? 0) > 0 && s.totalWeight === 0,
+          weightsUnset: items.length > 0 && s.totalWeight === 0,
         };
       }),
     [courses, metas]
