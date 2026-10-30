@@ -5,7 +5,14 @@ import { useToast } from "../context/ToastContext";
 import RollingNumber from "./RollingNumber";
 import { MAX_CREDITS, MAX_GRADE_ITEMS, MAX_GRADE_LABEL_LEN } from "../services/courseMeta";
 import { fillUnweighted, formatGrade, summarize } from "../utility/grades";
-import { assignmentKey, orderSheet, reconcileWithImport, sheetFromTasks } from "../utility/gradeSheet";
+import {
+  assignmentKey,
+  FINAL_SKIP,
+  looksLikeFinal,
+  orderSheet,
+  reconcileWithImport,
+  sheetFromTasks,
+} from "../utility/gradeSheet";
 import type { TaskLike } from "../utility/gradeSheet";
 import { FINAL_TASK_ID, isImportedTaskId } from "../services/homework";
 import type { CourseTab, GradeItem, HomeworkEntry } from "../types/models";
@@ -24,21 +31,12 @@ const row = (label: string, weight: number): GradeItem => ({
   weight,
 });
 
-// Fallback for a course with no imported assignments to go on.
-const genericSheet = (): GradeItem[] => [
-  row("Assignment 01", 10),
-  row("Assignment 02", 10),
-  row("Assignment 03", 10),
-  row("Final exam", 70),
-];
-
 // A course that has never been graded opens on a sheet built from its own
-// tasks, or the generic shape when it has none. Nothing is written until the
-// student changes something, so visiting the tab leaves no data behind.
-const defaultSheet = (tasks: TaskLike[], skip: ReadonlySet<string>): GradeItem[] => {
-  const drafts = sheetFromTasks(tasks, skip);
-  return drafts ? drafts.map((d) => row(d.label, d.weight)) : genericSheet();
-};
+// tasks: its imported assignments and an exam row (unless the student
+// removed it). Nothing is written until the student changes something, so
+// visiting the tab leaves no data behind.
+const defaultSheet = (tasks: TaskLike[], skip: ReadonlySet<string>): GradeItem[] =>
+  (sheetFromTasks(tasks, skip) ?? []).map((d) => row(d.label, d.weight));
 
 // A number the user is part-way through typing: an empty field and "8." are
 // both states the input has to allow, so values are only clamped on commit.
@@ -112,8 +110,7 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
       return;
     }
     // Otherwise keep what the student has filled in and line the rest up with
-    // the import. A cleared sheet stays cleared when the course has nothing
-    // imported to put in it.
+    // the import, exam row included.
     const reconciled = reconcileWithImport(stored, taskList, () => crypto.randomUUID(), skip);
     // Imports append, so a later one can leave 03 after 05: read in order.
     setItems(orderSheet(reconciled ?? stored));
@@ -165,11 +162,13 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
     const next = items.filter((i) => i.id !== item.id);
     setItems(next);
     lastSaved.current = next;
-    const key = assignmentKey(item.label);
-    const fromImport = taskList.some((t) => assignmentKey(t.name) === key);
+    // Deleting the exam row says the course has no exam; deleting an
+    // imported assignment says it doesn't count. Both are kept off the sheet.
+    const key = looksLikeFinal(item.label) ? FINAL_SKIP : assignmentKey(item.label);
+    const remember = key === FINAL_SKIP || taskList.some((t) => assignmentKey(t.name) === key);
     const skips = meta.gradeSkips ?? [];
     const patch =
-      fromImport && !skips.includes(key)
+      remember && !skips.includes(key)
         ? { gradeItems: next, gradeSkips: [...skips, key] }
         : { gradeItems: next };
     try {

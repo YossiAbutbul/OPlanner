@@ -436,5 +436,11 @@ describe("gradeSheetView", () => {
     expect(view.saved).toBe(false);
     expect(view.rows.map((r) => r.label)).toEqual(['מטלה 01 (ממ"ן)', 'מטלה 02 (ממ"ן)', "Final Exam"]);
   });
+
+  it("gives every unsaved sheet an exam row unless it was removed", () => {
+    const tasks = [{ id: "imp_2026-11-01_a", name: 'מטלה 01 (ממ"ן)', dueDate: "2026-11-01" }];
+    expect(gradeSheetView(undefined, tasks).rows.map((r) => r.label)).toEqual(['מטלה 01 (ממ"ן)', "Final exam"]);
+    expect(gradeSheetView(undefined, tasks, ["#final"]).rows.map((r) => r.label)).toEqual(['מטלה 01 (ממ"ן)']);
+  });
 });
 

@@ -7,6 +7,7 @@ import {
   reconcileWithImport,
   applyWeights,
   orderSheet,
+  FINAL_SKIP,
   sheetFromTasks,
 } from "./gradeSheet";
 import type { GradeItem } from "../types/models";
@@ -62,8 +63,17 @@ describe("isAssignmentName", () => {
 });
 
 describe("sheetFromTasks", () => {
-  it("returns null when the course has no assignments and no final", () => {
-    expect(sheetFromTasks([task("מפגש", "2026-10-01"), task("Lecture", "2026-10-08")])).toBeNull();
+  it("starts every course with an exam row, even before a final date", () => {
+    expect(sheetFromTasks([task("מפגש", "2026-10-01"), task("Lecture", "2026-10-08")])).toEqual([
+      { label: "Final exam", weight: 0 },
+    ]);
+  });
+
+  it("leaves the exam out once the student removed it", () => {
+    expect(sheetFromTasks([task("מפגש", "2026-10-01")], new Set([FINAL_SKIP]))).toBeNull();
+    expect(sheetFromTasks([task("ממן 1", "2026-11-01")], new Set([FINAL_SKIP]))).toEqual([
+      { label: "ממן 1", weight: 0 },
+    ]);
   });
 
   it("starts a sheet from the final alone, weight left to the student", () => {
@@ -80,7 +90,7 @@ describe("sheetFromTasks", () => {
         task("לסיים ממן 11", "2026-11-01", { isImported: false }),
         task("ממן 11", "2026-11-01", { isImported: false }),
       ])
-    ).toBeNull();
+    ).toEqual([{ label: "Final exam", weight: 0 }]);
   });
 
   it("orders assignments by due date, final last, all unweighted", () => {
@@ -99,8 +109,8 @@ describe("sheetFromTasks", () => {
   });
 
   it("keeps one row per assignment when a name repeats", () => {
-    const sheet = sheetFromTasks([task("מטלה 11", "2026-11-01"), task("מטלה 11", "2026-11-02")]);
-    expect(sheet).toHaveLength(1);
+    const sheet = sheetFromTasks([task("מטלה 11", "2026-11-01"), task("מטלה 11", "2026-11-02")])!;
+    expect(sheet.filter((i) => i.label === "מטלה 11")).toHaveLength(1);
   });
 });
 
@@ -208,10 +218,13 @@ describe("reconcileWithImport", () => {
     expect(out[0]).toEqual(graded[0]);
   });
 
-  it("leaves a sheet alone when the course has nothing imported", () => {
+  it("keeps a sheet with nothing imported as it is, plus its exam row", () => {
     const mine: GradeItem[] = [{ id: "1", label: "Lab work", weight: 100 }];
-    expect(reconcileWithImport(mine, [task("מפגש", "2026-10-01")], ids())).toBeNull();
-    expect(reconcileWithImport([], [], ids())).toBeNull();
+    const out = reconcileWithImport(mine, [task("מפגש", "2026-10-01")], ids())!;
+    expect(out[0]).toEqual(mine[0]);
+    expect(out[1]).toMatchObject({ label: "Final exam", weight: 0 });
+    // Without the exam either, there's nothing to line up.
+    expect(reconcileWithImport(mine, [], ids(), new Set([FINAL_SKIP]))).toBeNull();
   });
 });
 
@@ -241,9 +254,15 @@ describe("mergeMissingFinal", () => {
     }
   });
 
-  it("does nothing until a final date is set", () => {
+  it("adds an exam row even before a final date is set", () => {
     const sheet: GradeItem[] = [{ id: "1", label: "Project", weight: 50 }];
-    expect(mergeMissingFinal(sheet, [task('מטלה 01 (ממ"ן)', "2026-11-13")], ids())).toBe(sheet);
+    const out = mergeMissingFinal(sheet, [task('מטלה 01 (ממ"ן)', "2026-11-13")], ids());
+    expect(out[1]).toMatchObject({ label: "Final exam", weight: 0 });
+  });
+
+  it("doesn't put back an exam row the student removed", () => {
+    const sheet: GradeItem[] = [{ id: "1", label: "Project", weight: 100 }];
+    expect(mergeMissingFinal(sheet, [final], ids(), new Set([FINAL_SKIP]))).toBe(sheet);
   });
 });
 

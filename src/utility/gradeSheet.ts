@@ -62,39 +62,49 @@ const assignmentsIn = (tasks: TaskLike[], skip: ReadonlySet<string>): TaskLike[]
     });
 };
 
+// Recorded in gradeSkips when the student deletes the exam row: the course
+// has no exam, so the row isn't put back.
+export const FINAL_SKIP = "#final";
+
+// A row already standing in for the exam, whatever the student called it.
+const FINAL_PATTERNS = [/^final/i, /^exam/i, /בחינ/, /מבחן/];
+
+export const looksLikeFinal = (label: string) => {
+  const trimmed = label.trim();
+  return FINAL_PATTERNS.some((re) => re.test(trimmed));
+};
+
+// The exam row every sheet carries unless the student removed it: named for
+// the course's final exam task when it has one, "Final exam" otherwise.
+const examRow = (tasks: TaskLike[], skip: ReadonlySet<string>): string | null => {
+  const finalTask = tasks.find((t) => t.isFinal);
+  if (skip.has(FINAL_SKIP) || (finalTask && skip.has(assignmentKey(finalTask.name)))) return null;
+  return finalTask?.name.trim() || "Final exam";
+};
+
 /**
  * Build a sheet from the course's own tasks: one row per assignment in
- * due-date order, plus the final. Every row starts at weight 0: the split is
- * the course's rule, not something to guess, so the student (or the
- * assistant, from what they tell it) sets it. Null when nothing in the
- * course looks like an assignment, so the caller can fall back.
+ * due-date order, then the exam. Every course has one unless the student
+ * deleted it, so the row is there before any final date is set. Every row
+ * starts at weight 0: the split is the course's rule, not something to
+ * guess, so the student (or the assistant, from what they tell it) sets it.
+ * Null only when there's nothing at all to put on it.
  */
 export const sheetFromTasks = (
   tasks: TaskLike[],
   skip: ReadonlySet<string> = new Set()
 ): DraftItem[] | null => {
   const assignments = assignmentsIn(tasks, skip);
-  const finalTask = tasks.find((t) => t.isFinal);
-  const final = finalTask && !skip.has(assignmentKey(finalTask.name)) ? finalTask : undefined;
-  if (!assignments.length && !final) return null;
+  const exam = examRow(tasks, skip);
   const items: DraftItem[] = assignments.map((t) => ({ label: t.name.trim(), weight: 0 }));
-  // Setting a final date on the overview is enough to start a sheet.
-  if (final) items.push({ label: final.name.trim() || "Final exam", weight: 0 });
-  return items;
-};
-
-// A row already standing in for the exam, whatever the student called it.
-const FINAL_PATTERNS = [/^final/i, /^exam/i, /בחינ/, /מבחן/];
-
-const looksLikeFinal = (label: string) => {
-  const trimmed = label.trim();
-  return FINAL_PATTERNS.some((re) => re.test(trimmed));
+  if (exam) items.push({ label: exam, weight: 0 });
+  return items.length ? items : null;
 };
 
 /**
- * Put the course's final on the sheet once a date is set for it on the
- * overview, at weight 0 like every row the panel adds itself: the student
- * says what it's worth.
+ * Put the exam row on a sheet that lacks one, at weight 0 like every row the
+ * panel adds itself: the student says what it's worth. A row already
+ * standing in for the exam, under any name, counts.
  */
 export const mergeMissingFinal = (
   items: GradeItem[],
@@ -102,13 +112,10 @@ export const mergeMissingFinal = (
   makeId: () => string,
   skip: ReadonlySet<string> = new Set()
 ): GradeItem[] => {
-  const final = tasks.find((t) => t.isFinal);
-  if (!final || skip.has(assignmentKey(final.name))) return items;
-
-  const label = final.name.trim() || "Final exam";
+  const label = examRow(tasks, skip);
+  if (!label) return items;
   const already = items.some((i) => i.label.trim() === label || looksLikeFinal(i.label));
   if (already) return items;
-
   return [...items, { id: makeId(), label, weight: 0 }];
 };
 

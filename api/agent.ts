@@ -179,7 +179,12 @@ const semesterData = (uid: string, year: number, semester: string) => {
   const loadGradeSheet = async (course: string) => {
     const snap = await db().doc(`${base}/${course}`).get();
     const tasks = (await loadTasks()).filter((t) => t.course === course);
-    return gradeSheetView(snap.get("gradeItems"), tasks);
+    const skips = snap.get("gradeSkips");
+    return gradeSheetView(
+      snap.get("gradeItems"),
+      tasks,
+      Array.isArray(skips) ? skips.filter((k): k is string => typeof k === "string") : []
+    );
   };
 
   return { loadCourses, loadTasks, loadTimeBlocks, loadOtherTasks, loadGradeSheet };

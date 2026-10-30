@@ -553,11 +553,12 @@ const orderRows = <T extends { label: string }>(rows: T[]): T[] => {
 
 /**
  * The sheet as stored, or, for a course with none yet, the rows the app
- * would start it with: its imported assignments in date order, then the final.
+ * would start it with: its imported assignments in date order, then the exam.
  */
 export const gradeSheetView = (
   stored: unknown,
-  tasks: { id: string; name: string; dueDate: string }[]
+  tasks: { id: string; name: string; dueDate: string }[],
+  skips: string[] = []
 ): GradeSheetView => {
   if (Array.isArray(stored)) {
     const rows = stored
@@ -575,8 +576,13 @@ export const gradeSheetView = (
     .filter((t) => t.id.startsWith("imp_") && ASSIGNMENT_NAME.test(t.name.trim()))
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
     .filter((t) => !seen.has(t.name.trim()) && !!seen.add(t.name.trim()));
+  // Every course has an exam row unless the student removed it (#final in
+  // gradeSkips), named for its final exam task when it has one.
   const final = tasks.find((t) => t.id === FINAL_TASK_ID);
-  const rows = [...assignments, ...(final ? [final] : [])].map((t) => ({ label: t.name.trim(), weight: 0 }));
+  const rows = [
+    ...assignments.map((t) => ({ label: t.name.trim(), weight: 0 })),
+    ...(skips.includes("#final") ? [] : [{ label: final?.name.trim() || "Final exam", weight: 0 }]),
+  ];
   return { saved: false, rows, total: 0 };
 };
 
