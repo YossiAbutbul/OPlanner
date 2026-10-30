@@ -378,8 +378,8 @@ describe("withAutoExam", () => {
     expect(withAutoExam(s)).toBe(s);
   });
 
-  it("leaves the exam what the best N leave when only they count", () => {
-    expect(withAutoExam(sheet([4, 4, 4, 4, 4]), 3).at(-1)!.weight).toBe(88);
+  it("leaves the exam what a cap on the assignments leaves", () => {
+    expect(withAutoExam(sheet([4, 4, 4, 4, 4]), 12).at(-1)!.weight).toBe(88);
   });
 
   it("leaves an exam weight the student typed", () => {
@@ -393,19 +393,33 @@ describe("countedRows", () => {
     { id: "x", label: "Final exam", weight: 88 },
   ];
 
-  it("counts every row without a best-N rule", () => {
+  it("counts every row without a cap, or under it", () => {
     expect(countedRows(rows([90, 80]), undefined).dropped.size).toBe(0);
+    expect(countedRows(rows([90, 80]), 12).dropped.size).toBe(0);
   });
 
-  it("keeps the best marks and drops the rest", () => {
-    const { dropped } = countedRows(rows([70, 95, 60, 85, undefined]), 3);
+  it("keeps the best marks up to the cap and drops the rest", () => {
+    const { dropped } = countedRows(rows([70, 95, 60, 85, undefined]), 12);
     expect([...dropped].sort()).toEqual(["a3", "a5"]);
   });
 
-  it("holds open places for unmarked assignments until N are marked", () => {
-    const { counted, dropped } = countedRows(rows([90, undefined, undefined, undefined, undefined]), 3);
+  it("holds room under the cap for unmarked assignments", () => {
+    const { counted, dropped } = countedRows(rows([90, undefined, undefined, undefined, undefined]), 12);
     expect(counted.map((i) => i.id)).toEqual(["a1", "a2", "a3", "x"]);
     expect([...dropped].sort()).toEqual(["a4", "a5"]);
+  });
+});
+
+describe("countedRows with mixed weights", () => {
+  it("takes whole assignments that still fit under the cap", () => {
+    const items: GradeItem[] = [
+      { id: "a", label: "מטלה 01", weight: 5, score: 100 },
+      { id: "b", label: "מטלה 02", weight: 10, score: 90 },
+      { id: "c", label: "מטלה 03", weight: 5, score: 80 },
+      { id: "x", label: "Final exam", weight: 85 },
+    ];
+    // Best first: 01 (5) fits, 02 (10) would make 15, 03 (5) makes 10.
+    expect([...countedRows(items, 12).dropped]).toEqual(["b"]);
   });
 });
 

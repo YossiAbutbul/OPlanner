@@ -106,8 +106,8 @@ export const normalizeCourseMeta = (data: unknown): CourseMeta => {
   const credits = normalizeNumber(d.credits, 0, MAX_CREDITS);
   if (credits !== undefined) meta.credits = credits;
 
-  const gradeBest = normalizeNumber(d.gradeBest, 1, MAX_GRADE_ITEMS);
-  if (gradeBest !== undefined && Number.isInteger(gradeBest)) meta.gradeBest = gradeBest;
+  const gradeCap = normalizeNumber(d.gradeCap, 0, 100);
+  if (gradeCap !== undefined && gradeCap > 0) meta.gradeCap = gradeCap;
 
   return meta;
 };

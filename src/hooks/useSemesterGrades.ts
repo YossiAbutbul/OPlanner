@@ -87,7 +87,7 @@ export const useSemesterGrades = (year: number, semester: string, courses: Cours
     () =>
       courses.map((c) => {
         const meta = metas[c.name];
-        const s = summarize(countedRows(meta?.gradeItems ?? [], meta?.gradeBest).counted);
+        const s = summarize(countedRows(meta?.gradeItems ?? [], meta?.gradeCap).counted);
         return {
           course: c.name,
           grade: s.final ?? s.soFar,

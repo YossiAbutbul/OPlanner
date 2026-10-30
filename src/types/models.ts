@@ -97,9 +97,10 @@ export interface CourseMeta {
   // utility/gradeSheet. Without this the next visit adds them straight back.
   gradeSkips?: string[];    // max 100
   credits?: number;         // how much this course counts toward the GPA
-  // How many assignments count toward the grade, best marks first ("the best
-  // 3 of 5"). Unset: every assignment counts.
-  gradeBest?: number;
+  // The most the assignments can add to the grade, in percent: the best
+  // marks count until it's reached ("assignments count up to 12%"). Unset:
+  // every assignment counts.
+  gradeCap?: number;
 }
 
 // Course-level metadata returned by getAllYearsAndSemesters().

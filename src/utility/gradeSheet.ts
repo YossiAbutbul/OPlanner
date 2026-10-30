@@ -259,46 +259,48 @@ export const orderSheet = <T extends { label: string }>(items: T[]): T[] => {
 };
 
 /**
- * The rows that count toward the grade when a course counts only its best
- * `best` assignments (the Open University's "the highest marks up to the
- * set weight"). Marked assignments are taken best first; while fewer than
- * `best` are marked, unmarked ones fill the open places, in order, as weight
- * still to come. The exam and the rest always count. `dropped` holds the ids
- * that don't. With no `best`, or at least that many assignments, every row
- * counts.
+ * The rows that count toward the grade when a course caps what its
+ * assignments can add (the Open University's "the highest marks up to the
+ * set weight"). Assignments are taken best mark first, then the unmarked
+ * ones in order as weight still to come, each one whole, while they still
+ * fit under `cap`: with 4% each and a 12% cap, the best 3. The exam and the
+ * rest always count. `dropped` holds the ids that don't. With no cap, or one
+ * the assignments fit under anyway, every row counts.
  */
 export const countedRows = (
   items: GradeItem[],
-  best?: number
+  cap?: number
 ): { counted: GradeItem[]; dropped: Set<string> } => {
   const assignments = items.filter((i) => !looksLikeFinal(i.label));
-  if (!best || best >= assignments.length) return { counted: items, dropped: new Set() };
+  const total = assignments.reduce((n, i) => n + i.weight, 0);
+  if (!cap || total <= cap + 1e-9) return { counted: items, dropped: new Set() };
   const marked = assignments
     .filter((i) => typeof i.score === "number")
-    .sort((a, b) => b.score! - a.score!)
-    .slice(0, best);
-  const open = assignments.filter((i) => typeof i.score !== "number").slice(0, best - marked.length);
-  const keep = new Set([...marked, ...open].map((i) => i.id));
+    .sort((a, b) => b.score! - a.score!);
+  const open = assignments.filter((i) => typeof i.score !== "number");
+  const keep = new Set<string>();
+  let used = 0;
+  for (const i of [...marked, ...open]) {
+    if (used + i.weight > cap + 1e-9) continue;
+    keep.add(i.id);
+    used += i.weight;
+  }
   const dropped = new Set(assignments.filter((i) => !keep.has(i.id)).map((i) => i.id));
   return { counted: items.filter((i) => !dropped.has(i.id)), dropped };
 };
 
 /**
  * The exam takes whatever the counted assignments leave: 100 minus their
- * weights. Five assignments at 4% leave it 80%; a course counting the best
- * 3 leaves it 88%; an assignment at 0 (skipped) hands its share over too.
- * Applies only once some other row has a weight, and never to an exam weight
- * the student typed.
+ * weights. Five assignments at 4% leave it 80%; a 12% cap on them leaves it
+ * 88%; an assignment at 0 (skipped) hands its share over too. Applies only
+ * once some other row has a weight, and never to an exam weight the student
+ * typed.
  */
-export const withAutoExam = (items: GradeItem[], best?: number): GradeItem[] => {
+export const withAutoExam = (items: GradeItem[], cap?: number): GradeItem[] => {
   const exam = items.find((i) => looksLikeFinal(i.label));
   if (!exam || exam.fixedWeight) return items;
-  const rest = items.filter((i) => i !== exam).map((i) => i.weight);
-  // With best-N, the heaviest N assignments are the most the sheet can count.
-  const counted = best && best < rest.length ? [...rest].sort((a, b) => b - a).slice(0, best) : rest;
-  const others = counted.reduce((n, w) => n + w, 0);
+  const others = countedRows(items, cap).counted.reduce((n, i) => (i === exam ? n : n + i.weight), 0);
   if (others <= 0) return items;
   const weight = Math.max(0, Math.round((100 - others) * 10) / 10);
   return weight === exam.weight ? items : items.map((i) => (i === exam ? { ...i, weight } : i));
 };
-

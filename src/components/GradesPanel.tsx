@@ -115,15 +115,15 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
     // the import, exam row included.
     const reconciled = reconcileWithImport(stored, taskList, () => crypto.randomUUID(), skip);
     // Imports append, so a later one can leave 03 after 05: read in order.
-    setItems(withAutoExam(orderSheet(reconciled ?? stored), meta.gradeBest));
+    setItems(withAutoExam(orderSheet(reconciled ?? stored), meta.gradeCap));
     // taskKey stands in for taskList: same names and dates, same sheet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meta.gradeItems, meta.gradeSkips, meta.gradeBest, taskKey]);
+  }, [meta.gradeItems, meta.gradeSkips, meta.gradeCap, taskKey]);
 
-  // A course that counts only its best N assignments: the rest are shown
-  // but left out of every figure.
-  const best = meta.gradeBest;
-  const { counted, dropped } = useMemo(() => countedRows(items, best), [items, best]);
+  // A course whose assignments count only up to a weight: the rows past it
+  // are shown but left out of every figure.
+  const cap = meta.gradeCap;
+  const { counted, dropped } = useMemo(() => countedRows(items, cap), [items, cap]);
   const summary = useMemo(() => summarize(counted), [counted]);
   const assignmentCount = items.filter((i) => !looksLikeFinal(i.label)).length;
   // What the exam would take on auto, so blurring its field unchanged
@@ -131,11 +131,11 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
   const autoExamWeight = useMemo(() => {
     const exam = items.find((i) => looksLikeFinal(i.label));
     return exam
-      ? withAutoExam(items.map((i) => (i === exam ? { ...i, fixedWeight: false } : i)), best).find(
+      ? withAutoExam(items.map((i) => (i === exam ? { ...i, fixedWeight: false } : i)), cap).find(
           (i) => i.id === exam.id
         )!.weight
       : 0;
-  }, [items, best]);
+  }, [items, cap]);
   const ungraded = counted.filter((i) => i.score === undefined).length;
   // No weights at all is where an imported sheet starts: a prompt, not an
   // error. Some weights that miss 100 is the error.
@@ -149,8 +149,8 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
 
   // Optimistic: the sheet re-renders from local state, the write follows.
   // Every save recomputes the exam's share, so it follows the other weights.
-  const commit = async (edited: GradeItem[], bestNow: number | undefined = best) => {
-    const next = withAutoExam(edited, bestNow);
+  const commit = async (edited: GradeItem[], capNow: number | undefined = cap) => {
+    const next = withAutoExam(edited, capNow);
     setItems(next);
     lastSaved.current = next;
     try {
@@ -222,10 +222,10 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
     commit([...items, added]);
   };
 
-  // Changing how many assignments count moves the exam's share with it.
-  const saveBest = async (next: number | undefined) => {
+  // Changing what the assignments can add moves the exam's share with it.
+  const saveCap = async (next: number | undefined) => {
     try {
-      await save({ gradeBest: next ?? null } as Parameters<typeof save>[0]);
+      await save({ gradeCap: next ?? null } as Parameters<typeof save>[0]);
       await commit(items, next);
     } catch {
       toast.error("Could not save that.");
@@ -321,27 +321,27 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
             </div>
             <span className="gp-meta-note">counts this course toward the semester average</span>
             {assignmentCount > 1 && (
-              <div className="gp-meta-set gp-meta-best">
-                <label htmlFor="gp-best">Counts best</label>
+              <div className="gp-meta-set">
+                <label htmlFor="gp-cap">Assignments count up to</label>
                 <input
-                  id="gp-best"
+                  id="gp-cap"
                   className="gp-meta-input"
                   type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={assignmentCount}
-                  step={1}
-                  key={`best-${best ?? "all"}`}
-                  defaultValue={best ?? ""}
+                  inputMode="decimal"
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  key={`cap-${cap ?? "all"}`}
+                  defaultValue={cap ?? ""}
                   placeholder="all"
                   onKeyDown={blurOnEnter}
                   onBlur={(e) => {
-                    const n = parseNumber(e.target.value, assignmentCount);
-                    const next = n && n >= 1 && n < assignmentCount ? Math.round(n) : undefined;
-                    if (next !== best) saveBest(next);
+                    const n = parseNumber(e.target.value, 100);
+                    const next = n && n > 0 ? n : undefined;
+                    if (next !== cap) saveCap(next);
                   }}
                 />
-                <span className="gp-meta-of">of {assignmentCount} assignments</span>
+                <span className="gp-meta-of">%</span>
               </div>
             )}
           </div>
@@ -454,7 +454,7 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
                   />
 
                   {dropped.has(item.id) ? (
-                    <span className="gp-dropped" title={`Only the best ${best} assignments count`}>
+                    <span className="gp-dropped" title={`Assignments count up to ${cap}%, best marks first`}>
                       not counted
                     </span>
                   ) : (

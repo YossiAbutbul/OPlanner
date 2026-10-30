@@ -308,7 +308,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         await updateCourseMeta({ year, semester: key, course: p.course }, (meta) => ({
           gradeItems: withAutoExam(
             applyWeights(meta.gradeItems, p.weights ?? [], () => crypto.randomUUID()),
-            meta.gradeBest
+            meta.gradeCap
           ),
         }));
       } catch (e) {
