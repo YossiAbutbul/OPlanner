@@ -4,6 +4,7 @@ import { lsCache } from "./useLocalStorageCache";
 import { COURSE_META_EVENT, courseMetaCacheKey, type CourseMetaEventDetail } from "./useCourseMeta";
 import { fetchCourseMeta, normalizeCourseMeta } from "../services/courseMeta";
 import { semesterGpa, summarize } from "../utility/grades";
+import { countedRows } from "../utility/gradeSheet";
 import type { CourseInfo, CourseMeta } from "../types/models";
 
 export interface CourseGrade {
@@ -86,7 +87,7 @@ export const useSemesterGrades = (year: number, semester: string, courses: Cours
     () =>
       courses.map((c) => {
         const meta = metas[c.name];
-        const s = summarize(meta?.gradeItems ?? []);
+        const s = summarize(countedRows(meta?.gradeItems ?? [], meta?.gradeBest).counted);
         return {
           course: c.name,
           grade: s.final ?? s.soFar,

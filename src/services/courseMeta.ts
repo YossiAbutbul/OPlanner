@@ -106,6 +106,9 @@ export const normalizeCourseMeta = (data: unknown): CourseMeta => {
   const credits = normalizeNumber(d.credits, 0, MAX_CREDITS);
   if (credits !== undefined) meta.credits = credits;
 
+  const gradeBest = normalizeNumber(d.gradeBest, 1, MAX_GRADE_ITEMS);
+  if (gradeBest !== undefined && Number.isInteger(gradeBest)) meta.gradeBest = gradeBest;
+
   return meta;
 };
 
@@ -150,6 +153,7 @@ const normalizeGradeItems = (data: unknown): GradeItem[] | undefined => {
       const score = normalizeNumber(i.score, 0, 100);
       if (score !== undefined) item.score = score;
       if (i.manual === true) item.manual = true;
+      if (i.fixedWeight === true) item.fixedWeight = true;
       return item;
     });
   return items;

@@ -180,11 +180,14 @@ const semesterData = (uid: string, year: number, semester: string) => {
     const snap = await db().doc(`${base}/${course}`).get();
     const tasks = (await loadTasks()).filter((t) => t.course === course);
     const skips = snap.get("gradeSkips");
-    return gradeSheetView(
+    const best = snap.get("gradeBest");
+    const view = gradeSheetView(
       snap.get("gradeItems"),
       tasks,
       Array.isArray(skips) ? skips.filter((k): k is string => typeof k === "string") : []
     );
+    // "Only the best N assignments count": the exam takes what those leave.
+    return typeof best === "number" && Number.isInteger(best) && best > 0 ? { ...view, countsBest: best } : view;
   };
 
   return { loadCourses, loadTasks, loadTimeBlocks, loadOtherTasks, loadGradeSheet };

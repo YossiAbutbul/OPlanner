@@ -8,6 +8,8 @@ import {
   applyWeights,
   orderSheet,
   FINAL_SKIP,
+  withAutoExam,
+  countedRows,
   sheetFromTasks,
 } from "./gradeSheet";
 import type { GradeItem } from "../types/models";
@@ -315,6 +317,14 @@ describe("applyWeights", () => {
     ]);
   });
 
+  it("keeps an exam weight the student gave off auto", () => {
+    const out = applyWeights(sheet, [
+      { label: 'מטלה 01 (ממ"ן)', weight: 10 },
+      { label: "בחינת גמר", weight: 70 },
+    ], ids());
+    expect(out[1]).toMatchObject({ weight: 70, fixedWeight: true });
+  });
+
   it("matches an assignment by its number and leaves blank rows alone", () => {
     const out = applyWeights(sheet, [{ label: "ממן 1", weight: 15 }, { label: "בחינת גמר", weight: null }], ids());
     expect(out.map((i) => i.weight)).toEqual([15, 0]);
@@ -346,6 +356,56 @@ describe("orderSheet", () => {
       "Quiz",
       "בחינת גמר",
     ]);
+  });
+});
+
+describe("withAutoExam", () => {
+  const sheet = (weights: number[], exam = 0, fixed = false): GradeItem[] => [
+    ...weights.map((w, i) => ({ id: `a${i}`, label: `מטלה 0${i + 1}`, weight: w })),
+    { id: "x", label: "Final exam", weight: exam, ...(fixed ? { fixedWeight: true } : {}) },
+  ];
+
+  it("gives the exam what the assignments leave", () => {
+    expect(withAutoExam(sheet([4, 4, 4, 4, 4])).at(-1)!.weight).toBe(80);
+  });
+
+  it("moves a skipped assignment's share onto the exam", () => {
+    expect(withAutoExam(sheet([4, 4, 4, 0, 0])).at(-1)!.weight).toBe(88);
+  });
+
+  it("waits until some other row has a weight", () => {
+    const s = sheet([0, 0, 0]);
+    expect(withAutoExam(s)).toBe(s);
+  });
+
+  it("leaves the exam what the best N leave when only they count", () => {
+    expect(withAutoExam(sheet([4, 4, 4, 4, 4]), 3).at(-1)!.weight).toBe(88);
+  });
+
+  it("leaves an exam weight the student typed", () => {
+    expect(withAutoExam(sheet([4, 4], 70, true)).at(-1)!.weight).toBe(70);
+  });
+});
+
+describe("countedRows", () => {
+  const rows = (scores: (number | undefined)[]): GradeItem[] => [
+    ...scores.map((s, i) => ({ id: `a${i + 1}`, label: `מטלה 0${i + 1}`, weight: 4, ...(s === undefined ? {} : { score: s }) })),
+    { id: "x", label: "Final exam", weight: 88 },
+  ];
+
+  it("counts every row without a best-N rule", () => {
+    expect(countedRows(rows([90, 80]), undefined).dropped.size).toBe(0);
+  });
+
+  it("keeps the best marks and drops the rest", () => {
+    const { dropped } = countedRows(rows([70, 95, 60, 85, undefined]), 3);
+    expect([...dropped].sort()).toEqual(["a3", "a5"]);
+  });
+
+  it("holds open places for unmarked assignments until N are marked", () => {
+    const { counted, dropped } = countedRows(rows([90, undefined, undefined, undefined, undefined]), 3);
+    expect(counted.map((i) => i.id)).toEqual(["a1", "a2", "a3", "x"]);
+    expect([...dropped].sort()).toEqual(["a4", "a5"]);
   });
 });
 

@@ -73,6 +73,9 @@ export interface GradeItem {
   // Added by the student with "Add item" rather than taken from the import.
   // Kept through every sync with the calendar, even while still blank.
   manual?: boolean;
+  // The exam row normally takes whatever weight the other rows leave (see
+  // withAutoExam); true once the student typed its weight themselves.
+  fixedWeight?: boolean;
 }
 
 // Per-course exam tracker: a checkbox grid of exams (rows) × questions
@@ -94,6 +97,9 @@ export interface CourseMeta {
   // utility/gradeSheet. Without this the next visit adds them straight back.
   gradeSkips?: string[];    // max 100
   credits?: number;         // how much this course counts toward the GPA
+  // How many assignments count toward the grade, best marks first ("the best
+  // 3 of 5"). Unset: every assignment counts.
+  gradeBest?: number;
 }
 
 // Course-level metadata returned by getAllYearsAndSemesters().

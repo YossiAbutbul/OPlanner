@@ -319,6 +319,21 @@
   color: var(--label-4);
 }
 
+/* An assignment outside the best N: still on the sheet, out of the grade. */
+.gp-item-dropped .gp-weight,
+.gp-item-dropped .gp-name,
+.gp-item-dropped .gp-score {
+  opacity: 0.45;
+}
+
+.gp-dropped {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--label-3);
+  white-space: nowrap;
+}
+
 /* What a scored row adds to the course grade, in points. */
 .gp-points {
   flex-shrink: 0;
@@ -507,6 +522,11 @@
   color: var(--label);
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+.gp-meta-of {
+  font-size: var(--text-sm);
+  color: var(--label-3);
 }
 
 .gp-meta-note {

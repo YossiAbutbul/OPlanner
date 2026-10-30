@@ -210,10 +210,20 @@ export const applyWeights = (
       next.find((i) => i.label.trim() === label) ??
       next.find((i) => assignmentKey(i.label) === assignmentKey(label));
     if (hit) {
-      if (r.weight !== null) hit.weight = r.weight;
+      if (r.weight !== null && r.weight !== hit.weight) {
+        hit.weight = r.weight;
+        // A weight given for the exam is the student's own, not the remainder.
+        if (looksLikeFinal(hit.label)) hit.fixedWeight = true;
+      }
     } else {
       next.push({ id: makeId(), label, weight: r.weight ?? 0 });
     }
+  }
+  // An exam weight that is just the remainder stays on auto.
+  const exam = next.find((i) => i.fixedWeight && looksLikeFinal(i.label));
+  if (exam) {
+    const others = next.reduce((n, i) => (i === exam ? n : n + i.weight), 0);
+    if (Math.abs(100 - others - exam.weight) < 0.05) delete exam.fixedWeight;
   }
   return next;
 };
@@ -247,3 +257,48 @@ export const orderSheet = <T extends { label: string }>(items: T[]): T[] => {
     })
     .map(({ item }) => item);
 };
+
+/**
+ * The rows that count toward the grade when a course counts only its best
+ * `best` assignments (the Open University's "the highest marks up to the
+ * set weight"). Marked assignments are taken best first; while fewer than
+ * `best` are marked, unmarked ones fill the open places, in order, as weight
+ * still to come. The exam and the rest always count. `dropped` holds the ids
+ * that don't. With no `best`, or at least that many assignments, every row
+ * counts.
+ */
+export const countedRows = (
+  items: GradeItem[],
+  best?: number
+): { counted: GradeItem[]; dropped: Set<string> } => {
+  const assignments = items.filter((i) => !looksLikeFinal(i.label));
+  if (!best || best >= assignments.length) return { counted: items, dropped: new Set() };
+  const marked = assignments
+    .filter((i) => typeof i.score === "number")
+    .sort((a, b) => b.score! - a.score!)
+    .slice(0, best);
+  const open = assignments.filter((i) => typeof i.score !== "number").slice(0, best - marked.length);
+  const keep = new Set([...marked, ...open].map((i) => i.id));
+  const dropped = new Set(assignments.filter((i) => !keep.has(i.id)).map((i) => i.id));
+  return { counted: items.filter((i) => !dropped.has(i.id)), dropped };
+};
+
+/**
+ * The exam takes whatever the counted assignments leave: 100 minus their
+ * weights. Five assignments at 4% leave it 80%; a course counting the best
+ * 3 leaves it 88%; an assignment at 0 (skipped) hands its share over too.
+ * Applies only once some other row has a weight, and never to an exam weight
+ * the student typed.
+ */
+export const withAutoExam = (items: GradeItem[], best?: number): GradeItem[] => {
+  const exam = items.find((i) => looksLikeFinal(i.label));
+  if (!exam || exam.fixedWeight) return items;
+  const rest = items.filter((i) => i !== exam).map((i) => i.weight);
+  // With best-N, the heaviest N assignments are the most the sheet can count.
+  const counted = best && best < rest.length ? [...rest].sort((a, b) => b - a).slice(0, best) : rest;
+  const others = counted.reduce((n, w) => n + w, 0);
+  if (others <= 0) return items;
+  const weight = Math.max(0, Math.round((100 - others) * 10) / 10);
+  return weight === exam.weight ? items : items.map((i) => (i === exam ? { ...i, weight } : i));
+};
+

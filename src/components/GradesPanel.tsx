@@ -12,6 +12,8 @@ import {
   orderSheet,
   reconcileWithImport,
   sheetFromTasks,
+  withAutoExam,
+  countedRows,
 } from "../utility/gradeSheet";
 import type { TaskLike } from "../utility/gradeSheet";
 import { FINAL_TASK_ID, isImportedTaskId } from "../services/homework";
@@ -113,13 +115,28 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
     // the import, exam row included.
     const reconciled = reconcileWithImport(stored, taskList, () => crypto.randomUUID(), skip);
     // Imports append, so a later one can leave 03 after 05: read in order.
-    setItems(orderSheet(reconciled ?? stored));
+    setItems(withAutoExam(orderSheet(reconciled ?? stored), meta.gradeBest));
     // taskKey stands in for taskList: same names and dates, same sheet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [meta.gradeItems, meta.gradeSkips, taskKey]);
+  }, [meta.gradeItems, meta.gradeSkips, meta.gradeBest, taskKey]);
 
-  const summary = useMemo(() => summarize(items), [items]);
-  const ungraded = items.filter((i) => i.score === undefined).length;
+  // A course that counts only its best N assignments: the rest are shown
+  // but left out of every figure.
+  const best = meta.gradeBest;
+  const { counted, dropped } = useMemo(() => countedRows(items, best), [items, best]);
+  const summary = useMemo(() => summarize(counted), [counted]);
+  const assignmentCount = items.filter((i) => !looksLikeFinal(i.label)).length;
+  // What the exam would take on auto, so blurring its field unchanged
+  // doesn't count as typing a weight.
+  const autoExamWeight = useMemo(() => {
+    const exam = items.find((i) => looksLikeFinal(i.label));
+    return exam
+      ? withAutoExam(items.map((i) => (i === exam ? { ...i, fixedWeight: false } : i)), best).find(
+          (i) => i.id === exam.id
+        )!.weight
+      : 0;
+  }, [items, best]);
+  const ungraded = counted.filter((i) => i.score === undefined).length;
   // No weights at all is where an imported sheet starts: a prompt, not an
   // error. Some weights that miss 100 is the error.
   const weightsUnset = items.length > 0 && summary.totalWeight === 0;
@@ -131,7 +148,9 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
   const open = Math.max(0, 100 - summary.gradedWeight);
 
   // Optimistic: the sheet re-renders from local state, the write follows.
-  const commit = async (next: GradeItem[]) => {
+  // Every save recomputes the exam's share, so it follows the other weights.
+  const commit = async (edited: GradeItem[], bestNow: number | undefined = best) => {
+    const next = withAutoExam(edited, bestNow);
     setItems(next);
     lastSaved.current = next;
     try {
@@ -201,6 +220,16 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
     const added = { ...row("", 0), manual: true };
     focusId.current = added.id;
     commit([...items, added]);
+  };
+
+  // Changing how many assignments count moves the exam's share with it.
+  const saveBest = async (next: number | undefined) => {
+    try {
+      await save({ gradeBest: next ?? null } as Parameters<typeof save>[0]);
+      await commit(items, next);
+    } catch {
+      toast.error("Could not save that.");
+    }
   };
 
   const saveCredits = async (credits: number) => {
@@ -291,6 +320,30 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
               />
             </div>
             <span className="gp-meta-note">counts this course toward the semester average</span>
+            {assignmentCount > 1 && (
+              <div className="gp-meta-set gp-meta-best">
+                <label htmlFor="gp-best">Counts best</label>
+                <input
+                  id="gp-best"
+                  className="gp-meta-input"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={assignmentCount}
+                  step={1}
+                  key={`best-${best ?? "all"}`}
+                  defaultValue={best ?? ""}
+                  placeholder="all"
+                  onKeyDown={blurOnEnter}
+                  onBlur={(e) => {
+                    const n = parseNumber(e.target.value, assignmentCount);
+                    const next = n && n >= 1 && n < assignmentCount ? Math.round(n) : undefined;
+                    if (next !== best) saveBest(next);
+                  }}
+                />
+                <span className="gp-meta-of">of {assignmentCount} assignments</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -339,7 +392,7 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
           <ul className="gp-list">
             {items.map((item) => (
               <li key={item.id}>
-                <div className="gp-item">
+                <div className={`gp-item${dropped.has(item.id) ? " gp-item-dropped" : ""}`}>
                   <span className="gp-item-weight">
                     <input
                       className="gp-weight"
@@ -357,7 +410,23 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
                         )
                       }
                       onKeyDown={blurOnEnter}
-                      onBlur={(e) => patchItem(item.id, { weight: parseNumber(e.target.value, 100) ?? 0 })}
+                      onBlur={(e) => {
+                        const typed = parseNumber(e.target.value, 100);
+                        if (looksLikeFinal(item.label)) {
+                          // The exam follows the other rows on its own. Typing a
+                          // different weight keeps that number; clearing the
+                          // field hands it back to the rule.
+                          if (typed === undefined) {
+                            const { fixedWeight: _fixed, ...rest } = item;
+                            void _fixed;
+                            commit(items.map((i) => (i.id === item.id ? rest : i)));
+                          } else if (typed !== autoExamWeight || item.fixedWeight) {
+                            patchItem(item.id, { weight: typed, fixedWeight: typed !== autoExamWeight });
+                          }
+                          return;
+                        }
+                        patchItem(item.id, { weight: typed ?? 0 });
+                      }}
                     />
                     <span className="gp-weight-unit" aria-hidden="true">%</span>
                   </span>
@@ -384,10 +453,17 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
                     onBlur={(e) => patchItem(item.id, { label: e.target.value.trim() })}
                   />
 
-                  {item.score !== undefined && item.weight > 0 && (
-                    <span className="gp-points" title="Points this item adds to the course grade">
-                      +{formatGrade((item.score * item.weight) / 100)}
+                  {dropped.has(item.id) ? (
+                    <span className="gp-dropped" title={`Only the best ${best} assignments count`}>
+                      not counted
                     </span>
+                  ) : (
+                    item.score !== undefined &&
+                    item.weight > 0 && (
+                      <span className="gp-points" title="Points this item adds to the course grade">
+                        +{formatGrade((item.score * item.weight) / 100)}
+                      </span>
+                    )
                   )}
 
                   <input
