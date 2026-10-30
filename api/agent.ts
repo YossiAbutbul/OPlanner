@@ -265,7 +265,13 @@ const runTool = async (
           ? (await data.loadCourses()).find((c) => c.name.toLowerCase() === course.toLowerCase())
           : undefined;
       if (!match) return { content: `No course named "${String(course)}". Use list_courses.`, isError: true };
-      return { content: JSON.stringify(await data.loadGradeSheet(match.name)) };
+      const sheet = await data.loadGradeSheet(match.name);
+      return {
+        content: JSON.stringify({
+          ...sheet,
+          next: "To let the student enter or change weights, call propose_grade_weights now with these rows and their current weights.",
+        }),
+      };
     }
 
     case "propose_grade_weights": {
