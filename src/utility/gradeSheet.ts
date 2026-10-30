@@ -210,3 +210,33 @@ export const applyWeights = (
   }
   return next;
 };
+
+// The number an assignment row carries ("מטלה 03 (ממ"ן)" -> 3), or null.
+const assignmentNumber = (label: string): number | null => {
+  if (!isAssignmentName(label)) return null;
+  const digits = label.match(/\d+/);
+  return digits ? parseInt(digits[0], 10) : null;
+};
+
+/**
+ * The order a sheet reads in: numbered assignments by number (01, 02, 03,
+ * whatever order the imports added them in), then the rows the student
+ * added in their own order, then the final. Stable, so rows that tie keep
+ * their place.
+ */
+export const orderSheet = <T extends { label: string }>(items: T[]): T[] => {
+  const rank = (i: T) => (looksLikeFinal(i.label) ? 2 : assignmentNumber(i.label) !== null ? 0 : 1);
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => {
+      const ra = rank(a.item);
+      const rb = rank(b.item);
+      if (ra !== rb) return ra - rb;
+      if (ra === 0) {
+        const d = assignmentNumber(a.item.label)! - assignmentNumber(b.item.label)!;
+        if (d !== 0) return d;
+      }
+      return a.index - b.index;
+    })
+    .map(({ item }) => item);
+};

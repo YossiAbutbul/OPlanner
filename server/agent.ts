@@ -531,6 +531,26 @@ export interface GradeSheetView {
 const ASSIGNMENT_NAME = /^(ממ\s*["״']?\s*[ןנחםמ]|מטלה|אופל|maman|mamah|mamach|assignment)/i;
 export const FINAL_TASK_ID = "final-exam";
 
+const FINAL_NAME = /^final|^exam|בחינ|מבחן/i;
+const rowNumber = (label: string) => {
+  const d = ASSIGNMENT_NAME.test(label.trim()) ? label.match(/\d+/) : null;
+  return d ? parseInt(d[0], 10) : null;
+};
+
+// The order the app's Grades tab shows (utility/gradeSheet orderSheet):
+// numbered assignments by number, then other rows, then the final.
+const orderRows = <T extends { label: string }>(rows: T[]): T[] => {
+  const rank = (r: T) => (FINAL_NAME.test(r.label.trim()) ? 2 : rowNumber(r.label) !== null ? 0 : 1);
+  return rows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) =>
+      rank(a.row) - rank(b.row) ||
+      (rank(a.row) === 0 ? rowNumber(a.row.label)! - rowNumber(b.row.label)! : 0) ||
+      a.index - b.index
+    )
+    .map(({ row }) => row);
+};
+
 /**
  * The sheet as stored, or, for a course with none yet, the rows the app
  * would start it with: its imported assignments in date order, then the final.
@@ -548,7 +568,7 @@ export const gradeSheetView = (
         weight: typeof r.weight === "number" && Number.isFinite(r.weight) ? r.weight : 0,
         ...(typeof r.score === "number" && Number.isFinite(r.score) ? { score: r.score } : {}),
       }));
-    return { saved: true, rows, total: Math.round(rows.reduce((n, r) => n + r.weight, 0) * 10) / 10 };
+    return { saved: true, rows: orderRows(rows), total: Math.round(rows.reduce((n, r) => n + r.weight, 0) * 10) / 10 };
   }
   const seen = new Set<string>();
   const assignments = tasks

@@ -5,7 +5,7 @@ import { useToast } from "../context/ToastContext";
 import RollingNumber from "./RollingNumber";
 import { MAX_CREDITS, MAX_GRADE_ITEMS, MAX_GRADE_LABEL_LEN } from "../services/courseMeta";
 import { fillUnweighted, formatGrade, summarize } from "../utility/grades";
-import { assignmentKey, reconcileWithImport, sheetFromTasks } from "../utility/gradeSheet";
+import { assignmentKey, orderSheet, reconcileWithImport, sheetFromTasks } from "../utility/gradeSheet";
 import type { TaskLike } from "../utility/gradeSheet";
 import { FINAL_TASK_ID, isImportedTaskId } from "../services/homework";
 import type { CourseTab, GradeItem, HomeworkEntry } from "../types/models";
@@ -115,7 +115,8 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
     // the import. A cleared sheet stays cleared when the course has nothing
     // imported to put in it.
     const reconciled = reconcileWithImport(stored, taskList, () => crypto.randomUUID(), skip);
-    setItems(reconciled ?? stored);
+    // Imports append, so a later one can leave 03 after 05: read in order.
+    setItems(orderSheet(reconciled ?? stored));
     // taskKey stands in for taskList: same names and dates, same sheet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meta.gradeItems, meta.gradeSkips, taskKey]);

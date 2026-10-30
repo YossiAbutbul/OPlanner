@@ -6,6 +6,7 @@ import {
   mergeNewAssignments,
   reconcileWithImport,
   applyWeights,
+  orderSheet,
   sheetFromTasks,
 } from "./gradeSheet";
 import type { GradeItem } from "../types/models";
@@ -303,6 +304,29 @@ describe("applyWeights", () => {
   it("builds a sheet when the course has none", () => {
     const out = applyWeights(undefined, [{ label: "Project", weight: 40 }, { label: "Exam", weight: null }], ids());
     expect(out.map((i) => [i.label, i.weight])).toEqual([["Project", 40], ["Exam", 0]]);
+  });
+});
+
+describe("orderSheet", () => {
+  it("puts assignments in number order, the student's rows next, the final last", () => {
+    const rows = [
+      { label: 'מטלה 01 (ממ"ן)' },
+      { label: "בחינת גמר" },
+      { label: 'מטלה 05 (ממ"ן)' },
+      { label: "Lab" },
+      { label: 'מטלה 03 (ממ"ן)' },
+      { label: 'מטלה 02 (ממ"ן)' },
+      { label: "Quiz" },
+    ];
+    expect(orderSheet(rows).map((r) => r.label)).toEqual([
+      'מטלה 01 (ממ"ן)',
+      'מטלה 02 (ממ"ן)',
+      'מטלה 03 (ממ"ן)',
+      'מטלה 05 (ממ"ן)',
+      "Lab",
+      "Quiz",
+      "בחינת גמר",
+    ]);
   });
 });
 

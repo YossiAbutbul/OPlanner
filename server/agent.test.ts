@@ -405,6 +405,26 @@ describe("gradeSheetView", () => {
     });
   });
 
+  it("lists a saved sheet's assignments by number, the final last", () => {
+    const view = gradeSheetView(
+      [
+        { label: 'מטלה 01 (ממ"ן)', weight: 20 },
+        { label: 'מטלה 05 (ממ"ן)', weight: 70 },
+        { label: "בחינת גמר", weight: 0 },
+        { label: 'מטלה 03 (ממ"ן)', weight: 0 },
+        { label: 'מטלה 02 (ממ"ן)', weight: 10 },
+      ],
+      []
+    );
+    expect(view.rows.map((r) => r.label)).toEqual([
+      'מטלה 01 (ממ"ן)',
+      'מטלה 02 (ממ"ן)',
+      'מטלה 03 (ממ"ן)',
+      'מטלה 05 (ממ"ן)',
+      "בחינת גמר",
+    ]);
+  });
+
   it("starts an unsaved sheet from imported assignments and the final", () => {
     const view = gradeSheetView(undefined, [
       { id: "imp_2026-12-01_b", name: 'מטלה 02 (ממ"ן)', dueDate: "2026-12-01" },
