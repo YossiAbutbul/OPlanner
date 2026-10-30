@@ -482,16 +482,16 @@
 }
 
 /* --- Settings ---
-   A grouped list at the foot of the summary column, where it would
-   otherwise run out before the list beside it: label on the left, the value
+   A grouped list right under the summary, following it rather than pinned
+   to the column's foot (which left a hole as the list beside it grew):
+   label on the left, the value
    on the right as plain text that lights up when edited, a hairline between
    rows inset to the text. */
 .gp-settings {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  margin-top: auto;
-  padding-top: 0.9rem;
+  margin-top: 0.35rem;
 }
 
 .gp-settings-group {
