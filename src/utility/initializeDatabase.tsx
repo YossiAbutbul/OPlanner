@@ -203,6 +203,10 @@ export const addCourse = async (
 
     const coursesCollection = collection(db, `${base}/years/${year}/semesters/${semester}/courses`);
     const courseDoc = doc(coursesCollection, course);
+    // Only ever create. Re-importing a calendar (or adding a name that's
+    // already there) used to overwrite the doc and wipe the course's links,
+    // notes, exam table, grade sheet, colour and final date.
+    if ((await getDoc(courseDoc)).exists()) return true;
     await setDoc(courseDoc, { tasks: [] });
     return true;
   } catch (error) {

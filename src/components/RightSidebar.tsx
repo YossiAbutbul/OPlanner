@@ -17,7 +17,7 @@ import WaitlistPanel from "./RightSidebar/WaitlistPanel";
 import DayPanel from "./RightSidebar/DayPanel";
 import RemindersModal from "./RemindersModal";
 import { courseColor } from "../utility/courseColor";
-import { toIso } from "../utility/dayCalendar";
+import { blockCourseName, toIso } from "../utility/dayCalendar";
 import type { HomeworkEntry, TimeBlock, YearTreeData } from "../types/models";
 import "../css/RightSidebar.css";
 
@@ -236,8 +236,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     if (selectedYear === null || !selectedSemester) return b.color ?? "#7c4dff";
     const y = years.find((yr) => yr.year === selectedYear);
     const s = y?.semesters.find((ss) => ss.name === selectedSemester || ss.key === selectedSemester);
-    const c = s?.courses.find((cc) => cc.name === b.courseId);
-    return courseColor(b.courseId, c?.color);
+    const name = blockCourseName(b.courseId)!;
+    const c = s?.courses.find((cc) => cc.name === name);
+    return courseColor(name, c?.color);
   };
 
   // "Semester B" (or "2027 · Semester A" for another year) on a task from

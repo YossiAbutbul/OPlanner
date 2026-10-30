@@ -4,6 +4,7 @@ import DatePicker from "./DatePicker";
 import TimePicker from "./TimePicker";
 import NotesEditor from "./NotesEditor";
 import { TimeBlock } from "../context/TimeBlockContext";
+import { blockCourseName } from "../utility/dayCalendar";
 
 interface Props {
   isOpen: boolean;
@@ -67,15 +68,19 @@ const TimeBlockModal: React.FC<Props> = ({
     setEndTime(isAll ? curEnd : initEnd);
     setColor(initial?.color ?? DEFAULT_BLOCK_COLOR);
     setNotes(initial?.notes ?? "");
-    setCourseChoice(initial?.courseId ?? defaultCourse ?? NO_COURSE);
+    setCourseChoice(blockCourseName(initial?.courseId) ?? defaultCourse ?? NO_COURSE);
   }, [isOpen, initial, defaultCourse]);
 
   const canSave = !!title.trim() && !!date && (allDay || (!!startTime && !!endTime && startTime < endTime));
 
   const handleSave = async () => {
     if (!canSave) return;
+    // An unchanged course keeps its stored link as is: an imported block's
+    // "year|semester|course" pins the term, and the name alone would lose it.
+    const keepLink =
+      initial?.courseId && courseChoice === blockCourseName(initial.courseId) ? initial.courseId : undefined;
     const resolvedCourse =
-      availableCourses ? courseChoice : (defaultCourse ?? initial?.courseId);
+      keepLink ?? (availableCourses ? courseChoice : (defaultCourse ?? initial?.courseId));
     await onSave({
       id: initial?.id ?? "",
       title: title.trim(),

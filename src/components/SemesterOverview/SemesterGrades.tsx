@@ -35,12 +35,14 @@ const SemesterGrades: React.FC<Props> = ({ byCourse, courses, onSelectCourse }) 
             >
               <span style={{ width: `${c.gradedWeight}%` }} />
             </span>
-            <span className="course-stat-meta">
-              {c.grade === null
-                ? "No marks yet"
-                : c.complete
-                  ? "Final grade"
-                  : `So far · ${Math.round(c.gradedWeight)}% graded`}
+            <span className={`course-stat-meta${c.weightOff !== null ? " is-error" : ""}`}>
+              {c.weightOff !== null
+                ? `Weights add up to ${formatGrade(c.weightOff)}%`
+                : c.grade === null
+                  ? "No marks yet"
+                  : c.complete
+                    ? "Final grade"
+                    : `So far · ${Math.round(c.gradedWeight)}% graded`}
             </span>
           </span>
           <span className={`course-stat-pct course-stat-grade${c.grade === null ? " is-empty" : ""}`}>

@@ -182,7 +182,7 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const overdue = homework.filter((entry) => {
-      if (entry.status !== "PENDING") return false;
+      if (entry.status !== "PENDING" || entry.ignoreOverdue) return false;
       return isOverdue(entry.dueDate, entry.endTime ?? entry.startTime, now);
     });
 

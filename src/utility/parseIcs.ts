@@ -67,6 +67,13 @@ const extractCourse = (description: string) => {
   };
 };
 
+// An academic date names its term rather than a course: "סתיו תשפ"ז (א2027)".
+const TERM_RE = /\(([אבג])(\d{4})\)/;
+const extractTerm = (description: string) => {
+  const m = description.slice(0, 500).match(TERM_RE);
+  return m ? { semester: SEM_MAP[m[1]] || null, year: parseInt(m[2], 10) } : { semester: null, year: null };
+};
+
 const extractTaskNumber = (description: string) => {
   const m = description.match(/מטלה\s*(\d+)/);
   return m ? m[1] : null;
@@ -114,7 +121,10 @@ export const parseIcs = (raw: string): IcsEvent[] => {
 
     if (!startDate) continue;
 
-    const { course, courseNumber, semester, year } = extractCourse(description);
+    const parsed = extractCourse(description);
+    const { course, courseNumber } = parsed;
+    // No course: fall back to the term the event names, if any.
+    const { semester, year } = parsed.course ? parsed : extractTerm(description);
     events.push({
       summary,
       description,

@@ -89,6 +89,7 @@ export function useSemesterStats(
         const completed = list.filter((t) => t.status === "COMPLETED").length;
         const isOver = (t: HomeworkEntry) =>
           t.status === "PENDING" &&
+          !t.ignoreOverdue &&
           isOverdue(t.dueDate, t.endTime ?? t.startTime);
         const overdue = list.filter(isOver).length;
         // Overdue tasks move out of pending — they're counted as overdue, not both.

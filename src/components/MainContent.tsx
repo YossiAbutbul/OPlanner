@@ -109,7 +109,7 @@ const MainContent: React.FC<MainContentProps> = ({
   const courseTotals = useMemo(() => {
     const completed = filteredHomework.filter((t) => t.status === "COMPLETED").length;
     const overdue = filteredHomework.filter(
-      (t) => t.status === "PENDING" && isOverdue(t.dueDate, t.endTime ?? t.startTime)
+      (t) => t.status === "PENDING" && !t.ignoreOverdue && isOverdue(t.dueDate, t.endTime ?? t.startTime)
     ).length;
     const pending = filteredHomework.filter((t) => t.status === "PENDING").length - overdue;
     return { total: filteredHomework.length, completed, pending, overdue };

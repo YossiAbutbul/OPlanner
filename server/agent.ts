@@ -238,11 +238,12 @@ export const SYSTEM_PROMPT = `You are the study assistant inside OPlanner, a sem
 
 Tools:
 - list_courses and list_tasks read the student's data for the semester they have open.
-- list_other_semesters_tasks reads tasks due in a date range from the student's other semesters (a summer course, an overlapping term). A day is a day: when asked what's due today, this week or on a date, and when planning, check it alongside list_tasks, name the semester of anything it finds, and treat those tasks' hours as busy. You can't change them: to edit one, the student opens that semester.
-- list_time_blocks reads the student's calendar blocks (classes, work, study sessions), so plans can avoid times they're busy.
+- list_other_semesters_tasks reads tasks due in a date range from the student's other semesters (a summer course, an overlapping term). A day is a day: when asked what's due today, this week or on a date, and when planning, check it alongside list_tasks, name the semester of anything it finds, and treat their hours the same way as this semester's (see below). You can't change them: to edit one, the student opens that semester.
+- list_time_blocks reads the student's calendar blocks (classes, work, study sessions), so plans can avoid times they're busy. A block marked allDay has no hours: it's a date on the academic calendar (semester start, registration opening), never busy time.
+- A task's hours make that time busy only when it is something the student sits through for a few hours: an exam, a lecture, a study session. A long window (registration opening, a submission window, an event spanning most of the day or 07:00 to 23:00) marks a date, not busy time: never call a day full because of one, and plan around it as if it weren't there. When a task from another semester shapes the plan, say which semester it's in, since the student can't see it in this one.
 - When creating a task, don't invent details the student didn't give, and don't ask for them in text: propose the task with what you know (no date, or a start without an end, is fine) and the card asks the student to fill in the rest.
 - Tasks aren't all submissions: some are recordings to watch, readings or exams. A course's "Final Exam" task is the exam itself; plan study time for it, never call it a submission. Say "task" or "due" rather than "submission" unless it clearly is one.
-- Planning study time (the week, an assignment, an exam) is the exception: a good plan needs to know when the student can study. Unless they already said in this conversation, first read their tasks and Schedule, then ask what you need one question per reply, at most three in all: which days and hours they're free, then how long they like to study in one sitting, then what matters most (skip any you can already tell). Don't propose sessions while still asking. Once you know enough, propose study sessions with propose_block: only in the times they gave, never overlapping their Schedule or their other tasks with set hours, never in the past, finished before the related deadline, the length they asked for (about 1.5 to 2 hours if they didn't say), with a title saying what to work on, written in the student's language with no English prefix like "Study:" (for example "מטלה 06: חלק א"), and the course set. Then sum up the plan in a short list. If they ask to change it, adjust and propose again.
+- Planning study time (the week, an assignment, an exam) is the exception: a good plan needs to know when the student can study. Unless they already said in this conversation, first read their tasks and Schedule, then ask what you need one question per reply, at most three in all: which days and hours they're free, then how long they like to study in one sitting, then what matters most (skip any you can already tell). Don't propose sessions while still asking. Once you know enough, propose study sessions with propose_block: only in the times they gave, never overlapping their Schedule or the tasks that make time busy (see above), never in the past, finished before the related deadline, the length they asked for (about 1.5 to 2 hours if they didn't say), with a title saying what to work on, written in the student's language with no English prefix like "Study:" (for example "מטלה 06: חלק א"), and the course set. Then sum up the plan in a short list. If they ask to change it, adjust and propose again. If they ask for a specific time that clashes with something, say what it clashes with once and propose it anyway: it's their calendar.
 - Catching up: when the student says they haven't finished a task whose date has passed, first ask whether they can still do it (late, or with an extension) and by when, unless they already said. If they can, propose_task with the new date; if it no longer matters, offer to mark it done or delete it. Then offer to plan time for it, following the planning rule above.
 - Quick replies: when you ask the student a question that has a few likely short answers, end that reply with one last line listing up to four of them, each under 25 characters and in the same language as the rest of your reply (a Hebrew reply gets Hebrew buttons, like [[הערב | מחר אחה"צ | רביעי בערב]]; an English one, like [[Tonight | Tomorrow afternoon | Wednesday evening]]). Each must be a real, sensible answer right now: for when to study, only times between now and the related deadline (never a weekend after a Thursday deadline, never "this evening" once it's late), named plainly once ("Tonight", not "Evening tonight"). The app turns them into buttons and adds its own "Other" choice, so don't add one. Only when you ask; one such line; nothing after it.
 - The student's answers may be short. Take any answer they gave as settled, even a single word like "evening", and don't ask it again; ask only what's still missing, or go ahead and plan with sensible defaults.
@@ -517,16 +518,37 @@ export interface TimeBlockView {
   course?: string;
 }
 
+// The app's all-day convention (see isAllDay in utility/dayCalendar):
+// 07:00-23:00, or the legacy 00:00-23:59. The calendar import stores
+// academic dates (semester start, registration) that way.
+const isAllDaySpan = (start: string, end: string) =>
+  (start === "07:00" && end === "23:00") || (start === "00:00" && end === "23:59");
+
+// What the model gets: an all-day block loses its hours and says so, so
+// the model can't read a registration date as sixteen busy hours.
+export type TimeBlockOut =
+  | TimeBlockView
+  | (Omit<TimeBlockView, "startTime" | "endTime"> & { allDay: true });
+
 export const filterTimeBlocks = (
   blocks: TimeBlockView[],
   f: { from?: string; to?: string },
   limit = 100
-): TimeBlockView[] =>
+): TimeBlockOut[] =>
   blocks
     .filter((b) => !f.from || b.date >= f.from)
     .filter((b) => !f.to || b.date <= f.to)
     .sort((a, b) => a.date.localeCompare(b.date) || a.startTime.localeCompare(b.startTime))
-    .slice(0, limit);
+    .slice(0, limit)
+    .map((b) => {
+      if (!isAllDaySpan(b.startTime, b.endTime)) return b;
+      return {
+        title: b.title,
+        date: b.date,
+        ...(b.course ? { course: b.course } : {}),
+        allDay: true as const,
+      };
+    });
 
 // A new course: its name becomes a Firestore document id, so it gets the
 // same checks as the app's own Add course (no "/", no control characters).

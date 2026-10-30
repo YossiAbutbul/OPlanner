@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  blockCourseName,
   capitalizeWords,
   daysLeft,
   fmtDate,
@@ -68,6 +69,12 @@ describe("dayCalendar pure helpers", () => {
     expect(snapMin(8)).toBe(15);
     expect(snapMin(22)).toBe(15);
     expect(snapMin(23)).toBe(30);
+  });
+
+  it("reads a block's course from either link shape", () => {
+    expect(blockCourseName("2027|Semester A|אלגוריתמים")).toBe("אלגוריתמים");
+    expect(blockCourseName("אלגוריתמים")).toBe("אלגוריתמים");
+    expect(blockCourseName(undefined)).toBeUndefined();
   });
 
   it("isAllDay covers explicit, legacy, and missing times", () => {

@@ -8,7 +8,9 @@ import { useToast } from "../context/ToastContext";
 import { initializeYear, addCourse } from "../utility/initializeDatabase";
 import { IMPORTED_TASK_PREFIX } from "../services/homework";
 import { isSafeSegment } from "../utility/firestorePath";
-import type { TimeBlock } from "../types/models";
+import { toIso } from "../utility/dayCalendar";
+import { academicHome, academicTask, importedStatus, lectureTask } from "../utility/importTasks";
+import type { ImportedTask } from "../utility/importTasks";
 import "../css/ImportCalendarModal.css";
 
 interface Props {
@@ -18,9 +20,9 @@ interface Props {
   onDone: () => void;
 }
 
-// What an event becomes. Assignments are tasks in their course; meetings
-// (lectures) are timed blocks in the Schedule; academic dates (semester
-// start/end, registration, no course) are all-day Schedule blocks.
+// What an event becomes. Everything is a task: assignments and lectures in
+// their course (lectures with their hours), academic dates (semester
+// start/end, registration) as all-day tasks with no course.
 type Group = "maman" | "mamach" | "meeting" | "academic" | "other";
 
 const groupOf = (e: IcsEvent): Group =>
@@ -31,55 +33,14 @@ const TASK_GROUPS: Group[] = ["maman", "mamach", "other"];
 const GROUPS: { key: Group; name: string; dest: string }[] = [
   { key: "maman", name: "Assignments", dest: "Tasks" },
   { key: "mamach", name: "Computer assignments", dest: "Tasks" },
-  { key: "meeting", name: "Lectures", dest: "Schedule" },
-  { key: "academic", name: "Academic dates", dest: "Schedule, all-day" },
+  { key: "meeting", name: "Lectures", dest: "Tasks, with hours" },
+  { key: "academic", name: "Academic dates", dest: "Tasks, no course" },
   { key: "other", name: "Other course events", dest: "Tasks" },
 ];
 
 const capitalizeWords = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
-// Short stable hash so re-importing the same event overwrites its block
-// instead of adding a second one.
-const hash = (s: string) => {
-  let h = 5381;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
-  return (h >>> 0).toString(36);
-};
-
-const plusHours = (time: string, hours: number) => {
-  const [h, m] = time.split(":").map(Number);
-  const total = Math.min(h * 60 + m + hours * 60, 23 * 60 + 59);
-  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
-};
-
-// "סתיו תשפ"ז (א2027)" -> "סתיו תשפ"ז"
-const seasonOf = (description: string) => description.replace(/\s*\([^)]*\)\s*$/, "").trim();
-
-const toBlock = (e: IcsEvent): TimeBlock => {
-  if (groupOf(e) === "academic") {
-    const season = seasonOf(e.description);
-    return {
-      id: `imp_${e.startDate}_ac_${hash(e.summary + e.description)}`,
-      date: e.startDate,
-      startTime: "07:00",
-      endTime: "23:00",
-      title: season ? `${e.summary} · ${season}` : e.summary || "Academic date",
-    };
-  }
-  const course = capitalizeWords((e.course ?? "").trim());
-  const start = e.startTime ?? "07:00";
-  return {
-    id: `imp_${e.startDate}_${start.replace(":", "")}_${hash(`${e.courseNumber ?? course}|${e.summary}`)}`,
-    date: e.startDate,
-    startTime: start,
-    endTime: e.endTime ?? (e.startTime ? plusHours(start, 2) : "23:00"),
-    title: course ? `${e.summary || "מפגש"} · ${course}` : e.summary || "מפגש",
-    ...(course && e.year && e.semester ? { courseId: `${e.year}|${e.semester}|${course}` } : {}),
-    ...(e.location ? { notes: e.location } : {}),
-  };
-};
 
 interface Result {
   tasks: number;
@@ -92,7 +53,7 @@ interface Result {
 
 const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone }) => {
   const { addHomework, getCourseTasks } = useHomework();
-  const { blocks: existingBlocks, saveBlock } = useTimeBlocks();
+  const { blocks: existingBlocks, removeBlock } = useTimeBlocks();
   const toast = useToast();
   const [selected, setSelected] = useState<Record<Group, boolean>>({
     maman: true,
@@ -176,16 +137,72 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
       groups.get(key)!.events.push(e);
     }
 
+    const today = toIso(new Date());
+    // Earlier imports put lectures and academic dates in the Schedule. Each
+    // task here carries its old block's id, so the block it replaces goes.
     const blockIds = new Set(existingBlocks.map((b) => b.id));
-    const addBlock = async (e: IcsEvent) => {
-      const block = toBlock(e);
-      if (blockIds.has(block.id)) {
+    const retireBlock = async (id: string) => {
+      if (!blockIds.has(id)) return;
+      try {
+        await removeBlock(id);
+        blockIds.delete(id);
+        blocks++;
+      } catch {
+        /* the task is in; a leftover block is harmless */
+      }
+    };
+
+    // One timed or all-day task, skipped when it's already there (by id, or
+    // by name and date for tasks made before ids were stable).
+    const addTimedTask = async (
+      t: ImportedTask,
+      year: number,
+      semester: string,
+      course: string,
+      have: { ids: Set<string>; keys: Set<string> }
+    ) => {
+      const key = `${t.name}|${t.dueDate}|${t.startTime}`;
+      if (have.ids.has(t.id) || have.keys.has(key)) {
         skipped++;
+        await retireBlock(t.id);
         return;
       }
-      await saveBlock(block);
-      blockIds.add(block.id);
-      blocks++;
+      try {
+        await addHomework(
+          t.id,
+          t.name,
+          t.dueDate,
+          importedStatus(t.dueDate, today),
+          year,
+          semester,
+          course,
+          // A lecture or date isn't something to fall behind on.
+          true,
+          undefined,
+          t.startTime,
+          t.endTime,
+          t.notes
+        );
+        have.ids.add(t.id);
+        have.keys.add(key);
+        tasks++;
+        await retireBlock(t.id);
+      } catch (err) {
+        failed++;
+        reasons.push(`${course === "reminders" ? "No course" : course} – ${t.name}: ${(err as Error).message}`);
+      }
+    };
+
+    const existingIn = async (year: number, semester: string, course: string) => {
+      try {
+        const list = await getCourseTasks(year, semester, course, true);
+        return {
+          ids: new Set(list.map((t) => t.id)),
+          keys: new Set(list.map((t) => `${t.name}|${t.dueDate}|${t.startTime ?? ""}`)),
+        };
+      } catch {
+        return { ids: new Set<string>(), keys: new Set<string>() };
+      }
     };
 
     for (const [, g] of groups) {
@@ -203,7 +220,11 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
         await addCourse(g.year, g.semester, g.course);
       }
 
-      for (const e of g.events.filter((x) => groupOf(x) === "meeting")) await addBlock(e);
+      const lectures = g.events.filter((x) => groupOf(x) === "meeting");
+      if (lectures.length) {
+        const have = await existingIn(g.year, g.semester, g.course);
+        for (const e of lectures) await addTimedTask(lectureTask(e, g.course), g.year, g.semester, g.course, have);
+      }
 
       const taskEvents = g.events.filter((x) => TASK_GROUPS.includes(groupOf(x)));
       if (!taskEvents.length) continue;
@@ -236,17 +257,27 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
     }
 
     if (academic.length) setProgress("Academic dates…");
-    for (const e of academic) await addBlock(e);
+    const haveBySemester = new Map<string, { ids: Set<string>; keys: Set<string> }>();
+    for (const e of academic) {
+      const home = academicHome(e, events);
+      if (!home) {
+        unparseable++;
+        continue;
+      }
+      if (autoCreate) await initializeYear(home.year);
+      const k = `${home.year}|${home.semester}`;
+      if (!haveBySemester.has(k)) haveBySemester.set(k, await existingIn(home.year, home.semester, "reminders"));
+      await addTimedTask(academicTask(e), home.year, home.semester, "reminders", haveBySemester.get(k)!);
+    }
 
     setProgress("");
     setResult({ tasks, blocks, skipped, unparseable, failed, reasons });
     setBusy(false);
-    const added = tasks + blocks;
-    if (added > 0) {
+    if (tasks > 0 || blocks > 0) {
       toast.success(
-        [tasks && plural(tasks, "task", "tasks"), blocks && plural(blocks, "Schedule block", "Schedule blocks")]
-          .filter(Boolean)
-          .join(" and ") + " added"
+        tasks > 0
+          ? `${plural(tasks, "task", "tasks")} added`
+          : `${plural(blocks, "Schedule block", "Schedule blocks")} moved to tasks`
       );
     } else if (failed > 0) {
       toast.error("Import failed — nothing added");
@@ -317,7 +348,7 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
             )}
             {result.blocks > 0 && (
               <li>
-                <b>{result.blocks}</b> added to your Schedule
+                <b>{result.blocks}</b> old Schedule {result.blocks === 1 ? "block" : "blocks"} moved to tasks
               </li>
             )}
             {result.skipped > 0 && (

@@ -210,4 +210,8 @@ describe("Open University calendar export", () => {
   it("leaves academic dates without a course", () => {
     expect(academic).toMatchObject({ category: "other", course: null, startDate: "2026-10-25" });
   });
+
+  it("reads the term an academic date names", () => {
+    expect(academic).toMatchObject({ semester: "Semester A", year: 2027 });
+  });
 });

@@ -20,7 +20,8 @@ vi.mock("firebase/firestore", () => ({
   limit: vi.fn(),
 }));
 
-import { initializeYear } from "./initializeDatabase";
+import { setDoc } from "firebase/firestore";
+import { addCourse, initializeYear } from "./initializeDatabase";
 
 describe("initializeYear", () => {
   beforeEach(() => {
@@ -51,5 +52,27 @@ describe("initializeYear", () => {
     batch.commit.mockRejectedValueOnce(new Error("Missing or insufficient permissions."));
     vi.spyOn(console, "error").mockImplementation(() => {});
     await expect(initializeYear(2026)).resolves.toBe("failed");
+  });
+});
+
+describe("addCourse", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("creates a course that isn't there yet", async () => {
+    getDoc
+      .mockResolvedValueOnce({ exists: () => true }) // the semester
+      .mockResolvedValueOnce({ exists: () => false }); // the course
+    await expect(addCourse(2027, "Semester A", "Algorithms")).resolves.toBe(true);
+    expect(setDoc).toHaveBeenCalledTimes(1);
+  });
+
+  // A calendar re-import calls addCourse for every course in the file. It
+  // used to overwrite the doc and wipe the course's links, notes and grades.
+  it("leaves an existing course untouched", async () => {
+    getDoc.mockResolvedValue({ exists: () => true });
+    await expect(addCourse(2027, "Semester A", "Algorithms")).resolves.toBe(true);
+    expect(setDoc).not.toHaveBeenCalled();
   });
 });

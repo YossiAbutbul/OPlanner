@@ -149,6 +149,7 @@ const normalizeGradeItems = (data: unknown): GradeItem[] | undefined => {
       };
       const score = normalizeNumber(i.score, 0, 100);
       if (score !== undefined) item.score = score;
+      if (i.manual === true) item.manual = true;
       return item;
     });
   return items;

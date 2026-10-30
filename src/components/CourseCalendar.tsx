@@ -246,7 +246,7 @@ const CourseCalendar: React.FC<Props> = ({
           const visible = dayTasks.slice(0, maxVisibleTasks);
           const more = dayTasks.length - visible.length;
           const hasOverdue = dayTasks.some(
-            (t) => t.status !== "COMPLETED" && isOverdue(t.dueDate, t.endTime ?? t.startTime)
+            (t) => t.status !== "COMPLETED" && !t.ignoreOverdue && isOverdue(t.dueDate, t.endTime ?? t.startTime)
           );
           return (
             <button
@@ -304,7 +304,7 @@ const CourseCalendar: React.FC<Props> = ({
             {hoverTasks.map((t) => {
               const c = colorOf?.(t);
               const done = t.status === "COMPLETED";
-              const overdue = !done && isOverdue(t.dueDate, t.endTime ?? t.startTime);
+              const overdue = !done && !t.ignoreOverdue && isOverdue(t.dueDate, t.endTime ?? t.startTime);
               const status = done ? "Done" : overdue ? "Overdue" : "Pending";
               const statusClass = done ? "is-done" : overdue ? "is-overdue" : "is-pending";
               const time = t.endTime ?? t.startTime;

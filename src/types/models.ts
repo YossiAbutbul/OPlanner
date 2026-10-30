@@ -70,6 +70,9 @@ export interface GradeItem {
   label: string;   // e.g. "ממן 11"
   weight: number;  // 0–100
   score?: number;  // 0–100
+  // Added by the student with "Add item" rather than taken from the import.
+  // Kept through every sync with the calendar, even while still blank.
+  manual?: boolean;
 }
 
 // Per-course exam tracker: a checkbox grid of exams (rows) × questions

@@ -188,6 +188,20 @@ describe("reconcileWithImport", () => {
     expect(out.some((i) => i.label === "Assignment 01")).toBe(false);
   });
 
+  it("keeps a row the student added even before it has a name or weight", () => {
+    const mine: GradeItem[] = [
+      { id: "1", label: 'מטלה 01 (ממ"ן)', weight: 30 },
+      { id: "2", label: "", weight: 0, manual: true },
+    ];
+    const out = reconcileWithImport(mine, imported, ids())!;
+    expect(out.find((i) => i.id === "2")).toEqual({ id: "2", label: "", weight: 0, manual: true });
+  });
+
+  it("keeps a lone blank row the student added instead of rebuilding the sheet", () => {
+    const out = reconcileWithImport([{ id: "x", label: "Quiz", weight: 0, manual: true }], imported, ids())!;
+    expect(out[0]).toEqual({ id: "x", label: "Quiz", weight: 0, manual: true });
+  });
+
   it("keeps every row the student has filled in, and adds what is missing", () => {
     const mine: GradeItem[] = [
       { id: "1", label: 'מטלה 01 (ממ"ן)', weight: 20, score: 95 },

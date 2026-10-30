@@ -1635,6 +1635,11 @@ button.finals-badge:active {
   color: var(--label);
 }
 
+.course-stat-meta.is-error {
+  color: var(--danger-text);
+  font-weight: 600;
+}
+
 .course-stat-grade.is-empty {
   font-weight: 500;
   color: var(--label-4);

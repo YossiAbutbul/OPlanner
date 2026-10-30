@@ -256,6 +256,22 @@ describe("delete proposals and time blocks", () => {
     ]);
     expect(filterTimeBlocks(blocks, {}, 1)).toHaveLength(1);
   });
+
+  // Imported academic dates are stored 07:00-23:00; the model must not read
+  // them as a day of busy hours.
+  it("hands all-day blocks over as dates without hours", () => {
+    const out = filterTimeBlocks(
+      [
+        { title: "התחלת הרשמה", date: "2026-11-01", startTime: "07:00", endTime: "23:00" },
+        { title: "Lecture", date: "2026-11-01", startTime: "17:00", endTime: "19:00" },
+      ],
+      {}
+    );
+    expect(out).toEqual([
+      { title: "התחלת הרשמה", date: "2026-11-01", allDay: true },
+      { title: "Lecture", date: "2026-11-01", startTime: "17:00", endTime: "19:00" },
+    ]);
+  });
 });
 
 describe("course proposals", () => {

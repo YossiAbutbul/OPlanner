@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Scale, Trash2 } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { AlertCircle, Plus, Scale, Trash2 } from "lucide-react";
 import { useCourseMeta } from "../hooks/useCourseMeta";
 import { useToast } from "../context/ToastContext";
 import RollingNumber from "./RollingNumber";
@@ -91,9 +91,19 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
   // stays empty. An existing sheet keeps every row as it is, and only picks
   // up assignments it doesn't already have.
   const [items, setItems] = useState<GradeItem[]>([]);
+  // The sheet this panel last wrote. Its own saves come straight back through
+  // meta; syncing those with the import again would undo the edit that was
+  // just made, so they are taken as they are.
+  const lastSaved = useRef<GradeItem[] | null>(null);
+  // A row just added with "Add item": its name field takes the cursor.
+  const focusId = useRef<string | null>(null);
   useEffect(() => {
     const stored = meta.gradeItems;
     const skip = new Set(meta.gradeSkips ?? []);
+    if (stored && stored === lastSaved.current) {
+      setItems(stored);
+      return;
+    }
 
     // No sheet yet: build one from the course's imported assignments, or the
     // generic shape when it has none.
@@ -122,6 +132,7 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
   // Optimistic: the sheet re-renders from local state, the write follows.
   const commit = async (next: GradeItem[]) => {
     setItems(next);
+    lastSaved.current = next;
     try {
       await save({ gradeItems: next });
     } catch {
@@ -149,6 +160,7 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
     const before = items;
     const next = items.filter((i) => i.id !== item.id);
     setItems(next);
+    lastSaved.current = next;
     const key = assignmentKey(item.label);
     const fromImport = taskList.some((t) => assignmentKey(t.name) === key);
     const skips = meta.gradeSkips ?? [];
@@ -169,6 +181,7 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
         label: "Undo",
         onClick: () => {
           setItems(before);
+          lastSaved.current = before;
           save({ gradeItems: before, gradeSkips: skips }).catch(() =>
             toast.error("Could not save the grade sheet.")
           );
@@ -182,7 +195,9 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
       toast.info(`A course holds up to ${MAX_GRADE_ITEMS} graded items.`);
       return;
     }
-    commit([...items, row("", 0)]);
+    const added = { ...row("", 0), manual: true };
+    focusId.current = added.id;
+    commit([...items, added]);
   };
 
   const saveCredits = async (credits: number) => {
@@ -279,11 +294,23 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
         <div className="gp-sheet">
           <div className="gp-sheet-head">
             <span className="gp-sheet-title">Graded items</span>
-            <span className="gp-sheet-status">
-              <span className={`gp-sheet-total${weightOff ? " gp-sheet-total-off" : ""}`}>
-                {formatGrade(summary.totalWeight)}% of the grade
+            <span className={`gp-sheet-total${weightOff ? " gp-sheet-total-off" : ""}`}>
+              {formatGrade(summary.totalWeight)}% of the grade
+            </span>
+          </div>
+
+          {/* The weights are the grade's formula: until they total 100 the
+              course has no final grade, so say so plainly and say by how much. */}
+          {weightOff && (
+            <div className="gp-error" role="alert">
+              <AlertCircle size={15} strokeWidth={2.2} aria-hidden="true" />
+              <span className="gp-error-text">
+                Weights must add up to 100%.{" "}
+                {summary.totalWeight < 100
+                  ? `${formatGrade(100 - summary.totalWeight)}% is missing.`
+                  : `They are ${formatGrade(summary.totalWeight - 100)}% over.`}
               </span>
-              {weightOff && balanced && (
+              {balanced && (
                 <button
                   type="button"
                   className="gp-balance"
@@ -294,8 +321,8 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
                   <span>Fill to 100%</span>
                 </button>
               )}
-            </span>
-          </div>
+            </div>
+          )}
 
           <ul className="gp-list">
             {items.map((item) => (
@@ -329,6 +356,12 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
                     value={item.label}
                     maxLength={MAX_GRADE_LABEL_LEN}
                     placeholder="Name this item"
+                    ref={(el) => {
+                      if (el && focusId.current === item.id) {
+                        focusId.current = null;
+                        el.focus();
+                      }
+                    }}
                     aria-label="Item name"
                     onChange={(e) =>
                       setItems((l) =>

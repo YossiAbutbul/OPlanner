@@ -137,6 +137,12 @@ export const isAllDay = (s?: string, e?: string): boolean =>
   !s ||
   !e;
 
+// A Schedule block's course link comes in two shapes: the course name alone
+// (blocks made in the app) or "year|semester|course" (the calendar import).
+// The name is the last segment either way.
+export const blockCourseName = (courseId?: string): string | undefined =>
+  courseId ? courseId.split("|").pop() || undefined : undefined;
+
 export const hexToRgba = (hex: string, alpha: number): string => {
   const m = hex.replace("#", "");
   const full = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;

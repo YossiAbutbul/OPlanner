@@ -169,10 +169,13 @@ const PLACEHOLDER_LABELS = [/^assignment\s*\d+$/i, /^final exam$/i];
 const isPlaceholder = (label: string) =>
   PLACEHOLDER_LABELS.some((re) => re.test(label.trim()));
 
-// A row is the student's once it carries a mark or a weight they set, unless
-// it is one of the placeholders the panel itself put there.
+// A row is the student's once they added it themselves, or it carries a
+// mark or a weight they set, unless it is one of the placeholders the panel
+// itself put there.
 const carriesADecision = (item: GradeItem) =>
-  item.score !== undefined || (item.weight > 0 && !isPlaceholder(item.label));
+  item.manual === true ||
+  item.score !== undefined ||
+  (item.weight > 0 && !isPlaceholder(item.label));
 
 /**
  * Bring a stored sheet in line with the imported calendar: keep every row the
