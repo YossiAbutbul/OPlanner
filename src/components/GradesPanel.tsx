@@ -298,52 +298,59 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
               : `${ungraded} ${ungraded === 1 ? "item" : "items"} still to grade.`}
           </p>
 
-          <div className="gp-meta" aria-label="Credits">
-            <div className="gp-meta-set">
-              <label htmlFor="gp-credits">Credits</label>
-              <input
-                id="gp-credits"
-                className="gp-meta-input"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={MAX_CREDITS}
-                step={0.5}
-                key={`credits-${meta.credits ?? "none"}`}
-                defaultValue={meta.credits ?? ""}
-                placeholder="0"
-                onKeyDown={blurOnEnter}
-                onBlur={(e) => {
-                  const next = parseNumber(e.target.value, MAX_CREDITS) ?? 0;
-                  if (next !== (meta.credits ?? 0)) saveCredits(next);
-                }}
-              />
-            </div>
-            <span className="gp-meta-note">counts this course toward the semester average</span>
-            {assignmentCount > 1 && (
-              <div className="gp-meta-set">
-                <label htmlFor="gp-cap">Assignments count up to</label>
-                <input
-                  id="gp-cap"
-                  className="gp-meta-input"
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  max={100}
-                  step={0.5}
-                  key={`cap-${cap ?? "all"}`}
-                  defaultValue={cap ?? ""}
-                  placeholder="all"
-                  onKeyDown={blurOnEnter}
-                  onBlur={(e) => {
-                    const n = parseNumber(e.target.value, 100);
-                    const next = n && n > 0 ? n : undefined;
-                    if (next !== cap) saveCap(next);
-                  }}
-                />
-                <span className="gp-meta-of">%</span>
+          {/* Settings in the Apple way: one grouped list, label left, value
+              right, unit beside it. */}
+          <div className="gp-settings">
+            <div className="gp-settings-group">
+              <div className="gp-setting">
+                <label htmlFor="gp-credits">Credits</label>
+                <span className="gp-setting-field">
+                  <input
+                    id="gp-credits"
+                    className="gp-setting-input"
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    max={MAX_CREDITS}
+                    step={0.5}
+                    key={`credits-${meta.credits ?? "none"}`}
+                    defaultValue={meta.credits ?? ""}
+                    placeholder="0"
+                    onKeyDown={blurOnEnter}
+                    onBlur={(e) => {
+                      const next = parseNumber(e.target.value, MAX_CREDITS) ?? 0;
+                      if (next !== (meta.credits ?? 0)) saveCredits(next);
+                    }}
+                  />
+                </span>
               </div>
-            )}
+              {assignmentCount > 1 && (
+                <div className="gp-setting">
+                  <label htmlFor="gp-cap" title="Best marks count up to this weight; the exam takes the rest">Assignments max</label>
+                  <span className="gp-setting-field">
+                    <input
+                      id="gp-cap"
+                      className="gp-setting-input"
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      key={`cap-${cap ?? "all"}`}
+                      defaultValue={cap ?? ""}
+                      placeholder="all"
+                      onKeyDown={blurOnEnter}
+                      onBlur={(e) => {
+                        const n = parseNumber(e.target.value, 100);
+                        const next = n && n > 0 ? n : undefined;
+                        if (next !== cap) saveCap(next);
+                      }}
+                    />
+                    <span className="gp-setting-unit" aria-hidden="true">%</span>
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

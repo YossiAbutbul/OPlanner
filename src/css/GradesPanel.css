@@ -308,8 +308,7 @@
 
 .gp-weight:focus-visible,
 .gp-name:focus-visible,
-.gp-score:focus-visible,
-.gp-meta-input:focus-visible {
+.gp-score:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: -1px;
 }
@@ -380,8 +379,8 @@
 .gp-weight::-webkit-inner-spin-button,
 .gp-score::-webkit-outer-spin-button,
 .gp-score::-webkit-inner-spin-button,
-.gp-meta-input::-webkit-outer-spin-button,
-.gp-meta-input::-webkit-inner-spin-button {
+.gp-setting-input::-webkit-outer-spin-button,
+.gp-setting-input::-webkit-inner-spin-button {
   appearance: none;
   margin: 0;
 }
@@ -482,59 +481,103 @@
   outline-offset: 2px;
 }
 
-/* --- Credits ---
-   They sit at the foot of the summary column, where the figure's column
-   would otherwise run out of content before the list beside it does. */
-.gp-meta {
+/* --- Settings ---
+   A grouped list at the foot of the summary column, where it would
+   otherwise run out before the list beside it: label on the left, the value
+   on the right as plain text that lights up when edited, a hairline between
+   rows inset to the text. */
+.gp-settings {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1.25rem;
+  flex-direction: column;
+  gap: 0.4rem;
   margin-top: auto;
   padding-top: 0.9rem;
-  border-top: 1px solid var(--separator);
 }
 
-.gp-meta-set {
+.gp-settings-group {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.gp-setting {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 42px;
+  padding: 0 0.85rem;
+  cursor: text;
+  transition: background-color var(--dur-1) var(--ease-out);
 }
 
+.gp-setting + .gp-setting::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0.85rem;
+  right: 0;
+  height: 1px;
+  background: var(--separator);
+}
 
-.gp-meta-set label {
+.gp-setting:focus-within {
+  background: var(--fill);
+}
+
+.gp-setting label {
+  flex: 1;
+  min-width: 0;
   font-size: var(--text-sm);
   letter-spacing: var(--tracking-body);
-  color: var(--label-2);
+  color: var(--label);
+  cursor: text;
 }
 
-.gp-meta-input {
+.gp-setting-field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+/* The value reads as text, right-aligned; the empty state ("all") is
+   quieter than a set number. */
+.gp-setting-input {
   width: 3.25rem;
-  padding: 0.3rem 0.4rem;
-  border: 1px solid var(--separator);
+  padding: 0.2rem 0.3rem;
+  border: 0;
   border-radius: var(--radius-sm);
-  background: var(--surface-2);
+  background: transparent;
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
-  text-align: center;
+  text-align: right;
   color: var(--label);
   -moz-appearance: textfield;
   appearance: textfield;
 }
 
-.gp-meta-of {
+.gp-setting-input::placeholder {
+  font-weight: 500;
+  color: var(--label-3);
+}
+
+.gp-setting-input:focus-visible {
+  outline: none;
+  background: var(--surface);
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.gp-setting-unit {
   font-size: var(--text-sm);
   color: var(--label-3);
 }
 
-.gp-meta-note {
-  flex-basis: 100%;
-  font-size: var(--text-xs);
-  line-height: 1.4;
-  color: var(--label-3);
-}
 
 @media (max-width: 880px) {
   .gp-card {
