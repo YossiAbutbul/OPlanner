@@ -13,6 +13,8 @@ import {
   parseDeleteProposal,
   parseCourseProposal,
   parseBlockProposal,
+  parseGradeWeightsProposal,
+  gradeSheetView,
   isAllowed,
   parseAgentRequest,
   parseAllowlist,
@@ -363,3 +365,56 @@ describe("other semesters' tasks", () => {
     expect(parseOtherTaskRange({ from: "2026-01-01", to: "2026-12-31" }).ok).toBe(false);
   });
 });
+
+describe("grade weights proposals", () => {
+  it("keeps the given weights and leaves the rest empty", () => {
+    expect(
+      parseGradeWeightsProposal({
+        course: "אלגוריתמים",
+        rows: [{ label: " מטלה 01 ", weight: 5 }, { label: "בחינת גמר" }],
+      })
+    ).toEqual({
+      ok: true,
+      value: { course: "אלגוריתמים", rows: [{ label: "מטלה 01", weight: 5 }, { label: "בחינת גמר", weight: null }] },
+    });
+  });
+
+  it("rejects weights outside 0-100 and empty labels", () => {
+    expect(parseGradeWeightsProposal({ course: "A", rows: [{ label: "x", weight: 120 }] }).ok).toBe(false);
+    expect(parseGradeWeightsProposal({ course: "A", rows: [{ label: " " }] }).ok).toBe(false);
+    expect(parseGradeWeightsProposal({ course: "A", rows: [] }).ok).toBe(false);
+  });
+});
+
+describe("gradeSheetView", () => {
+  it("returns a saved sheet with its total", () => {
+    const view = gradeSheetView(
+      [
+        { id: "1", label: "מטלה 01", weight: 30, score: 90 },
+        { id: "2", label: "בחינה", weight: 70 },
+      ],
+      []
+    );
+    expect(view).toEqual({
+      saved: true,
+      rows: [
+        { label: "מטלה 01", weight: 30, score: 90 },
+        { label: "בחינה", weight: 70 },
+      ],
+      total: 100,
+    });
+  });
+
+  it("starts an unsaved sheet from imported assignments and the final", () => {
+    const view = gradeSheetView(undefined, [
+      { id: "imp_2026-12-01_b", name: 'מטלה 02 (ממ"ן)', dueDate: "2026-12-01" },
+      { id: "imp_2026-11-01_a", name: 'מטלה 01 (ממ"ן)', dueDate: "2026-11-01" },
+      { id: "imp_2026-10-26_1630_x", name: "מפגש", dueDate: "2026-10-26" },
+      { id: "own", name: "מטלה לסיים", dueDate: "2026-11-02" },
+      { id: "final-exam", name: "Final Exam", dueDate: "2027-01-28" },
+    ]);
+    expect(view.saved).toBe(false);
+    expect(view.rows.map((r) => r.label)).toEqual(['מטלה 01 (ממ"ן)', 'מטלה 02 (ממ"ן)', "Final Exam"]);
+  });
+});
+

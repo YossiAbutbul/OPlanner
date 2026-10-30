@@ -30,19 +30,6 @@ export interface DraftItem {
   weight: number;
 }
 
-// What the final takes when the course has one; the assignments split the rest.
-const FINAL_WEIGHT = 70;
-
-const round1 = (n: number) => Math.round(n * 10) / 10;
-
-/** Spread `total` over `count` rows, the last absorbing the rounding. */
-const split = (total: number, count: number): number[] => {
-  if (count <= 0) return [];
-  const each = round1(total / count);
-  const parts = Array.from({ length: count }, () => each);
-  parts[count - 1] = round1(total - each * (count - 1));
-  return parts;
-};
 
 export interface TaskLike {
   name: string;
@@ -77,8 +64,10 @@ const assignmentsIn = (tasks: TaskLike[], skip: ReadonlySet<string>): TaskLike[]
 
 /**
  * Build a sheet from the course's own tasks: one row per assignment in
- * due-date order, plus the final. Null when nothing in the course looks like
- * an assignment, so the caller can fall back to a generic sheet.
+ * due-date order, plus the final. Every row starts at weight 0: the split is
+ * the course's rule, not something to guess, so the student (or the
+ * assistant, from what they tell it) sets it. Null when nothing in the
+ * course looks like an assignment, so the caller can fall back.
  */
 export const sheetFromTasks = (
   tasks: TaskLike[],
@@ -87,18 +76,10 @@ export const sheetFromTasks = (
   const assignments = assignmentsIn(tasks, skip);
   const finalTask = tasks.find((t) => t.isFinal);
   const final = finalTask && !skip.has(assignmentKey(finalTask.name)) ? finalTask : undefined;
-  if (!assignments.length) {
-    // Setting a final date on the overview is enough to start a sheet: that
-    // exam is the whole grade until something else is added.
-    return final ? [{ label: final.name.trim() || "Final exam", weight: 100 }] : null;
-  }
-
-  const weights = split(final ? 100 - FINAL_WEIGHT : 100, assignments.length);
-  const items: DraftItem[] = assignments.map((t, i) => ({
-    label: t.name.trim(),
-    weight: weights[i],
-  }));
-  if (final) items.push({ label: final.name.trim() || "Final exam", weight: FINAL_WEIGHT });
+  if (!assignments.length && !final) return null;
+  const items: DraftItem[] = assignments.map((t) => ({ label: t.name.trim(), weight: 0 }));
+  // Setting a final date on the overview is enough to start a sheet.
+  if (final) items.push({ label: final.name.trim() || "Final exam", weight: 0 });
   return items;
 };
 
@@ -112,9 +93,8 @@ const looksLikeFinal = (label: string) => {
 
 /**
  * Put the course's final on the sheet once a date is set for it on the
- * overview. It takes whatever weight is unclaimed, so a sheet of assignments
- * adding up to 30 gives it 70 without touching a single existing row, and a
- * sheet already at 100 gets it at 0 for the student to sort out.
+ * overview, at weight 0 like every row the panel adds itself: the student
+ * says what it's worth.
  */
 export const mergeMissingFinal = (
   items: GradeItem[],
@@ -129,8 +109,7 @@ export const mergeMissingFinal = (
   const already = items.some((i) => i.label.trim() === label || looksLikeFinal(i.label));
   if (already) return items;
 
-  const used = items.reduce((n, i) => n + i.weight, 0);
-  return [...items, { id: makeId(), label, weight: Math.max(0, Math.round((100 - used) * 10) / 10) }];
+  return [...items, { id: makeId(), label, weight: 0 }];
 };
 
 // Two rows are the same assignment when they carry the same number, however
@@ -182,7 +161,7 @@ const carriesADecision = (item: GradeItem) =>
  * student has actually filled in, drop the panel's own placeholders and empty
  * leftovers, and add the imported assignments that are missing. A sheet with
  * nothing worth keeping is rebuilt from the import outright, so its rows carry
- * the calendar's own names and a sensible split instead of Assignment 01.
+ * the calendar's own names instead of Assignment 01.
  */
 export const reconcileWithImport = (
   items: GradeItem[],
@@ -196,4 +175,38 @@ export const reconcileWithImport = (
   const kept = items.filter(carriesADecision);
   if (!kept.length) return fromTasks.map((d) => ({ id: makeId(), label: d.label, weight: d.weight }));
   return mergeMissingFinal(mergeNewAssignments(kept, tasks, makeId, skip), tasks, makeId, skip);
+};
+
+// A row of weights the assistant proposed: null where the student left it.
+export interface WeightRow {
+  label: string;
+  weight: number | null;
+}
+
+/**
+ * Write proposed weights onto a sheet. Each row finds its item by label, or
+ * by assignment number ("מטלה 01" and "ממן 1" are one item); its weight is
+ * set when the row has one and left alone when it doesn't. Scores never
+ * change. A row with no matching item is added, so a course with no saved
+ * sheet yet gets one from the table the student filled in.
+ */
+export const applyWeights = (
+  items: GradeItem[] | undefined,
+  rows: WeightRow[],
+  makeId: () => string
+): GradeItem[] => {
+  const next = (items ?? []).map((i) => ({ ...i }));
+  for (const r of rows) {
+    const label = r.label.trim();
+    if (!label) continue;
+    const hit =
+      next.find((i) => i.label.trim() === label) ??
+      next.find((i) => assignmentKey(i.label) === assignmentKey(label));
+    if (hit) {
+      if (r.weight !== null) hit.weight = r.weight;
+    } else {
+      next.push({ id: makeId(), label, weight: r.weight ?? 0 });
+    }
+  }
+  return next;
 };

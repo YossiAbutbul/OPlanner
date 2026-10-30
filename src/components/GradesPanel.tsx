@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, Plus, Scale, Trash2 } from "lucide-react";
+import { AlertCircle, Plus, Scale, Sparkles, Trash2 } from "lucide-react";
 import { useCourseMeta } from "../hooks/useCourseMeta";
 import { useToast } from "../context/ToastContext";
 import RollingNumber from "./RollingNumber";
@@ -122,7 +122,10 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
 
   const summary = useMemo(() => summarize(items), [items]);
   const ungraded = items.filter((i) => i.score === undefined).length;
-  const weightOff = items.length > 0 && !summary.balanced;
+  // No weights at all is where an imported sheet starts: a prompt, not an
+  // error. Some weights that miss 100 is the error.
+  const weightsUnset = items.length > 0 && summary.totalWeight === 0;
+  const weightOff = items.length > 0 && !weightsUnset && !summary.balanced;
   const balanced = useMemo(() => fillUnweighted(items), [items]);
   // The bar is the course's 0–100 scale: points banked, points already lost
   // on graded items, and what is still open.
@@ -301,6 +304,15 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
 
           {/* The weights are the grade's formula: until they total 100 the
               course has no final grade, so say so plainly and say by how much. */}
+          {weightsUnset && (
+            <div className="gp-note">
+              <Sparkles size={15} strokeWidth={2.2} aria-hidden="true" />
+              <span className="gp-note-text">
+                Set each item's share of the grade, or tell the assistant the weights and it will fill them in.
+              </span>
+            </div>
+          )}
+
           {weightOff && (
             <div className="gp-error" role="alert">
               <AlertCircle size={15} strokeWidth={2.2} aria-hidden="true" />

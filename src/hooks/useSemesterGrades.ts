@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { auth, requireUid } from "../firebase";
 import { lsCache } from "./useLocalStorageCache";
-import { courseMetaCacheKey } from "./useCourseMeta";
+import { COURSE_META_EVENT, courseMetaCacheKey, type CourseMetaEventDetail } from "./useCourseMeta";
 import { fetchCourseMeta, normalizeCourseMeta } from "../services/courseMeta";
 import { semesterGpa, summarize } from "../utility/grades";
 import type { CourseInfo, CourseMeta } from "../types/models";
@@ -15,8 +15,12 @@ export interface CourseGrade {
   complete: boolean;
   // Share of the course grade already marked, 0–100.
   gradedWeight: number;
-  // The sheet's weights total, when they don't add up to 100; else null.
+  // The sheet's weights total, when some are set but they don't add up to
+  // 100; else null.
   weightOff: number | null;
+  // The course has a sheet but no weights on it yet (an import leaves them
+  // for the student to set).
+  weightsUnset: boolean;
 }
 
 // Every course's grade sheet for one semester, and the GPA they add up to.
@@ -67,6 +71,17 @@ export const useSemesterGrades = (year: number, semester: string, courses: Cours
     return () => { cancelled = true; };
   }, [year, semester, courseNamesKey]);
 
+  // A course changed elsewhere (the assistant saving its weights).
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const d = (e as CustomEvent<CourseMetaEventDetail>).detail;
+      if (!d || d.tab.year !== year || d.tab.semester !== semester) return;
+      setMetas((m) => ({ ...m, [d.tab.course]: d.meta }));
+    };
+    window.addEventListener(COURSE_META_EVENT, onChange);
+    return () => window.removeEventListener(COURSE_META_EVENT, onChange);
+  }, [year, semester]);
+
   const byCourse = useMemo<CourseGrade[]>(
     () =>
       courses.map((c) => {
@@ -78,7 +93,8 @@ export const useSemesterGrades = (year: number, semester: string, courses: Cours
           credits: meta?.credits ?? 0,
           complete: s.final !== null,
           gradedWeight: Math.min(100, s.gradedWeight),
-          weightOff: (meta?.gradeItems?.length ?? 0) > 0 && !s.balanced ? s.totalWeight : null,
+          weightOff: s.totalWeight > 0 && !s.balanced ? s.totalWeight : null,
+          weightsUnset: (meta?.gradeItems?.length ?? 0) > 0 && s.totalWeight === 0,
         };
       }),
     [courses, metas]

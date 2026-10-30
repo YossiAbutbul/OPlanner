@@ -7,6 +7,8 @@ import { requireUid } from "../firebase";
 import { createTaskRef } from "../services/homework";
 import { fetchAgentAccess, type AgentAccess, type AgentProposal } from "../services/agent";
 import { lsCache } from "../hooks/useLocalStorageCache";
+import { updateCourseMeta } from "../hooks/useCourseMeta";
+import { applyWeights } from "../utility/gradeSheet";
 
 // Heavy form modals — only mounted when the user actually opens them, so
 // their chunks fetch on first interaction instead of in the initial bundle.
@@ -296,6 +298,22 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       }
       toast.success(`Task “${p.name}” added`);
       return id;
+    }
+    if (p.action === "grades") {
+      const key =
+        years
+          .find((y) => y.year === year)
+          ?.semesters.find((s) => s.name === semester || s.key === semester)?.key ?? semester;
+      try {
+        await updateCourseMeta({ year, semester: key, course: p.course }, (meta) => ({
+          gradeItems: applyWeights(meta.gradeItems, p.weights ?? [], () => crypto.randomUUID()),
+        }));
+      } catch (e) {
+        toast.error(`Couldn't save the weights for “${p.course}”`);
+        throw e;
+      }
+      toast.success(`Weights saved for “${p.course}”`);
+      return;
     }
     if (p.action === "course") {
       const key =

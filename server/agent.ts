@@ -239,6 +239,7 @@ export const SYSTEM_PROMPT = `You are the study assistant inside OPlanner, a sem
 Tools:
 - list_courses and list_tasks read the student's data for the semester they have open.
 - list_other_semesters_tasks reads tasks due in a date range from the student's other semesters (a summer course, an overlapping term). A day is a day: when asked what's due today, this week or on a date, and when planning, check it alongside list_tasks, name the semester of anything it finds, and treat their hours the same way as this semester's (see below). You can't change them: to edit one, the student opens that semester.
+- Grade weights: each course has a grade sheet (its graded items and each one's share of the grade, in percent). When the student tells you how a course is graded, or asks to set or fix the weights, read get_grade_sheet for that course, then call propose_grade_weights once with every row on the sheet, using the sheet's labels exactly, the weights they told you filled in and the rest left empty. Map what they say onto the rows ("each ממ"ן is 5%", "the exam is 70%"); don't invent weights they didn't give. A course with no sheet yet gets rows for its assignments and final from get_grade_sheet. The card shows the table and lets them fill in or change any weight before saving; weights should total 100, and say so if theirs don't.
 - list_time_blocks reads the student's calendar blocks (classes, work, study sessions), so plans can avoid times they're busy. A block marked allDay has no hours: it's a date on the academic calendar (semester start, registration opening), never busy time.
 - A task's hours make that time busy only when it is something the student sits through for a few hours: an exam, a lecture, a study session. A long window (registration opening, a submission window, an event spanning most of the day or 07:00 to 23:00) marks a date, not busy time: never call a day full because of one, and plan around it as if it weren't there. When a task from another semester shapes the plan, say which semester it's in, since the student can't see it in this one.
 - When creating a task, don't invent details the student didn't give, and don't ask for them in text: propose the task with what you know (no date, or a start without an end, is fine) and the card asks the student to fill in the rest.
@@ -371,6 +372,43 @@ export const TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "get_grade_sheet",
+    description:
+      "Read one course's grade sheet: each graded item's label, its weight (percent of the course grade, 0 when not set) and its score if marked. A course with no saved sheet returns its imported assignments and final as unweighted rows, with saved: false.",
+    input_schema: {
+      type: "object",
+      properties: { course: { type: "string", description: "Exact course name from list_courses." } },
+      required: ["course"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "propose_grade_weights",
+    description:
+      "Propose the weights for one course's grade sheet as an editable table: every row from get_grade_sheet with its label, and a weight where the student gave one (omit weight to leave it for them). The student can edit any weight on the card, then saves or dismisses it. Only weights change; scores and rows not listed stay as they are.",
+    input_schema: {
+      type: "object",
+      properties: {
+        course: { type: "string", description: "Exact course name from list_courses." },
+        rows: {
+          type: "array",
+          maxItems: 40,
+          items: {
+            type: "object",
+            properties: {
+              label: { type: "string", description: "The row's label, exactly as get_grade_sheet gave it." },
+              weight: { type: "number", description: "Percent of the course grade, 0-100. Omit if the student didn't say." },
+            },
+            required: ["label"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["course", "rows"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "propose_task",
     description:
       "Propose creating a task, or editing an existing one (pass its id from list_tasks). The student confirms or dismisses it in the app. One task per call.",
@@ -439,8 +477,15 @@ export const parseOtherTaskRange = (input: unknown): Parsed<{ from: string; to: 
   return { ok: true, value: { from: i.from, to: i.to } };
 };
 
+// One row of a proposed grade sheet: its label and weight, null when the
+// student hasn't said and the card leaves it for them.
+export interface GradeWeightRow {
+  label: string;
+  weight: number | null;
+}
+
 export interface TaskProposal {
-  action?: "delete" | "course" | "block";  // omitted for task create/edit
+  action?: "delete" | "course" | "block" | "grades";  // omitted for task create/edit
   id?: string;
   course: string;
   name: string;
@@ -448,7 +493,72 @@ export interface TaskProposal {
   startTime?: string;
   endTime?: string;
   status: "PENDING" | "DONE";
+  weights?: GradeWeightRow[]; // grades only
 }
+
+export const MAX_GRADE_ROWS = 40;
+
+export const parseGradeWeightsProposal = (
+  input: unknown
+): Parsed<{ course: string; rows: GradeWeightRow[] }> => {
+  const i = (input ?? {}) as Record<string, unknown>;
+  if (!isDocId(i.course)) return { ok: false, error: "course is required." };
+  if (!Array.isArray(i.rows) || i.rows.length === 0) return { ok: false, error: "rows must list the sheet's items." };
+  if (i.rows.length > MAX_GRADE_ROWS) return { ok: false, error: `At most ${MAX_GRADE_ROWS} rows.` };
+  const rows: GradeWeightRow[] = [];
+  for (const r of i.rows as unknown[]) {
+    const row = (r ?? {}) as Record<string, unknown>;
+    const label = typeof row.label === "string" ? row.label.trim() : "";
+    if (!label || label.length > 120) return { ok: false, error: "Each label must be 1-120 characters." };
+    const w = row.weight;
+    if (w !== undefined && w !== null && (typeof w !== "number" || !Number.isFinite(w) || w < 0 || w > 100)) {
+      return { ok: false, error: `Weight for "${label}" must be 0-100.` };
+    }
+    rows.push({ label, weight: typeof w === "number" ? Math.round(w * 10) / 10 : null });
+  }
+  return { ok: true, value: { course: i.course, rows } };
+};
+
+// What get_grade_sheet returns for a course.
+export interface GradeSheetView {
+  saved: boolean;
+  rows: { label: string; weight: number; score?: number }[];
+  total: number;
+}
+
+// Names the calendar import gives graded items; mirrors the app's
+// utility/gradeSheet, which the server can't import.
+const ASSIGNMENT_NAME = /^(ממ\s*["״']?\s*[ןנחםמ]|מטלה|אופל|maman|mamah|mamach|assignment)/i;
+export const FINAL_TASK_ID = "final-exam";
+
+/**
+ * The sheet as stored, or, for a course with none yet, the rows the app
+ * would start it with: its imported assignments in date order, then the final.
+ */
+export const gradeSheetView = (
+  stored: unknown,
+  tasks: { id: string; name: string; dueDate: string }[]
+): GradeSheetView => {
+  if (Array.isArray(stored)) {
+    const rows = stored
+      .filter((r): r is Record<string, unknown> => !!r && typeof r === "object" && typeof r.label === "string")
+      .slice(0, MAX_GRADE_ROWS)
+      .map((r) => ({
+        label: (r.label as string).slice(0, 120),
+        weight: typeof r.weight === "number" && Number.isFinite(r.weight) ? r.weight : 0,
+        ...(typeof r.score === "number" && Number.isFinite(r.score) ? { score: r.score } : {}),
+      }));
+    return { saved: true, rows, total: Math.round(rows.reduce((n, r) => n + r.weight, 0) * 10) / 10 };
+  }
+  const seen = new Set<string>();
+  const assignments = tasks
+    .filter((t) => t.id.startsWith("imp_") && ASSIGNMENT_NAME.test(t.name.trim()))
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+    .filter((t) => !seen.has(t.name.trim()) && !!seen.add(t.name.trim()));
+  const final = tasks.find((t) => t.id === FINAL_TASK_ID);
+  const rows = [...assignments, ...(final ? [final] : [])].map((t) => ({ label: t.name.trim(), weight: 0 }));
+  return { saved: false, rows, total: 0 };
+};
 
 export const parseProposal = (input: unknown): Parsed<TaskProposal> => {
   const i = (input ?? {}) as Record<string, unknown>;

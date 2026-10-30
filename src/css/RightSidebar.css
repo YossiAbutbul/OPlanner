@@ -2348,6 +2348,106 @@
   border-color: color-mix(in srgb, var(--rs-warn) 70%, transparent);
 }
 
+/* Grade weights card: a two-column table, item and weight, with the total
+   underneath. The weight cells are inputs while the card is open. */
+.rs-agent-weights {
+  margin-top: 0.6rem;
+}
+
+.rs-agent-weights table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.rs-agent-weights th {
+  padding: 0 0 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--rs-text-muted);
+  text-align: left;
+}
+
+.rs-agent-weights th:last-child,
+.rs-agent-weights td:last-child {
+  width: 5.5rem;
+  text-align: right;
+}
+
+.rs-agent-weights td {
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--rs-border);
+  color: var(--rs-text-soft);
+  vertical-align: middle;
+}
+
+.rs-agent-weights td bdi {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rs-agent-weights tfoot td {
+  color: var(--rs-text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rs-agent-weights tfoot tr.is-off td:last-child {
+  color: var(--rs-warn);
+}
+
+.rs-agent-weight {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0.15rem 0.4rem;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--rs-text-muted);
+}
+
+.rs-agent-weight input {
+  width: 2.6rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--rs-text);
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.rs-agent-weight input::-webkit-outer-spin-button,
+.rs-agent-weight input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.rs-agent-weight input:focus-visible {
+  outline: none;
+}
+
+.rs-agent-weight:focus-within {
+  border-color: var(--rs-accent);
+}
+
+/* A blank weight is what the student still has to fill in. */
+.rs-agent-weight.is-blank {
+  border-color: color-mix(in srgb, var(--rs-accent) 55%, transparent);
+}
+
+.rs-agent-weight-value {
+  color: var(--rs-text);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
 .rs-agent-fields-hint {
   grid-column: 1 / -1;
   margin: 0;

@@ -5,6 +5,7 @@ import {
   mergeMissingFinal,
   mergeNewAssignments,
   reconcileWithImport,
+  applyWeights,
   sheetFromTasks,
 } from "./gradeSheet";
 import type { GradeItem } from "../types/models";
@@ -64,12 +65,12 @@ describe("sheetFromTasks", () => {
     expect(sheetFromTasks([task("מפגש", "2026-10-01"), task("Lecture", "2026-10-08")])).toBeNull();
   });
 
-  it("starts a sheet from the final alone, worth the whole grade", () => {
+  it("starts a sheet from the final alone, weight left to the student", () => {
     const sheet = sheetFromTasks([
       task("מפגש", "2026-10-01"),
       task("Final Exam – Java", "2027-01-28", { isFinal: true, isImported: false }),
     ]);
-    expect(sheet).toEqual([{ label: "Final Exam – Java", weight: 100 }]);
+    expect(sheet).toEqual([{ label: "Final Exam – Java", weight: 0 }]);
   });
 
   it("ignores tasks the student wrote themselves", () => {
@@ -81,7 +82,7 @@ describe("sheetFromTasks", () => {
     ).toBeNull();
   });
 
-  it("orders assignments by due date and gives the final 70%", () => {
+  it("orders assignments by due date, final last, all unweighted", () => {
     const sheet = sheetFromTasks([
       task("מטלה 12", "2026-12-01"),
       task("בחינת גמר", "2027-01-28", { isFinal: true }),
@@ -89,25 +90,11 @@ describe("sheetFromTasks", () => {
       task("מטלה 13", "2027-01-01"),
     ]);
     expect(sheet).toEqual([
-      { label: "מטלה 11", weight: 10 },
-      { label: "מטלה 12", weight: 10 },
-      { label: "מטלה 13", weight: 10 },
-      { label: "בחינת גמר", weight: 70 },
+      { label: "מטלה 11", weight: 0 },
+      { label: "מטלה 12", weight: 0 },
+      { label: "מטלה 13", weight: 0 },
+      { label: "בחינת גמר", weight: 0 },
     ]);
-  });
-
-  it("gives the assignments the whole grade when there is no final", () => {
-    const sheet = sheetFromTasks([task("ממן 1", "2026-11-01"), task("ממן 2", "2026-12-01")]);
-    expect(sheet).toEqual([
-      { label: "ממן 1", weight: 50 },
-      { label: "ממן 2", weight: 50 },
-    ]);
-  });
-
-  it("adds up to exactly 100 when the split does not divide evenly", () => {
-    const tasks = Array.from({ length: 7 }, (_, i) => task(`מטלה ${i + 1}`, `2026-11-0${i + 1}`));
-    const sheet = sheetFromTasks([...tasks, task("מבחן", "2027-01-28", { isFinal: true })])!;
-    expect(sheet.reduce((n, i) => n + i.weight, 0)).toBeCloseTo(100);
   });
 
   it("keeps one row per assignment when a name repeats", () => {
@@ -175,7 +162,7 @@ describe("reconcileWithImport", () => {
     ];
     const out = reconcileWithImport(generic, imported, ids())!;
     expect(out.map((i) => i.label)).toEqual(['מטלה 01 (ממ"ן)', 'מטלה 02 (ממ"ן)', "בחינת גמר"]);
-    expect(out.map((i) => i.weight)).toEqual([15, 15, 70]);
+    expect(out.map((i) => i.weight)).toEqual([0, 0, 0]);
   });
 
   it("drops the empty rows an earlier version added for the student's todos", () => {
@@ -230,14 +217,15 @@ describe("reconcileWithImport", () => {
 describe("mergeMissingFinal", () => {
   const final = task("Final Exam – Java", "2027-01-28", { isFinal: true, isImported: false });
 
-  it("adds the final with the weight nothing else claims", () => {
+  it("adds the final unweighted, leaving the rest alone", () => {
     const sheet: GradeItem[] = [
       { id: "1", label: 'מטלה 01 (ממ"ן)', weight: 10 },
       { id: "2", label: 'מטלה 02 (ממ"ן)', weight: 20 },
     ];
     const out = mergeMissingFinal(sheet, [final], ids());
     expect(out).toHaveLength(3);
-    expect(out[2]).toMatchObject({ label: "Final Exam – Java", weight: 70 });
+    expect(out[2]).toMatchObject({ label: "Final Exam – Java", weight: 0 });
+    expect(out.slice(0, 2)).toEqual(sheet);
   });
 
   it("adds it at zero when the sheet is already full", () => {
@@ -289,3 +277,32 @@ describe("dismissed assignments", () => {
     expect(out.map((i) => i.label)).toEqual(["Lab work", 'מטלה 01 (ממ"ן)', "Final Exam – Java"]);
   });
 });
+
+describe("applyWeights", () => {
+  const sheet: GradeItem[] = [
+    { id: "1", label: 'מטלה 01 (ממ"ן)', weight: 0, score: 90 },
+    { id: "2", label: "בחינת גמר", weight: 0 },
+  ];
+
+  it("sets the weights given and keeps scores", () => {
+    const out = applyWeights(sheet, [
+      { label: 'מטלה 01 (ממ"ן)', weight: 10 },
+      { label: "בחינת גמר", weight: 90 },
+    ], ids());
+    expect(out).toEqual([
+      { id: "1", label: 'מטלה 01 (ממ"ן)', weight: 10, score: 90 },
+      { id: "2", label: "בחינת גמר", weight: 90 },
+    ]);
+  });
+
+  it("matches an assignment by its number and leaves blank rows alone", () => {
+    const out = applyWeights(sheet, [{ label: "ממן 1", weight: 15 }, { label: "בחינת גמר", weight: null }], ids());
+    expect(out.map((i) => i.weight)).toEqual([15, 0]);
+  });
+
+  it("builds a sheet when the course has none", () => {
+    const out = applyWeights(undefined, [{ label: "Project", weight: 40 }, { label: "Exam", weight: null }], ids());
+    expect(out.map((i) => [i.label, i.weight])).toEqual([["Project", 40], ["Exam", 0]]);
+  });
+});
+

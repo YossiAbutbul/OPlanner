@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { sendAgentMessage, type AgentProposal } from "../../services/agent";
+import { sendAgentMessage, type AgentProposal, type GradeWeightRow } from "../../services/agent";
 import { capitalizeWords } from "../../utility/dayCalendar";
 import { lsCache } from "../../hooks/useLocalStorageCache";
 import AgentText from "./AgentText";
@@ -28,7 +28,17 @@ interface Card {
   editing?: boolean;
 }
 
-type TaskDetails = { name?: string; dueDate?: string; startTime?: string; endTime?: string };
+type TaskDetails = {
+  name?: string;
+  dueDate?: string;
+  startTime?: string;
+  endTime?: string;
+  weights?: GradeWeightRow[]; // grades: the table as the user edited it
+};
+
+// The weights a grades card adds up to, counting blanks as 0.
+const weightsTotal = (rows: GradeWeightRow[] = []) =>
+  Math.round(rows.reduce((n, r) => n + (r.weight ?? 0), 0) * 10) / 10;
 
 // The suggestion with the user's edits applied. An emptied time field
 // removes that time.
@@ -53,6 +63,7 @@ const needsInput = (kind: CardKind, p: AgentProposal) =>
       : !p.dueDate || missingDetails(p);
 
 const detailsProblem = (p: AgentProposal): string | null => {
+  if (p.action === "grades") return null;
   if (!p.name.trim()) return "Add a name.";
   if (p.action === "course") {
     if (/[/]/.test(p.name)) return "A course name can't contain /.";
@@ -203,13 +214,14 @@ const editChanges = (p: AgentProposal): { label: string; from: string; to: strin
   return rows.filter((r) => r.from !== r.to);
 };
 
-type CardKind = "new" | "edit" | "done" | "delete" | "course" | "block";
+type CardKind = "new" | "edit" | "done" | "delete" | "course" | "block" | "grades";
 
 // A status-only change to Done gets its own card: it's the most common edit.
 const cardKind = (p: AgentProposal): CardKind => {
   if (p.action === "delete") return "delete";
   if (p.action === "course") return "course";
   if (p.action === "block") return "block";
+  if (p.action === "grades") return "grades";
   if (!p.id) return "new";
   const changes = editChanges(p);
   return changes.length === 1 && changes[0].label === "Status" && p.status === "DONE" ? "done" : "edit";
@@ -241,6 +253,10 @@ const KIND: Record<CardKind, { label: string; action: string; working: string; d
     label: "Study session", action: "Add", working: "Adding…", doneText: "Added to your tasks",
     icon: <svg {...ICON_PROPS}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>,
   },
+  grades: {
+    label: "Grade weights", action: "Save weights", working: "Saving…", doneText: "Weights saved",
+    icon: <svg {...ICON_PROPS}><path d="M19 5L5 19" /><circle cx="7" cy="7" r="2.5" /><circle cx="17" cy="17" r="2.5" /></svg>,
+  },
   delete: {
     label: "Delete task", action: "Delete", working: "Deleting…", doneText: "Deleted",
     icon: <svg {...ICON_PROPS}><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" /></svg>,
@@ -262,6 +278,11 @@ const cardNotes = (cards: Card[]): string =>
   cards
     .map((c) => {
       const p = withEdits(c);
+      if (p.action === "grades") {
+        // The table as saved, so a later turn knows what the weights are now.
+        const rows = (p.weights ?? []).map((r) => `${r.label}: ${r.weight === null ? "blank" : `${r.weight}%`}`);
+        return `[App note: the grade weights table for "${p.course}" (${rows.join("; ")}) was ${OUTCOME[c.state]}.]`;
+      }
       const what = KIND[cardKind(c.proposal)].label.toLowerCase();
       const when = p.dueDate ? ` (${p.dueDate}${p.startTime ? ` ${formatTime(p)}` : ""})` : "";
       return `[App note: the ${what} suggestion "${p.name}"${when} was ${OUTCOME[c.state]}.]`;
@@ -849,7 +870,11 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                       </span>
                       {/* <bdi> keeps Hebrew names from reordering the English around them. */}
                       <span className="rs-agent-card-name"><bdi>{shown.name}</bdi></span>
-                      {kind === "course" ? (
+                      {kind === "grades" ? (
+                        <span className="rs-agent-card-meta">
+                          {(shown.weights ?? []).length} items · fill in or change any weight
+                        </span>
+                      ) : kind === "course" ? (
                         <span className="rs-agent-card-meta">
                           {shown.dueDate ? `Final exam ${formatDate(shown.dueDate)}` : "No final exam date"}
                         </span>
@@ -869,6 +894,68 @@ const AgentPanel: React.FC<Props> = ({ year, semester, onConfirm, liveTasks, sto
                       )}
                     </div>
                   </div>
+                  {kind === "grades" && (() => {
+                    const rows = proposed.weights ?? [];
+                    const total = weightsTotal(rows);
+                    const off = Math.abs(total - 100) >= 0.05;
+                    const setRow = (r: number, raw: string) => {
+                      const v = raw.trim() === "" ? null : Math.min(100, Math.max(0, Number(raw)));
+                      if (v !== null && !Number.isFinite(v)) return;
+                      setCardEdits(m.id, i, {
+                        weights: rows.map((row, j) => (j === r ? { ...row, weight: v } : row)),
+                      });
+                    };
+                    return (
+                      <div className="rs-agent-weights">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th scope="col">Item</th>
+                              <th scope="col">Weight</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((r, j) => (
+                              <tr key={j}>
+                                <td><bdi>{r.label}</bdi></td>
+                                <td>
+                                  {actionable ? (
+                                    <span className={`rs-agent-weight${r.weight === null ? " is-blank" : ""}`}>
+                                      <input
+                                        type="number"
+                                        inputMode="decimal"
+                                        min={0}
+                                        max={100}
+                                        step={0.5}
+                                        value={r.weight ?? ""}
+                                        placeholder="–"
+                                        aria-label={`Weight of ${r.label} in percent`}
+                                        onChange={(e) => setRow(j, e.target.value)}
+                                      />
+                                      <span aria-hidden="true">%</span>
+                                    </span>
+                                  ) : (
+                                    <span className="rs-agent-weight-value">{r.weight === null ? "–" : `${r.weight}%`}</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr className={off ? "is-off" : undefined}>
+                              <td>Total</td>
+                              <td>{total}%</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                        {actionable && off && (
+                          <p className="rs-agent-fields-hint">
+                            {total < 100 ? `${Math.round((100 - total) * 10) / 10}% still unassigned.` : `${Math.round((total - 100) * 10) / 10}% over 100.`}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                   {kind === "edit" && !gone && c.state !== "saved" && (
                     <ul className="rs-agent-card-changes">
                       {changes.length === 0 && <li>No changes</li>}

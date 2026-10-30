@@ -3,8 +3,15 @@ import { auth } from "../firebase";
 // Client for api/agent.ts. The server decides who may use the agent; the
 // client only asks so it can show or hide the tab.
 
+// One row of a proposed grade sheet; weight is null where it's left to the
+// student.
+export interface GradeWeightRow {
+  label: string;
+  weight: number | null;
+}
+
 export interface AgentProposal {
-  action?: "delete" | "course" | "block";  // omitted for task create/edit
+  action?: "delete" | "course" | "block" | "grades";  // omitted for task create/edit
   id?: string;
   course: string;
   name: string;
@@ -13,6 +20,7 @@ export interface AgentProposal {
   endTime?: string;
   status: "PENDING" | "DONE";
   prevCourse?: string;  // set when an edit moves the task to another course
+  weights?: GradeWeightRow[];  // grades only: the table the card shows
   // Edits only: the task as currently stored, shown against the new values.
   prev?: {
     course: string;

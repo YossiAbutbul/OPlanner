@@ -33,6 +33,8 @@ import {
   parseDeleteProposal,
   parseCourseProposal,
   parseBlockProposal,
+  parseGradeWeightsProposal,
+  gradeSheetView,
   filterTimeBlocks,
   takeGlobal,
   takeRequest,
@@ -172,7 +174,15 @@ const semesterData = (uid: string, year: number, semester: string) => {
       .slice(0, 100);
   };
 
-  return { loadCourses, loadTasks, loadTimeBlocks, loadOtherTasks };
+  // One course's grade sheet, from its course doc, or its starting rows
+  // when it has none yet.
+  const loadGradeSheet = async (course: string) => {
+    const snap = await db().doc(`${base}/${course}`).get();
+    const tasks = (await loadTasks()).filter((t) => t.course === course);
+    return gradeSheetView(snap.get("gradeItems"), tasks);
+  };
+
+  return { loadCourses, loadTasks, loadTimeBlocks, loadOtherTasks, loadGradeSheet };
 };
 
 // A proposal the client shows as a confirm card. `prevCourse` is set when an
@@ -245,6 +255,38 @@ const runTool = async (
       return {
         content: "Proposal shown to the student. It's added as a task only if they confirm.",
         proposal: { action: "block", course, name: title, dueDate: date, startTime, endTime, status: "PENDING" },
+      };
+    }
+
+    case "get_grade_sheet": {
+      const course = ((input ?? {}) as Record<string, unknown>).course;
+      const match =
+        typeof course === "string"
+          ? (await data.loadCourses()).find((c) => c.name.toLowerCase() === course.toLowerCase())
+          : undefined;
+      if (!match) return { content: `No course named "${String(course)}". Use list_courses.`, isError: true };
+      return { content: JSON.stringify(await data.loadGradeSheet(match.name)) };
+    }
+
+    case "propose_grade_weights": {
+      const p = parseGradeWeightsProposal(input);
+      if (!p.ok) return { content: p.error, isError: true };
+      const match = (await data.loadCourses()).find((c) => c.name.toLowerCase() === p.value.course.toLowerCase());
+      if (!match) return { content: `No course named "${p.value.course}". Use list_courses.`, isError: true };
+      const total = p.value.rows.reduce((n, r) => n + (r.weight ?? 0), 0);
+      const open = p.value.rows.filter((r) => r.weight === null).length;
+      return {
+        content:
+          `Weights table shown to the student; saved only if they confirm. Given weights total ${Math.round(total * 10) / 10}%` +
+          (open ? `, ${open} left for them to fill in.` : "."),
+        proposal: {
+          action: "grades",
+          course: match.name,
+          name: match.name,
+          dueDate: "",
+          status: "PENDING",
+          weights: p.value.rows,
+        },
       };
     }
 
@@ -466,6 +508,8 @@ const TOOL_STATUS: Record<string, string> = {
   propose_delete: "Preparing a suggestion…",
   propose_course: "Preparing a suggestion…",
   propose_block: "Planning a study session…",
+  get_grade_sheet: "Reading the grade sheet…",
+  propose_grade_weights: "Filling in the weights…",
 };
 
 const describeError = (err: unknown): string => {

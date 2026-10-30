@@ -1599,21 +1599,57 @@ button.finals-badge:active {
 }
 
 /* --- Grades rows ---------------------------------------------------------
-   Same card rows as Courses, with a bar where the ring sits: how much of the
-   course is marked. No ring, so the separator starts at the card's inset. */
-.course-stat-graded + .course-stat-graded::before {
-  left: 0.8rem;
+   Same card and row as Courses. The leading tile sits in the ring's column,
+   so the hairlines inset to the same text edge and nothing shifts when the
+   card swipes between the two. */
+.grade-tile {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--course-color) 14%, transparent);
+  color: var(--course-color);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
-.course-stat-graded .course-stat-text {
-  gap: 0.3rem;
+/* Final: the tile fills, like a ring that has closed. */
+.course-stat-graded.is-done .grade-tile {
+  background: var(--course-color);
+  color: #fff;
+}
+
+/* Before any marks the tile holds the course's initial, as in the sidebar,
+   and steps back so the graded courses read first. */
+.course-stat-graded.is-empty .grade-tile {
+  background: var(--fill);
+  color: var(--label-3);
+  font-weight: 600;
+}
+
+.course-stat-graded.is-empty .course-stat-name {
+  color: var(--label-2);
+  font-weight: 500;
+}
+
+/* Progress line: a gauge then the share, on one line under the name. */
+.course-stat-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 .course-stat-bar {
-  display: block;
+  flex: 1 1 auto;
+  max-width: 120px;
   height: 4px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--course-color) 18%, transparent);
+  background: color-mix(in srgb, var(--course-color) 16%, transparent);
   overflow: hidden;
 }
 
@@ -1625,28 +1661,13 @@ button.finals-badge:active {
   transition: width 600ms var(--ease-out);
 }
 
-/* The grade is the row's headline figure, a notch stronger than a task
-   percentage; an unmarked course stays quiet. */
-.course-stat-grade {
-  min-width: 2.2rem;
-  text-align: end;
-  font-size: var(--text-base);
-  font-weight: 700;
-  color: var(--label);
+@media (prefers-reduced-motion: reduce) {
+  .course-stat-bar > span {
+    transition: none;
+  }
 }
 
 .course-stat-meta.is-error {
   color: var(--danger-text);
   font-weight: 600;
-}
-
-.course-stat-grade.is-empty {
-  font-weight: 500;
-  color: var(--label-4);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .course-stat-bar > span {
-    transition: none;
-  }
 }

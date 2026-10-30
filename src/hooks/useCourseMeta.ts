@@ -12,6 +12,38 @@ export const courseMetaCacheKey = (uid: string, tab: CourseTab) =>
 
 const cacheKey = (tab: CourseTab) => courseMetaCacheKey(requireUid(), tab);
 
+// Window event for a course doc changed outside the hook that shows it (the
+// assistant saving a grade sheet), so an open Grades tab and the semester
+// grades follow without a reload.
+export const COURSE_META_EVENT = "oplanner:course-meta";
+export interface CourseMetaEventDetail {
+  tab: CourseTab;
+  meta: CourseMeta;
+}
+
+const sameTab = (a: CourseTab, b: CourseTab) =>
+  a.year === b.year && a.semester === b.semester && a.course === b.course;
+
+/**
+ * Change one course's metadata from anywhere: reads the doc, applies
+ * `update`, writes the changed keys, refreshes the cache and tells every
+ * hook showing that course.
+ */
+export const updateCourseMeta = async (
+  tab: CourseTab,
+  update: (meta: CourseMeta) => Partial<CourseMeta>
+): Promise<void> => {
+  const uid = requireUid();
+  const current = await fetchCourseMeta(uid, tab.year, tab.semester, tab.course);
+  const patch = update(current);
+  await saveCourseMeta(uid, tab.year, tab.semester, tab.course, patch);
+  const meta = { ...current, ...patch };
+  lsCache.write(courseMetaCacheKey(uid, tab), meta);
+  window.dispatchEvent(
+    new CustomEvent<CourseMetaEventDetail>(COURSE_META_EVENT, { detail: { tab, meta } })
+  );
+};
+
 // Course-page metadata for the active course tab. Stale-while-revalidate:
 // serve the localStorage copy immediately, then refresh with one Firestore
 // read. Saves are optimistic — state + cache update first, Firestore write
@@ -55,6 +87,16 @@ export const useCourseMeta = (tab: CourseTab | null) => {
     })();
 
     return () => { cancelled = true; };
+  }, [tab?.year, tab?.semester, tab?.course]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!tab) return;
+    const onChange = (e: Event) => {
+      const d = (e as CustomEvent<CourseMetaEventDetail>).detail;
+      if (d && sameTab(d.tab, tab)) setMeta(d.meta);
+    };
+    window.addEventListener(COURSE_META_EVENT, onChange);
+    return () => window.removeEventListener(COURSE_META_EVENT, onChange);
   }, [tab?.year, tab?.semester, tab?.course]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const save = useCallback(async (patch: Partial<CourseMeta>) => {
