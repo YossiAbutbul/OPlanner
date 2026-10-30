@@ -78,8 +78,29 @@ export const UpdateProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [needRefresh]);
 
+  // Activate the waiting worker and reload once it controls the page. Done
+  // here rather than through updateServiceWorker(true): that reloads only on
+  // workbox's own "controlling" event, which doesn't fire for a worker that
+  // finished installing in an earlier session or a later update() check, and
+  // the button then did nothing until a manual refresh.
   const applyUpdate = useCallback(() => {
-    void updateServiceWorker(true);
+    let reloaded = false;
+    const reload = () => {
+      if (reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    };
+    const waiting = registrationRef.current?.waiting;
+    if (!waiting || !navigator.serviceWorker) {
+      void updateServiceWorker(true);
+      // Nothing to hand over to: a plain reload picks up the new build.
+      window.setTimeout(reload, 1500);
+      return;
+    }
+    navigator.serviceWorker.addEventListener("controllerchange", reload, { once: true });
+    waiting.postMessage({ type: "SKIP_WAITING" });
+    // If the switch never reports (a stuck worker), reload anyway.
+    window.setTimeout(reload, 3000);
   }, [updateServiceWorker]);
 
   const checkForUpdates = useCallback(async (): Promise<CheckResult> => {
