@@ -5,8 +5,9 @@
   color: var(--label);
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  /* Fills the view but never shrinks below its content: shrunk, the cards
+     spilled past it and the scroller's bottom padding sat behind them. */
+  flex: 1 0 auto;
 }
 
 .overview-header {
