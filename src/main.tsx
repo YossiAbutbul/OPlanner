@@ -35,6 +35,17 @@ const normalizePath = (p: string) => p.replace(/\/+$/, "") || "/";
 const isKnownRoute =
   normalizePath(window.location.pathname) === normalizePath(import.meta.env.BASE_URL);
 
+// Marks the page idle while its window isn't focused or visible; index.css
+// pauses the looping animations under it.
+const markIdle = () => {
+  const idle = document.visibilityState !== "visible" || !document.hasFocus();
+  document.documentElement.toggleAttribute("data-idle", idle);
+};
+window.addEventListener("focus", markIdle);
+window.addEventListener("blur", markIdle);
+document.addEventListener("visibilitychange", markIdle);
+markIdle();
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>

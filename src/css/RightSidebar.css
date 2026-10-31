@@ -767,13 +767,25 @@
   height: 10px;
   border-radius: 50%;
   background: var(--rs-accent);
-  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.22);
+  /* Keeps the halo below the dot but above the grid. */
+  isolation: isolate;
+}
+
+/* The halo pulses by scale and opacity, not box-shadow: those run on the
+   compositor, where an animated shadow repainted every frame. */
+.rs-day-now-dot::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: rgba(29, 185, 84, 0.22);
+  z-index: -1;
   animation: rs-now-pulse 2s ease-in-out infinite;
 }
 
 @keyframes rs-now-pulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.22); }
-  50%      { box-shadow: 0 0 0 5px rgba(29, 185, 84, 0.10); }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.25); opacity: 0.45; }
 }
 
 .rs-day-now-line {
