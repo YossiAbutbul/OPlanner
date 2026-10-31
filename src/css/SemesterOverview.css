@@ -283,7 +283,12 @@
 
 .ovs-upnext-list.is-scroll {
   overflow-y: auto;
-  scrollbar-width: thin;
+  /* Still scrolls; the bar itself only cluttered the card. */
+  scrollbar-width: none;
+}
+
+.ovs-upnext-list.is-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .ovs-upnext-more {
