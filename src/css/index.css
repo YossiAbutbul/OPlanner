@@ -497,10 +497,16 @@ select:focus-visible {
 
 /* While the app's window isn't focused (another window, a video beside it),
    looping animations hold still so they don't keep the GPU busy. They pick
-   up where they left off on return. Set by main.tsx. */
+   up where they left off on return. Blurs and promoted layers drop too:
+   static, they still cost the GPU each time Chrome composites the window,
+   which an installed app window beside a video does constantly. Set by
+   main.tsx. */
 :root[data-idle] *,
 :root[data-idle] *::before,
 :root[data-idle] *::after {
   animation-play-state: paused !important;
+  will-change: auto !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
