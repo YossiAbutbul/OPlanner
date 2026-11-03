@@ -154,6 +154,34 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
     const course = availableCourses !== undefined ? courseChoice : (courseData.course ?? "");
     if (!name.trim() || !dueDate) return;
 
+    const nextStart = allDay ? "07:00" : (startTime || undefined);
+    const nextEnd = allDay ? "23:00" : (endTime || undefined);
+
+    // Saving an untouched task would rewrite it and replay the progress
+    // animations for nothing, so just close.
+    if (editHomework) {
+      const e = editHomework;
+      const wasAllDay =
+        (e.startTime === "00:00" && e.endTime === "23:59") ||
+        (e.startTime === "07:00" && e.endTime === "23:00") ||
+        (!e.startTime && !e.endTime);
+      const sameTimes = allDay
+        ? wasAllDay
+        : !wasAllDay && (e.startTime || undefined) === nextStart && (e.endTime || undefined) === nextEnd;
+      if (
+        e.name === name.trim() &&
+        e.dueDate === dueDate &&
+        e.status === status &&
+        e.course === course &&
+        sameTimes &&
+        (e.notes || "") === notes &&
+        (e.color || "") === color
+      ) {
+        onClose();
+        return;
+      }
+    }
+
     // Fire confetti when this save transitions the task into COMPLETED —
     // either a brand-new task created already-done or an existing task
     // flipped from PENDING. Repeated saves while already COMPLETED don't
@@ -172,8 +200,8 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
       semester,
       course,
       editHomework?.ignoreOverdue ?? false, // preserve existing; new tasks can go overdue
-      allDay ? "07:00" : (startTime || undefined),
-      allDay ? "23:00" : (endTime || undefined),
+      nextStart,
+      nextEnd,
       notes || undefined,
       color || undefined
     );
