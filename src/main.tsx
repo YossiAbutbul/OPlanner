@@ -42,11 +42,19 @@ const normalizePath = (p: string) => p.replace(/\/+$/, "") || "/";
 const isKnownRoute =
   normalizePath(window.location.pathname) === normalizePath(import.meta.env.BASE_URL);
 
-// Marks the page idle while its window isn't focused or visible; index.css
-// pauses the looping animations under it.
+// Marks the page idle while its window isn't focused or visible, and holds
+// the looping animations still meanwhile. Only the infinite ones: a one-shot
+// entrance paused at its first frame (opacity 0) would leave the page blank
+// when the app opens without focus.
+const loops = () =>
+  document.getAnimations().filter((a) => a.effect?.getTiming().iterations === Infinity);
 const markIdle = () => {
   const idle = document.visibilityState !== "visible" || !document.hasFocus();
   document.documentElement.toggleAttribute("data-idle", idle);
+  for (const a of loops()) {
+    if (idle && a.playState === "running") a.pause();
+    else if (!idle && a.playState === "paused") a.play();
+  }
 };
 window.addEventListener("focus", markIdle);
 window.addEventListener("blur", markIdle);
