@@ -105,3 +105,22 @@
     calc(-50% + (var(--toast-left-inset) - var(--toast-right-inset)) / 2)
   );
 }
+/* The pill grows with its title up to the toast width; a long title (a task
+   or course name) would run past its edge. Clip it there instead: badge,
+   gap and header padding take the rest. */
+[data-sileo-viewport] [data-sileo-title] {
+  max-width: calc(var(--sileo-width) - 3.5rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  unicode-bidi: isolate;
+}
+
+/* Descriptions put a name on its own line ("name\ncourse · due date"). Each
+   line takes its own direction, so a Hebrew name reads right-to-left without
+   scrambling the English around it. */
+[data-sileo-viewport] [data-sileo-description] {
+  white-space: pre-line;
+  unicode-bidi: plaintext;
+  text-align: start;
+  overflow-wrap: anywhere;
+}

@@ -98,8 +98,8 @@ const SemesterOverview: React.FC<Props> = ({
       setTaskModalOpen(false);
       setTaskEditTask(null);
       setTaskPrefillDate(null);
-      toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`, {
-        description: `${course} · due ${dueDate}`,
+      toast.success(id ? "Task updated" : "Task added", {
+        description: `${name}\nDue ${dueDate} · ${course}`,
       });
     } finally {
       setIsLoadingAction(false);

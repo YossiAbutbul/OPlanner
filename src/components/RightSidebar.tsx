@@ -298,8 +298,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         });
         throw e;
       }
-      toast.success(`Task “${p.name}” added`, {
-        description: `${course} · due ${p.dueDate}`,
+      toast.success("Task added", {
+        description: `${p.name}\nDue ${p.dueDate} · ${course}`,
       });
       return id;
     }
@@ -400,8 +400,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       });
       throw e;
     }
-    toast.success(p.id ? `Task “${p.name}” updated` : `Task “${p.name}” added`, {
-      description: `${p.course ?? "reminders"} · due ${p.dueDate}`,
+    toast.success(p.id ? "Task updated" : "Task added", {
+      description: `${p.name}\nDue ${p.dueDate} · ${p.course ?? "reminders"}`,
     });
     return taskId;
   };
@@ -532,8 +532,8 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           setHwPrefillDate(null);
           setHwPrefillStart(null);
           setHwPrefillEnd(null);
-          toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`, {
-            description: `${course} · due ${dueDate}`,
+          toast.success(id ? "Task updated" : "Task added", {
+            description: `${name}\nDue ${dueDate} · ${course}`,
           });
         }}
         editHomework={editTask}

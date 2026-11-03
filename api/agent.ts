@@ -211,25 +211,27 @@ const runTool = async (
 
     case "list_tasks": {
       const f = parseTaskFilter(input);
-      if (!f.ok) return { content: f.error, isError: true };
+      // `=== false`, not `!f.ok`: Vercel type-checks api/ without strict mode,
+      // where only the explicit comparison narrows the result union.
+      if (f.ok === false) return { content: f.error, isError: true };
       return { content: JSON.stringify(filterTasks(await data.loadTasks(), f.value)) };
     }
 
     case "list_other_semesters_tasks": {
       const r = parseOtherTaskRange(input);
-      if (!r.ok) return { content: r.error, isError: true };
+      if (r.ok === false) return { content: r.error, isError: true };
       return { content: JSON.stringify(await data.loadOtherTasks(r.value.from, r.value.to)) };
     }
 
     case "list_time_blocks": {
       const f = parseTaskFilter(input);
-      if (!f.ok) return { content: f.error, isError: true };
+      if (f.ok === false) return { content: f.error, isError: true };
       return { content: JSON.stringify(filterTimeBlocks(await data.loadTimeBlocks(), f.value)) };
     }
 
     case "propose_block": {
       const p = parseBlockProposal(input);
-      if (!p.ok) return { content: p.error, isError: true };
+      if (p.ok === false) return { content: p.error, isError: true };
       const { date, startTime, endTime, title } = p.value;
       // Use the course's stored spelling so the block links to it.
       let course = "";
@@ -284,7 +286,7 @@ const runTool = async (
 
     case "propose_grade_weights": {
       const p = parseGradeWeightsProposal(input);
-      if (!p.ok) return { content: p.error, isError: true };
+      if (p.ok === false) return { content: p.error, isError: true };
       const match = (await data.loadCourses()).find((c) => c.name.toLowerCase() === p.value.course.toLowerCase());
       if (!match) return { content: `No course named "${p.value.course}". Use list_courses.`, isError: true };
       const total = p.value.rows.reduce((n, r) => n + (r.weight ?? 0), 0);
@@ -306,7 +308,7 @@ const runTool = async (
 
     case "propose_course": {
       const p = parseCourseProposal(input);
-      if (!p.ok) return { content: p.error, isError: true };
+      if (p.ok === false) return { content: p.error, isError: true };
       const taken = (await data.loadCourses()).some((c) => c.name.toLowerCase() === p.value.name.toLowerCase());
       if (taken) return { content: `A course named "${p.value.name}" already exists.`, isError: true };
       return {
@@ -323,7 +325,7 @@ const runTool = async (
 
     case "propose_delete": {
       const p = parseDeleteProposal(input);
-      if (!p.ok) return { content: p.error, isError: true };
+      if (p.ok === false) return { content: p.error, isError: true };
       const t = (await data.loadTasks()).find((x) => x.id === p.value.id);
       if (!t) return { content: `No task with id "${p.value.id}". Use list_tasks.`, isError: true };
       return {
@@ -343,7 +345,7 @@ const runTool = async (
 
     case "propose_task": {
       const p = parseProposal(input);
-      if (!p.ok) return { content: p.error, isError: true };
+      if (p.ok === false) return { content: p.error, isError: true };
       const courses = await data.loadCourses();
       if (p.value.course !== REMINDERS && !courses.some((c) => c.name === p.value.course)) {
         return { content: `No course named "${p.value.course}". Use list_courses.`, isError: true };
@@ -402,7 +404,7 @@ export async function POST(request: Request): Promise<Response> {
     return json(400, { error: "Invalid request." });
   }
   const parsed = parseAgentRequest(body);
-  if (!parsed.ok) return json(400, { error: parsed.error });
+  if (parsed.ok === false) return json(400, { error: parsed.error });
   const req = parsed.value;
 
   // Rate limit + daily budget, atomically. agentUsage/ sits outside users/ so
@@ -417,9 +419,9 @@ export async function POST(request: Request): Promise<Response> {
       const [snap, globalSnap] = await Promise.all([tx.get(usageRef), tx.get(globalRef)]);
       const now = Date.now();
       const result = takeRequest({ ...emptyUsage(), ...(snap.data() as Partial<UsageState> | undefined) }, now);
-      if (!result.ok) return result;
+      if (result.ok === false) return result;
       const app = takeGlobal(globalSnap.data() as Partial<GlobalUsage> | undefined, now);
-      if (!app.ok) {
+      if (app.ok === false) {
         console.warn("Agent: app-wide daily budget reached");
         return app;
       }
@@ -431,7 +433,7 @@ export async function POST(request: Request): Promise<Response> {
     console.error("Agent: usage check failed", err instanceof Error ? err.name : "unknown");
     return json(503, { error: "The assistant is unavailable right now." });
   }
-  if (!gate.ok) {
+  if (gate.ok === false) {
     return json(429, { error: gate.reason }, { "Retry-After": String(gate.retryAfterSec) });
   }
 

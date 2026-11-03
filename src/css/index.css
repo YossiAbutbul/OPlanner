@@ -488,9 +488,7 @@ select:focus-visible {
   }
 
   /* Opacity and color changes aid comprehension; keep them, just short. */
-  .app-modal-overlay,
-  .toast,
-  .pwa-update {
+  .app-modal-overlay {
     transition-duration: 160ms !important;
   }
 }
