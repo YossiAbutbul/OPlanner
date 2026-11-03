@@ -4,14 +4,16 @@ import './utility/installPrompt';
 // Applies the saved appearance (Light / Dark) before first paint.
 import './utility/theme';
 import './css/index.css';
-import './css/Toast.css';
+import 'sileo/styles.css';
+import './css/sileo.css';
 import './css/InstallHelpModal.css';
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import NotFound from "./components/NotFound";
 import ErrorBoundary from "./components/ErrorBoundary";
-import ToastList from "./components/ToastList";
+import AppToaster from "./components/AppToaster";
+import ToastLab from "./components/ToastLab";
 import PwaReloadPrompt from "./components/PwaReloadPrompt";
 import { HomeworkProvider } from "./context/HomeworkContext";
 import { TimeBlockProvider } from "./context/TimeBlockContext";
@@ -21,6 +23,11 @@ import { CoinsProvider } from "./context/CoinsContext";
 import { PomodoroProvider } from "./context/PomodoroContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { UpdateProvider } from "./context/UpdateContext";
+
+// Dev-only toast playground: visit ?toastlab=1 to fire every toast kind from
+// every position.
+const showToastLab =
+  import.meta.env.DEV && new URLSearchParams(location.search).get("toastlab") === "1";
 
 // Mobile debug console: dev builds only, visit ?debug=1 to enable on phones.
 if (import.meta.env.DEV && new URLSearchParams(location.search).get("debug") === "1") {
@@ -59,7 +66,8 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
                   <TimeBlockProvider>
                     <NotificationProvider>
                       <App />
-                      <ToastList />
+                      <AppToaster />
+                      {showToastLab && <ToastLab />}
                       <PwaReloadPrompt />
                     </NotificationProvider>
                   </TimeBlockProvider>

@@ -73,7 +73,9 @@ const NotificationList: React.FC = () => {
     color?: string
   ) => {
     await addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, undefined, startTime, endTime, notes, color);
-    toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`);
+    toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`, {
+      description: `${course} · due ${dueDate}`,
+    });
     setModalOpen(false);
   };
 

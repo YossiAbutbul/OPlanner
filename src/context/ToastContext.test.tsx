@@ -1,7 +1,23 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import React from "react";
+import { sileo } from "sileo";
 import { ToastProvider, useToast } from "./ToastContext";
+
+// Sileo owns the queue and rendering; these tests cover the mapping this
+// context does on top of it (kind, durations, action button, coalescing).
+vi.mock("sileo", () => {
+  let n = 0;
+  const make = () => `sileo-${++n}`;
+  return {
+    sileo: {
+      success: vi.fn(make),
+      error: vi.fn(make),
+      info: vi.fn(make),
+      dismiss: vi.fn(),
+    },
+  };
+});
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <ToastProvider>{children}</ToastProvider>
@@ -10,89 +26,84 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 describe("ToastContext", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.clearAllMocks();
   });
   afterEach(() => {
     vi.useRealTimers();
   });
 
   it("throws if useToast used outside provider", () => {
-    // renderHook without wrapper should make the hook throw on mount.
     expect(() => renderHook(() => useToast())).toThrow(/within ToastProvider/);
   });
 
-  it("push adds a toast; success/error/info sugar work", () => {
+  it("maps success/error/info onto the matching sileo call", () => {
     const { result } = renderHook(() => useToast(), { wrapper });
-    expect(result.current.toasts).toHaveLength(0);
 
-    act(() => result.current.success("yay"));
-    act(() => result.current.error("oh no"));
-    act(() => result.current.info("fyi"));
+    act(() => void result.current.success("yay"));
+    act(() => void result.current.error("oh no"));
+    act(() => void result.current.info("fyi"));
 
-    expect(result.current.toasts).toHaveLength(3);
-    expect(result.current.toasts[0]).toMatchObject({ kind: "success", message: "yay" });
-    expect(result.current.toasts[1]).toMatchObject({ kind: "error", message: "oh no" });
-    expect(result.current.toasts[2]).toMatchObject({ kind: "info", message: "fyi" });
-    // Ids must be unique.
-    const ids = result.current.toasts.map((t) => t.id);
-    expect(new Set(ids).size).toBe(3);
+    expect(sileo.success).toHaveBeenCalledWith(expect.objectContaining({ title: "yay" }));
+    expect(sileo.error).toHaveBeenCalledWith(expect.objectContaining({ title: "oh no" }));
+    expect(sileo.info).toHaveBeenCalledWith(expect.objectContaining({ title: "fyi" }));
   });
 
-  it("auto-dismisses success/info after 4.5s, errors after 6s", () => {
+  it("gives errors a longer duration than success/info, and sticky toasts none", () => {
     const { result } = renderHook(() => useToast(), { wrapper });
-    act(() => result.current.success("a"));
-    act(() => result.current.error("b"));
 
-    // At 4.5s, success is gone but error stays.
-    act(() => {
-      vi.advanceTimersByTime(4500);
-    });
-    expect(result.current.toasts.map((t) => t.kind)).toEqual(["error"]);
+    act(() => void result.current.success("a"));
+    act(() => void result.current.error("b"));
+    act(() => void result.current.info("c", { sticky: true }));
 
-    // At 6s total, error is also gone.
-    act(() => {
-      vi.advanceTimersByTime(1500);
-    });
-    expect(result.current.toasts).toHaveLength(0);
+    expect(vi.mocked(sileo.success).mock.calls[0][0].duration).toBe(4500);
+    expect(vi.mocked(sileo.error).mock.calls[0][0].duration).toBe(6000);
+    expect(vi.mocked(sileo.info).mock.calls[0][0].duration).toBeNull();
   });
 
-  it("coalesces identical non-sticky toasts into one, refreshing its timer", () => {
+  it("passes an action through as sileo's button", () => {
     const { result } = renderHook(() => useToast(), { wrapper });
-    act(() => result.current.success("Notes saved"));
-    act(() => {
-      vi.advanceTimersByTime(3000);
-    });
-    // Spam the same message — should stay a single toast.
-    act(() => result.current.success("Notes saved"));
-    act(() => result.current.success("Notes saved"));
-    expect(result.current.toasts).toHaveLength(1);
+    const onClick = vi.fn();
 
-    // Timer was refreshed by the last push: original 4.5s window has passed
-    // (3000 + 2000 = 5000) but the toast survives.
-    act(() => {
-      vi.advanceTimersByTime(2000);
-    });
-    expect(result.current.toasts).toHaveLength(1);
-    // ...and clears 4.5s after the last push.
-    act(() => {
-      vi.advanceTimersByTime(2500);
-    });
-    expect(result.current.toasts).toHaveLength(0);
+    act(() => void result.current.info("Chat cleared", { action: { label: "Undo", onClick } }));
+
+    const opts = vi.mocked(sileo.info).mock.calls[0][0];
+    expect(opts.button).toMatchObject({ title: "Undo" });
+    opts.button!.onClick();
+    expect(onClick).toHaveBeenCalled();
   });
 
-  it("caps the stack at 3, evicting the oldest non-sticky toast", () => {
+  it("coalesces identical non-sticky toasts by dismissing the live twin", () => {
     const { result } = renderHook(() => useToast(), { wrapper });
-    act(() => result.current.info("a"));
-    act(() => result.current.info("b"));
-    act(() => result.current.info("c"));
-    act(() => result.current.info("d"));
-    expect(result.current.toasts.map((t) => t.message)).toEqual(["b", "c", "d"]);
+
+    let first = "";
+    act(() => {
+      first = result.current.success("Notes saved");
+    });
+    expect(sileo.dismiss).not.toHaveBeenCalled();
+
+    act(() => void result.current.success("Notes saved"));
+    expect(sileo.dismiss).toHaveBeenCalledWith(first);
+
+    // A different message is its own toast, not a replacement.
+    vi.mocked(sileo.dismiss).mockClear();
+    act(() => void result.current.success("Links saved"));
+    expect(sileo.dismiss).not.toHaveBeenCalled();
   });
 
-  it("dismiss removes the toast immediately", () => {
+  it("stops tracking a toast once it has expired, so its id is not reused", () => {
     const { result } = renderHook(() => useToast(), { wrapper });
-    act(() => result.current.success("a"));
-    const id = result.current.toasts[0].id;
-    act(() => result.current.dismiss(id));
-    expect(result.current.toasts).toHaveLength(0);
+
+    act(() => void result.current.success("Notes saved"));
+    act(() => {
+      vi.advanceTimersByTime(5500);
+    });
+    act(() => void result.current.success("Notes saved"));
+    expect(sileo.dismiss).not.toHaveBeenCalled();
+  });
+
+  it("dismiss forwards to sileo", () => {
+    const { result } = renderHook(() => useToast(), { wrapper });
+    act(() => result.current.dismiss("sileo-42"));
+    expect(sileo.dismiss).toHaveBeenCalledWith("sileo-42");
   });
 });

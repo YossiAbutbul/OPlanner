@@ -277,12 +277,22 @@ const ImportCalendarModal: React.FC<Props> = ({ isOpen, onClose, events, onDone 
       toast.success(
         tasks > 0
           ? `${plural(tasks, "task", "tasks")} added`
-          : `${plural(blocks, "Schedule block", "Schedule blocks")} moved to tasks`
+          : `${plural(blocks, "Schedule block", "Schedule blocks")} moved to tasks`,
+        {
+          description:
+            skipped > 0
+              ? `${skipped} already on your calendar were skipped.`
+              : "Imported from your university calendar.",
+        }
       );
     } else if (failed > 0) {
-      toast.error("Import failed — nothing added");
+      toast.error("Import failed", {
+        description: `${plural(failed, "event", "events")} couldn't be read.`,
+      });
     } else {
-      toast.info("Nothing new to import");
+      toast.info("Nothing new to import", {
+        description: "Everything in the file is already on your calendar.",
+      });
     }
     onDone();
   };

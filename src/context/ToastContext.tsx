@@ -1,4 +1,5 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef } from "react";
+import { sileo } from "sileo";
 
 export type ToastKind = "success" | "error" | "info";
 
@@ -8,103 +9,82 @@ export interface ToastAction {
 }
 
 export interface ToastOptions {
+  // A second line under the message. Sileo expands the pill into a card for
+  // it, the same way it does for an action.
+  description?: string;
   // Sticky toasts never auto-dismiss — used for actionable prompts like
   // "New version available". The user must click the action or close it.
   sticky?: boolean;
   action?: ToastAction;
 }
 
-export interface Toast {
-  id: string;
-  kind: ToastKind;
-  message: string;
-  sticky?: boolean;
-  action?: ToastAction;
-}
-
 interface ToastContextValue {
-  toasts: Toast[];
-  push: (kind: ToastKind, message: string, opts?: ToastOptions) => void;
+  push: (kind: ToastKind, message: string, opts?: ToastOptions) => string;
   dismiss: (id: string) => void;
   // Sugar for the common cases.
-  success: (message: string, opts?: ToastOptions) => void;
-  error: (message: string, opts?: ToastOptions) => void;
-  info: (message: string, opts?: ToastOptions) => void;
+  success: (message: string, opts?: ToastOptions) => string;
+  error: (message: string, opts?: ToastOptions) => string;
+  info: (message: string, opts?: ToastOptions) => string;
 }
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
 const TOAST_TTL_MS = 4500;
-// Cap the visible stack so spamming an action can't bury the screen.
-const MAX_TOASTS = 3;
+// Errors stay slightly longer so the user can actually read them.
+const ERROR_TTL_MS = 6000;
 
-// Counter is sufficient — single-tab, no SSR. Avoids Date.now() / Math.random()
-// which would defeat React strict-mode double-invocation determinism.
-let counter = 0;
-const nextId = () => `toast-${++counter}`;
-
+// Sileo owns the queue, stacking and animation; this context only maps the
+// app's small toast vocabulary onto it, and keeps the coalescing behaviour the
+// app relies on (a spammed action refreshes one toast instead of stacking).
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  // Track auto-dismiss timers by id so coalescing/dismiss can cancel a stale
-  // one instead of letting it fire against a recycled toast.
-  const timers = useRef<Map<string, number>>(new Map());
+  // kind+message -> live sileo id, so an identical toast replaces its twin.
+  const live = useRef<Map<string, string>>(new Map());
 
-  const dismiss = useCallback((id: string) => {
-    const t = timers.current.get(id);
-    if (t !== undefined) {
-      window.clearTimeout(t);
-      timers.current.delete(id);
-    }
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
-
-  const push = useCallback(
-    (kind: ToastKind, message: string, opts?: ToastOptions) => {
-      const sticky = opts?.sticky;
-      const id = nextId();
-      setToasts((prev) => {
-        // Coalesce: if an identical non-sticky toast is already showing, drop it
-        // so a spammed action just refreshes one toast instead of stacking.
-        let next = prev.filter((t) => {
-          const dup = !t.sticky && !sticky && t.kind === kind && t.message === message;
-          if (dup) {
-            const h = timers.current.get(t.id);
-            if (h !== undefined) { window.clearTimeout(h); timers.current.delete(t.id); }
-          }
-          return !dup;
-        });
-        next = [...next, { id, kind, message, sticky, action: opts?.action }];
-        // Cap the stack — evict oldest non-sticky toasts past the limit.
-        while (next.length > MAX_TOASTS) {
-          const victim = next.find((t) => !t.sticky);
-          if (!victim) break;
-          const h = timers.current.get(victim.id);
-          if (h !== undefined) { window.clearTimeout(h); timers.current.delete(victim.id); }
-          next = next.filter((t) => t.id !== victim.id);
-        }
-        return next;
-      });
-      // Auto-dismiss after TTL unless sticky. Errors stay slightly longer
-      // so the user can actually read them before they fade.
-      if (!sticky) {
-        const ttl = kind === "error" ? TOAST_TTL_MS + 1500 : TOAST_TTL_MS;
-        timers.current.set(id, window.setTimeout(() => dismiss(id), ttl));
+  const value = useMemo<ToastContextValue>(() => {
+    const push = (kind: ToastKind, message: string, opts?: ToastOptions) => {
+      const key = `${kind}:${message}`;
+      if (!opts?.sticky) {
+        const prev = live.current.get(key);
+        if (prev) sileo.dismiss(prev);
       }
-    },
-    [dismiss]
-  );
+      // Acting on a toast also closes it — the prompt has been answered.
+      // Assigned after the call, which is where the id comes from.
+      let id = "";
+      const action = opts?.action;
+      id = sileo[kind]({
+        title: message,
+        description: opts?.description,
+        duration: opts?.sticky ? null : kind === "error" ? ERROR_TTL_MS : TOAST_TTL_MS,
+        button: action
+          ? {
+              title: action.label,
+              onClick: () => {
+                action.onClick();
+                sileo.dismiss(id);
+              },
+            }
+          : undefined,
+      });
+      if (!opts?.sticky) {
+        live.current.set(key, id);
+        // Forget the mapping once the toast has gone, so the map can't grow
+        // without bound and a later push doesn't dismiss a recycled id.
+        const ttl = kind === "error" ? ERROR_TTL_MS : TOAST_TTL_MS;
+        window.setTimeout(() => {
+          if (live.current.get(key) === id) live.current.delete(key);
+        }, ttl + 1000);
+      }
+      return id;
+    };
 
-  const value = useMemo<ToastContextValue>(
-    () => ({
-      toasts,
+    return {
       push,
-      dismiss,
+      dismiss: (id: string) => sileo.dismiss(id),
       success: (m: string, o?: ToastOptions) => push("success", m, o),
       error: (m: string, o?: ToastOptions) => push("error", m, o),
       info: (m: string, o?: ToastOptions) => push("info", m, o),
-    }),
-    [toasts, push, dismiss]
-  );
+    };
+  }, []);
 
   // Dev-only debug hook: expose toast API on window so `__toast.error("x")`
   // works from the browser console. Effect-bound so the assignment doesn't

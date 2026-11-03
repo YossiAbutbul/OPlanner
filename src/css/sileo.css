@@ -1,0 +1,107 @@
+/* App-side overrides for the Sileo toast viewport.
+   Loaded after sileo/styles.css in main.tsx. */
+
+/* Sileo's layout math assumes border-box (the header is sized to the pill
+   height and then padded). The app has no global box-sizing reset, so without
+   this the header grows past the pill and the text sits off its centre. */
+[data-sileo-viewport],
+[data-sileo-viewport] *,
+[data-sileo-viewport] *::before,
+[data-sileo-viewport] *::after {
+  box-sizing: border-box;
+}
+
+/* The app writes toast copy as sentences (“Couldn't save notes. Try again.”);
+   Sileo's capitalize would render it Title Case. */
+[data-sileo-viewport] :is([data-sileo-title], [data-sileo-description], [data-sileo-button]) {
+  text-transform: none;
+}
+
+/* Match the app's type. */
+[data-sileo-viewport] {
+  font-family: inherit;
+}
+
+[data-sileo-viewport] [data-sileo-title] {
+  font-size: var(--text-sm);
+}
+
+/* index.css pauses every animation while the window is idle (unfocused or
+   hidden) to keep the GPU quiet. Sileo's entrance animations are fill-both,
+   so a paused one leaves the toast frozen at its from-state — an empty pill.
+   Toasts are short-lived and only appear on an action, so let them run. */
+:root[data-idle] [data-sileo-viewport],
+:root[data-idle] [data-sileo-viewport] *,
+:root[data-idle] [data-sileo-viewport] *::before,
+:root[data-idle] [data-sileo-viewport] *::after {
+  animation-play-state: running !important;
+}
+
+/* Above the app's chrome and modals (the highest z-index in the app is 9999),
+   so a toast raised from inside a dialog is still readable. */
+[data-sileo-viewport][data-position] {
+  z-index: 10000;
+}
+
+/* Sileo tints the title with the state colour too, which reads as low-contrast
+   green/red text on the dark pill. Keep the colour on the badge only. */
+/* Sileo inverts the pill against the theme (dark pill in light mode), which
+   its own data-theme attribute tracks — so does the title's contrast colour. */
+[data-sileo-viewport][data-theme="light"] [data-sileo-title][data-state] {
+  --sileo-tone: rgba(255, 255, 255, 0.95);
+}
+
+[data-sileo-viewport][data-theme="dark"] [data-sileo-title][data-state] {
+  --sileo-tone: rgba(0, 0, 0, 0.9);
+}
+
+/* The app underlines bare buttons that look like links; Sileo's action button
+   is already a filled control. */
+[data-sileo-viewport] [data-sileo-button] {
+  text-decoration: none;
+}
+
+/* The toast floats at the very top, over the app's own dark top bar — a flat
+   dark pill would melt into it, so lift it with a shadow. The shadow goes on
+   the canvas (the pill is an SVG shape, not a box). */
+[data-sileo-viewport] [data-sileo-canvas] {
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.28))
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* Narrow phones: the 350px pill would run to both edges. */
+@media (max-width: 420px) {
+  [data-sileo-viewport] {
+    --sileo-width: min(350px, calc(100vw - 2rem));
+  }
+}
+
+/* Dynamic Island style: the pill hugs the top edge, so drop the viewport's
+   own top padding (the offset already carries the notch inset). */
+[data-sileo-viewport][data-position^="top"] {
+  padding-top: 0;
+}
+
+/* The content column: the gaps the sidebars leave. Zero under 1024px, where
+   the app hides both and the window edge is the content edge. AppToaster feeds
+   --toast-right-inset into sileo's right offset for bottom-right (content). */
+:root {
+  --toast-right-inset: 0px;
+  --toast-left-inset: 0px;
+}
+
+@media (min-width: 1025px) {
+  :root {
+    /* The sidebar's own width plus the gutter its panel sits in. */
+    --toast-right-inset: calc(var(--rsidebar-w) + 12px);
+    --toast-left-inset: var(--sidebar-w);
+  }
+}
+
+/* bottom-center (content): centre between the sidebars instead of on the
+   window, so the toast never sits on the course list or the composer. */
+:root[data-toast-align="content"] [data-sileo-viewport][data-position$="center"] {
+  transform: translateX(
+    calc(-50% + (var(--toast-left-inset) - var(--toast-right-inset)) / 2)
+  );
+}

@@ -293,10 +293,14 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         // Flagged as the Assistant's own plan, so it doesn't plan for it again.
         await addHomework(id, p.name, p.dueDate, "PENDING", year, semester, course, false, undefined, p.startTime, p.endTime, undefined, undefined, true);
       } catch (e) {
-        toast.error(`Couldn't add “${p.name}”`);
+        toast.error(`Couldn't add “${p.name}”`, {
+          description: "The assistant's task wasn't saved.",
+        });
         throw e;
       }
-      toast.success(`Task “${p.name}” added`);
+      toast.success(`Task “${p.name}” added`, {
+        description: `${course} · due ${p.dueDate}`,
+      });
       return id;
     }
     if (p.action === "grades") {
@@ -312,10 +316,14 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           ),
         }));
       } catch (e) {
-        toast.error(`Couldn't save the weights for “${p.course}”`);
+        toast.error(`Couldn't save the weights for “${p.course}”`, {
+          description: "The grade sheet is unchanged.",
+        });
         throw e;
       }
-      toast.success(`Weights saved for “${p.course}”`);
+      toast.success(`Weights saved for “${p.course}”`, {
+        description: "Its grade sheet now uses the new weights.",
+      });
       return;
     }
     if (p.action === "course") {
@@ -328,10 +336,14 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         if (!onAddCourse) throw new Error("Adding courses isn't available here");
         await onAddCourse(year, key, name, p.dueDate || undefined);
       } catch (e) {
-        toast.error(`Couldn't add “${name}”`);
+        toast.error(`Couldn't add “${name}”`, {
+          description: "The course wasn't created.",
+        });
         throw e;
       }
-      toast.success(`Course “${name}” added`);
+      toast.success(`Course “${name}” added`, {
+        description: "Open it to set exams, grades and notes.",
+      });
       return;
     }
     const fromCourse = p.prevCourse ?? p.course;
@@ -342,18 +354,24 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       : undefined;
     // Never let a proposal create a task under an id the user doesn't have.
     if (p.id && !existing) {
-      toast.error(`“${p.name}” no longer exists`);
+      toast.error(`“${p.name}” no longer exists`, {
+        description: "It was deleted since the assistant suggested it.",
+      });
       throw new Error("Proposed task not found");
     }
     if (p.action === "delete" && existing) {
       try {
         await removeHomework(existing.id, existing.year, existing.semester, existing.course);
       } catch (e) {
-        toast.error(`Couldn't delete “${p.name}”`);
+        toast.error(`Couldn't delete “${p.name}”`, {
+          description: "The task is still on your list.",
+        });
         throw e;
       }
       setAllSemesterTasks((prev) => prev.filter((x) => x.id !== existing.id));
-      toast.success(`Deleted “${p.name}”`);
+      toast.success(`Deleted “${p.name}”`, {
+        description: `Removed from ${existing.course}.`,
+      });
       return;
     }
     let taskId: string;
@@ -377,10 +395,14 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         existing?.color
       );
     } catch (e) {
-      toast.error(`Couldn't save “${p.name}”`);
+      toast.error(`Couldn't save “${p.name}”`, {
+        description: "The assistant's change wasn't applied.",
+      });
       throw e;
     }
-    toast.success(p.id ? `Task “${p.name}” updated` : `Task “${p.name}” added`);
+    toast.success(p.id ? `Task “${p.name}” updated` : `Task “${p.name}” added`, {
+      description: `${p.course ?? "reminders"} · due ${p.dueDate}`,
+    });
     return taskId;
   };
 
@@ -437,7 +459,12 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
               }
               storageKey={`oplanner.agentChat.${user.uid}`}
               blocks={blocks}
-              onCleared={(undo) => toast.info("Chat cleared", { action: { label: "Undo", onClick: undo } })}
+              onCleared={(undo) =>
+                toast.info("Chat cleared", {
+                  description: "This course's conversation was removed.",
+                  action: { label: "Undo", onClick: undo },
+                })
+              }
             />
           )}
         </div>
@@ -505,7 +532,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           setHwPrefillDate(null);
           setHwPrefillStart(null);
           setHwPrefillEnd(null);
-          toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`);
+          toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`, {
+            description: `${course} · due ${dueDate}`,
+          });
         }}
         editHomework={editTask}
         note={editTask && otherSemesterLabel(editTask) ? `From another semester: ${otherSemesterLabel(editTask)}` : null}
@@ -513,7 +542,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           const name = editTask.name;
           await removeHomework(editTask.id, editTask.year, editTask.semester, editTask.course);
           setAllSemesterTasks((prev) => prev.filter((x) => x.id !== editTask.id));
-          toast.success(`Deleted “${name}”`);
+          toast.success(`Deleted “${name}”`, {
+            description: `Removed from ${editTask.course}.`,
+          });
         } : undefined}
         selectedCourseData={
           editTask
@@ -553,7 +584,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         onDelete={async (t) => {
           await removeHomework(t.id, t.year, t.semester, t.course);
           setAllSemesterTasks((prev) => prev.filter((x) => x.id !== t.id));
-          toast.success(`Deleted “${t.name}”`);
+          toast.success(`Deleted “${t.name}”`, {
+            description: `Removed from ${t.course}.`,
+          });
         }}
         onAdd={() => {
           setRemindersOpen(false);
@@ -573,7 +606,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
         }}
         onSave={async (b) => {
           await saveBlock(b);
-          toast.success(b.id ? "Time block updated" : "Time block added");
+          toast.success(b.id ? "Time block updated" : "Time block added", {
+            description: `${b.date} · ${b.startTime}–${b.endTime}`,
+          });
         }}
         onDelete={async (id) => {
           await removeBlock(id);

@@ -99,10 +99,14 @@ const HomeworkModal: React.FC<HomeworkModalProps> = ({
         try {
           await removeHomework(t.id, t.year, t.semester, t.course);
         } catch (e) {
-          toast.error(`Couldn't delete “${t.name}”`);
+          toast.error(`Couldn't delete “${t.name}”`, {
+            description: "The task is still on your list.",
+          });
           throw e;
         }
-        toast.success(`Deleted “${t.name}”`);
+        toast.success(`Deleted “${t.name}”`, {
+          description: `Removed from ${t.course}.`,
+        });
       })
     : undefined;
 

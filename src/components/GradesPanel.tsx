@@ -156,7 +156,9 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
     try {
       await save({ gradeItems: next });
     } catch {
-      toast.error("Could not save the grade sheet.");
+      toast.error("Couldn't save the grade sheet", {
+        description: "Your last change wasn't stored — try again.",
+      });
     }
   };
 
@@ -193,19 +195,24 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
     try {
       await save(patch);
     } catch {
-      toast.error("Could not save the grade sheet.");
+      toast.error("Couldn't save the grade sheet", {
+        description: "The row is still there — try again.",
+      });
       return;
     }
     // A scored row is easy to lose by a stray tap; put it back on request,
     // skip list included, so the import doesn't treat it as dismissed.
-    toast.info(`Removed ${item.label || "item"}.`, {
+    toast.info(`Removed ${item.label || "item"}`, {
+      description: "It no longer counts toward this course's grade.",
       action: {
         label: "Undo",
         onClick: () => {
           setItems(before);
           lastSaved.current = before;
           save({ gradeItems: before, gradeSkips: skips }).catch(() =>
-            toast.error("Could not save the grade sheet.")
+            toast.error("Couldn't restore that row", {
+              description: "Try removing and re-adding it.",
+            })
           );
         },
       },
@@ -214,7 +221,9 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
 
   const addItem = () => {
     if (items.length >= MAX_GRADE_ITEMS) {
-      toast.info(`A course holds up to ${MAX_GRADE_ITEMS} graded items.`);
+      toast.info("That's all the graded items", {
+        description: `A course holds up to ${MAX_GRADE_ITEMS} of them.`,
+      });
       return;
     }
     const added = { ...row("", 0), manual: true };
@@ -228,7 +237,9 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
       await save({ gradeCap: next ?? null } as Parameters<typeof save>[0]);
       await commit(items, next);
     } catch {
-      toast.error("Could not save that.");
+      toast.error("Couldn't save that", {
+        description: "The grade cap is unchanged.",
+      });
     }
   };
 
@@ -236,7 +247,9 @@ const GradesPanel: React.FC<Props> = ({ activeTab, tasks }) => {
     try {
       await save({ credits });
     } catch {
-      toast.error("Could not save that.");
+      toast.error("Couldn't save that", {
+        description: "The credit count is unchanged.",
+      });
     }
   };
 

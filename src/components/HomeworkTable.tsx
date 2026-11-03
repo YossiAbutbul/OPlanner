@@ -162,11 +162,15 @@ const HomeworkTable: React.FC<HomeworkTableProps> = ({ tasks, onAddTask, loading
             }}
             onSave={(id, name, dueDate, status, year, semester, course, ignoreOverdue, startTime, endTime, notes, color) => {
               if (!name || !dueDate) {
-                toast.error("Name and due date are required.");
+                toast.error("Name and due date are required", {
+                  description: "Fill both in before saving the task.",
+                });
                 return;
               }
               addHomework(id, name, dueDate, status, year, semester, course, ignoreOverdue, undefined, startTime, endTime, notes, color);
-              toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`);
+              toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`, {
+                description: `${course} · due ${dueDate}`,
+              });
               setModalOpen(false);
               setEditHomework(null);
             }}

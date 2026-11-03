@@ -98,7 +98,9 @@ const SemesterOverview: React.FC<Props> = ({
       setTaskModalOpen(false);
       setTaskEditTask(null);
       setTaskPrefillDate(null);
-      toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`);
+      toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`, {
+        description: `${course} · due ${dueDate}`,
+      });
     } finally {
       setIsLoadingAction(false);
     }
@@ -118,16 +120,22 @@ const SemesterOverview: React.FC<Props> = ({
           final.id, final.name, next, final.status, final.year, final.semester, final.course,
           final.ignoreOverdue, undefined, final.startTime, final.endTime, final.notes, final.color
         );
-        toast.success("Final exam date saved");
+        toast.success("Final exam date saved", {
+          description: `${course} · ${next}`,
+        });
       } else {
         void removeHomework(final.id, final.year, final.semester, final.course);
-        toast.success("Final exam date cleared");
+        toast.success("Final exam date cleared", {
+          description: `${course} has no final on the calendar.`,
+        });
       }
       return;
     }
     onUpdateCourseFinalDate(course, next)
       .then(() => {
-        toast.success(next ? "Final exam date saved" : "Final exam date cleared");
+        toast.success(next ? "Final exam date saved" : "Final exam date cleared", {
+          description: next ? `${course} · ${next}` : `${course} has no final on the calendar.`,
+        });
       })
       .catch((err: Error) => {
         onError(err.message || "Failed to save final date.");
@@ -187,7 +195,9 @@ const SemesterOverview: React.FC<Props> = ({
           setAddOpen(false);
           onYearsChanged();
           onSelectCourse(name);
-          toast.success(`Course “${name}” added`);
+          toast.success(`Course “${name}” added`, {
+            description: "Open it to set exams, grades and notes.",
+          });
         }}
         onError={onError}
       />
@@ -350,7 +360,9 @@ const SemesterOverview: React.FC<Props> = ({
                 ? async () => {
                     const t = taskEditTask;
                     await removeHomework(t.id, t.year, t.semester, t.course);
-                    toast.success(`Deleted “${t.name}”`);
+                    toast.success(`Deleted “${t.name}”`, {
+                      description: `Removed from ${t.course}.`,
+                    });
                   }
                 : undefined
             }
@@ -390,7 +402,9 @@ const SemesterOverview: React.FC<Props> = ({
             const t = confirmDelete;
             await removeHomework(t.id, t.year, t.semester, t.course);
             setConfirmDelete(null);
-            toast.success(`Deleted “${t.name}”`);
+            toast.success(`Deleted “${t.name}”`, {
+              description: `Removed from ${t.course}.`,
+            });
             if (dayModalDate) {
               const remaining = allTasks.filter(
                 (x) => x.dueDate === dayModalDate && x.id !== t.id

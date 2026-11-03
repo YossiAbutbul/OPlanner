@@ -83,7 +83,9 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
     setLinks(next);
     saveRef.current({ links: next }).catch((e) => {
       console.error("Error saving course links:", e);
-      toast.error("Couldn't save links. Try again.");
+      toast.error("Couldn't save links", {
+        description: "Your links are still on screen — try again.",
+      });
     });
   };
 
@@ -135,7 +137,9 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
     pendingNotesRef.current = null;
     saveRef.current({ courseNotes: html }).catch((e) => {
       console.error("Error saving course notes:", e);
-      toast.error("Couldn't save notes. Try again.");
+      toast.error("Couldn't save notes", {
+        description: "Your last edit is still here — try again.",
+      });
     });
   }, [toast]);
 
@@ -148,7 +152,7 @@ const CourseInfoPanel: React.FC<Props> = ({ activeTab, assignments }) => {
   // Ctrl/Cmd+S in the notes editor: flush immediately + confirm.
   const saveNotesNow = useCallback(() => {
     flushNotes();
-    toast.success("Notes saved");
+    toast.success("Notes saved", { description: "This course's notes are up to date." });
   }, [flushNotes, toast]);
 
   useEffect(() => {

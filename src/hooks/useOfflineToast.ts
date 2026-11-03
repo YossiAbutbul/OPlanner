@@ -17,12 +17,16 @@ export function useOfflineToast(): void {
   useEffect(() => {
     const onOffline = () => {
       wasOffline.current = true;
-      toast.info("You're offline. Changes will sync when reconnected.");
+      toast.info("You're offline", {
+        description: "Changes are kept on this device and sync when you reconnect.",
+      });
     };
     const onOnline = () => {
       if (!wasOffline.current) return;
       wasOffline.current = false;
-      toast.success("Back online — syncing your changes.");
+      toast.success("Back online", {
+        description: "Syncing the changes you made while offline.",
+      });
     };
 
     window.addEventListener("offline", onOffline);

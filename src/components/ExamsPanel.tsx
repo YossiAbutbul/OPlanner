@@ -256,7 +256,9 @@ const ExamsPanel: React.FC<Props> = ({ activeTab }) => {
     setTable(next);
     saveRef.current({ examTable: next }).catch((e) => {
       console.error("Error saving exam table:", e);
-      toast.error("Couldn't save exams. Try again.");
+      toast.error("Couldn't save exams", {
+        description: "Your edits are still on screen — try again.",
+      });
     });
   };
 

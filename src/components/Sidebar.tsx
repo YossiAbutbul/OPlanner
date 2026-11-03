@@ -86,8 +86,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     const result = await update.checkForUpdates();
     setCheckingUpdate(false);
     setSettingsOpen(false);
-    if (result === "current") toast.success(`You're on the latest version (${update.version})`);
-    else if (result === "offline") toast.error("Couldn't check for updates. Check your connection.");
+    if (result === "current")
+      toast.success("You're up to date", { description: `Version ${update.version} is installed.` });
+    else if (result === "offline")
+      toast.error("Couldn't check for updates", {
+        description: "Check your connection and try again.",
+      });
   };
   const { canInstall, installed, promptInstall } = useInstallPrompt();
   const [installHelpOpen, setInstallHelpOpen] = useState(false);
@@ -158,7 +162,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       await deleteCourse(selectedYear!, selectedSemester!, name);
       if (selectedCourse === name) onSelectCourse(null);
       await Promise.resolve(onYearsChanged());
-      toast.success(`Course “${name}” deleted`);
+      toast.success(`Course “${name}” deleted`, {
+        description: "Removed from this semester.",
+      });
     } finally {
       setConfirmDelete(null);
     }
@@ -214,7 +220,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       );
     }
     onYearsChanged();
-    toast.success("Course updated");
+    toast.success("Course updated", { description: "Your changes to the course were saved." });
   };
 
   return (
@@ -466,7 +472,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                   // who dismissed the native banner earlier).
                   if (canInstall) {
                     const outcome = await promptInstall();
-                    if (outcome === "accepted") toast.success("OPlanner installed");
+                    if (outcome === "accepted")
+                      toast.success("OPlanner installed", {
+                        description: "Open it from your home screen or dock.",
+                      });
                   } else {
                     setInstallHelpOpen(true);
                   }

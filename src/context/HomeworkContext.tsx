@@ -233,7 +233,8 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const failToast = useCallback(
-    (what: string) => toast.error(`Couldn't save ${what}. Your change was undone.`),
+    (what: string) =>
+      toast.error(`Couldn't save ${what}`, { description: "Your change was undone." }),
     [toast]
   );
 
@@ -378,7 +379,9 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             return next;
           });
         }
-        toast.error(`Couldn't delete ${previous ? `“${previous.name}”` : "the task"}. It was restored.`);
+        toast.error(`Couldn't delete ${previous ? `“${previous.name}”` : "the task"}`, {
+          description: "It's back on your list.",
+        });
       }
     })();
   }, [homework, recordEdit, dropEdit, syncCache, toast, announceFinalDate]);

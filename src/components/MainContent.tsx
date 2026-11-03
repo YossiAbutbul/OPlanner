@@ -201,7 +201,9 @@ const MainContent: React.FC<MainContentProps> = ({
       );
       setCalDate(dueDate);
       setHomeworkModalOpen(false);
-      toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`);
+      toast.success(id ? `Task “${name}” updated` : `Task “${name}” added`, {
+        description: `${course} · due ${dueDate}`,
+      });
     } finally {
       setIsLoadingAction(false);
     }
@@ -452,7 +454,9 @@ const MainContent: React.FC<MainContentProps> = ({
               onUpdateCourseFinalDate(selectedYear, currentSemester.key, course, date)
             }
             onYearsChanged={onYearsChanged}
-            onError={(msg) => toast.error(msg)}
+            // The panels report failures as a sentence; it reads better as the
+            // card's second line than as its heading.
+            onError={(msg) => toast.error("That didn't go through", { description: msg })}
           />
         ) : loadError ? (
           <div className="load-error" role="alert">
@@ -540,7 +544,9 @@ const MainContent: React.FC<MainContentProps> = ({
             const t = confirmDelete;
             await removeHomework(t.id, t.year, t.semester, t.course);
             setConfirmDelete(null);
-            toast.success(`Deleted “${t.name}”`);
+            toast.success(`Deleted “${t.name}”`, {
+              description: `Removed from ${t.course}.`,
+            });
             // if the day has no more tasks, close the day modal
             if (dayModalDate) {
               const remaining = filteredHomework.filter(
@@ -591,9 +597,15 @@ const MainContent: React.FC<MainContentProps> = ({
                   color
                 );
               }
-              toast.success(color ? "Color updated" : "Color reset");
+              toast.success(color ? "Color updated" : "Color reset", {
+                description: color
+                  ? "This tab now uses the colour you picked."
+                  : "This tab is back to its default colour.",
+              });
             } catch (err) {
-              toast.error(err instanceof Error ? err.message : "Something went wrong.");
+              toast.error("Couldn't change the colour", {
+                description: err instanceof Error ? err.message : "Something went wrong.",
+              });
               throw err;
             }
           }}
