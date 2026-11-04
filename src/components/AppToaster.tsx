@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Toaster, type SileoPosition } from "sileo";
+import ToastList from "./ToastList";
+import { usePhoneToasts } from "../hooks/usePhoneToasts";
 import { getThemePref, subscribeTheme, type ThemePref } from "../utility/theme";
 
 // Two pseudo positions that sileo doesn't have: they are its bottom-center /
@@ -28,7 +30,13 @@ const RIGHT_INSET = `calc(${GAP}px + var(--toast-right-inset, 0px))`;
 // Sileo's viewport. Mounted once near the root; the toasts themselves are
 // pushed through ToastContext (useToast). Its own light/dark palette follows
 // the app's appearance choice rather than the system's.
+//
+// On a phone or in an installed PWA sileo stands down and the plain toast
+// list takes over: there, the only toast that gets through is an actionable
+// prompt (the update prompt), and it reads better as a plain bar than as a
+// pill that expands over the content.
 const AppToaster: React.FC = () => {
+  const plain = usePhoneToasts();
   const [theme, setTheme] = useState<ThemePref>(getThemePref);
   const [placement, setPlacement] = useState<ToastPlacement>(DEFAULT_TOAST_POSITION);
 
@@ -66,6 +74,8 @@ const AppToaster: React.FC = () => {
     if (placement === CONTENT_CENTER) root.dataset.toastAlign = "content";
     else delete root.dataset.toastAlign;
   }, [placement]);
+
+  if (plain) return <ToastList />;
 
   return <Toaster position={position} theme={theme} offset={offset} />;
 };

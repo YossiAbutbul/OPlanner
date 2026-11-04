@@ -6,6 +6,8 @@ import './utility/theme';
 import './css/index.css';
 import 'sileo/styles.css';
 import './css/sileo.css';
+// The plain toast list, used instead of sileo on a phone / installed PWA.
+import './css/Toast.css';
 import './css/InstallHelpModal.css';
 import React from "react";
 import ReactDOM from "react-dom/client";

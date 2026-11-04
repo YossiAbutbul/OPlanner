@@ -1,0 +1,261 @@
+/* Bottom-right corner of the main page, just left of the right sidebar,
+   next to the actions toasts report on and clear of the Schedule and the
+   AI Assistant. Below 1025px the sidebar is a drawer, so the stack sits in
+   the window's corner instead. */
+.toast-stack {
+  position: fixed;
+  bottom: 1.25rem;
+  /* The sidebar's width var is its content box: add its side padding
+     (0.85rem each) and 1px border to clear its real edge. */
+  right: calc(var(--rsidebar-w) + 1.7rem + 1px + 0.6rem);
+  display: flex;
+  /* Newest toast stays closest to the corner; the stack grows upward. */
+  flex-direction: column-reverse;
+  gap: 0.65rem;
+  z-index: var(--z-toast);
+  width: 340px;
+  max-width: calc(100vw - var(--rsidebar-w) - 3.55rem - 1px);
+  pointer-events: none;
+}
+
+@media (max-width: 1024px) {
+  .toast-stack {
+    right: 1.25rem;
+    max-width: calc(100vw - 2rem);
+  }
+}
+
+.toast {
+  pointer-events: auto;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  display: grid;
+  /* Icon, message, then only the controls that exist (action, close), so
+     the close button always sits at the trailing edge with no empty
+     column (and its gap) after it. */
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0.6rem 0.85rem 0.85rem;
+  /* Dark chrome to match the sidebars (one cohesive system). */
+  background: rgba(24, 26, 30, 0.86);
+  backdrop-filter: saturate(180%) blur(24px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.4),
+    0 4px 10px rgba(0, 0, 0, 0.2);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-body);
+  line-height: 1.35;
+  color: #f3f3f5;
+  overflow: hidden;
+  /* Materialize from the corner it lives in (springs in ToastList.tsx). */
+  transform-origin: bottom right;
+  touch-action: pan-y;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .toast {
+    background: #18191d;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* Icon in a colored, soft-tinted circle so the kind reads instantly. */
+.toast-icon {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Bright tints: the toast is always dark, so icons need light-on-dark
+   colors to keep contrast. */
+.toast-success .toast-icon {
+  color: #4cd980;
+  background: rgba(29, 185, 84, 0.18);
+}
+.toast-error .toast-icon {
+  color: #ff7a7a;
+  background: rgba(255, 105, 97, 0.16);
+}
+.toast-info .toast-icon {
+  color: #7aa7ff;
+  background: rgba(110, 160, 255, 0.16);
+}
+
+/* Message and its optional second line share one column, so the icon and
+   the controls stay centred against the pair. */
+.toast-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-right: 0.25rem;
+}
+
+.toast-msg {
+  min-width: 0;
+  word-wrap: break-word;
+  font-weight: 500;
+  color: #f3f3f5;
+}
+
+/* Context under the message — what the toast is about, or what happens
+   next if it carries an action. */
+.toast-desc {
+  min-width: 0;
+  word-wrap: break-word;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: rgba(243, 243, 245, 0.7);
+}
+
+/* Action button — primary accent, e.g. "Reload" on the update prompt. */
+.toast-action {
+  flex-shrink: 0;
+  padding: 0.4rem 0.8rem;
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-button);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-out), transform var(--dur-press) var(--ease-out);
+}
+
+.toast-action:hover {
+  background: var(--color-accent-hover);
+}
+
+.toast-action:active {
+  transform: scale(var(--press-scale));
+  background: var(--color-accent-active);
+}
+
+/* White ring on the dark toast — the global green ring is low-contrast
+   against the accent-green button. */
+.toast-action:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Sticky toasts have no auto-dismiss, so hide the TTL countdown bar. */
+.toast-sticky::after {
+  display: none;
+}
+
+/* Dismiss button — neutral chrome that brightens on hover. */
+.toast-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #8a8a8a;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+
+.toast-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.toast-close:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* TTL progress bar — shrinks to 0 over the auto-dismiss window so the
+   user can see how long they have. Always runs so it stays in sync with
+   the (non-pausing) dismiss timer. */
+.toast::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  transform-origin: left center;
+  animation: toast-progress var(--toast-ttl, 4500ms) linear forwards;
+}
+
+.toast-success::after {
+  background: linear-gradient(to right, var(--color-accent), #4ade80);
+}
+.toast-error::after {
+  background: linear-gradient(to right, #d23030, #f87171);
+}
+.toast-info::after {
+  background: linear-gradient(to right, #3498db, #60a5fa);
+}
+
+/* Keyframes */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    /* Rise and settle, critically damped: a toast wasn't thrown, so no
+       overshoot. */
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-progress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* Phone: full-width edge-to-edge, smaller padding. */
+@media (max-width: 480px) {
+  .toast-stack {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.6rem);
+    right: 0.6rem;
+    left: 0.6rem;
+    width: auto;
+    max-width: none;
+  }
+  .toast {
+    padding: 0.75rem 0.8rem;
+    border-radius: var(--radius-lg);
+    transform-origin: bottom center;
+  }
+  .toast-icon {
+    width: 28px;
+    height: 28px;
+  }
+  /* Belt and braces: ToastContext already drops transient toasts on a phone
+     or in an installed PWA, where they clutter a small screen and cover the
+     thing just acted on. Only actionable prompts get this far. */
+  .toast:not(.toast-sticky) {
+    display: none;
+  }
+}
+
+/* Drawer layout: the open drawer covers the window's corner, so while the
+   AI Assistant shows there the stack lifts above its input. */
+@media (max-width: 1024px) {
+  body:has(.rs.mobile-open .rs-agent-wrap:not([hidden])) .toast-stack {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem + 38px + 0.75rem);
+  }
+}
