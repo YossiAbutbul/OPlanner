@@ -31,7 +31,6 @@ export interface Toast {
 }
 
 interface ToastContextValue {
-  toasts: Toast[];
   push: (kind: ToastKind, message: string, opts?: ToastOptions) => string;
   dismiss: (id: string) => void;
   // Sugar for the common cases.
@@ -41,6 +40,13 @@ interface ToastContextValue {
 }
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
+
+// The plain list's queue lives in its own context so the API context's value
+// never changes identity. Callers pass success/error/info straight into effect
+// dependency arrays, and a queue change that reshaped the API would re-run
+// those effects: PwaReloadPrompt would dismiss and re-push its prompt on every
+// render, which is an infinite loop (React error #185).
+const ToastQueueContext = createContext<Toast[]>([]);
 
 const TOAST_TTL_MS = 4500;
 // Errors stay slightly longer so the user can actually read them.
@@ -124,16 +130,16 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return id;
   }, []);
 
+  // push and dismiss are stable, so this is built once and never again.
   const value = useMemo<ToastContextValue>(
     () => ({
-      toasts,
       push,
       dismiss,
       success: (m: string, o?: ToastOptions) => push("success", m, o),
       error: (m: string, o?: ToastOptions) => push("error", m, o),
       info: (m: string, o?: ToastOptions) => push("info", m, o),
     }),
-    [toasts, push, dismiss]
+    [push, dismiss]
   );
 
   // Dev-only debug hook: expose toast API on window so `__toast.error("x")`
@@ -144,7 +150,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     (window as unknown as { __toast?: ToastContextValue }).__toast = value;
   }, [value]);
 
-  return <ToastContext.Provider value={value}>{children}</ToastContext.Provider>;
+  return (
+    <ToastContext.Provider value={value}>
+      <ToastQueueContext.Provider value={toasts}>{children}</ToastQueueContext.Provider>
+    </ToastContext.Provider>
+  );
 };
 
 export const useToast = (): ToastContextValue => {
@@ -152,3 +162,7 @@ export const useToast = (): ToastContextValue => {
   if (!ctx) throw new Error("useToast must be used within ToastProvider");
   return ctx;
 };
+
+// What ToastList renders. Empty unless the plain list is in charge (phone or
+// installed PWA) — sileo keeps its own queue.
+export const useToastQueue = (): Toast[] => useContext(ToastQueueContext);

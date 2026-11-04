@@ -2,7 +2,7 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from "framer-motion";
-import { useToast } from "../context/ToastContext";
+import { useToast, useToastQueue } from "../context/ToastContext";
 import { SPRING_DEFAULT, project } from "../utility/motion";
 
 const ICONS = {
@@ -17,7 +17,8 @@ const ttlFor = (kind: keyof typeof ICONS) =>
   kind === "error" ? 6000 : 4500;
 
 const ToastList: React.FC = () => {
-  const { toasts, dismiss } = useToast();
+  const toasts = useToastQueue();
+  const { dismiss } = useToast();
   const reduceMotion = useReducedMotion();
 
   // Flick sideways to dismiss: judged on where the flick would land.
