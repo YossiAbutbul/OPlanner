@@ -19,7 +19,7 @@ export interface ToastOptions {
   action?: ToastAction;
 }
 
-// A toast the plain list renders itself (phone / installed PWA). Sileo owns
+// A toast the plain list renders itself (on a phone). Sileo owns
 // its own queue, so this is empty in every other case.
 export interface Toast {
   id: string;
@@ -63,7 +63,7 @@ let counter = 0;
 // app's small toast vocabulary onto it, and keeps the coalescing behaviour the
 // app relies on (a spammed action refreshes one toast instead of stacking).
 //
-// On a phone or in an installed PWA neither applies: transient toasts are
+// On a phone, tab or installed PWA, neither applies: transient toasts are
 // dropped and the actionable ones go into `toasts` for ToastList to render.
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // kind+message -> live sileo id, so an identical toast replaces its twin.
@@ -163,6 +163,6 @@ export const useToast = (): ToastContextValue => {
   return ctx;
 };
 
-// What ToastList renders. Empty unless the plain list is in charge (phone or
-// installed PWA) — sileo keeps its own queue.
+// What ToastList renders. Empty unless the plain list is in charge (on a
+// phone) — sileo keeps its own queue.
 export const useToastQueue = (): Toast[] => useContext(ToastQueueContext);

@@ -116,24 +116,20 @@ describe("ToastContext", () => {
 // Phone / installed PWA: sileo stands down, transient toasts are dropped,
 // and the prompts that remain go into `toasts` for ToastList to render.
 describe("ToastContext on a phone", () => {
-  const realMatchMedia = window.matchMedia;
+  const realScreen = { width: window.screen.width, height: window.screen.height };
+  const setScreen = (width: number, height: number) => {
+    Object.defineProperty(window.screen, "width", { value: width, configurable: true });
+    Object.defineProperty(window.screen, "height", { value: height, configurable: true });
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    window.matchMedia = ((query: string) => ({
-      matches: query === "(max-width: 480px)",
-      media: query,
-      onchange: null,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      addListener: () => {},
-      removeListener: () => {},
-      dispatchEvent: () => false,
-    })) as typeof window.matchMedia;
+    // A phone's screen: its shorter side is what makes it a phone.
+    setScreen(390, 844);
   });
 
   afterEach(() => {
-    window.matchMedia = realMatchMedia;
+    setScreen(realScreen.width, realScreen.height);
   });
 
   it("drops transient toasts instead of showing them", () => {

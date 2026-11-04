@@ -244,8 +244,8 @@
     width: 28px;
     height: 28px;
   }
-  /* Belt and braces: ToastContext already drops transient toasts on a phone
-     or in an installed PWA, where they clutter a small screen and cover the
+  /* Belt and braces: ToastContext already drops transient toasts on a phone,
+     tab or installed PWA, where they clutter a small screen and cover the
      thing just acted on. Only actionable prompts get this far. */
   .toast:not(.toast-sticky) {
     display: none;

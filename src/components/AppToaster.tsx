@@ -31,7 +31,7 @@ const RIGHT_INSET = `calc(${GAP}px + var(--toast-right-inset, 0px))`;
 // pushed through ToastContext (useToast). Its own light/dark palette follows
 // the app's appearance choice rather than the system's.
 //
-// On a phone or in an installed PWA sileo stands down and the plain toast
+// On a phone (tab or installed PWA) sileo stands down and the plain toast
 // list takes over: there, the only toast that gets through is an actionable
 // prompt (the update prompt), and it reads better as a plain bar than as a
 // pill that expands over the content.
