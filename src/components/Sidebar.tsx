@@ -75,23 +75,27 @@ const Sidebar: React.FC<SidebarProps> = ({
   const toast = useToast();
   const update = useUpdate();
   const [checkingUpdate, setCheckingUpdate] = useState(false);
+  // The outcome of the last check, shown under the row. It used to be a toast,
+  // which meant closing the menu to uncover it — and on a phone, where
+  // transient toasts don't show at all, pressing the row only closed the menu
+  // and said nothing. Reporting in place works the same everywhere.
+  const [updateNote, setUpdateNote] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   // Checks now instead of waiting for the hourly or on-focus check. A newer
-  // build shows the Update banner; this row then applies it directly.
+  // build leaves the row reading "Update to <version>", which applies it.
   const onCheckForUpdates = async () => {
     if (update.needRefresh) {
       update.applyUpdate();
       return;
     }
+    setUpdateNote(null);
     setCheckingUpdate(true);
     const result = await update.checkForUpdates();
     setCheckingUpdate(false);
-    setSettingsOpen(false);
     if (result === "current")
-      toast.success("You're up to date", { description: `Version ${update.version} is installed.` });
+      setUpdateNote({ tone: "ok", text: `Up to date — v${update.version} is the latest.` });
     else if (result === "offline")
-      toast.error("Couldn't check for updates", {
-        description: "Check your connection and try again.",
-      });
+      setUpdateNote({ tone: "err", text: "Couldn't check. Check your connection and try again." });
+    // "available" needs no line: the row itself now offers the update.
   };
   const { canInstall, installed, promptInstall } = useInstallPrompt();
   const [installHelpOpen, setInstallHelpOpen] = useState(false);
@@ -110,6 +114,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     return () => mq.removeEventListener("change", handle);
   }, []);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // A closed menu forgets the last check, so reopening it starts clean.
+  useEffect(() => {
+    if (!settingsOpen) setUpdateNote(null);
+  }, [settingsOpen]);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
   // Back from the sign-in a deletion asked for: reopen it to finish.
   const [resumeDelete, setResumeDelete] = useState(false);
@@ -499,6 +507,11 @@ const Sidebar: React.FC<SidebarProps> = ({
               </span>
               <span className="settings-version">v{update.version}</span>
             </button>
+            {updateNote && (
+              <p className={`settings-note settings-note-${updateNote.tone}`} role="status">
+                {updateNote.text}
+              </p>
+            )}
             <button
               onClick={() => {
                 setSettingsOpen(false);

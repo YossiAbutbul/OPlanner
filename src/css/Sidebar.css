@@ -1058,6 +1058,20 @@ button:focus:not(:focus-visible) { outline: none; }
   font-variant-numeric: tabular-nums;
 }
 
+/* Outcome of a Check for updates, under the row that ran it. Lines up with
+   the row's label rather than its icon. */
+.settings-note {
+  margin: 0 0 0.15rem;
+  padding: 0 0.65rem 0.25rem 2rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.settings-note-err {
+  color: #ff6b6b;
+}
+
 .settings-spin {
   animation: settings-spin 0.9s linear infinite;
 }
