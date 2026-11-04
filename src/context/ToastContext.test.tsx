@@ -107,3 +107,80 @@ describe("ToastContext", () => {
     expect(sileo.dismiss).toHaveBeenCalledWith("sileo-42");
   });
 });
+
+// Phone / installed PWA: sileo stands down, transient toasts are dropped,
+// and the prompts that remain go into `toasts` for ToastList to render.
+describe("ToastContext on a phone", () => {
+  const realMatchMedia = window.matchMedia;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.matchMedia = ((query: string) => ({
+      matches: query === "(max-width: 480px)",
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia;
+  });
+
+  afterEach(() => {
+    window.matchMedia = realMatchMedia;
+  });
+
+  it("drops transient toasts instead of showing them", () => {
+    const { result } = renderHook(() => useToast(), { wrapper });
+
+    let id = "x";
+    act(() => {
+      id = result.current.success("Task updated", { description: "Due tomorrow" });
+    });
+    act(() => void result.current.error("Couldn't save"));
+
+    expect(id).toBe("");
+    expect(result.current.toasts).toEqual([]);
+    expect(sileo.success).not.toHaveBeenCalled();
+    expect(sileo.error).not.toHaveBeenCalled();
+  });
+
+  it("keeps a sticky prompt in its own list and dismisses it by id", () => {
+    const { result } = renderHook(() => useToast(), { wrapper });
+    const onClick = vi.fn();
+
+    let id = "";
+    act(() => {
+      id = result.current.info("Update available", {
+        description: "Version 9.9.9 is ready.",
+        sticky: true,
+        action: { label: "Update", onClick },
+      });
+    });
+
+    expect(sileo.info).not.toHaveBeenCalled();
+    expect(result.current.toasts).toHaveLength(1);
+    expect(result.current.toasts[0]).toMatchObject({
+      id,
+      kind: "info",
+      message: "Update available",
+      description: "Version 9.9.9 is ready.",
+      sticky: true,
+    });
+
+    act(() => result.current.dismiss(id));
+    expect(result.current.toasts).toEqual([]);
+    // The plain list owns this id, so sileo is never asked about it.
+    expect(sileo.dismiss).not.toHaveBeenCalled();
+  });
+
+  it("replaces an identical prompt rather than stacking a second one", () => {
+    const { result } = renderHook(() => useToast(), { wrapper });
+
+    act(() => void result.current.info("Update available", { sticky: true }));
+    act(() => void result.current.info("Update available", { sticky: true }));
+
+    expect(result.current.toasts).toHaveLength(1);
+  });
+});

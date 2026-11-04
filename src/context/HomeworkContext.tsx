@@ -111,9 +111,24 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     (list: HomeworkEntry[], inScope: (t: HomeworkEntry) => boolean) => {
       const keys = Object.keys(edits);
       if (keys.length === 0) return list;
-      const touched = new Set(keys);
-      const out = list.filter((t) => !touched.has(editKey(t)));
+      // An edited task keeps its place in the list: swapping it for the new
+      // version in situ (instead of dropping it and appending) stops a plain
+      // edit from reading as the task leaving and coming back. Only tasks
+      // the fetched list doesn't have yet go on the end.
+      const seen = new Set<string>();
+      const out: HomeworkEntry[] = [];
+      for (const t of list) {
+        const key = editKey(t);
+        const e = edits[key];
+        if (!e) {
+          out.push(t);
+          continue;
+        }
+        seen.add(key);
+        if (e.entry && inScope(e.entry)) out.push(e.entry);
+      }
       for (const key of keys) {
+        if (seen.has(key)) continue;
         const e = edits[key].entry;
         if (e && inScope(e)) out.push(e);
       }
@@ -173,9 +188,42 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  const writeCache = useCallback((year: number, semester: string, course: string, list: HomeworkEntry[]) => {
-    try { lsCache.write(cacheKey(year, semester, course), list); } catch { /* ignore */ }
-  }, []);
+  // Update one task inside a location's cached list, in place. The cached
+  // list is the only copy some views read first, so it is patched rather
+  // than rewritten: `homework` holds a single course at a time, and writing
+  // it over another course's cache used to leave that course with one task
+  // until the server answered — which read on screen as the task being
+  // deleted and added back.
+  const patchCache = useCallback(
+    (
+      taskId: string,
+      task: HomeworkEntry | null,
+      locs: { year: number; semester: string; course: string }[]
+    ) => {
+      for (const l of locs) {
+        let key: string;
+        try { key = cacheKey(l.year, l.semester, l.course); } catch { continue; }
+        const cached = lsCache.read<HomeworkEntry[]>(key);
+        // No cache for this location yet: a one-task list would be worse
+        // than none, so leave it for the next fetch to fill.
+        if (!Array.isArray(cached)) continue;
+        const belongsHere = !!task && task.year === l.year && task.course === l.course;
+        const at = cached.findIndex((h) => h.id === taskId);
+        let next: HomeworkEntry[];
+        if (!belongsHere) {
+          if (at < 0) continue;
+          next = cached.filter((h) => h.id !== taskId);
+        } else if (at >= 0) {
+          next = cached.slice();
+          next[at] = task as HomeworkEntry;
+        } else {
+          next = [...cached, task as HomeworkEntry];
+        }
+        lsCache.write(key, next);
+      }
+    },
+    []
+  );
 
   // Calculate notifications when homework changes
   useEffect(() => {
@@ -211,21 +259,6 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }),
     ]);
   }, [homework]);
-
-  // Rewrite the per-course cache for every location a change touched.
-  const syncCache = useCallback(
-    (list: HomeworkEntry[], locs: { year: number; semester: string; course: string }[]) => {
-      for (const l of locs) {
-        writeCache(
-          l.year,
-          l.semester,
-          l.course,
-          list.filter((h) => h.course === l.course && h.year === l.year && h.semester === l.semester)
-        );
-      }
-    },
-    [writeCache]
-  );
 
   // Tell the year tree a course's final date changed (optimistically).
   const announceFinalDate = useCallback((detail: FinalDateDetail) => {
@@ -302,12 +335,11 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       entry.year === (prevLoc?.year ?? year);
     setHomework((prev) => {
       const exists = prev.some(matches);
-      const next = exists
+      return exists
         ? prev.map((entry) => (matches(entry) ? { ...entry, ...task, startTime, endTime, notes, color } : entry))
         : [...prev, task];
-      syncCache(next, locs);
-      return next;
     });
+    patchCache(taskId, task, locs);
 
     // 2. Persist in the background; roll back on failure.
     void (async () => {
@@ -331,16 +363,15 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setHomework((prev) => {
           const isNew = (entry: HomeworkEntry) =>
             entry.id === taskId && entry.course === course && entry.year === year;
-          const next = previous
+          return previous
             ? prev.map((entry) => (isNew(entry) ? previous : entry))
             : prev.filter((entry) => !isNew(entry));
-          syncCache(next, locs);
-          return next;
         });
+        patchCache(taskId, previous ?? null, locs);
         failToast(`“${name}”`);
       }
     })();
-  }, [homework, recordEdit, dropEdit, syncCache, failToast, announceFinalDate]);
+  }, [homework, recordEdit, dropEdit, patchCache, failToast, announceFinalDate]);
 
   const removeHomework = useCallback(async (
     id: string,
@@ -356,11 +387,8 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const seq = recordEdit(key, null);
     // Deleting the Final Exam task clears the course's final date.
     if (isFinal) announceFinalDate({ year, semester, course, date: null });
-    setHomework((prev) => {
-      const next = prev.filter((entry) => !matches(entry));
-      syncCache(next, locs);
-      return next;
-    });
+    setHomework((prev) => prev.filter((entry) => !matches(entry)));
+    patchCache(id, null, locs);
 
     void (async () => {
       try {
@@ -373,18 +401,15 @@ export const HomeworkProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           announceFinalDate({ year, semester, course, date: previous.dueDate });
         }
         if (previous) {
-          setHomework((prev) => {
-            const next = prev.some(matches) ? prev : [...prev, previous];
-            syncCache(next, locs);
-            return next;
-          });
+          setHomework((prev) => (prev.some(matches) ? prev : [...prev, previous]));
+          patchCache(id, previous, locs);
         }
         toast.error(`Couldn't delete ${previous ? `“${previous.name}”` : "the task"}`, {
           description: "It's back on your list.",
         });
       }
     })();
-  }, [homework, recordEdit, dropEdit, syncCache, toast, announceFinalDate]);
+  }, [homework, recordEdit, dropEdit, patchCache, toast, announceFinalDate]);
 
   const value = useMemo<HomeworkContextProps>(
     () => ({ homework, notifications, fetchHomework, getCourseTasks, addHomework, removeHomework, applyEdits }),
