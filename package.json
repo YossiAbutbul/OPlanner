@@ -37,7 +37,7 @@
     "dompurify": "^3.4.17",
     "firebase": "^12.14.0",
     "firebase-admin": "^14.5.0",
-    "framer-motion": "^12.0.1",
+    "framer-motion": "^14.9.0",
     "lucide-react": "^1.14.0",
     "react": "^19.2.6",
     "react-calendar": "^6.0.1",
