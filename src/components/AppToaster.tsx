@@ -3,6 +3,7 @@ import { Toaster, type SileoPosition } from "sileo";
 import ToastList from "./ToastList";
 import { usePhoneToasts } from "../hooks/usePhoneToasts";
 import { getThemePref, subscribeTheme, type ThemePref } from "../utility/theme";
+import { installToastClose } from "../utility/toastClose";
 
 // Two pseudo positions that sileo doesn't have: they are its bottom-center /
 // bottom-right pinned to the content column rather than to the window, so a
@@ -48,6 +49,9 @@ const AppToaster: React.FC = () => {
         : placement;
 
   useEffect(() => subscribeTheme(() => setTheme(getThemePref())), []);
+
+  // Every sileo toast gets a close button (sileo has none of its own).
+  useEffect(() => (plain ? undefined : installToastClose()), [plain]);
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
