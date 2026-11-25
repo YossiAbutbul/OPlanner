@@ -8,6 +8,7 @@ import {
   initializeYear,
   linkCourse,
   pickYearColor,
+  setLinkFinal,
   semesterDefaultColor,
   setCourseColor,
   setCourseFinalDate,
@@ -25,35 +26,6 @@ const yearsCacheKey = (uid: string) => `oplanner.years.${uid}`;
 const bootstrappedKey = (uid: string) => `oplanner.bootstrapped.${uid}`;
 const homeworkCacheKey = (uid: string, year: number, sem: string, course: string) =>
   `oplanner.homework.${uid}.${year}|${sem}|${course}`;
-
-// Links mirror their original's final date: carry a change to every link
-// pointing at (year, semester, course). `semester` may be a key or a name.
-const withLinkedFinal = (
-  tree: YearTreeData[],
-  year: number,
-  semester: string,
-  course: string,
-  date: string | null
-): YearTreeData[] => {
-  const key =
-    tree.find((y) => y.year === year)?.semesters.find((s) => s.key === semester || s.name === semester)?.key ??
-    semester;
-  return tree.map((y) => ({
-    ...y,
-    semesters: y.semesters.map((s) =>
-      !s.links?.some((l) => l.year === year && l.semester === key && l.name === course)
-        ? s
-        : {
-            ...s,
-            links: s.links.map((l) =>
-              l.year === year && l.semester === key && l.name === course
-                ? { ...l, finalDate: date ?? undefined }
-                : l
-            ),
-          }
-    ),
-  }));
-};
 
 // Owns the year/semester/course tree: fetch, cache, mutate (colors, finals,
 // reorder, add/delete year). Optimistic local update + Firestore write,
@@ -268,7 +240,7 @@ export function useYearTree(
     const onFinal = (e: Event) => {
       const { year, semester, course, date } = (e as CustomEvent<FinalDateDetail>).detail;
       setYears((curr) => {
-        const next = withLinkedFinal(curr, year, semester, course, date).map((y) =>
+        const next = curr.map((y) =>
           y.year !== year
             ? y
             : {
@@ -298,7 +270,7 @@ export function useYearTree(
       let prev: YearTreeData[] = [];
       setYears((curr) => {
         prev = curr;
-        const next = withLinkedFinal(curr, year, semesterKey, course, date).map((y) => {
+        const next = curr.map((y) => {
           if (y.year !== year) return y;
           return {
             ...y,
@@ -362,15 +334,62 @@ export function useYearTree(
     async (
       from: { year: number; semester: string; color?: string },
       course: string,
-      to: { year: number; semester: string }
+      to: { year: number; semester: string },
+      exam?: { finalDate?: string; finalDone?: boolean }
     ): Promise<LinkCourseResult> => {
+      const link: LinkedCourse = { name: course, year: from.year, semester: from.semester };
+      if (from.color) link.color = from.color;
+      if (exam?.finalDate) {
+        link.finalDate = exam.finalDate;
+        if (exam.finalDone) link.finalDone = true;
+      }
       const rollback = setLinks(to.year, to.semester, (links) => [
         ...links.filter((l) => l.name !== course),
-        { name: course, year: from.year, semester: from.semester, color: from.color },
+        link,
       ]);
-      const result = await linkCourse(from, course, to);
+      const result = await linkCourse(from, course, to, exam);
       if (result !== "linked") rollback();
       return result;
+    },
+    [setLinks]
+  );
+
+  // A linked course's own exam date here (a retake). A new date is a new
+  // sitting, so it starts not done. Optimistic, rolled back on failure.
+  const handleUpdateLinkFinalDate = useCallback(
+    async (year: number, semesterKey: string, course: string, date: string | null) => {
+      const rollback = setLinks(year, semesterKey, (links) =>
+        links.map((l) => {
+          if (l.name !== course) return l;
+          const next: LinkedCourse = { name: l.name, year: l.year, semester: l.semester };
+          if (l.color) next.color = l.color;
+          if (date) next.finalDate = date;
+          return next;
+        })
+      );
+      if (!(await setLinkFinal(year, semesterKey, course, { finalDate: date, finalDone: false }))) {
+        rollback();
+        throw new Error("Failed to save the exam date. Check your connection and try again.");
+      }
+    },
+    [setLinks]
+  );
+
+  const handleSetLinkFinalDone = useCallback(
+    async (year: number, semesterKey: string, course: string, done: boolean) => {
+      const rollback = setLinks(year, semesterKey, (links) =>
+        links.map((l) => {
+          if (l.name !== course) return l;
+          const next: LinkedCourse = { ...l };
+          if (done) next.finalDone = true;
+          else delete next.finalDone;
+          return next;
+        })
+      );
+      if (!(await setLinkFinal(year, semesterKey, course, { finalDone: done }))) {
+        rollback();
+        throw new Error("Couldn't save that. Check your connection and try again.");
+      }
     },
     [setLinks]
   );
@@ -428,5 +447,7 @@ export function useYearTree(
     handleAddYear,
     handleLinkCourse,
     handleUnlinkCourse,
+    handleUpdateLinkFinalDate,
+    handleSetLinkFinalDone,
   };
 }

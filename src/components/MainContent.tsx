@@ -56,6 +56,19 @@ interface MainContentProps {
     course: string,
     date: string | null
   ) => Promise<void>;
+  // A linked course's own exam date in the semester it's linked into.
+  onUpdateLinkFinalDate: (
+    year: number,
+    semesterKey: string,
+    course: string,
+    date: string | null
+  ) => Promise<void>;
+  onSetLinkFinalDone: (
+    year: number,
+    semesterKey: string,
+    course: string,
+    done: boolean
+  ) => Promise<void>;
   activeTab: CourseTab | null;
   onCloseMobile: () => void;
 }
@@ -80,6 +93,8 @@ const MainContent: React.FC<MainContentProps> = ({
   onUpdateSemesterColor,
   onUpdateCourseColor,
   onUpdateCourseFinalDate,
+  onUpdateLinkFinalDate,
+  onSetLinkFinalDone,
   activeTab,
   onCloseMobile,
 }) => {
@@ -455,7 +470,10 @@ const MainContent: React.FC<MainContentProps> = ({
             }
             links={currentSemester.links}
             onUpdateLinkedFinalDate={(link, date) =>
-              onUpdateCourseFinalDate(link.year, link.semester, link.name, date)
+              onUpdateLinkFinalDate(selectedYear, currentSemester.key, link.name, date)
+            }
+            onSetLinkFinalDone={(link, done) =>
+              onSetLinkFinalDone(selectedYear, currentSemester.key, link.name, done)
             }
             onYearsChanged={onYearsChanged}
             // The panels report failures as a sentence; it reads better as the

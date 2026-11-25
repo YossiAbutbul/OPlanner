@@ -206,6 +206,8 @@ const App: React.FC = () => {
         onUpdateSemesterColor={tree.handleUpdateSemesterColor}
         onUpdateCourseColor={tree.handleUpdateCourseColor}
         onUpdateCourseFinalDate={tree.handleUpdateCourseFinalDate}
+        onUpdateLinkFinalDate={tree.handleUpdateLinkFinalDate}
+        onSetLinkFinalDone={tree.handleSetLinkFinalDone}
         activeTab={activeTab}
         onCloseMobile={() => setMobileNavOpen(false)}
       />

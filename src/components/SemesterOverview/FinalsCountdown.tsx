@@ -24,6 +24,8 @@ interface Props {
   finalDateOf?: (course: string) => string | undefined;
   // For a course shown here from another semester: where it lives.
   linkedFrom?: (course: string) => string | undefined;
+  // What pressing the badge does, when it isn't opening the exam task.
+  badgeLabel?: (course: string) => string | undefined;
 }
 
 const FinalsCountdown: React.FC<Props> = ({
@@ -33,6 +35,7 @@ const FinalsCountdown: React.FC<Props> = ({
   finalStatusOf,
   finalDateOf,
   linkedFrom,
+  badgeLabel,
 }) => {
   const courses = rawCourses.map((c) => {
     const d = finalDateOf?.(c.name);
@@ -144,8 +147,8 @@ const FinalsCountdown: React.FC<Props> = ({
                 type="button"
                 className={`finals-badge ${badgeClass}`}
                 onClick={() => onOpenFinal?.(c.name)}
-                title="Open the final exam task"
-                aria-label={`Open the final exam task for ${c.name}`}
+                title={badgeLabel?.(c.name) ?? "Open the final exam task"}
+                aria-label={`${badgeLabel?.(c.name) ?? "Open the final exam task"} for ${c.name}`}
               >
                 {urgency === "past" && <Check size={12} strokeWidth={3} />}
                 {badge}

@@ -144,7 +144,10 @@ export const getAllYearsAndSemesters = async (): Promise<
             const courseDocs = allDocs.filter((c) => {
               const l = c.data?.linkOf;
               if (!l || typeof l.year !== "number" || typeof l.semester !== "string") return true;
-              links.push({ name: c.id, year: l.year, semester: l.semester });
+              const link: LinkedCourse = { name: c.id, year: l.year, semester: l.semester };
+              if (typeof c.data.finalDate === "string") link.finalDate = c.data.finalDate;
+              if (c.data.finalDone === true) link.finalDone = true;
+              links.push(link);
               return false;
             });
             const courseNames = courseDocs.map((c) => c.id);
@@ -185,7 +188,8 @@ export const getAllYearsAndSemesters = async (): Promise<
     );
 
     // A link whose original was renamed or deleted points at nothing: hide
-    // it. One that resolves takes the original's color.
+    // it. One that resolves takes the original's color; its final date is
+    // its own.
     for (const y of yearsData) {
       for (const s of y.semesters) {
         s.links = s.links
@@ -195,10 +199,7 @@ export const getAllYearsAndSemesters = async (): Promise<
               ?.semesters.find((ss) => ss.key === l.semester)
               ?.courses.find((c) => c.name === l.name);
             if (!src) return null;
-            const out: LinkedCourse = { name: l.name, year: l.year, semester: l.semester };
-            if (src.color) out.color = src.color;
-            if (src.finalDate) out.finalDate = src.finalDate;
-            return out;
+            return src.color ? { ...l, color: src.color } : l;
           })
           .filter((l): l is LinkedCourse => l !== null);
       }
@@ -258,17 +259,42 @@ export type LinkCourseResult = "linked" | "taken" | "failed";
 export const linkCourse = async (
   from: { year: number; semester: string },
   course: string,
-  to: { year: number; semester: string }
+  to: { year: number; semester: string },
+  // Restoring a removed link (Undo) brings its exam date back with it.
+  exam?: { finalDate?: string; finalDone?: boolean }
 ): Promise<LinkCourseResult> => {
   try {
     const base = userBase();
     const target = doc(db, `${base}/years/${to.year}/semesters/${to.semester}/courses`, course);
     if ((await getDoc(target)).exists()) return "taken";
-    await setDoc(target, { linkOf: { year: from.year, semester: from.semester } });
+    await setDoc(target, {
+      linkOf: { year: from.year, semester: from.semester },
+      ...(exam?.finalDate ? { finalDate: exam.finalDate } : {}),
+      ...(exam?.finalDate && exam.finalDone ? { finalDone: true } : {}),
+    });
     return "linked";
   } catch (error) {
     console.error(`Error linking course: ${error}`);
     return "failed";
+  }
+};
+
+// Saves a linked course's own exam in the semester it's linked into: its
+// date (null clears it) and whether it's done. Touches only the link,
+// never the original.
+export const setLinkFinal = async (
+  year: number,
+  semester: string,
+  course: string,
+  patch: { finalDate?: string | null; finalDone?: boolean }
+): Promise<boolean> => {
+  try {
+    const ref = doc(db, `${userBase()}/years/${year}/semesters/${semester}/courses`, course);
+    await updateDoc(ref, patch);
+    return true;
+  } catch (error) {
+    console.error(`Error saving linked course exam date: ${error}`);
+    return false;
   }
 };
 

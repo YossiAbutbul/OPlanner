@@ -41,7 +41,8 @@ interface SidebarProps {
   onLinkCourse: (
     from: { year: number; semester: string; color?: string },
     course: string,
-    to: { year: number; semester: string }
+    to: { year: number; semester: string },
+    exam?: { finalDate?: string; finalDone?: boolean }
   ) => Promise<LinkCourseResult>;
   onUnlinkCourse: (year: number, semesterKey: string, course: string) => Promise<boolean>;
   // Opens a course in its own semester.
@@ -230,7 +231,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           void onLinkCourse(
             { year: link.year, semester: link.semester, color: link.color },
             link.name,
-            { year: hereYear, semester: here }
+            { year: hereYear, semester: here },
+            { finalDate: link.finalDate, finalDone: link.finalDone }
           );
         },
       },

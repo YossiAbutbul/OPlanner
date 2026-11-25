@@ -118,7 +118,11 @@ export interface LinkedCourse {
   year: number;      // where the original lives
   semester: string;  // its semester key
   color?: string;    // the original's, mirrored when the tree loads
-  finalDate?: string; // likewise
+  // This semester's own exam date for the course (a retake or a later
+  // sitting), stored on the link. Separate from the original's final.
+  finalDate?: string;
+  // That sitting is over. Reset whenever the date changes.
+  finalDone?: boolean;
 }
 
 export interface SemesterInfo {
