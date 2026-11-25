@@ -1,5 +1,6 @@
 import { doc, setDoc, getDocs, getDocsFromServer, collection, getDoc, deleteDoc, updateDoc, writeBatch, query, limit } from "firebase/firestore";
 import { db, requireUid, auth } from "../firebase";
+import type { LinkedCourse } from "../types/models";
 
 const MAX_NAME_LENGTH = 100;
 
@@ -105,6 +106,7 @@ export const getAllYearsAndSemesters = async (): Promise<
       key: string;
       color?: string;
       courses: { name: string; finalDate?: string; color?: string }[];
+      links?: LinkedCourse[];
     }[];
   }>
 > => {
@@ -132,10 +134,19 @@ export const getAllYearsAndSemesters = async (): Promise<
             );
             const coursesSnapshot = await getDocs(coursesCollection);
 
-            const courseDocs = coursesSnapshot.docs.map((d) => ({
+            const allDocs = coursesSnapshot.docs.map((d) => ({
               id: d.id,
               data: d.data(),
             }));
+            // Links to courses in other semesters are listed on their own;
+            // resolved against the whole tree once it's loaded.
+            const links: LinkedCourse[] = [];
+            const courseDocs = allDocs.filter((c) => {
+              const l = c.data?.linkOf;
+              if (!l || typeof l.year !== "number" || typeof l.semester !== "string") return true;
+              links.push({ name: c.id, year: l.year, semester: l.semester });
+              return false;
+            });
             const courseNames = courseDocs.map((c) => c.id);
             const order: string[] = Array.isArray(semesterData.courseOrder)
               ? (semesterData.courseOrder as string[])
@@ -160,6 +171,7 @@ export const getAllYearsAndSemesters = async (): Promise<
               key: semesterDoc.id,
               color: typeof semesterData.color === "string" ? semesterData.color : undefined,
               courses,
+              links,
             };
           })
         );
@@ -171,6 +183,26 @@ export const getAllYearsAndSemesters = async (): Promise<
         };
       })
     );
+
+    // A link whose original was renamed or deleted points at nothing: hide
+    // it. One that resolves takes the original's color.
+    for (const y of yearsData) {
+      for (const s of y.semesters) {
+        s.links = s.links
+          .map((l): LinkedCourse | null => {
+            const src = yearsData
+              .find((yy) => yy.year === l.year)
+              ?.semesters.find((ss) => ss.key === l.semester)
+              ?.courses.find((c) => c.name === l.name);
+            if (!src) return null;
+            const out: LinkedCourse = { name: l.name, year: l.year, semester: l.semester };
+            if (src.color) out.color = src.color;
+            if (src.finalDate) out.finalDate = src.finalDate;
+            return out;
+          })
+          .filter((l): l is LinkedCourse => l !== null);
+      }
+    }
 
     return yearsData;
   } catch (error) {
@@ -206,11 +238,55 @@ export const addCourse = async (
     // Only ever create. Re-importing a calendar (or adding a name that's
     // already there) used to overwrite the doc and wipe the course's links,
     // notes, exam table, grade sheet, colour and final date.
-    if ((await getDoc(courseDoc)).exists()) return true;
+    // A link to another semester's course is replaced: a real course of
+    // that name takes its place.
+    const existing = await getDoc(courseDoc);
+    if (existing.exists() && !existing.data?.()?.linkOf) return true;
     await setDoc(courseDoc, { tasks: [] });
     return true;
   } catch (error) {
     console.error(`Error adding course: ${error}`);
+    return false;
+  }
+};
+
+export type LinkCourseResult = "linked" | "taken" | "failed";
+
+// Shows a course in another semester without copying it: the target gets a
+// course doc that only points back at the original. Refuses when the target
+// already has a course (or link) of that name.
+export const linkCourse = async (
+  from: { year: number; semester: string },
+  course: string,
+  to: { year: number; semester: string }
+): Promise<LinkCourseResult> => {
+  try {
+    const base = userBase();
+    const target = doc(db, `${base}/years/${to.year}/semesters/${to.semester}/courses`, course);
+    if ((await getDoc(target)).exists()) return "taken";
+    await setDoc(target, { linkOf: { year: from.year, semester: from.semester } });
+    return "linked";
+  } catch (error) {
+    console.error(`Error linking course: ${error}`);
+    return "failed";
+  }
+};
+
+// Removes a link. Only ever deletes a doc that is a link, never a course.
+export const unlinkCourse = async (
+  year: number,
+  semester: string,
+  course: string
+): Promise<boolean> => {
+  try {
+    const ref = doc(db, `${userBase()}/years/${year}/semesters/${semester}/courses`, course);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return true;
+    if (!snap.data()?.linkOf) return false;
+    await deleteDoc(ref);
+    return true;
+  } catch (error) {
+    console.error(`Error removing linked course: ${error}`);
     return false;
   }
 };

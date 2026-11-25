@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Sun, Moon, LayoutGrid, MoreVertical, Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Sun, Moon, LayoutGrid, MoreVertical, Pencil, Trash2, RefreshCw, Link2, Link2Off, ArrowUpRight } from "lucide-react";
 import { useUpdate } from "../context/UpdateContext";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useConfettiPref } from "../hooks/useConfettiPref";
@@ -26,12 +26,26 @@ import { courseColor } from "../utility/courseColor";
 import DeleteModal from "./DeleteModal";
 import Modal from "./Modal";
 import CourseEditModal from "./CourseEditModal";
+import LinkCourseModal from "./LinkCourseModal";
+import type { LinkedCourse, YearTreeData } from "../types/models";
+import type { LinkCourseResult } from "../utility/initializeDatabase";
 
 interface SidebarProps {
   selectedYear: number | null;
   selectedSemester: string | null;
   selectedCourse: string | null;
   courses: CourseInfo[];
+  // Courses from other semesters shown in this one.
+  links: LinkedCourse[];
+  years: YearTreeData[];
+  onLinkCourse: (
+    from: { year: number; semester: string; color?: string },
+    course: string,
+    to: { year: number; semester: string }
+  ) => Promise<LinkCourseResult>;
+  onUnlinkCourse: (year: number, semesterKey: string, course: string) => Promise<boolean>;
+  // Opens a course in its own semester.
+  onGoToCourse: (year: number, semesterKey: string, course: string) => void;
   onSelectCourse: (c: string | null) => void;
   onReorderCourses: (year: number, semester: string, names: string[]) => void;
   onYearsChanged: () => void | Promise<void>;
@@ -59,6 +73,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   selectedSemester,
   selectedCourse,
   courses,
+  links,
+  years,
+  onLinkCourse,
+  onUnlinkCourse,
+  onGoToCourse,
   onSelectCourse,
   onReorderCourses,
   onYearsChanged,
@@ -139,6 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const [linking, setLinking] = useState<string | null>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -162,6 +182,55 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, []);
 
   const canManage = selectedYear !== null && !!selectedSemester;
+  // Selected semester's key (paths use it; the selection holds its name).
+  const semesterKey =
+    years.find((y) => y.year === selectedYear)?.semesters.find((s) => s.name === selectedSemester)?.key ??
+    selectedSemester;
+  const semesterLabel = (year: number, key: string) => {
+    const s = years.find((y) => y.year === year)?.semesters.find((ss) => ss.key === key);
+    return `${s?.name ?? key}, ${year}`;
+  };
+  const menuLink = menuOpen ? links.find((l) => l.name === menuOpen) ?? null : null;
+
+  const handleLink = async (to: { year: number; semester: string; label: string }): Promise<LinkCourseResult> => {
+    if (!canManage || !linking) return "failed";
+    const name = linking;
+    const from = { year: selectedYear!, semester: semesterKey!, color: courses.find((c) => c.name === name)?.color };
+    const result = await onLinkCourse(from, name, to);
+    if (result === "linked") {
+      toast.success(`Now in ${to.label}`, {
+        description: `${capitalizeWords(name)} shows there too. Changes in either place are the same course.`,
+        action: { label: "Open", onClick: () => onGoToCourse(to.year, to.semester, name) },
+      });
+    }
+    return result;
+  };
+
+  const handleUnlink = async (link: LinkedCourse) => {
+    if (!canManage) return;
+    const here = semesterKey!;
+    const hereYear = selectedYear!;
+    if (selectedCourse === link.name) onSelectCourse(null);
+    const ok = await onUnlinkCourse(hereYear, here, link.name);
+    if (!ok) {
+      toast.error("Couldn't remove it", { description: "Check your connection and try again." });
+      return;
+    }
+    // Nothing is lost, so no confirmation first; Undo puts it straight back.
+    toast.info(`Removed from ${semesterLabel(hereYear, here)}`, {
+      description: `${capitalizeWords(link.name)} is still in ${semesterLabel(link.year, link.semester)}.`,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          void onLinkCourse(
+            { year: link.year, semester: link.semester, color: link.color },
+            link.name,
+            { year: hereYear, semester: here }
+          );
+        },
+      },
+    });
+  };
 
   const handleDelete = async () => {
     if (!canManage || !confirmDelete) return;
@@ -335,6 +404,51 @@ const Sidebar: React.FC<SidebarProps> = ({
                       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                       setMenuPos({ top: rect.top, left: rect.right + 6 });
                       setMenuOpen(name);
+                    }
+                  }}
+                  title="More"
+                  aria-label="More"
+                >
+                  <MoreVertical size={16} />
+                </button>
+              </li>
+            );
+          })}
+          {links.map((l) => {
+            const isActive = l.name === selectedCourse;
+            const from = semesterLabel(l.year, l.semester);
+            return (
+              <li
+                key={`link:${l.name}`}
+                className={`open-item linked ${isActive ? "selected" : ""}`}
+                title={!isMobile && collapsed ? `${capitalizeWords(l.name)} — from ${from}` : undefined}
+                onClick={() => { onSelectCourse(l.name); onCloseMobile(); }}
+                style={{ "--c": courseColor(l.name, l.color) } as React.CSSProperties}
+              >
+                <span className="open-item-icon open-item-course" aria-hidden="true">
+                  {l.name.trim().charAt(0).toUpperCase()}
+                  <span className="open-item-link-badge">
+                    <Link2 size={8} strokeWidth={3} />
+                  </span>
+                </span>
+                <span className="open-item-stack">
+                  <span className="open-item-label" dir="auto">{capitalizeWords(l.name)}</span>
+                  <span className="open-item-sub">
+                    <Link2 size={12} strokeWidth={2.4} role="img" aria-label="Linked from" />
+                    <span className="open-item-sub-text">{from}</span>
+                  </span>
+                </span>
+                <button
+                  className="open-item-menu-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (menuOpen === l.name) {
+                      setMenuOpen(null);
+                      setMenuPos(null);
+                    } else {
+                      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                      setMenuPos({ top: rect.top, left: rect.right + 6 });
+                      setMenuOpen(l.name);
                     }
                   }}
                   title="More"
@@ -547,6 +661,33 @@ const Sidebar: React.FC<SidebarProps> = ({
             style={{ top: menuPos.top, left: menuPos.left }}
             onClick={(e) => e.stopPropagation()}
           >
+            {menuLink ? (
+              <>
+                <button
+                  onClick={() => {
+                    setMenuOpen(null);
+                    setMenuPos(null);
+                    onGoToCourse(menuLink.year, menuLink.semester, menuLink.name);
+                    onCloseMobile();
+                  }}
+                >
+                  <ArrowUpRight size={14} />
+                  Open in {semesterLabel(menuLink.year, menuLink.semester)}
+                </button>
+                <div className="open-item-menu-sep" role="separator" />
+                <button
+                  onClick={() => {
+                    setMenuOpen(null);
+                    setMenuPos(null);
+                    void handleUnlink(menuLink);
+                  }}
+                >
+                  <Link2Off size={14} />
+                  Remove from this semester
+                </button>
+              </>
+            ) : (
+            <>
             <button
               onClick={() => {
                 const target = menuOpen;
@@ -558,6 +699,18 @@ const Sidebar: React.FC<SidebarProps> = ({
             >
               <Pencil size={14} />
               Edit
+            </button>
+            <button
+              onClick={() => {
+                const target = menuOpen;
+                setMenuOpen(null);
+                setMenuPos(null);
+                setLinking(target);
+                onCloseMobile();
+              }}
+            >
+              <Link2 size={14} />
+              Show in another semester…
             </button>
             <div className="open-item-menu-sep" role="separator" />
             <button
@@ -573,6 +726,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               <Trash2 size={14} />
               Delete
             </button>
+            </>
+            )}
           </div>,
           document.body
         )}
@@ -591,6 +746,17 @@ const Sidebar: React.FC<SidebarProps> = ({
           />
         );
       })()}
+
+      {linking && canManage && (
+        <LinkCourseModal
+          isOpen={!!linking}
+          course={linking}
+          from={{ year: selectedYear!, semester: semesterKey! }}
+          years={years}
+          onClose={() => setLinking(null)}
+          onConfirm={handleLink}
+        />
+      )}
 
       {confirmDelete && (
         <DeleteModal

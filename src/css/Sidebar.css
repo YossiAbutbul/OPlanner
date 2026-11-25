@@ -1306,3 +1306,89 @@ button:focus:not(:focus-visible) { outline: none; }
     transform: rotate(360deg);
   }
 }
+
+/* Linked course: a course from another semester shown here. The tile
+   stays clean; the second line says where it lives, led by a link glyph
+   (like iOS "Shared with" rows). The icon rail, which has no text, gets a
+   small badge in the course color instead. */
+.open-item.linked .open-item-course {
+  position: relative;
+}
+
+.open-item-link-badge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--c);
+  /* Cut out of the tile by a ring of the sidebar itself. */
+  box-shadow: 0 0 0 2px var(--bg);
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-out);
+}
+
+.sidebar.collapsed .open-item-link-badge {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.open-item-stack {
+  flex: 0 0 auto;
+  width: calc(var(--sidebar-w) - 85px);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: opacity var(--dur-2) var(--ease-out);
+}
+
+.open-item-stack .open-item-label {
+  width: auto;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.open-item-sub {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-caption);
+  line-height: 1.25;
+  color: var(--text-muted);
+  /* Hebrew names above, but the semester line always reads left to right. */
+  direction: ltr;
+}
+
+.open-item-sub svg {
+  flex-shrink: 0;
+  /* The course color, lifted toward the text so dark colors still read
+     on the dark rail. */
+  color: color-mix(in srgb, var(--c) 70%, var(--text));
+}
+
+.open-item-sub-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar.collapsed .open-item-stack {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .open-item-link-badge { transform: none; }
+}

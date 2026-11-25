@@ -110,11 +110,26 @@ export interface CourseInfo {
   color?: string;
 }
 
+// A course shown in a semester it doesn't belong to: a pointer to the
+// original, which keeps all the data. Stored as a course doc holding only
+// `linkOf: { year, semester }` (semester key), under the same course name.
+export interface LinkedCourse {
+  name: string;
+  year: number;      // where the original lives
+  semester: string;  // its semester key
+  color?: string;    // the original's, mirrored when the tree loads
+  finalDate?: string; // likewise
+}
+
 export interface SemesterInfo {
   name: string;
   key: string;
   color?: string;
   courses: CourseInfo[];
+  // Courses from other semesters shown here too. Kept apart from `courses`
+  // so stats, grades, reminders and task pickers never count or write to
+  // them twice.
+  links?: LinkedCourse[];
 }
 
 export interface YearTreeData {

@@ -1,5 +1,5 @@
 import React from "react";
-import { CalendarPlus, Check } from "lucide-react";
+import { CalendarPlus, Check, Link2 } from "lucide-react";
 import type { CourseInfo } from "../../types/models";
 import DatePicker from "../DatePicker";
 import { capitalizeWords } from "../../utility/dayCalendar";
@@ -22,6 +22,8 @@ interface Props {
   // The Final Exam task's date: the source of truth when the task exists,
   // so edits made to the task anywhere show here at once.
   finalDateOf?: (course: string) => string | undefined;
+  // For a course shown here from another semester: where it lives.
+  linkedFrom?: (course: string) => string | undefined;
 }
 
 const FinalsCountdown: React.FC<Props> = ({
@@ -30,6 +32,7 @@ const FinalsCountdown: React.FC<Props> = ({
   onOpenFinal,
   finalStatusOf,
   finalDateOf,
+  linkedFrom,
 }) => {
   const courses = rawCourses.map((c) => {
     const d = finalDateOf?.(c.name);
@@ -125,7 +128,16 @@ const FinalsCountdown: React.FC<Props> = ({
             </DatePicker>
             <span className="finals-text">
               <span className="finals-row-name">{capitalizeWords(c.name)}</span>
-              <span className="finals-sub" dir="ltr">{sub}</span>
+              <span className="finals-sub" dir="ltr">
+                {linkedFrom?.(c.name) && (
+                  <span className="finals-linked" title={`From ${linkedFrom(c.name)}`}>
+                    <Link2 size={11} strokeWidth={2.4} role="img" aria-label="Linked from" />
+                    {linkedFrom(c.name)}
+                    <span aria-hidden> · </span>
+                  </span>
+                )}
+                {sub}
+              </span>
             </span>
             {badge && (
               <button

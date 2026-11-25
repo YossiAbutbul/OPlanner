@@ -453,6 +453,10 @@ const MainContent: React.FC<MainContentProps> = ({
             onUpdateCourseFinalDate={(course, date) =>
               onUpdateCourseFinalDate(selectedYear, currentSemester.key, course, date)
             }
+            links={currentSemester.links}
+            onUpdateLinkedFinalDate={(link, date) =>
+              onUpdateCourseFinalDate(link.year, link.semester, link.name, date)
+            }
             onYearsChanged={onYearsChanged}
             // The panels report failures as a sentence; it reads better as the
             // card's second line than as its heading.
@@ -511,7 +515,14 @@ const MainContent: React.FC<MainContentProps> = ({
             editHomework={editTask}
             prefilledDueDate={prefillDate}
             isLoading={isLoadingAction}
-            availableCourses={currentSemester?.courses.map((c) => c.name)}
+            availableCourses={(activeTab
+              // Tasks save to the active course's own semester, which for a
+              // linked course isn't the one on screen: offer its courses.
+              ? years
+                  .find((y) => y.year === activeTab.year)
+                  ?.semesters.find((s) => s.key === activeTab.semester || s.name === activeTab.semester)
+              : currentSemester
+            )?.courses.map((c) => c.name)}
           />
         </Suspense>
       )}

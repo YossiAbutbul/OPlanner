@@ -1032,6 +1032,15 @@
   text-align: start;
 }
 
+/* A final from a course linked in from another semester: a link glyph in
+   the course color and where it lives, ahead of the date. */
+.finals-linked svg {
+  display: inline-block;
+  vertical-align: -1.5px;
+  margin-right: 3px;
+  color: var(--tile-color);
+}
+
 /* Finished exams recede; what's still ahead keeps full contrast. */
 .finals-row[data-urgency="past"] .finals-row-name {
   color: var(--label-2);

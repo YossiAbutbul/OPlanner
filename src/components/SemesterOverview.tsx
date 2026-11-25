@@ -16,7 +16,7 @@ import FinalsCountdown from "./SemesterOverview/FinalsCountdown";
 import AddCourseModal from "./SemesterOverview/AddCourseModal";
 import OverviewSkeleton from "./SemesterOverview/OverviewSkeleton";
 import { useSemesterStats } from "../hooks/useSemesterStats";
-import type { CourseInfo, HomeworkEntry } from "../types/models";
+import type { CourseInfo, HomeworkEntry, LinkedCourse } from "../types/models";
 import { BookPlus, Download } from "lucide-react";
 import "../css/SemesterOverview.css";
 
@@ -28,6 +28,10 @@ interface Props {
   onSelectCourse: (c: string) => void;
   onImport: (events: IcsEvent[]) => void;
   onUpdateCourseFinalDate: (course: string, date: string | null) => Promise<void>;
+  // Courses from other semesters shown here. Only their finals appear on
+  // this page; their tasks count in their own semester.
+  links?: LinkedCourse[];
+  onUpdateLinkedFinalDate?: (link: LinkedCourse, date: string | null) => Promise<void>;
   onYearsChanged: () => void;
   onError: (msg: string) => void;
 }
@@ -40,6 +44,8 @@ const SemesterOverview: React.FC<Props> = ({
   onSelectCourse,
   onImport,
   onUpdateCourseFinalDate,
+  links = [],
+  onUpdateLinkedFinalDate,
   onYearsChanged,
   onError,
 }) => {
@@ -106,12 +112,51 @@ const SemesterOverview: React.FC<Props> = ({
     }
   };
 
+  // Final Exam tasks of linked courses, read from their own semester, so
+  // their row shows the live date and "Done" like any other.
+  const [linkedFinals, setLinkedFinals] = useState<Record<string, HomeworkEntry | undefined>>({});
+  const linksKey = links.map((l) => `${l.year}|${l.semester}|${l.name}`).join("\n");
+  useEffect(() => {
+    if (!links.length) {
+      setLinkedFinals({});
+      return;
+    }
+    let cancelled = false;
+    void Promise.all(
+      links.map(async (l) => {
+        const list = await getCourseTasks(l.year, l.semester, l.name);
+        return [l.name, list.find((t) => t.id === FINAL_TASK_ID)] as const;
+      })
+    ).then((pairs) => {
+      if (cancelled) return;
+      const map = Object.fromEntries(pairs);
+      // Local edits not yet on the server win, as they do for the rest.
+      for (const l of links) {
+        const [edited] = applyEdits(
+          map[l.name] ? [map[l.name]!] : [],
+          (t) => t.id === FINAL_TASK_ID && t.year === l.year && t.course === l.name
+        ).filter((t) => t.id === FINAL_TASK_ID && t.course === l.name);
+        map[l.name] = edited;
+      }
+      setLinkedFinals(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linksKey, getCourseTasks, applyEdits, homework]);
+
+  const linkOf = (course: string) => links.find((l) => l.name === course);
+
   const finalTaskOf = (course: string) =>
-    allTasks.find((t) => t.course === course && t.id === FINAL_TASK_ID);
+    linkOf(course)
+      ? linkedFinals[course]
+      : allTasks.find((t) => t.course === course && t.id === FINAL_TASK_ID);
 
   const handleFinalDateChange = (course: string, value: string) => {
     const next = value ? value : null;
     const final = finalTaskOf(course);
+    const link = linkOf(course);
     // An existing Final Exam task is edited in place (optimistic, keeps its
     // status); the homework context carries the date to the course.
     if (final) {
@@ -131,7 +176,10 @@ const SemesterOverview: React.FC<Props> = ({
       }
       return;
     }
-    onUpdateCourseFinalDate(course, next)
+    const save = link
+      ? onUpdateLinkedFinalDate?.(link, next) ?? Promise.resolve()
+      : onUpdateCourseFinalDate(course, next);
+    save
       .then(() => {
         toast.success(next ? "Final exam date saved" : "Final exam date cleared", {
           description: next ? `${course} · ${next}` : `${course} has no final on the calendar.`,
@@ -325,11 +373,28 @@ const SemesterOverview: React.FC<Props> = ({
                 onSelectCourse={onSelectCourse}
               />
               <FinalsCountdown
-                courses={courses}
+                courses={[
+                  ...courses,
+                  // A linked course with no final date has nothing to count
+                  // down to here; it's set from its own semester or page.
+                  ...links
+                    .filter((l) => l.finalDate || linkedFinals[l.name])
+                    .map((l) => ({ name: l.name, color: l.color, finalDate: l.finalDate })),
+                ]}
+                linkedFrom={(course) => {
+                  const l = linkOf(course);
+                  return l ? `${l.semester}, ${l.year}` : undefined;
+                }}
                 onChangeFinalDate={handleFinalDateChange}
                 finalStatusOf={(course) => finalTaskOf(course)?.status}
                 finalDateOf={(course) => finalTaskOf(course)?.dueDate}
                 onOpenFinal={(course) => {
+                  // A linked course's final is edited on its course page, so
+                  // it saves to the semester that owns it.
+                  if (linkOf(course)) {
+                    onSelectCourse(course);
+                    return;
+                  }
                   const final = allTasks.find(
                     (t) => t.course === course && t.id === FINAL_TASK_ID
                   );

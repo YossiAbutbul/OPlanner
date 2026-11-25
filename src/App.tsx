@@ -91,18 +91,21 @@ const App: React.FC = () => {
     [tree, sel, user]
   );
 
-  const activeTab = useMemo(
-    () =>
-      sel.selectedYear !== null && sel.selectedSemester && sel.selectedCourse
-        ? { year: sel.selectedYear, semester: sel.selectedSemester, course: sel.selectedCourse }
-        : null,
-    [sel.selectedYear, sel.selectedSemester, sel.selectedCourse]
-  );
-
   const currentYear = tree.years.find((y) => y.year === sel.selectedYear) || null;
   const currentSemester =
     currentYear?.semesters.find((s) => s.name === sel.selectedSemester) || null;
   const semesterCourses: CourseInfo[] = currentSemester?.courses ?? [];
+  const semesterLinks = useMemo(() => currentSemester?.links ?? [], [currentSemester]);
+
+  // A linked course opens the original: every read and write goes to the
+  // semester that owns the data.
+  const activeTab = useMemo(() => {
+    if (sel.selectedYear === null || !sel.selectedSemester || !sel.selectedCourse) return null;
+    const link = semesterLinks.find((l) => l.name === sel.selectedCourse);
+    return link
+      ? { year: link.year, semester: link.semester, course: link.name }
+      : { year: sel.selectedYear, semester: sel.selectedSemester, course: sel.selectedCourse };
+  }, [sel.selectedYear, sel.selectedSemester, sel.selectedCourse, semesterLinks]);
 
   if (loading) {
     return (
@@ -154,6 +157,19 @@ const App: React.FC = () => {
         selectedSemester={sel.selectedSemester}
         selectedCourse={sel.selectedCourse}
         courses={semesterCourses}
+        links={semesterLinks}
+        years={tree.years}
+        onLinkCourse={tree.handleLinkCourse}
+        onUnlinkCourse={tree.handleUnlinkCourse}
+        onGoToCourse={(year, semesterKey, course) => {
+          const target = tree.years.find((y) => y.year === year);
+          const sem = target?.semesters.find((s) => s.key === semesterKey);
+          if (!sem) return;
+          setPomodoroOpen(false);
+          sel.setSelectedYear(year);
+          sel.setSelectedSemester(sem.name);
+          sel.setSelectedCourse(course);
+        }}
         onSelectCourse={(c) => { setPomodoroOpen(false); sel.setSelectedCourse(c); }}
         onReorderCourses={tree.handleReorderCourses}
         onYearsChanged={tree.refreshYears}
