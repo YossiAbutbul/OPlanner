@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import "../css/Sidebar.css";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Sun, Moon, LayoutGrid, MoreVertical, Pencil, Trash2, RefreshCw, Link2, Link2Off, ArrowUpRight } from "lucide-react";
+import { Settings, CalendarPlus, LogOut, Download, Timer, Bell, BellRing, PartyPopper, Sun, Moon, LayoutGrid, MoreVertical, Pencil, Trash2, RefreshCw, Link2, Link2Off, ArrowUpRight, Check, WifiOff } from "lucide-react";
 import { useUpdate } from "../context/UpdateContext";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useConfettiPref } from "../hooks/useConfettiPref";
@@ -94,11 +94,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   const toast = useToast();
   const update = useUpdate();
   const [checkingUpdate, setCheckingUpdate] = useState(false);
-  // The outcome of the last check, shown under the row. It used to be a toast,
-  // which meant closing the menu to uncover it — and on a phone, where
-  // transient toasts don't show at all, pressing the row only closed the menu
-  // and said nothing. Reporting in place works the same everywhere.
-  const [updateNote, setUpdateNote] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
+  // The outcome of the last check, reported by the row itself: its label
+  // turns into the answer for a few seconds, then back. A toast meant
+  // closing the menu to see it (and phones don't show transient toasts);
+  // a line under the row pushed the rest of the menu down.
+  const [updateNote, setUpdateNote] = useState<{ tone: "ok" | "err"; text: string; detail: string } | null>(null);
+  useEffect(() => {
+    if (!updateNote) return;
+    const t = window.setTimeout(() => setUpdateNote(null), 3500);
+    return () => window.clearTimeout(t);
+  }, [updateNote]);
   // Checks now instead of waiting for the hourly or on-focus check. A newer
   // build leaves the row reading "Update to <version>", which applies it.
   const onCheckForUpdates = async () => {
@@ -111,9 +116,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     const result = await update.checkForUpdates();
     setCheckingUpdate(false);
     if (result === "current")
-      setUpdateNote({ tone: "ok", text: `Up to date — v${update.version} is the latest.` });
+      setUpdateNote({ tone: "ok", text: "Up to date", detail: `v${update.version} is the latest version.` });
     else if (result === "offline")
-      setUpdateNote({ tone: "err", text: "Couldn't check. Check your connection and try again." });
+      setUpdateNote({ tone: "err", text: "Couldn't check", detail: "Check your connection and try again." });
     // "available" needs no line: the row itself now offers the update.
   };
   const { canInstall, installed, promptInstall } = useInstallPrompt();
@@ -608,24 +613,48 @@ const Sidebar: React.FC<SidebarProps> = ({
               </button>
             )}
             <div className="settings-menu-divider"></div>
-            <button onClick={() => void onCheckForUpdates()} disabled={checkingUpdate}>
-              <RefreshCw size={15} className={checkingUpdate ? "settings-spin" : undefined} />
-              <span>
-                {checkingUpdate
-                  ? "Checking…"
-                  : update.needRefresh
-                    ? update.nextVersion
-                      ? `Update to ${update.nextVersion}`
-                      : "Update now"
-                    : "Check for updates"}
-              </span>
+            <button
+              onClick={() => void onCheckForUpdates()}
+              disabled={checkingUpdate}
+              className={`settings-update ${updateNote ? `is-${updateNote.tone}` : ""}`}
+              title={updateNote?.detail}
+            >
+              {/* Icon and label swap together in place; the row never
+                  changes size, so nothing else in the menu moves. */}
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={updateNote ? updateNote.tone : checkingUpdate ? "checking" : "idle"}
+                  className="settings-update-state"
+                  initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 6, filter: "blur(2px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, filter: "blur(2px)" }}
+                  transition={SPRING_SNAPPY}
+                >
+                  {updateNote?.tone === "ok" ? (
+                    <Check size={15} strokeWidth={2.6} />
+                  ) : updateNote?.tone === "err" ? (
+                    <WifiOff size={15} />
+                  ) : (
+                    <RefreshCw size={15} className={checkingUpdate ? "settings-spin" : undefined} />
+                  )}
+                  <span>
+                    {updateNote
+                      ? updateNote.text
+                      : checkingUpdate
+                        ? "Checking…"
+                        : update.needRefresh
+                          ? update.nextVersion
+                            ? `Update to ${update.nextVersion}`
+                            : "Update now"
+                          : "Check for updates"}
+                  </span>
+                </motion.span>
+              </AnimatePresence>
               <span className="settings-version">v{update.version}</span>
+              <span className="sr-only" role="status">
+                {updateNote ? `${updateNote.text}. ${updateNote.detail}` : ""}
+              </span>
             </button>
-            {updateNote && (
-              <p className={`settings-note settings-note-${updateNote.tone}`} role="status">
-                {updateNote.text}
-              </p>
-            )}
             <button
               onClick={() => {
                 setSettingsOpen(false);

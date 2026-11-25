@@ -1058,18 +1058,49 @@ button:focus:not(:focus-visible) { outline: none; }
   font-variant-numeric: tabular-nums;
 }
 
-/* Outcome of a Check for updates, under the row that ran it. Lines up with
-   the row's label rather than its icon. */
-.settings-note {
-  margin: 0 0 0.15rem;
-  padding: 0 0.65rem 0.25rem 2rem;
-  font-size: 0.72rem;
-  line-height: 1.35;
+/* Check for updates: the row reports its own outcome. Icon + label swap
+   as one piece; the version stays put on the right. */
+.settings-menu button.settings-update {
+  overflow: hidden;
+}
+
+.settings-update-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.settings-update-state svg {
+  flex-shrink: 0;
   color: var(--text-muted);
 }
 
-.settings-note-err {
+/* The answer tints the whole label, icon included. */
+.settings-update.is-ok .settings-update-state svg,
+.settings-update.is-err .settings-update-state svg {
+  color: inherit;
+}
+
+.settings-update.is-ok .settings-update-state {
+  color: var(--accent);
+}
+
+.settings-update.is-err .settings-update-state {
   color: #ff6b6b;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .settings-spin {
