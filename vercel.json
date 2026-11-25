@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':(exclude)docs' ':(exclude)cron'",
   "rewrites": [
     {
       "source": "/__/auth/:path*",
